@@ -12,17 +12,17 @@ GameStateManager::~GameStateManager()
 
 void GameStateManager::LevelInit()
 {
-	levelList.at(currentLevel)->Init();
+	levelList.at(static_cast<int>(currentLevel))->Init();
 }
 
 void GameStateManager::Update(float dt)
 {
-	levelList.at(currentLevel)->Update(dt);
+	levelList.at(static_cast<int>(currentLevel))->Update(dt);
 }
 
 void GameStateManager::Draw(float dt)
 {
-	levelList.at(currentLevel)->Draw(dt);
+	levelList.at(static_cast<int>(currentLevel))->Draw(dt);
 }
 
 void GameStateManager::End()
@@ -37,12 +37,12 @@ void GameStateManager::AddLevel(GameState* level)
 
 void GameStateManager::ChangeLevel(GameLevel changeLV)
 {
-	levelList.at(currentLevel)->End();
+	levelList.at(static_cast<int>(currentLevel))->End();
 	currentLevel = changeLV;
-	levelList.at(currentLevel)->Init();
+	levelList.at(static_cast<int>(currentLevel))->Init();
 }
 
 void GameStateManager::RestartLevel()
 {
-	levelList.at(currentLevel)->Restart();
+	levelList.at(static_cast<int>(currentLevel))->Restart();
 }

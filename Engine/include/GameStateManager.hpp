@@ -2,9 +2,9 @@
 #include "GameState.hpp"
 #include <vector>
 
-enum GameLevel
+enum class GameLevel
 {
-	SHADERDEMO,
+	SHADERDEMO = 0,
 	VERTICESDEMO,
 	NONE
 };
@@ -25,7 +25,6 @@ public:
 	void RestartLevel();
 
 	GameLevel GetCurrentLevel() { return currentLevel; }
-
 private:
 	GameLevel currentLevel;
 	std::vector<GameState*> levelList;

@@ -47,7 +47,6 @@ public:
 	}
 
 	FrameRate GetFrameRate() { return frame; }
-
 private:
 	using clock = std::chrono::system_clock;
 	using second = std::chrono::duration <float>;

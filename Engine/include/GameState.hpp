@@ -8,6 +8,5 @@ public:
 	virtual void Draw(float dt) = 0;
 	virtual void Restart() = 0;
 	virtual void End() = 0;
-
 protected:
 };

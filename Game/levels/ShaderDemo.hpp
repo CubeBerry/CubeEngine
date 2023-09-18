@@ -21,7 +21,6 @@ public:
 	void Draw(float dt) override;
 	void Restart() override;
 	void End() override;
-
 private:
 	VKVertexBuffer* vkVertexBuffer;
 	VKIndexBuffer* vkIndexBuffer;

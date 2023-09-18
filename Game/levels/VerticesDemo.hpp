@@ -21,9 +21,7 @@ public:
 	void Draw(float dt) override;
 	void Restart() override;
 	void End() override;
-
 private:
-
 	struct Material
 	{
 		glm::vec3 color{ 1.f };

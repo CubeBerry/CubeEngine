@@ -261,7 +261,6 @@ protected:
 	{
 		mouseButtonStates[button] = state;
 	}
-
 private:
 	std::unordered_map<KEYBOARDKEYS, bool> keyStates;
 	std::unordered_map<KEYBOARDKEYS, bool> keyStatePrev;

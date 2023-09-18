@@ -21,7 +21,6 @@ public:
 	static VKRenderManager* GetVKRenderManager() { return Instance().vkRenderManager; }
 	static GameStateManager* GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager* GetInputManager() { return Instance().inputManager; }
-
 private:
 
 	bool isRunning = true;
