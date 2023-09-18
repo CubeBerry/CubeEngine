@@ -27,6 +27,7 @@ void GameStateManager::Draw(float dt)
 
 void GameStateManager::End()
 {
+	levelList.at(static_cast<int>(currentLevel))->End();
 	levelList.clear();
 }
 
