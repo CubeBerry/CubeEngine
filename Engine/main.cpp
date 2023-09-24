@@ -13,7 +13,7 @@ int main(void)
 
 	engine.GetGameStateManager()->AddLevel(new ShaderDemo);
 	engine.GetGameStateManager()->AddLevel(new VerticesDemo);
-	Engine::GetGameStateManager()->LevelInit();
+	engine.GetGameStateManager()->LevelInit();
 
 	engine.Update();
 	engine.End();
