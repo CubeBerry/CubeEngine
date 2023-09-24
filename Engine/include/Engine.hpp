@@ -11,10 +11,11 @@ public:
 	Engine() {};
 	~Engine() = default;
 
-	void Init();
+	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
 	void End();
 
+	void SetFPS(FrameRate fps);
 
 	static Engine& Instance() { static Engine instance; return instance; }
 	static Window* GetWindow() { return Instance().window; }

@@ -38,12 +38,12 @@ VKInit::~VKInit()
 {
 	vkDeviceWaitIdle(vkDevice);
 
-	//Destroy Instance
-	vkDestroyInstance(vkInstance, nullptr);
-	//Destroy Device
-	vkDestroyDevice(vkDevice, nullptr);
 	//Destroy Surface
 	vkDestroySurfaceKHR(vkInstance, vkSurface, nullptr);
+	//Destroy Device
+	vkDestroyDevice(vkDevice, nullptr);
+	//Destroy Instance
+	vkDestroyInstance(vkInstance, nullptr);
 }
 
 void VKInit::InitInstance()

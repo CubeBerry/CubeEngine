@@ -73,6 +73,16 @@ void VerticesDemo::Init()
 
 void VerticesDemo::Update(float /*dt*/)
 {
+	if (inputManager->IsKeyPressedOnce(KEYBOARDKEYS::ESCAPE))
+	{
+		SDL_Event quitEvent;
+		quitEvent.type = SDL_QUIT;
+		SDL_PushEvent(&quitEvent);
+	}
+	if (inputManager->IsKeyPressedOnce(KEYBOARDKEYS::R))
+	{
+		Engine::GetGameStateManager()->RestartLevel();
+	}
 	if (inputManager->IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_1))
 	{
 		Engine::GetGameStateManager()->ChangeLevel(GameLevel::SHADERDEMO);

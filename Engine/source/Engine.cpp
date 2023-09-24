@@ -1,23 +1,14 @@
 #include "Engine.hpp"
 
-#include"levels/ShaderDemo.hpp"
-#include"levels/VerticesDemo.hpp"
-#include <iostream>
-
-void Engine::Init()
+void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
 	window = new Window();
-	window->Init("Vulkan Demo", 640, 480, false, WindowMode::NORMAL);
-	timer.Init(FPS_144);
+	window->Init(title, windowWidth, windowHeight, fullScreen, mode);
+	timer.Init();
 
 	vkRenderManager = new VKRenderManager(window->GetWindow());
 	gameStateManger = new GameStateManager();
 	inputManager = new InputManager;
-
-	gameStateManger->AddLevel(new ShaderDemo);
-	gameStateManger->AddLevel(new VerticesDemo);
-
-	gameStateManger->LevelInit();
 }
 
 void Engine::Update()
@@ -27,7 +18,6 @@ void Engine::Update()
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
-
 		if (deltaTime > 1.f / static_cast<float>(timer.GetFrameRate()))
 		{
 			SDL_PollEvent(&event);
@@ -43,23 +33,12 @@ void Engine::Update()
 				break;
 			}
 			inputManager->InputPollEvent(event);
-			if (inputManager->IsKeyPressedOnce(KEYBOARDKEYS::ESCAPE))
-			{
-				SDL_Event quitEvent;
-				quitEvent.type = SDL_QUIT;
-				SDL_PushEvent(&quitEvent);
-			}
-			if (inputManager->IsKeyPressedOnce(KEYBOARDKEYS::R))
-			{
-				gameStateManger->RestartLevel();
-			}
-
 			gameStateManger->Draw(deltaTime);
 			gameStateManger->Update(deltaTime);
 
 			timer.ResetLastTimeStamp();
 			frameCount++;
-			if (frameCount >= timer.GetFrameRate())
+			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
 			{
 				int averageFrameRate = static_cast<int>(frameCount / timer.GetFrameRateCalculateTime());
 				//windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
@@ -75,10 +54,13 @@ void Engine::Update()
 
 void Engine::End()
 {
-	gameStateManger->End();
-
 	delete inputManager;
 	delete vkRenderManager;
 	delete gameStateManger;
 	delete window;
+}
+
+void Engine::SetFPS(FrameRate fps)
+{
+	timer.Init(fps);
 }
