@@ -46,7 +46,7 @@ uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_
 void VKTexture::LoadTexture(const std::filesystem::path& path_)
 {
 	auto path = path_;
-	int width, height, color;
+	int color;
 	//Read in image file
 	auto data = stbi_load(path.string().c_str(), &width, &height, &color, STBI_rgb_alpha);
 
@@ -56,7 +56,7 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_)
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		createInfo.imageType = VK_IMAGE_TYPE_2D;
 		createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		createInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height),1 };
+		createInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;
 		createInfo.samples = VK_SAMPLE_COUNT_1_BIT;

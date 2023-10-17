@@ -69,13 +69,13 @@
     <ClCompile Include="common_vk\source\Window.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Game\levels\ShaderDemo.cpp">
-      <Filter>Source Files\Levels</Filter>
-    </ClCompile>
     <ClCompile Include="Game\levels\VerticesDemo.cpp">
       <Filter>Source Files\Levels</Filter>
     </ClCompile>
     <ClCompile Include="Engine\main.cpp" />
+    <ClCompile Include="Engine\source\Texture.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_vk\include\Vertex.hpp">
@@ -129,11 +129,11 @@
     <ClInclude Include="common_vk\include\Window.hpp">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Game\levels\ShaderDemo.hpp">
-      <Filter>Header Files\Levels</Filter>
-    </ClInclude>
     <ClInclude Include="Game\levels\VerticesDemo.hpp">
       <Filter>Header Files\Levels</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\include\Texture.hpp">
+      <Filter>Header Files\Engine</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

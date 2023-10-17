@@ -13,14 +13,14 @@ public:
 	void InitUniformBuffer();
 	void UpdateUniform(Material* material_, const uint32_t frameIndex_);
 
-	std::array<VkBuffer, BUFFER_COUNT>* GetUniformBuffers() { return &vkUniformBuffers; };
+	std::array<VkBuffer, 2>* GetUniformBuffers() { return &vkUniformBuffers; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool;
 
-	std::array<VkBuffer, BUFFER_COUNT> vkUniformBuffers{ VK_NULL_HANDLE };
-	std::array<VkDeviceMemory, BUFFER_COUNT> vkUniformDeviceMemories{ VK_NULL_HANDLE };
+	std::array<VkBuffer, 2> vkUniformBuffers{ VK_NULL_HANDLE };
+	std::array<VkDeviceMemory, 2> vkUniformDeviceMemories{ VK_NULL_HANDLE };
 };
 
 template<typename Material>
@@ -47,7 +47,7 @@ VKUniformBuffer<Material>::~VKUniformBuffer()
 template<typename Material>
 inline void VKUniformBuffer<Material>::InitUniformBuffer()
 {
-	for (auto i = 0; i != BUFFER_COUNT; ++i)
+	for (auto i = 0; i != 2; ++i)
 	{
 		//Create Uniform Buffer Info
 		VkBufferCreateInfo createInfo{};
