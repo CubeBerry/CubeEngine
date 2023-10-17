@@ -9,12 +9,11 @@ layout(set = 0, binding = 1) uniform Material
 {
   mat3 matrix;  
 };
-//layout(set = 1, binding = 1) uniform sampler2D tex;
+layout(set = 1, binding = 1) uniform sampler2D tex;
 
 void main()
 {
-    //vec3 col = texture(tex, i_uv).rgb;
-    vec3 col = vec3(0);
+    vec3 col = texture(tex, i_uv).rgb;
 
     framgentColor = vec4(col, 1.0);
 }
