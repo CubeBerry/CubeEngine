@@ -63,23 +63,23 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	}
 
 	{
-		//Define Vertex Input Attribute about Texture
+		//Define Vertex Input Attribute about Color
 		VkVertexInputAttributeDescription vertexInputAttribute{};
 		vertexInputAttribute.location = 1;
 		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32G32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(Vertex, uv);
+		vertexInputAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputAttribute.offset = offsetof(Vertex, color);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
 
 	{
-		//Define Vertex Input Attribute about Color
+		//Define Vertex Input Attribute about Texture
 		VkVertexInputAttributeDescription vertexInputAttribute{};
 		vertexInputAttribute.location = 2;
 		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(Vertex, color);
+		vertexInputAttribute.format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttribute.offset = offsetof(Vertex, uv);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}

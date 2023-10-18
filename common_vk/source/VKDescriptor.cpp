@@ -166,6 +166,7 @@ void VKDescriptor::InitDescriptorSetLayouts()
 
 	//	vkDescriptorSetLayouts.push_back(vkTextureDescriptorSetLayout);
 	//}
+
 	{
 		//Create Binding for Fragment Uniform Block
 		VkDescriptorSetLayoutBinding binding[2];
