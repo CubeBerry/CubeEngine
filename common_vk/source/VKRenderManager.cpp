@@ -793,7 +793,7 @@ void VKRenderManager::Render(Window* window_)
 	//	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 	//}
 
-	currentTextureDescriptorSet = &(*vkDescriptor->GetTextureDescriptorSets())[frameIndex];
+	currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 	{
 		//Create Texture DescriptorBuffer Info
 		VkDescriptorImageInfo imageInfo{};
@@ -887,7 +887,7 @@ void VKRenderManager::Render(Window* window_)
 	//Bind Material DescriptorSet
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 	//Bind Texture DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 0, 1, currentTextureDescriptorSet, 0, nullptr);
+	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 	//Draw
 	vkCmdDrawIndexed(*currentCommandBuffer, 4, 1, 0, 0, 0);
 

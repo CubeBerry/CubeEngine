@@ -5,7 +5,7 @@ layout(location = 1) in vec2 i_uv;
 
 layout(location = 0) out vec4 framgentColor;
 
-layout(set = 0, binding = 1) uniform Material
+layout(set = 0, binding = 0) uniform Material
 {
   mat3 matrix;  
 };
