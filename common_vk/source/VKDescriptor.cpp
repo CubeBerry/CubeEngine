@@ -16,7 +16,7 @@ VKDescriptor::~VKDescriptor()
 	//Destroy Fragment Material DescriptorSetLayout
 	vkDestroyDescriptorSetLayout(*vkInit->GetDevice(), vkFragmentMaterialDescriptorSetLayout, nullptr);
 	//Destroy Texture DescriptorSetLayout
-	vkDestroyDescriptorSetLayout(*vkInit->GetDevice(), vkTextureDescriptorSetLayout, nullptr);
+	//vkDestroyDescriptorSetLayout(*vkInit->GetDevice(), vkTextureDescriptorSetLayout, nullptr);
 	//Destroy DescriptorPool
 	vkDestroyDescriptorPool(*vkInit->GetDevice(), vkDescriptorPool, nullptr);
 }
