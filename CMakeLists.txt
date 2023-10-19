@@ -33,14 +33,6 @@ add_subdirectory("${VK_DIR}")
 target_link_libraries(${PROJECT_NAME} common_vk)
 target_include_directories(${PROJECT_NAME} PUBLIC ${VK_INC_DIR})
 
-find_program(GLSLANG_VALIDATOR
-    NAMES glslangValidator
-    HINTS "C:/VulkanSDK/1.3.250.1/Bin"
-)
-if (GLSLANG_VALIDATOR)
-    target_compile_options(${PROJECT_NAME} PRIVATE -DGLSLANG_VALIDATOR="${GLSLANG_VALIDATOR}")
-endif()
-
 # SDL2
 set(SDL_DIR "./Engine/libs/SDL2")
 add_subdirectory("${SDL_DIR}")
