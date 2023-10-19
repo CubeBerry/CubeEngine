@@ -17,15 +17,18 @@ public:
 	void InitDescriptorSets();
 
 	std::vector<VkDescriptorSetLayout>* GetDescriptorSetLayout() { return &vkDescriptorSetLayouts; };
-	std::array<VkDescriptorSet, 2>* GetMaterialDescriptorSets() { return &vkMaterialDescriptorSets; };
-	std::array<VkDescriptorSet, 2>* GetTextureDescriptorSets() { return &vkTextureDescriptorSets; };
+	std::array<VkDescriptorSet, 2>* GetVertexMaterialDescriptorSets() { return &vkVertexMaterialDescriptorSets; };
+	std::array<VkDescriptorSet, 2>* GetFragmentMaterialDescriptorSets() { return &vkFragmentMaterialDescriptorSets; };
+	//std::array<VkDescriptorSet, 2>* GetTextureDescriptorSets() { return &vkTextureDescriptorSets; };
 private:
 	VKInit* vkInit;
 
 	std::vector<VkDescriptorSetLayout> vkDescriptorSetLayouts;
-	VkDescriptorSetLayout vkMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
-	VkDescriptorSetLayout vkTextureDescriptorSetLayout{ VK_NULL_HANDLE };
+	VkDescriptorSetLayout vkVertexMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
+	VkDescriptorSetLayout vkFragmentMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
+	//VkDescriptorSetLayout vkTextureDescriptorSetLayout{ VK_NULL_HANDLE };
 	VkDescriptorPool vkDescriptorPool{ VK_NULL_HANDLE };
-	std::array<VkDescriptorSet, 2> vkMaterialDescriptorSets{ VK_NULL_HANDLE };
-	std::array<VkDescriptorSet, 2> vkTextureDescriptorSets{ VK_NULL_HANDLE };
+	std::array<VkDescriptorSet, 2> vkVertexMaterialDescriptorSets{ VK_NULL_HANDLE };
+	std::array<VkDescriptorSet, 2> vkFragmentMaterialDescriptorSets{ VK_NULL_HANDLE };
+	//std::array<VkDescriptorSet, 2> vkTextureDescriptorSets{ VK_NULL_HANDLE };
 };

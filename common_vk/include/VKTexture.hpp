@@ -14,6 +14,8 @@ public:
 
 	VkSampler* GetSampler() { return &vkTextureSampler; };
 	VkImageView* GetImageView() { return &vkTextureImageView; };
+	int GetWidth() const { return width; };
+	int GetHeight() const { return height; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
@@ -23,4 +25,6 @@ private:
 	VkDeviceMemory vkTextureDeviceMemory{ VK_NULL_HANDLE };
 	VkImageView vkTextureImageView{ VK_NULL_HANDLE };
 	VkSampler vkTextureSampler{ VK_NULL_HANDLE };
+
+	int width, height;
 };

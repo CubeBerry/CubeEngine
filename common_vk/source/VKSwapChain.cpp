@@ -56,7 +56,7 @@ void VKSwapChain::InitSwapChain()
 	VkSwapchainCreateInfoKHR swapchainInfo{};
 	swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchainInfo.surface = *vkInit->GetSurface();
-	swapchainInfo.minImageCount = BUFFER_COUNT;
+	swapchainInfo.minImageCount = 2;
 	swapchainInfo.imageFormat = surfaceFormat.format;
 	swapchainInfo.imageColorSpace = surfaceFormat.colorSpace;
 	swapchainInfo.imageExtent = surfaceCapabilities.currentExtent;

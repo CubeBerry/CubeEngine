@@ -24,7 +24,7 @@
     <ClCompile Include="Engine\main.cpp" />
     <ClCompile Include="Engine\source\Engine.cpp" />
     <ClCompile Include="Engine\source\GameStateManager.cpp" />
-    <ClCompile Include="Game\levels\ShaderDemo.cpp" />
+    <ClCompile Include="Engine\source\Texture.cpp" />
     <ClCompile Include="Game\levels\VerticesDemo.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -44,8 +44,8 @@
     <ClInclude Include="Engine\include\GameState.hpp" />
     <ClInclude Include="Engine\include\GameStateManager.hpp" />
     <ClInclude Include="Engine\include\InputManager.hpp" />
+    <ClInclude Include="Engine\include\Texture.hpp" />
     <ClInclude Include="Engine\include\Timer.hpp" />
-    <ClInclude Include="Game\levels\ShaderDemo.hpp" />
     <ClInclude Include="Game\levels\VerticesDemo.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

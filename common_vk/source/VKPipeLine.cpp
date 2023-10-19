@@ -95,7 +95,8 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//Create Pipeline Input Assembly State Info
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
 	inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	//inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
 	//Create Viewport
 	VkViewport viewport{};
@@ -155,7 +156,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	VkGraphicsPipelineCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	createInfo.stageCount = static_cast<uint32_t>(stageCreateInfos.size());
-	createInfo.pStages = &stageCreateInfos[0];
+	createInfo.pStages = stageCreateInfos.data();
 	createInfo.pVertexInputState = &vertexInputStateInfo;
 	createInfo.pInputAssemblyState = &inputAssemblyStateInfo;
 	createInfo.pViewportState = &viewportStateInfo;
