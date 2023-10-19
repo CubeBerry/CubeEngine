@@ -1,7 +1,7 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <unordered_map>
-#include "glm/glm.hpp"
+#include "glm/vec2.hpp"
 
 #include <iostream>
 

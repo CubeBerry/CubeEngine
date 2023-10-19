@@ -5,7 +5,7 @@
 #include "VKRenderManager.hpp"
 #include "InputManager.hpp"
 
-class Engine 
+class Engine
 {
 public:
 	Engine() {};
