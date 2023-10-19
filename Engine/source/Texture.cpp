@@ -5,7 +5,7 @@
 
 Texture::Texture(const std::filesystem::path& path_)
 {
-	auto* renderManager = Engine::Instance().GetVKRenderManager();
+	auto* renderManager = Engine::Engine().GetVKRenderManager();
 	texture = new VKTexture(renderManager->GetVkInit(), renderManager->GetCommandPool());
 	texture->LoadTexture(path_);
 
