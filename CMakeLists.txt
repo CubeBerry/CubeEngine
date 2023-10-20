@@ -23,8 +23,19 @@ add_subdirectory(Game)
 FILE(GLOB_RECURSE SOURCES "${ENGINE_SRC_DIR}/*.cpp" "${GAME_SRC_DIR}/*.cpp")
 FILE(GLOB_RECURSE INCLUDES "${ENGINE_INC_DIR}/*.hpp" "${GAME_INC_DIR}/*.hpp")
 
+file(GLOB_RECURSE ENGINE_SRC
+    "./Engine/include/*.hpp"
+    "./Engine/source/*.cpp"
+)
+file(GLOB_RECURSE GAME_SRC
+    "./Game/include/*.hpp"
+    "./Game/source/*.cpp"
+)
+
 add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES})
 
+source_group("Engine"            FILES ${ENGINE_SRC})
+source_group("Game"            FILES ${GAME_SRC})
 #target_link_libraries(${PROJECT_NAME} CubeEngine)
 
 # common_vk
