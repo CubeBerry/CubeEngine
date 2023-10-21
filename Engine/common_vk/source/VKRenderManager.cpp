@@ -6,6 +6,10 @@
 #include "Window.hpp"
 #include "VKUniformBuffer.hpp"
 
+#include "imgui.h"
+#include "backends/imgui_impl_vulkan.h"
+#include "backends/imgui_impl_sdl2.h"
+
 #include <iostream>
 
 VKRenderManager::VKRenderManager(SDL_Window* window_) : window(window_)
@@ -29,10 +33,14 @@ VKRenderManager::VKRenderManager(SDL_Window* window_) : window(window_)
 	vkDescriptor = new VKDescriptor(vkInit);
 	vkPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkPipeline->InitPipeLine(vkShader->GetVertexModule(), vkShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass);
+
+	ImGuiInitialize();
 }
 
 VKRenderManager::~VKRenderManager()
 {
+	//Destroy ImGui
+	ImGuiShutdown();
 	//Destroy Command Pool, also Command Buffer destroys with Command Pool
 	vkDestroyCommandPool(*vkInit->GetDevice(), vkCommandPool, nullptr);
 	//Destroy RenderPass
@@ -714,6 +722,85 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 //	frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
 //}
 
+void VKRenderManager::ImGuiInitialize()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	(void)io;
+
+	ImGui_ImplVulkan_InitInfo initInfo{};
+	initInfo.Instance = *vkInit->GetInstance();
+	initInfo.PhysicalDevice = *vkInit->GetPhysicalDevice();
+	initInfo.Device = *vkInit->GetDevice();
+	initInfo.Queue = *vkInit->GetQueue();
+	initInfo.QueueFamily = *vkInit->GetQueueFamilyIndex();
+	initInfo.PipelineCache = VK_NULL_HANDLE;
+	initInfo.DescriptorPool = *vkDescriptor->GetDescriptorPool();
+	initInfo.MinImageCount = 2;
+	initInfo.ImageCount = 2;
+	initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	initInfo.Allocator = nullptr;
+	initInfo.CheckVkResultFn = nullptr;
+
+	ImGui_ImplVulkan_Init(&initInfo, vkRenderPass);
+
+	//Create command buffer begin info
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	//Begin command buffer
+	for (int i = 0; i != 2; ++i)
+	{
+		vkBeginCommandBuffer(vkCommandBuffers[i], &beginInfo);
+		ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffers[i]);
+		//End Command Buffer
+		vkEndCommandBuffer(vkCommandBuffers[i]);
+
+		//Create Submit Info
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &vkCommandBuffers[i];
+
+		//Submit Queue to Command Buffer
+		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+
+		//Wait until all submitted command buffers are handled
+		vkDeviceWaitIdle(*vkInit->GetDevice());
+
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
+	}
+
+	ImGui_ImplSDL2_InitForVulkan(window);
+}
+
+void VKRenderManager::ImGuiFeedEvent(const SDL_Event& event_)
+{
+	ImGui_ImplSDL2_ProcessEvent(&event_);
+}
+
+void VKRenderManager::ImGuiBegin()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+}
+
+void VKRenderManager::ImGuiEnd(uint32_t index_)
+{
+	ImGui::Render();
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCommandBuffers[index_], *vkPipeline->GetPipeLine());
+}
+
+void VKRenderManager::ImGuiShutdown()
+{
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+}
+
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 {
 	Texture texture(path_);
@@ -890,6 +977,12 @@ void VKRenderManager::Render(Window* window_)
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 	//Draw
 	vkCmdDrawIndexed(*currentCommandBuffer, 4, 1, 0, 0, 0);
+
+	ImGuiBegin();
+	ImGui::Begin("Hello World!", nullptr);
+	ImGui::Text("Hello ImGui Test");
+	ImGui::End();
+	ImGuiEnd(frameIndex);
 
 	//--------------------End Draw--------------------//
 

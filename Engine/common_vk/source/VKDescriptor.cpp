@@ -235,6 +235,8 @@ void VKDescriptor::InitDescriptorPool()
 	{
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
+		//For ImGui
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 }
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
 	};
@@ -243,7 +245,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 6;
+	createInfo.maxSets = 8;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = &poolSize[0];
 

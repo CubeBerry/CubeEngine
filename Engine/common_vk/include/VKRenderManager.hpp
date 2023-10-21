@@ -24,23 +24,20 @@ class VKRenderManager
 public:
 	VKRenderManager(SDL_Window* window_);
 	~VKRenderManager();
-	void InitCommandPool();
-	void InitCommandBuffer();
-	void InitRenderPass();
-	void InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_);
-	void CleanSwapChain();
-	void RecreateSwapChain(Window* window_);
-
-	//void OldClearColor();
-	//void NewClearColor(Window* window_);
-	//void DrawVerticesTriangle(VkBuffer* buffer_);
-	//void DrawIndicesTriangle(VkBuffer* vertex_, VkBuffer* index_);
 
 	void Render(Window* window_);
 	//void EndRender(Window* window_);
 
 	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
 	VKInit* GetVkInit() { return vkInit; }
+
+	//--------------------ImGUI--------------------//
+
+	void ImGuiInitialize();
+	void ImGuiFeedEvent(const SDL_Event& event_);
+	void ImGuiBegin();
+	void ImGuiEnd(uint32_t index_);
+	void ImGuiShutdown();
 
 	//--------------------Texture Render--------------------//
 
@@ -67,6 +64,18 @@ private:
 	VkFence* currentFence{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentVertexMaterialDescriptorSet{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
+
+	void InitCommandPool();
+	void InitCommandBuffer();
+	void InitRenderPass();
+	void InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_);
+	void CleanSwapChain();
+	void RecreateSwapChain(Window* window_);
+
+	//void OldClearColor();
+	//void NewClearColor(Window* window_);
+	//void DrawVerticesTriangle(VkBuffer* buffer_);
+	//void DrawIndicesTriangle(VkBuffer* vertex_, VkBuffer* index_);
 
 	//--------------------Texture Render--------------------//
 

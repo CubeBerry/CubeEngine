@@ -9,6 +9,10 @@ project(Project)
 set(VK_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk/include")
 include_directories(${VK_INC_DIR})
 
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
+FILE(GLOB_RECURSE IMGUI_SOURCES "${IMGUI_DIR}/*.h" "${IMGUI_DIR}/*.cpp")
+include_directories(${IMGUI_DIR})
+
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
 include_directories(${ENGINE_INC_DIR})
@@ -32,7 +36,7 @@ file(GLOB_RECURSE GAME_SRC
     "./Game/source/*.cpp"
 )
 
-add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES})
+add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES} ${IMGUI_SOURCES})
 
 source_group("Engine"            FILES ${ENGINE_SRC})
 source_group("Game"            FILES ${GAME_SRC})

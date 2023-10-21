@@ -27,6 +27,7 @@ public:
 	void PrintMemoryProperties();
 #endif
 
+	VkInstance* GetInstance() { return &vkInstance; };
 	VkDevice* GetDevice() { return &vkDevice; };
 	VkPhysicalDevice* GetPhysicalDevice() { return &vkPhysicalDevice; };
 	VkSurfaceKHR* GetSurface() { return &vkSurface; };
