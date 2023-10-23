@@ -829,7 +829,7 @@ void VKRenderManager::Render(Window* window_)
 	currentCommandBuffer = &vkCommandBuffers[frameIndex];
 
 	//Reset command buffer
-	//vkResetCommandBuffer(*currentCommandBuffer, 0);
+	vkResetCommandBuffer(*currentCommandBuffer, 0);
 
 	//Create command buffer begin info
 	VkCommandBufferBeginInfo beginInfo{};
