@@ -23,7 +23,7 @@ class VKUniformBuffer;
 class VKRenderManager
 {
 public:
-	VKRenderManager(SDL_Window* window_);
+	VKRenderManager(SDL_Window* window_, bool isDiscrete);
 	~VKRenderManager();
 
 	void Render(Window* window_);

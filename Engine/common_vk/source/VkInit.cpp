@@ -6,10 +6,10 @@
 #include <string>
 #include <sstream>
 
-VKInit::VKInit(SDL_Window* window_) : window(window_)
+VKInit::VKInit(SDL_Window* window_, bool isDiscrete) : window(window_)
 {
 	InitInstance();
-	SetPhysicalDevice();
+	SetPhysicalDevice(isDiscrete);
 	SetQueueFamilyIndex();
 	InitDevice();
 	InitQueue();
@@ -83,7 +83,7 @@ void VKInit::InitInstance()
 	}
 }
 
-void VKInit::SetPhysicalDevice()
+void VKInit::SetPhysicalDevice(bool isDiscrete)
 {
 	//if pPhysicalDevices == nullptr -> returns numbers of all available GPU
 	uint32_t count{ 0 };
@@ -94,7 +94,7 @@ void VKInit::SetPhysicalDevice()
 	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
 
 	//Set proper physical device
-	vkPhysicalDevice = physicalDevices[0];
+	vkPhysicalDevice = GetRequiredDevice(physicalDevices, isDiscrete);
 }
 
 void VKInit::SetQueueFamilyIndex()
@@ -454,3 +454,25 @@ void VKInit::PrintMemoryProperties()
 }
 
 #endif
+
+VkPhysicalDevice VKInit::GetRequiredDevice(std::vector<VkPhysicalDevice>& physicalDevices, bool isDiscrete)
+{
+	uint32_t returnValue{ 0 };
+	for (auto& device : physicalDevices)
+	{
+		//Get Physical Device Properties
+		VkPhysicalDeviceProperties properties;
+		vkGetPhysicalDeviceProperties(device, &properties);
+
+		//Find Device is Discrete or Integrated Graphic
+		if ((properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && isDiscrete == true) ||
+			(properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU && isDiscrete == false))
+		{
+			std::cout << "Set " << "Device : " << properties.deviceName << std::endl;
+			return physicalDevices[returnValue];
+		}
+		returnValue++;
+	}
+	//Return First Physical Device
+	return  physicalDevices[0];
+}

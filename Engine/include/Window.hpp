@@ -19,7 +19,6 @@ class Window
 public:
 	Window() = default;
 	void Init(const char* title, int width, int height, bool fullscreen, WindowMode mode);
-	void Update();
 
 	SDL_Window* GetWindow() { return window; };
 	bool GetQuit() { return isQuit; };

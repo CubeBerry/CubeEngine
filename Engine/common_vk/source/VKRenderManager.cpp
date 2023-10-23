@@ -8,9 +8,9 @@
 
 #include <iostream>
 
-VKRenderManager::VKRenderManager(SDL_Window* window_) : window(window_)
+VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(window_)
 {
-	vkInit = new VKInit(window);
+	vkInit = new VKInit(window, isDiscrete);
 	vkSwapChain = new VKSwapChain(vkInit);
 	
 	InitCommandPool();

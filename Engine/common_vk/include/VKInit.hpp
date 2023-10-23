@@ -7,11 +7,11 @@
 class VKInit
 {
 public:
-	VKInit(SDL_Window* window_);
+	VKInit(SDL_Window* window_, bool isDiscrete);
 	~VKInit();
 	//void ValidationCheck();
 	void InitInstance();
-	void SetPhysicalDevice();
+	void SetPhysicalDevice(bool isDiscrete);
 	void SetQueueFamilyIndex();
 	void InitDevice();
 	void InitQueue();
@@ -26,6 +26,7 @@ public:
 	void PrintPresentModes();
 	void PrintMemoryProperties();
 #endif
+	VkPhysicalDevice GetRequiredDevice(std::vector<VkPhysicalDevice>& physicalDevices, bool isDiscrete);
 
 	VkInstance* GetInstance() { return &vkInstance; };
 	VkDevice* GetDevice() { return &vkDevice; };

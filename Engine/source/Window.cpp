@@ -50,29 +50,3 @@ void Window::Init(const char* title, int width, int height, bool fullscreen, Win
 		std::cout << "Create Window Successful" << std::endl;
 	}
 }
-
-void Window::Update()
-{
-	while (!isQuit)
-	{
-		while (SDL_PollEvent(&e) != 0)
-		{
-			switch (e.type)
-			{
-			case SDL_QUIT:
-				isQuit = true;
-				break;
-			case SDL_WINDOWEVENT:
-				if (e.window.event == SDL_WINDOWEVENT_MINIMIZED) {
-					isMinimized = true;
-				}
-				else if (e.window.event == SDL_WINDOWEVENT_RESTORED) {
-					isMinimized = false;
-				}
-				break;
-			default:
-				break;
-			}
-		}
-	}
-}
