@@ -7,6 +7,7 @@
 #include "VKDescriptor.hpp"
 #include "Texture.hpp"
 #include "VKSwapChain.hpp"
+#include "ImGuiManager.hpp"
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
@@ -30,18 +31,23 @@ public:
 
 	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
 	VKInit* GetVkInit() { return vkInit; }
-
-	//--------------------ImGUI--------------------//
-
-	void ImGuiInitialize();
-	void ImGuiFeedEvent(const SDL_Event& event_);
-	void ImGuiBegin();
-	void ImGuiEnd(uint32_t index_);
-	void ImGuiShutdown();
+	ImGuiManager* GetImGuiManager() { return imguiManager; };
 
 	//--------------------Texture Render--------------------//
 
 	void LoadTexture(const std::filesystem::path& path_);
+private:
+	void InitCommandPool();
+	void InitCommandBuffer();
+	void InitRenderPass();
+	void InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_);
+	void CleanSwapChain();
+	void RecreateSwapChain(Window* window_);
+
+	//void OldClearColor();
+	//void NewClearColor(Window* window_);
+	//void DrawVerticesTriangle(VkBuffer* buffer_);
+	//void DrawIndicesTriangle(VkBuffer* vertex_, VkBuffer* index_);
 private:
 	SDL_Window* window;
 	VKInit* vkInit;
@@ -65,21 +71,11 @@ private:
 	VkDescriptorSet* currentVertexMaterialDescriptorSet{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
 
-	void InitCommandPool();
-	void InitCommandBuffer();
-	void InitRenderPass();
-	void InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_);
-	void CleanSwapChain();
-	void RecreateSwapChain(Window* window_);
-
-	//void OldClearColor();
-	//void NewClearColor(Window* window_);
-	//void DrawVerticesTriangle(VkBuffer* buffer_);
-	//void DrawIndicesTriangle(VkBuffer* vertex_, VkBuffer* index_);
-
 	//--------------------Texture Render--------------------//
 
 	std::vector<Texture> textures;
+
+	ImGuiManager* imguiManager;
 };
 
 //void VKRenderManager::Render(Window* window_)

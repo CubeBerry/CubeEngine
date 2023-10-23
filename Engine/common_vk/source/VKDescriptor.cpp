@@ -236,8 +236,8 @@ void VKDescriptor::InitDescriptorPool()
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
-		//For ImGui
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 }
+		//For ImGUI
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
 	};
 
