@@ -7,6 +7,7 @@
 #include "VKDescriptor.hpp"
 #include "Texture.hpp"
 #include "VKSwapChain.hpp"
+#include "ImGuiManager.hpp"
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
@@ -24,6 +25,18 @@ class VKRenderManager
 public:
 	VKRenderManager(SDL_Window* window_);
 	~VKRenderManager();
+
+	void Render(Window* window_);
+	//void EndRender(Window* window_);
+
+	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
+	VKInit* GetVkInit() { return vkInit; }
+	ImGuiManager* GetImGuiManager() { return imguiManager; };
+
+	//--------------------Texture Render--------------------//
+
+	void LoadTexture(const std::filesystem::path& path_);
+private:
 	void InitCommandPool();
 	void InitCommandBuffer();
 	void InitRenderPass();
@@ -35,16 +48,6 @@ public:
 	//void NewClearColor(Window* window_);
 	//void DrawVerticesTriangle(VkBuffer* buffer_);
 	//void DrawIndicesTriangle(VkBuffer* vertex_, VkBuffer* index_);
-
-	void Render(Window* window_);
-	//void EndRender(Window* window_);
-
-	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
-	VKInit* GetVkInit() { return vkInit; }
-
-	//--------------------Texture Render--------------------//
-
-	void LoadTexture(const std::filesystem::path& path_);
 private:
 	SDL_Window* window;
 	VKInit* vkInit;
@@ -71,6 +74,8 @@ private:
 	//--------------------Texture Render--------------------//
 
 	std::vector<Texture> textures;
+
+	ImGuiManager* imguiManager;
 };
 
 //void VKRenderManager::Render(Window* window_)

@@ -16,6 +16,7 @@ public:
 	void InitDescriptorPool();
 	void InitDescriptorSets();
 
+	VkDescriptorPool* GetDescriptorPool() { return &vkDescriptorPool; };
 	std::vector<VkDescriptorSetLayout>* GetDescriptorSetLayout() { return &vkDescriptorSetLayouts; };
 	std::array<VkDescriptorSet, 2>* GetVertexMaterialDescriptorSets() { return &vkVertexMaterialDescriptorSets; };
 	std::array<VkDescriptorSet, 2>* GetFragmentMaterialDescriptorSets() { return &vkFragmentMaterialDescriptorSets; };

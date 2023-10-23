@@ -29,6 +29,9 @@ VKRenderManager::VKRenderManager(SDL_Window* window_) : window(window_)
 	vkDescriptor = new VKDescriptor(vkInit);
 	vkPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkPipeline->InitPipeLine(vkShader->GetVertexModule(), vkShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass);
+
+	imguiManager = new ImGuiManager(vkInit, vkSwapChain, vkPipeline->GetPipeLine(), window, vkCommandBuffers);
+	imguiManager->Initialize(vkDescriptor->GetDescriptorPool(), &vkRenderPass, vkCommandPool);
 }
 
 VKRenderManager::~VKRenderManager()
@@ -891,6 +894,11 @@ void VKRenderManager::Render(Window* window_)
 	//Draw
 	vkCmdDrawIndexed(*currentCommandBuffer, 4, 1, 0, 0, 0);
 
+	//ImGui
+	imguiManager->Begin();
+	ImGui::ShowDemoWindow();
+	imguiManager->End(frameIndex);
+
 	//--------------------End Draw--------------------//
 
 	//End renderpass
@@ -930,7 +938,8 @@ void VKRenderManager::Render(Window* window_)
 	submitInfo.pWaitDstStageMask = &waitDstStageMask;
 
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = currentCommandBuffer;
+	//submitInfo.pCommandBuffers = currentCommandBuffer;
+	submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
 
 	//Define semaphore that informs when command buffer is processed
 	submitInfo.signalSemaphoreCount = 1;
