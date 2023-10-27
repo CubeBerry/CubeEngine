@@ -5,6 +5,7 @@
 #include "VKPipeLine.hpp"
 #include "Window.hpp"
 #include "VKUniformBuffer.hpp"
+#include "Engine.hpp"
 
 #include <iostream>
 
@@ -30,8 +31,7 @@ VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(
 	vkPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkPipeline->InitPipeLine(vkShader->GetVertexModule(), vkShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass);
 
-	imguiManager = new ImGuiManager(vkInit, vkSwapChain, vkPipeline->GetPipeLine(), window, vkCommandBuffers);
-	imguiManager->Initialize(vkDescriptor->GetDescriptorPool(), &vkRenderPass, vkCommandPool);
+	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
 }
 
 VKRenderManager::~VKRenderManager()
@@ -723,8 +723,9 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 	textures.push_back(texture);
 }
 
-void VKRenderManager::Render(Window* window_)
+void VKRenderManager::Render()
 {
+	Window* window_ = Engine::Engine().GetWindow();
 	auto& vkSemaphore = (*vkSwapChain->GetSemaphores())[frameIndex];
 
 	//Get image index from swapchain
@@ -799,19 +800,23 @@ void VKRenderManager::Render(Window* window_)
 	currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 	{
 		//Create Texture DescriptorBuffer Info
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler = *textures[0].GetSampler();
-		imageInfo.imageView = *textures[0].GetImageView();
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		VkDescriptorImageInfo imageInfo[2]{};
+		imageInfo[0].sampler = *textures[0].GetSampler();
+		imageInfo[0].imageView = *textures[0].GetImageView();
+		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		imageInfo[1].sampler = *textures[1].GetSampler();
+		imageInfo[1].imageView = *textures[1].GetImageView();
+		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		//Define which resource descriptor set will point
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite.dstSet = *currentTextureDescriptorSet;
 		descriptorWrite.dstBinding = 1;
-		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.descriptorCount = 2;
 		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite.pImageInfo = &imageInfo;
+		descriptorWrite.pImageInfo = imageInfo;
 
 		//Update DescriptorSet
 		//DescriptorSet does not have to update every frame since it points same uniform buffer
@@ -879,20 +884,23 @@ void VKRenderManager::Render(Window* window_)
 
 	//--------------------Begin Draw--------------------//
 
-	//Draw Quad
-	VkDeviceSize vertexBufferOffset{ 0 };
-	//Bind Vertex Buffer
-	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, textures[0].GetVertexBuffer(), &vertexBufferOffset);
-	//Bind Index Buffer
-	vkCmdBindIndexBuffer(*currentCommandBuffer, *textures[0].GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-	//Bind Pipeline
-	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLine());
-	//Bind Material DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-	//Bind Texture DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
-	//Draw
-	vkCmdDrawIndexed(*currentCommandBuffer, 4, 1, 0, 0, 0);
+	//for (int i = 0; i < textures.size(); ++i)
+	//{
+		//Draw Quad
+		VkDeviceSize vertexBufferOffset{ 0 };
+		//Bind Vertex Buffer
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, textures[0].GetVertexBuffer(), &vertexBufferOffset);
+		//Bind Index Buffer
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *textures[0].GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		//Bind Pipeline
+		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLine());
+		//Bind Material DescriptorSet
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+		//Bind Texture DescriptorSet
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+		//Draw
+		vkCmdDrawIndexed(*currentCommandBuffer, 4, 1, 0, 0, 0);
+	//}
 
 	//ImGui
 	imguiManager->Begin();

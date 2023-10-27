@@ -26,7 +26,7 @@ public:
 	VKRenderManager(SDL_Window* window_, bool isDiscrete);
 	~VKRenderManager();
 
-	void Render(Window* window_);
+	void Render();
 	//void EndRender(Window* window_);
 
 	VkCommandPool* GetCommandPool() { return &vkCommandPool; };

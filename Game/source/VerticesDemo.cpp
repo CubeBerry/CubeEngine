@@ -6,6 +6,7 @@
 void VerticesDemo::Init()
 {
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
+	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
 }
 
 void VerticesDemo::Update(float /*dt*/)
@@ -14,8 +15,7 @@ void VerticesDemo::Update(float /*dt*/)
 
 void VerticesDemo::Draw(float /*dt*/)
 {
-	auto* window = Engine::Engine().GetWindow();
-	Engine::Engine().GetVKRenderManager()->Render(window);
+	Engine::Engine().GetVKRenderManager()->Render();
 }
 
 void VerticesDemo::Restart()

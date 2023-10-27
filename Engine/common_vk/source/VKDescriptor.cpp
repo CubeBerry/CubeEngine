@@ -180,7 +180,7 @@ void VKDescriptor::InitDescriptorSetLayouts()
 		//Create Binding for Combined Image Sampler
 		binding[1].binding = 1;
 		binding[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		binding[1].descriptorCount = 1;
+		binding[1].descriptorCount = 2;
 		//Only fragment shader accesses
 		binding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		binding[1].pImmutableSamplers = nullptr;
@@ -235,7 +235,7 @@ void VKDescriptor::InitDescriptorPool()
 	{
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
 		//For ImGUI
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
@@ -245,7 +245,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 8;
+	createInfo.maxSets = 9;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = &poolSize[0];
 
