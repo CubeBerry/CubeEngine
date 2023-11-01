@@ -755,19 +755,23 @@ void VKRenderManager::Render()
 	currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 	{
 		//Create Vertex Material DescriptorBuffer Info
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = vkUniformBuffer;
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(glm::mat3);
+		VkDescriptorBufferInfo bufferInfo[2];
+		bufferInfo[0].buffer = vkUniformBuffer;
+		bufferInfo[0].offset = 0;
+		bufferInfo[0].range = sizeof(glm::mat3);
+
+		bufferInfo[1].buffer = vkUniformBuffer;
+		bufferInfo[1].offset = 0;
+		bufferInfo[1].range = sizeof(glm::mat3);
 
 		//Define which resource descriptor set will point
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
 		descriptorWrite.dstBinding = 0;
-		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.descriptorCount = 2;
 		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.pBufferInfo = &bufferInfo;
+		descriptorWrite.pBufferInfo = bufferInfo;
 
 		//Update DescriptorSet
 		//DescriptorSet does not have to update every frame since it points same uniform buffer
@@ -824,7 +828,11 @@ void VKRenderManager::Render()
 	}
 
 	//Update Uniform Material
-	glm::mat3 mat(1);
+	glm::mat3 mat = glm::mat3(
+		1, 0, 100,
+		0, 1, 200,
+		0, 0, 1
+	);
 	//Includes Updating Uniform Function
 	textures[0].Resize(mat, frameIndex);
 	//uniform_->UpdateUniform(mat, frameIndex);

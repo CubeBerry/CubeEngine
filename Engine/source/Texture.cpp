@@ -11,10 +11,10 @@ Texture::Texture(const std::filesystem::path& path_)
 
 	std::vector<Vertex> vertices
 	{
-		Vertex(glm::vec3(-1.f, 1.f, 0), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
-		Vertex(glm::vec3(-1.f, -1.f, 0), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
-		Vertex(glm::vec3(1.f, 1.f, 0), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
-		Vertex(glm::vec3(1.f, -1.f, 0), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
+		Vertex(glm::vec3(-1.f, 1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
+		Vertex(glm::vec3(-1.f, -1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
+		Vertex(glm::vec3(1.f, 1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
+		Vertex(glm::vec3(1.f, -1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
 	};
 	vertex = new VKVertexBuffer(renderManager->GetVkInit(), &vertices);
 

@@ -28,7 +28,7 @@ void VKDescriptor::InitDescriptorSetLayouts()
 		VkDescriptorSetLayoutBinding binding{};
 		binding.binding = 0;
 		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		binding.descriptorCount = 1;
+		binding.descriptorCount = 2;
 		//Only vertex shader accesses
 		binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
@@ -233,7 +233,9 @@ void VKDescriptor::InitDescriptorPool()
 	//2nd parameter == number of uniform buffer
 	std::vector<VkDescriptorPoolSize> poolSize
 	{
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
+		//For Vertex
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
+		//For Fragment
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
 		//For ImGUI
