@@ -752,6 +752,7 @@ void VKRenderManager::Render()
 	//--------------------Descriptor Update--------------------//
 
 	auto& vkUniformBuffer = (*textures[0].GetUniformBuffers())[frameIndex];
+	auto& vkUniformBuffer2 = (*textures[1].GetUniformBuffers())[frameIndex];
 	currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 	{
 		//Create Vertex Material DescriptorBuffer Info
@@ -760,7 +761,7 @@ void VKRenderManager::Render()
 		bufferInfo[0].offset = 0;
 		bufferInfo[0].range = sizeof(glm::mat3);
 
-		bufferInfo[1].buffer = vkUniformBuffer;
+		bufferInfo[1].buffer = vkUniformBuffer2;
 		bufferInfo[1].offset = 0;
 		bufferInfo[1].range = sizeof(glm::mat3);
 
@@ -828,13 +829,21 @@ void VKRenderManager::Render()
 	}
 
 	//Update Uniform Material
-	glm::mat3 mat = glm::mat3(
-		1, 0, 100,
-		0, 1, 200,
+	glm::mat3 mat = {
+		glm::mat3(
+		1, 0, 0,
+		0, 1, 0,
 		0, 0, 1
-	);
+	) };
+	glm::mat3 mat2 = {
+		glm::mat3(
+		1, 0, 10,
+		0, 1, 10,
+		0, 0, 1
+	) };
 	//Includes Updating Uniform Function
 	textures[0].Resize(mat, frameIndex);
+	textures[1].Resize(mat2, frameIndex);
 	//uniform_->UpdateUniform(mat, frameIndex);
 
 	//--------------------Descriptor Update End--------------------//
