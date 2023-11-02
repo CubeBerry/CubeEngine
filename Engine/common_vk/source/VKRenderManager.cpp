@@ -923,12 +923,12 @@ void VKRenderManager::Render()
 		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 0),
 		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 0),
 
-		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  1),
-		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 1),
-		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 1),
-		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 1),
+		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  1.f),
+		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 1.f),
+		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 1.f),
+		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 1.f),
 	};
-	VKVertexBuffer* vertex = new VKVertexBuffer(vkInit, &vertices);
+	VKVertexBuffer vertex(vkInit, &vertices);
 
 	std::vector<uint16_t> indices{
 		0, 1, 2, 2, 1, 3,
@@ -937,16 +937,16 @@ void VKRenderManager::Render()
 	//std::vector<uint16_t> indices{
 	//0, 1, 2, 3, 4, 5, 6, 7
 	//};
-	VKIndexBuffer* index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+	VKIndexBuffer index(vkInit, &vkCommandPool, &indices);
 
 	//for (int i = 0; i < textures.size(); ++i)
 	//{
 		//Draw Quad
 		VkDeviceSize vertexBufferOffset{ 0 };
 		//Bind Vertex Buffer
-		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex->GetVertexBuffer(), &vertexBufferOffset);
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex.GetVertexBuffer(), &vertexBufferOffset);
 		//Bind Index Buffer
-		vkCmdBindIndexBuffer(*currentCommandBuffer, *index->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *index.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 		//Bind Pipeline
 		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLine());
 		//Bind Material DescriptorSet
