@@ -56,7 +56,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		VkVertexInputAttributeDescription vertexInputAttribute{};
 		vertexInputAttribute.location = 0;
 		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 		vertexInputAttribute.offset = offsetof(Vertex, position);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
