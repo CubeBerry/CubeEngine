@@ -3,7 +3,7 @@
 
 #include "Vertex.hpp"
 
-Texture::Texture(const std::filesystem::path& path_)
+Texture::Texture(const std::filesystem::path& path_, int index_)
 {
 	auto* renderManager = Engine::Engine().GetVKRenderManager();
 	texture = new VKTexture(renderManager->GetVkInit(), renderManager->GetCommandPool());
@@ -11,10 +11,10 @@ Texture::Texture(const std::filesystem::path& path_)
 
 	std::vector<Vertex> vertices
 	{
-		Vertex(glm::vec3(-1.f, 1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
-		Vertex(glm::vec3(-1.f, -1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
-		Vertex(glm::vec3(1.f, 1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
-		Vertex(glm::vec3(1.f, -1.f, 1.f), glm::vec3(0, 0, 0), glm::vec2(0, 0)),
+		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  index_),
+		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), index_),
+		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), index_),
+		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), index_),
 	};
 	vertex = new VKVertexBuffer(renderManager->GetVkInit(), &vertices);
 

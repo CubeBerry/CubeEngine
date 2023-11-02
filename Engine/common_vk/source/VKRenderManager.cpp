@@ -720,7 +720,7 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 {
-	Texture texture(path_);
+	Texture texture(path_, textures.size());
 	textures.push_back(texture);
 }
 
@@ -836,21 +836,21 @@ void VKRenderManager::Render()
 	glm::mat4 modelMatrix(1.0f);
 	glm::mat4 modelMatrix2(1.0f);
 
-	glm::vec3 pos(0,0, 0);
+	glm::vec3 pos(0, 0, 0);
 	glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
 	glm::vec3 extent(1.f / Engine::GetWindow()->GetWindowSize().x, 1.f / Engine::GetWindow()->GetWindowSize().y, 0);
 
-	modelMatrix = glm::translate(modelMatrix, pos * extent);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(0.f), glm::vec3(0.0f, 0.0f, 1.0f));
-	modelMatrix = glm::scale(modelMatrix, size * extent);
+	//modelMatrix = glm::translate(modelMatrix, pos * extent);
+	//modelMatrix = glm::rotate(modelMatrix, glm::radians(0.f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//modelMatrix = glm::scale(modelMatrix, size * extent);
 	
 	uniMat.model = modelMatrix;
 	//uniMat.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
 	//uniMat.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
 
 	modelMatrix2 = glm::translate(modelMatrix, { 1.f,1.f,0.f });
-	modelMatrix2 = glm::rotate(modelMatrix, glm::radians(45.f), glm::vec3(0.0f, 0.0f, 1.0f));
-	modelMatrix2 = glm::scale(modelMatrix, { 1.f,1.f,0.f });
+	//modelMatrix2 = glm::rotate(modelMatrix, glm::radians(45.f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//modelMatrix2 = glm::scale(modelMatrix, { 1.f,1.f,0.f });
 
 	uniMat2.model = modelMatrix2;
 	//uniMat2.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
@@ -916,14 +916,37 @@ void VKRenderManager::Render()
 
 	//--------------------Begin Draw--------------------//
 
+	std::vector<Vertex> vertices
+	{
+		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  0),
+		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 0),
+		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 0),
+		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 0),
+
+		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  1),
+		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 1),
+		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 1),
+		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 1),
+	};
+	VKVertexBuffer* vertex = new VKVertexBuffer(vkInit, &vertices);
+
+	std::vector<uint16_t> indices{
+		0, 1, 2, 2, 1, 3,
+		4, 5, 6, 6, 5, 7
+	};
+	//std::vector<uint16_t> indices{
+	//0, 1, 2, 3, 4, 5, 6, 7
+	//};
+	VKIndexBuffer* index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+
 	//for (int i = 0; i < textures.size(); ++i)
 	//{
 		//Draw Quad
 		VkDeviceSize vertexBufferOffset{ 0 };
 		//Bind Vertex Buffer
-		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, textures[0].GetVertexBuffer(), &vertexBufferOffset);
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex->GetVertexBuffer(), &vertexBufferOffset);
 		//Bind Index Buffer
-		vkCmdBindIndexBuffer(*currentCommandBuffer, *textures[0].GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *index->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 		//Bind Pipeline
 		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLine());
 		//Bind Material DescriptorSet
@@ -931,7 +954,7 @@ void VKRenderManager::Render()
 		//Bind Texture DescriptorSet
 		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 		//Draw
-		vkCmdDrawIndexed(*currentCommandBuffer, 4, 1, 0, 0, 0);
+		vkCmdDrawIndexed(*currentCommandBuffer, indices.size(), 1, 0, 0, 0);
 	//}
 
 	//ImGui

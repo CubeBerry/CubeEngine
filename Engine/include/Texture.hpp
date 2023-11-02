@@ -11,7 +11,7 @@
 class Texture
 {
 public:
-	Texture(const std::filesystem::path& path_);
+	Texture(const std::filesystem::path& path_, int index_);
 	~Texture();
 	void Resize(UniformMatrix matrix_, const uint32_t frameIndex_);
 

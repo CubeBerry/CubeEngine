@@ -62,24 +62,35 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
 
+	//{
+	//	//Define Vertex Input Attribute about Color
+	//	VkVertexInputAttributeDescription vertexInputAttribute{};
+	//	vertexInputAttribute.location = 1;
+	//	vertexInputAttribute.binding = 0;
+	//	vertexInputAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+	//	vertexInputAttribute.offset = offsetof(Vertex, color);
+
+	//	vertexInputAttributes.push_back(vertexInputAttribute);
+	//}
+
+	//{
+	//	//Define Vertex Input Attribute about Texture
+	//	VkVertexInputAttributeDescription vertexInputAttribute{};
+	//	vertexInputAttribute.location = 2;
+	//	vertexInputAttribute.binding = 0;
+	//	vertexInputAttribute.format = VK_FORMAT_R32G32_SFLOAT;
+	//	vertexInputAttribute.offset = offsetof(Vertex, uv);
+
+	//	vertexInputAttributes.push_back(vertexInputAttribute);
+	//}
+
 	{
-		//Define Vertex Input Attribute about Color
+		//Define Vertex Input Attribute about Texture Index
 		VkVertexInputAttributeDescription vertexInputAttribute{};
 		vertexInputAttribute.location = 1;
 		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(Vertex, color);
-
-		vertexInputAttributes.push_back(vertexInputAttribute);
-	}
-
-	{
-		//Define Vertex Input Attribute about Texture
-		VkVertexInputAttributeDescription vertexInputAttribute{};
-		vertexInputAttribute.location = 2;
-		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32G32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(Vertex, uv);
+		vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
+		vertexInputAttribute.offset = offsetof(Vertex, index);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
@@ -95,8 +106,8 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//Create Pipeline Input Assembly State Info
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
 	inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	//inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	//inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
 	//Create Viewport
 	VkViewport viewport{};
