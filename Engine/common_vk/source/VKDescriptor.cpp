@@ -247,7 +247,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 9;
+	createInfo.maxSets = 11;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = &poolSize[0];
 
