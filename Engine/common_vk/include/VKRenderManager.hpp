@@ -9,6 +9,18 @@
 #include "VKSwapChain.hpp"
 #include "ImGuiManager.hpp"
 
+struct TestCamera
+{
+	glm::vec3 cameraPosition{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 cameraTarget{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 upVector{ 0.0f, 1.0f, 0.0f };
+
+	float fov = 45.0f;
+	float aspectRatio = 640 / 480; // Replace screenWidth and screenHeight with actual values
+	float nearClip = 0.1f;
+	float farClip = 100.0f;
+};
+
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
 
@@ -76,6 +88,9 @@ private:
 	std::vector<Texture> textures;
 
 	ImGuiManager* imguiManager;
+
+	//Variable for UniformMatrix
+	TestCamera tesCamera;
 };
 
 //void VKRenderManager::Render(Window* window_)

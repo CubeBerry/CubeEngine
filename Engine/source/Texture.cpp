@@ -21,14 +21,14 @@ Texture::Texture(const std::filesystem::path& path_)
 	std::vector<uint16_t> indices{ 0, 1, 2, 3 };
 	index = new VKIndexBuffer(renderManager->GetVkInit(), renderManager->GetCommandPool(), &indices);
 
-	uniform = new VKUniformBuffer<glm::mat3>(renderManager->GetVkInit());
+	uniform = new VKUniformBuffer<UniformMatrix>(renderManager->GetVkInit());
 }
 
 Texture::~Texture()
 {
 }
 
-void Texture::Resize(glm::mat3 matrix_, const uint32_t frameIndex_)
+void Texture::Resize(UniformMatrix matrix_, const uint32_t frameIndex_)
 {
 	matrix = matrix_;
 	uniform->UpdateUniform(&matrix, frameIndex_);

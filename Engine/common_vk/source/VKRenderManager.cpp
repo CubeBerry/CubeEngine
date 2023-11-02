@@ -8,6 +8,7 @@
 #include "Engine.hpp"
 
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(window_)
 {
@@ -759,11 +760,11 @@ void VKRenderManager::Render()
 		VkDescriptorBufferInfo bufferInfo[2];
 		bufferInfo[0].buffer = vkUniformBuffer;
 		bufferInfo[0].offset = 0;
-		bufferInfo[0].range = sizeof(glm::mat3);
+		bufferInfo[0].range = sizeof(UniformMatrix);
 
 		bufferInfo[1].buffer = vkUniformBuffer2;
 		bufferInfo[1].offset = 0;
-		bufferInfo[1].range = sizeof(glm::mat3);
+		bufferInfo[1].range = sizeof(UniformMatrix);
 
 		//Define which resource descriptor set will point
 		VkWriteDescriptorSet descriptorWrite{};
@@ -829,21 +830,35 @@ void VKRenderManager::Render()
 	}
 
 	//Update Uniform Material
-	glm::mat3 mat = {
-		glm::mat3(
-		1, 0, 0,
-		0, 1, 0,
-		0, 0, 1
-	) };
-	glm::mat3 mat2 = {
-		glm::mat3(
-		1, 0, 10,
-		0, 1, 10,
-		0, 0, 1
-	) };
+	UniformMatrix uniMat;
+	UniformMatrix uniMat2;
+
+	glm::mat4 modelMatrix(1.0f);
+	glm::mat4 modelMatrix2(1.0f);
+
+	glm::vec3 pos(0,0, 0);
+	glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
+	glm::vec3 extent(1.f / Engine::GetWindow()->GetWindowSize().x, 1.f / Engine::GetWindow()->GetWindowSize().y, 0);
+
+	modelMatrix = glm::translate(modelMatrix, pos * extent);
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(0.f), glm::vec3(0.0f, 0.0f, 1.0f));
+	modelMatrix = glm::scale(modelMatrix, size * extent);
+	
+	uniMat.model = modelMatrix;
+	//uniMat.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
+	//uniMat.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
+
+	modelMatrix2 = glm::translate(modelMatrix, { 1.f,1.f,0.f });
+	modelMatrix2 = glm::rotate(modelMatrix, glm::radians(45.f), glm::vec3(0.0f, 0.0f, 1.0f));
+	modelMatrix2 = glm::scale(modelMatrix, { 1.f,1.f,0.f });
+
+	uniMat2.model = modelMatrix2;
+	//uniMat2.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
+	//uniMat2.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
+
 	//Includes Updating Uniform Function
-	textures[0].Resize(mat, frameIndex);
-	textures[1].Resize(mat2, frameIndex);
+	textures[0].Resize(uniMat, frameIndex);
+	textures[1].Resize(uniMat2, frameIndex);
 	//uniform_->UpdateUniform(mat, frameIndex);
 
 	//--------------------Descriptor Update End--------------------//

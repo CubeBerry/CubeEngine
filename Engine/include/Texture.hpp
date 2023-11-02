@@ -13,8 +13,9 @@ class Texture
 public:
 	Texture(const std::filesystem::path& path_);
 	~Texture();
-	void Resize(glm::mat3 matrix_, const uint32_t frameIndex_);
+	void Resize(UniformMatrix matrix_, const uint32_t frameIndex_);
 
+	const glm::vec2 GetImageSize() { return glm::vec2(texture->GetWidth(), texture->GetHeight()); };
 	VkSampler* GetSampler() { return texture->GetSampler(); };
 	VkImageView* GetImageView() { return texture->GetImageView(); };
 	VkBuffer* GetVertexBuffer() { return vertex->GetVertexBuffer(); };
@@ -24,7 +25,7 @@ private:
 	VKTexture* texture;
 	VKVertexBuffer* vertex;
 	VKIndexBuffer* index;
-	VKUniformBuffer<glm::mat3>* uniform;
+	VKUniformBuffer<UniformMatrix>* uniform;
 
-	glm::mat3 matrix;
+	UniformMatrix matrix;
 };
