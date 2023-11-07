@@ -57,8 +57,13 @@ void VKInit::InitInstance()
 		std::vector<const char*> extensionNames
 		{
 			"VK_KHR_surface",
-			"VK_KHR_win32_surface"
+			"VK_KHR_win32_surface",
+			"VK_KHR_get_physical_device_properties2",
 		};
+
+		VkApplicationInfo applicationInfo{};
+		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
 		//Create VkInstanceInfo
 		VkInstanceCreateInfo createInfo{};
@@ -67,6 +72,7 @@ void VKInit::InitInstance()
 		createInfo.ppEnabledLayerNames = &layerName;
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
 		createInfo.ppEnabledExtensionNames = &extensionNames[0];
+		createInfo.pApplicationInfo = &applicationInfo;
 
 		//Create VkInstance
 		//VkResult result = VK_SUCCESS;
@@ -136,17 +142,26 @@ void VKInit::InitDevice()
 		queueCreateInfo.queueCount = 1;
 		queueCreateInfo.pQueuePriorities = &priority;
 
+		//Create 12Features info (for descriptor array)
+		VkPhysicalDeviceVulkan12Features versionFeatures{};
+		versionFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+		versionFeatures.runtimeDescriptorArray = VK_TRUE;
+		versionFeatures.descriptorIndexing = VK_TRUE;
+
 		//Create device info
 		VkDeviceCreateInfo deviceCreateInfo{};
 		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		deviceCreateInfo.queueCreateInfoCount = 1;
 		deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+		deviceCreateInfo.pNext = &versionFeatures;
 
 		//--------------------Device Extensions settings--------------------//
 
 		std::vector<const char*> deviceExtensionNames
 		{
-			"VK_KHR_swapchain"
+			"VK_KHR_swapchain",
+			"VK_KHR_maintenance3",
+			"VK_EXT_descriptor_indexing"
 		};
 
 		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensionNames.size());

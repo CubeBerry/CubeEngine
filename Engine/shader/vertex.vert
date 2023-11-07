@@ -1,4 +1,5 @@
-#version 450
+#version 460
+#extension GL_EXT_nonuniform_qualifier : enable
 precision mediump float;
 
 layout(location = 0) in vec4 i_pos;
@@ -12,7 +13,7 @@ layout(set = 0, binding = 0) uniform uniformMatrix
     mat4 model;
     mat4 view;
     mat4 projection;
-} material[2];
+} material[];
 
 void main()
 {

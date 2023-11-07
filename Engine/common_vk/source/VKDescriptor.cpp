@@ -234,10 +234,10 @@ void VKDescriptor::InitDescriptorPool()
 	std::vector<VkDescriptorPoolSize> poolSize
 	{
 		//For Vertex
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },	//500 available
 		//For Fragment
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },	//500 available
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },	//500 available
 		//For ImGUI
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
@@ -247,7 +247,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 11;
+	createInfo.maxSets = 3001;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = &poolSize[0];
 
