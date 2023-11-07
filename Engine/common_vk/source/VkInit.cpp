@@ -58,7 +58,7 @@ void VKInit::InitInstance()
 		{
 			"VK_KHR_surface",
 			"VK_KHR_win32_surface",
-			"VK_KHR_get_physical_device_properties2",
+			//"VK_KHR_get_physical_device_properties2",
 		};
 
 		VkApplicationInfo applicationInfo{};
@@ -160,8 +160,8 @@ void VKInit::InitDevice()
 		std::vector<const char*> deviceExtensionNames
 		{
 			"VK_KHR_swapchain",
-			"VK_KHR_maintenance3",
-			"VK_EXT_descriptor_indexing"
+			//"VK_KHR_maintenance3",
+			//"VK_EXT_descriptor_indexing"
 		};
 
 		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensionNames.size());
