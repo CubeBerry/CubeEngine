@@ -9,7 +9,7 @@ layout(location = 2) out vec2 o_uv;
 layout(location = 3) out float outTexIndex;
 
 layout(set = 0, binding = 0) uniform uniformMatrix
-{       
+{
     mat4 model;
     mat4 view;
     mat4 projection;

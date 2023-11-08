@@ -5,8 +5,9 @@
 
 void VerticesDemo::Init()
 {
-	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
-	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
+	//Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
+	for (int i = 0; i < 3; ++i)
+		Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
 }
 
 void VerticesDemo::Update(float /*dt*/)

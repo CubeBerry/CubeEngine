@@ -745,7 +745,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
 			descriptorWrite.dstBinding = 0;
-			descriptorWrite.descriptorCount = textures.size();
+			descriptorWrite.descriptorCount = bufferInfos.size();
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrite.pBufferInfo = bufferInfos.data();
 
@@ -772,7 +772,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrite.dstSet = *currentTextureDescriptorSet;
 			descriptorWrite.dstBinding = 1;
-			descriptorWrite.descriptorCount = textures.size();
+			descriptorWrite.descriptorCount = imageInfos.size();
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrite.pImageInfo = imageInfos.data();
 
@@ -837,9 +837,11 @@ void VKRenderManager::Render()
 	//Update Uniform Material
 	UniformMatrix uniMat;
 	UniformMatrix uniMat2;
+	UniformMatrix uniMat3;
 
 	glm::mat4 modelMatrix(1.0f);
 	glm::mat4 modelMatrix2(1.0f);
+	glm::mat4 modelMatrix3(1.0f);
 
 	glm::vec3 pos(0, 0, 0);
 	glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
@@ -854,6 +856,7 @@ void VKRenderManager::Render()
 	//uniMat.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
 
 	modelMatrix2 = glm::translate(modelMatrix, { 1.f,1.f,0.f });
+	modelMatrix3 = glm::translate(modelMatrix, { -1.f,1.f,0.f });
 	//modelMatrix2 = glm::rotate(modelMatrix, glm::radians(45.f), glm::vec3(0.0f, 0.0f, 1.0f));
 	//modelMatrix2 = glm::scale(modelMatrix, { 1.f,1.f,0.f });
 
@@ -861,9 +864,12 @@ void VKRenderManager::Render()
 	//uniMat2.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
 	//uniMat2.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
 
+	uniMat3.model = modelMatrix3;
+
 	//Includes Updating Uniform Function
 	textures[0].Resize(uniMat, frameIndex);
 	textures[1].Resize(uniMat2, frameIndex);
+	textures[2].Resize(uniMat3, frameIndex);
 	//uniform_->UpdateUniform(mat, frameIndex);
 
 	//--------------------Descriptor Update End--------------------//
@@ -932,12 +938,18 @@ void VKRenderManager::Render()
 		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 1.f),
 		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 1.f),
 		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 1.f),
+
+		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  2.f),
+		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 2.f),
+		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 2.f),
+		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 2.f),
 	};
 	VKVertexBuffer vertex(vkInit, &vertices);
 
 	std::vector<uint16_t> indices{
 		0, 1, 2, 2, 1, 3,
-		4, 5, 6, 6, 5, 7
+		4, 5, 6, 6, 5, 7,
+		8, 9, 10, 10, 9, 11
 	};
 	//std::vector<uint16_t> indices{
 	//0, 1, 2, 3, 4, 5, 6, 7
