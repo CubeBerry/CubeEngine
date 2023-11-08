@@ -730,24 +730,24 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 		currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 		{
 			//Create Vertex Material DescriptorBuffer Info
-			std::vector<VkDescriptorBufferInfo> bufferInfos;
-			for (auto& t : textures)
-			{
+			//std::vector<VkDescriptorBufferInfo> bufferInfos;
+			//for (auto& t : textures)
+			//{
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*t.GetUniformBuffers())[frameIndex];
+				bufferInfo.buffer = (*textures[0].GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(UniformMatrix);
-				bufferInfos.push_back(bufferInfo);
-			}
+				bufferInfo.range = sizeof(UniformMatrix) * 3;
+				//bufferInfos.push_back(bufferInfo);
+			//}
 
 			//Define which resource descriptor set will point
 			VkWriteDescriptorSet descriptorWrite{};
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
 			descriptorWrite.dstBinding = 0;
-			descriptorWrite.descriptorCount = bufferInfos.size();
+			descriptorWrite.descriptorCount = 1;
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite.pBufferInfo = bufferInfos.data();
+			descriptorWrite.pBufferInfo = &bufferInfo;
 
 			//Update DescriptorSet
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
@@ -867,9 +867,23 @@ void VKRenderManager::Render()
 	uniMat3.model = modelMatrix3;
 
 	//Includes Updating Uniform Function
-	textures[0].Resize(uniMat, frameIndex);
-	textures[1].Resize(uniMat2, frameIndex);
-	textures[2].Resize(uniMat3, frameIndex);
+	std::vector<UniformMatrix> mats{ uniMat, uniMat2, uniMat3 };
+	//textures[0].Resize(mats.data(), frameIndex);
+
+	VkDeviceMemory vkUniformDeviceMemory = (*(textures[0].GetUniformDeviceMemories()))[frameIndex];
+
+	//Get Virtual Address for CPU to access Memory
+	void* contents;
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * 3, 0, &contents);
+
+	//auto material = static_cast<UniformMatrix*>(contents);
+	//*material = *mats.data();
+	memcpy(contents, mats.data(), sizeof(UniformMatrix) * 3);
+
+	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
+
+	//textures[1].Resize(uniMat2, frameIndex);
+	//textures[2].Resize(uniMat3, frameIndex);
 	//uniform_->UpdateUniform(mat, frameIndex);
 
 	//--------------------Descriptor Update End--------------------//

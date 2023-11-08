@@ -28,8 +28,8 @@ Texture::~Texture()
 {
 }
 
-void Texture::Resize(UniformMatrix matrix_, const uint32_t frameIndex_)
+void Texture::Resize(UniformMatrix* matrix_, const uint32_t frameIndex_)
 {
 	matrix = matrix_;
-	uniform->UpdateUniform(&matrix, frameIndex_);
+	uniform->UpdateUniform(matrix, frameIndex_);
 }
