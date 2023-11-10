@@ -5,7 +5,10 @@
 
 #include "VKInit.hpp"
 #include "VKDescriptor.hpp"
-#include "Texture.hpp"
+#include "VKTexture.hpp"
+#include "VKVertexBuffer.hpp"
+#include "VKIndexBuffer.hpp"
+#include "VKUniformBuffer.hpp"
 #include "VKSwapChain.hpp"
 #include "ImGuiManager.hpp"
 
@@ -85,9 +88,15 @@ private:
 
 	//--------------------Texture Render--------------------//
 
-	std::vector<Texture> textures;
+	std::vector<VKTexture*> textures;
 
 	ImGuiManager* imguiManager;
+	std::vector<Vertex> vertices;
+	VKVertexBuffer* vertex;
+	std::vector<uint16_t> indices;
+	VKIndexBuffer* index;
+	std::vector<UniformMatrix> matrices;
+	VKUniformBuffer<UniformMatrix>* uniform;
 
 	//Variable for UniformMatrix
 	TestCamera tesCamera;

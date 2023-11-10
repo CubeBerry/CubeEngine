@@ -720,8 +720,32 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 {
-	Texture texture(path_, textures.size());
+	int indexCount{ static_cast<int>(textures.size()) };
+	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
+	texture->LoadTexture(path_);
+	vertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), textures.size()));
+	vertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), textures.size()));
+	vertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), textures.size()));
+	vertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), textures.size()));
+	if (textures.size() > 0)
+		delete vertex;
+	vertex = new VKVertexBuffer(vkInit, &vertices);
+
+	indices.push_back(4 * indexCount);
+	indices.push_back(4 * indexCount + 1);
+	indices.push_back(4 * indexCount + 2);
+	indices.push_back(4 * indexCount + 2);
+	indices.push_back(4 * indexCount + 1);
+	indices.push_back(4 * indexCount + 3);
+	if (textures.size() > 0)
+		delete index;
+	index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+
 	textures.push_back(texture);
+
+	if (textures.size() > 1)
+		delete uniform;
+	uniform = new VKUniformBuffer<UniformMatrix>(vkInit, textures.size());
 
 	//auto& vkUniformBuffer = (*textures[0].GetUniformBuffers())[frameIndex];
 	//auto& vkUniformBuffer2 = (*textures[1].GetUniformBuffers())[frameIndex];
@@ -734,9 +758,9 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			//for (auto& t : textures)
 			//{
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*textures[0].GetUniformBuffers())[frameIndex];
+				bufferInfo.buffer = (*(uniform->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(UniformMatrix) * 3;
+				bufferInfo.range = sizeof(UniformMatrix) * textures.size();
 				//bufferInfos.push_back(bufferInfo);
 			//}
 
@@ -761,8 +785,8 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			for (auto& t : textures)
 			{
 				VkDescriptorImageInfo imageInfo{};
-				imageInfo.sampler = *t.GetSampler();
-				imageInfo.imageView = *t.GetImageView();
+				imageInfo.sampler = *t->GetSampler();
+				imageInfo.imageView = *t->GetImageView();
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				imageInfos.push_back(imageInfo);
 			}
@@ -866,11 +890,17 @@ void VKRenderManager::Render()
 
 	uniMat3.model = modelMatrix3;
 
+	if (matrices.size() < 3)
+	{
+		matrices.push_back(uniMat);
+		matrices.push_back(uniMat2);
+		matrices.push_back(uniMat3);
+	}
+
 	//Includes Updating Uniform Function
-	std::vector<UniformMatrix> mats{ uniMat, uniMat2, uniMat3 };
 	//textures[0].Resize(mats.data(), frameIndex);
 
-	VkDeviceMemory vkUniformDeviceMemory = (*(textures[0].GetUniformDeviceMemories()))[frameIndex];
+	VkDeviceMemory vkUniformDeviceMemory = (*(uniform->GetUniformDeviceMemories()))[frameIndex];
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
@@ -878,7 +908,7 @@ void VKRenderManager::Render()
 
 	//auto material = static_cast<UniformMatrix*>(contents);
 	//*material = *mats.data();
-	memcpy(contents, mats.data(), sizeof(UniformMatrix) * 3);
+	memcpy(contents, matrices.data(), sizeof(UniformMatrix) * textures.size());
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 
@@ -941,41 +971,12 @@ void VKRenderManager::Render()
 
 	//--------------------Begin Draw--------------------//
 
-	std::vector<Vertex> vertices
-	{
-		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  0),
-		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 0),
-		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 0),
-		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 0),
-
-		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  1.f),
-		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 1.f),
-		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 1.f),
-		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 1.f),
-
-		Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f),  2.f),
-		Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), 2.f),
-		Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), 2.f),
-		Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), 2.f),
-	};
-	VKVertexBuffer vertex(vkInit, &vertices);
-
-	std::vector<uint16_t> indices{
-		0, 1, 2, 2, 1, 3,
-		4, 5, 6, 6, 5, 7,
-		8, 9, 10, 10, 9, 11
-	};
-	//std::vector<uint16_t> indices{
-	//0, 1, 2, 3, 4, 5, 6, 7
-	//};
-	VKIndexBuffer index(vkInit, &vkCommandPool, &indices);
-
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 	//Bind Vertex Buffer
-	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex.GetVertexBuffer(), &vertexBufferOffset);
+	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex->GetVertexBuffer(), &vertexBufferOffset);
 	//Bind Index Buffer
-	vkCmdBindIndexBuffer(*currentCommandBuffer, *index.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+	vkCmdBindIndexBuffer(*currentCommandBuffer, *index->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 	//Bind Pipeline
 	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLine());
 	//Bind Material DescriptorSet
