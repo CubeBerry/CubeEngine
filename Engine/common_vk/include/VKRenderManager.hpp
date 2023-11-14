@@ -89,6 +89,7 @@ private:
 	//--------------------Texture Render--------------------//
 
 	std::vector<VKTexture*> textures;
+	std::vector<VkDescriptorImageInfo> imageInfos;
 
 	ImGuiManager* imguiManager;
 	std::vector<Vertex> vertices;

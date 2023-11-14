@@ -147,19 +147,29 @@ void VKInit::InitDevice()
 		versionFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 		versionFeatures.runtimeDescriptorArray = VK_TRUE;
 		versionFeatures.descriptorIndexing = VK_TRUE;
+		//versionFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+		//versionFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+		//versionFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+
+		//Create Robustness2Features info (for nullDescriptor)
+		VkPhysicalDeviceRobustness2FeaturesEXT robustness2Features{};
+		robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+		robustness2Features.nullDescriptor = VK_TRUE;
+		robustness2Features.pNext = &versionFeatures;
 
 		//Create device info
 		VkDeviceCreateInfo deviceCreateInfo{};
 		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		deviceCreateInfo.queueCreateInfoCount = 1;
 		deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-		deviceCreateInfo.pNext = &versionFeatures;
+		deviceCreateInfo.pNext = &robustness2Features;
 
 		//--------------------Device Extensions settings--------------------//
 
 		std::vector<const char*> deviceExtensionNames
 		{
 			"VK_KHR_swapchain",
+			"VK_EXT_robustness2",
 			//"VK_KHR_maintenance3",
 			//"VK_EXT_descriptor_indexing"
 		};

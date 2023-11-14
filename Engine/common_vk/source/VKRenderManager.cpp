@@ -33,6 +33,22 @@ VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(
 	vkPipeline->InitPipeLine(vkShader->GetVertexModule(), vkShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass);
 
 	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
+
+	for (int i = 0; i < 500; ++i)
+	{
+		VkSamplerCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+		VkSampler immutableSampler;
+		VkResult result{ VK_SUCCESS };
+		result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
+
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.sampler = immutableSampler;
+		imageInfo.imageView = VK_NULL_HANDLE;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfos.push_back(imageInfo);
+	}
 }
 
 VKRenderManager::~VKRenderManager()
@@ -781,14 +797,21 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 		currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 		{
 			//Create Texture DescriptorBuffer Info
-			std::vector<VkDescriptorImageInfo> imageInfos;
-			for (auto& t : textures)
+			//std::vector<VkDescriptorImageInfo> imageInfos;
+			//for (auto& t : textures)
+			//{
+			//	VkDescriptorImageInfo imageInfo{};
+			//	imageInfo.sampler = *t->GetSampler();
+			//	imageInfo.imageView = *t->GetImageView();
+			//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			//	imageInfos.push_back(imageInfo);
+			//}
+
+			for (int i = 0; i < textures.size(); ++i)
 			{
-				VkDescriptorImageInfo imageInfo{};
-				imageInfo.sampler = *t->GetSampler();
-				imageInfo.imageView = *t->GetImageView();
-				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfos.push_back(imageInfo);
+				imageInfos[i].sampler = *textures[i]->GetSampler();
+				imageInfos[i].imageView = *textures[i]->GetImageView();
+				imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			}
 
 			//Define which resource descriptor set will point
@@ -796,7 +819,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrite.dstSet = *currentTextureDescriptorSet;
 			descriptorWrite.dstBinding = 1;
-			descriptorWrite.descriptorCount = imageInfos.size();
+			descriptorWrite.descriptorCount = 500;
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrite.pImageInfo = imageInfos.data();
 
