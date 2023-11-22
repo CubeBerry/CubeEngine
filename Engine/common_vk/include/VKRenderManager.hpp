@@ -51,6 +51,7 @@ public:
 	//--------------------Texture Render--------------------//
 
 	void LoadTexture(const std::filesystem::path& path_);
+	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
 	void InitCommandPool();
 	void InitCommandBuffer();

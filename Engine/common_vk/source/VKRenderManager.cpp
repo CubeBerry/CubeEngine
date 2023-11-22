@@ -828,6 +828,12 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 		}
 	}
+
+	UniformMatrix mat;
+	mat.model = glm::mat3(1.f);
+	mat.view = glm::mat3(1.f);
+	mat.projection = glm::mat3(1.f);
+	matrices.push_back(mat);
 }
 
 void VKRenderManager::Render()
@@ -882,43 +888,6 @@ void VKRenderManager::Render()
 	//}
 
 	//Update Uniform Material
-	UniformMatrix uniMat;
-	UniformMatrix uniMat2;
-	UniformMatrix uniMat3;
-
-	glm::mat4 modelMatrix(1.0f);
-	glm::mat4 modelMatrix2(1.0f);
-	glm::mat4 modelMatrix3(1.0f);
-
-	glm::vec3 pos(0, 0, 0);
-	glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
-	glm::vec3 extent(1.f / Engine::GetWindow()->GetWindowSize().x, 1.f / Engine::GetWindow()->GetWindowSize().y, 0);
-
-	//modelMatrix = glm::translate(modelMatrix, pos * extent);
-	//modelMatrix = glm::rotate(modelMatrix, glm::radians(0.f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//modelMatrix = glm::scale(modelMatrix, size * extent);
-	
-	uniMat.model = modelMatrix;
-	//uniMat.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
-	//uniMat.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
-
-	modelMatrix2 = glm::translate(modelMatrix, { 1.f,1.f,0.f });
-	modelMatrix3 = glm::translate(modelMatrix, { -1.f,1.f,0.f });
-	//modelMatrix2 = glm::rotate(modelMatrix, glm::radians(45.f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//modelMatrix2 = glm::scale(modelMatrix, { 1.f,1.f,0.f });
-
-	uniMat2.model = modelMatrix2;
-	//uniMat2.view = glm::lookAt(tesCamera.cameraPosition, tesCamera.cameraTarget, tesCamera.upVector);
-	//uniMat2.projection = glm::perspective(glm::radians(tesCamera.fov), tesCamera.aspectRatio, tesCamera.nearClip, tesCamera.farClip);
-
-	uniMat3.model = modelMatrix3;
-
-	if (matrices.size() < 3)
-	{
-		matrices.push_back(uniMat);
-		matrices.push_back(uniMat2);
-		matrices.push_back(uniMat3);
-	}
 
 	//Includes Updating Uniform Function
 	//textures[0].Resize(mats.data(), frameIndex);
@@ -927,7 +896,7 @@ void VKRenderManager::Render()
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * 3, 0, &contents);
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * textures.size(), 0, &contents);
 
 	//auto material = static_cast<UniformMatrix*>(contents);
 	//*material = *mats.data();
