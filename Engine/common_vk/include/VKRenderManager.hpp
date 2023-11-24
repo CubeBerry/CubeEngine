@@ -5,9 +5,24 @@
 
 #include "VKInit.hpp"
 #include "VKDescriptor.hpp"
-#include "Texture.hpp"
+#include "VKTexture.hpp"
+#include "VKVertexBuffer.hpp"
+#include "VKIndexBuffer.hpp"
+#include "VKUniformBuffer.hpp"
 #include "VKSwapChain.hpp"
 #include "ImGuiManager.hpp"
+
+struct TestCamera
+{
+	glm::vec3 cameraPosition{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 cameraTarget{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 upVector{ 0.0f, 1.0f, 0.0f };
+
+	float fov = 45.0f;
+	float aspectRatio = 640 / 480; // Replace screenWidth and screenHeight with actual values
+	float nearClip = 0.1f;
+	float farClip = 100.0f;
+};
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
@@ -26,7 +41,7 @@ public:
 	VKRenderManager(SDL_Window* window_, bool isDiscrete);
 	~VKRenderManager();
 
-	void Render(Window* window_);
+	void Render();
 	//void EndRender(Window* window_);
 
 	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
@@ -36,6 +51,8 @@ public:
 	//--------------------Texture Render--------------------//
 
 	void LoadTexture(const std::filesystem::path& path_);
+	void LoadQuad(glm::vec4 color_);
+	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
 	void InitCommandPool();
 	void InitCommandBuffer();
@@ -73,9 +90,20 @@ private:
 
 	//--------------------Texture Render--------------------//
 
-	std::vector<Texture> textures;
+	std::vector<VKTexture*> textures;
+	std::vector<VkDescriptorImageInfo> imageInfos;
 
 	ImGuiManager* imguiManager;
+	std::vector<Vertex> vertices;
+	VKVertexBuffer* vertex;
+	std::vector<uint16_t> indices;
+	VKIndexBuffer* index;
+	std::vector<UniformMatrix> matrices;
+	VKUniformBuffer<UniformMatrix>* uniform;
+	unsigned int quadCount{ 0 };
+
+	//Variable for UniformMatrix
+	TestCamera tesCamera;
 };
 
 //void VKRenderManager::Render(Window* window_)

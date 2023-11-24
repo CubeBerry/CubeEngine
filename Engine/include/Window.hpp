@@ -23,6 +23,8 @@ public:
 	SDL_Window* GetWindow() { return window; };
 	bool GetQuit() { return isQuit; };
 	bool GetMinimized() { return isMinimized; };
+
+	glm::vec2 GetWindowSize() { return wSize; }
 private:
 	SDL_Window* window;
 	SDL_Event e;

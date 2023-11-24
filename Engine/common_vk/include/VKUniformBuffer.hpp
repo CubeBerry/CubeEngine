@@ -7,13 +7,14 @@ template<typename Material>
 class VKUniformBuffer
 {
 public:
-	VKUniformBuffer(VKInit* init_);
+	VKUniformBuffer(VKInit* init_, const int size_);
 	~VKUniformBuffer();
 
-	void InitUniformBuffer();
+	void InitUniformBuffer(const int size_);
 	void UpdateUniform(Material* material_, const uint32_t frameIndex_);
 
 	std::array<VkBuffer, 2>* GetUniformBuffers() { return &vkUniformBuffers; };
+	std::array<VkDeviceMemory, 2>* GetUniformDeviceMemories() { return &vkUniformDeviceMemories; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
@@ -24,9 +25,9 @@ private:
 };
 
 template<typename Material>
-VKUniformBuffer<Material>::VKUniformBuffer(VKInit* init_) : vkInit(init_)
+VKUniformBuffer<Material>::VKUniformBuffer(VKInit* init_, const int size_) : vkInit(init_)
 {
-	InitUniformBuffer();
+	InitUniformBuffer(size_);
 }
 
 template<typename Material>
@@ -45,14 +46,14 @@ VKUniformBuffer<Material>::~VKUniformBuffer()
 }
 
 template<typename Material>
-inline void VKUniformBuffer<Material>::InitUniformBuffer()
+inline void VKUniformBuffer<Material>::InitUniformBuffer(const int size_)
 {
 	for (auto i = 0; i != 2; ++i)
 	{
 		//Create Uniform Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = sizeof(Material);
+		createInfo.size = sizeof(Material) * size_;
 		createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
 		//Create Uniform Buffer
@@ -169,7 +170,7 @@ inline void VKUniformBuffer<Material>::UpdateUniform(Material* material_, const 
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material), 0, &contents);
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material) * 3, 0, &contents);
 
 	auto material = static_cast<Material*>(contents);
 	*material = *material_;

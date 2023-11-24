@@ -15,10 +15,17 @@ class Window;
 class ImGuiManager
 {
 public:
-	ImGuiManager(VKInit* init_, VKSwapChain* chain_, VkPipeline* pipeline_, SDL_Window* window_, std::array<VkCommandBuffer, 2> buffers_);
+	ImGuiManager(
+		VKInit* init_,
+		SDL_Window* window_,
+		VkCommandPool* cpool_,
+		std::array<VkCommandBuffer, 2>* cbuffers_,
+		VkDescriptorPool* dpool_,
+		VkRenderPass* pass_
+		);
 	~ImGuiManager();
 
-	void Initialize(VkDescriptorPool* pool_, VkRenderPass* pass_, VkCommandPool cpool_);
+	void Initialize();
 	void FeedEvent(const SDL_Event& event_);
 	void Begin();
 	void End(uint32_t index_);
@@ -29,16 +36,10 @@ public:
 	std::array<VkCommandBuffer, 2>* GetCommandBuffers() { return &vkCommandBuffers; };
 private:
 	VKInit* vkInit;
-	VKSwapChain* vkSwapChain;
 	SDL_Window* window;
-	VkPipeline* pipeline;
 
 	VkCommandPool vkCommandPool{ VK_NULL_HANDLE };
 	std::array<VkCommandBuffer, 2> vkCommandBuffers{ VK_NULL_HANDLE };
-	VkRenderPass renderPass{ VK_NULL_HANDLE };
 	VkDescriptorPool vkDescriptorPool;
-	std::vector<VkFramebuffer> vkFrameBuffers;
-
-	VkImage swapchainImage;
-	VkFence* currentFence;
+	VkRenderPass renderPass{ VK_NULL_HANDLE };
 };

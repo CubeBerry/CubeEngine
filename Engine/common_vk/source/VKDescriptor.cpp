@@ -180,16 +180,23 @@ void VKDescriptor::InitDescriptorSetLayouts()
 		//Create Binding for Combined Image Sampler
 		binding[1].binding = 1;
 		binding[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		binding[1].descriptorCount = 1;
+		binding[1].descriptorCount = 500;
 		//Only fragment shader accesses
 		binding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		binding[1].pImmutableSamplers = nullptr;
+
+		VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo{};
+		bindingFlagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+		VkDescriptorBindingFlags flags[] = { VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT };
+		bindingFlagsInfo.pBindingFlags = flags;
 
 		//Create Descriptor Set Layout Info
 		VkDescriptorSetLayoutCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		createInfo.bindingCount = 2;
 		createInfo.pBindings = binding;
+		createInfo.pNext = &bindingFlagsInfo;
+		createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
 		//Create Descriptor Set Layout
 		try
 		{
@@ -233,9 +240,11 @@ void VKDescriptor::InitDescriptorPool()
 	//2nd parameter == number of uniform buffer
 	std::vector<VkDescriptorPoolSize> poolSize
 	{
+		//For Vertex
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
+		//For Fragment
+		//{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
 		//For ImGUI
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
@@ -245,9 +254,10 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 8;
+	createInfo.maxSets = 1009;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = &poolSize[0];
+	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
 	//Create DescriptorPool
 	try

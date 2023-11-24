@@ -1,19 +1,22 @@
-#version 450
+#version 460
+#extension GL_EXT_nonuniform_qualifier : enable
 precision mediump float;
 
-layout(location = 1) in vec2 i_uv;
+#define MAX_TEXTURES 500
 
-layout(location = 0) out vec4 framgentColor;
+layout(location = 0) in vec2 i_uv;
+layout(location = 1) in vec4 i_col;
+layout(location = 2) in float inTexIndex;
 
-layout(set = 0, binding = 0) uniform Material
-{
-  mat3 matrix;  
-};
-layout(set = 1, binding = 1) uniform sampler2D tex;
+layout(location = 0) out vec4 fragmentColor;
+
+layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    vec3 col = texture(tex, i_uv).rgb;
-
-    framgentColor = vec4(col, 1.0);
+    vec3 col = texture(tex[int(inTexIndex)], i_uv).rgb;
+    if(inTexIndex > 500.0)
+        fragmentColor = vec4(0, 0, 1.0, 1.0);
+    else
+        fragmentColor = vec4(col, 1.0);
 }
