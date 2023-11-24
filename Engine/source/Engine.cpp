@@ -2,6 +2,7 @@
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
+	//Init Window -> Init VKInit -> Init SwapChain -> Init VKRenderManager
 	window = new Window();
 	window->Init(title, windowWidth, windowHeight, fullScreen, mode);
 	timer.Init();

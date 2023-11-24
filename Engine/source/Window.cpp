@@ -7,7 +7,6 @@ void Window::Init(const char* title, int width, int height, bool fullscreen, Win
 {
 	isQuit = false;
 
-	//Init Window -> Init VKInit -> Init SwapChain -> Init VKRenderManager
 	int flags = 0;
 	wSize.x = (float)width;
 	wSize.y = (float)height;
