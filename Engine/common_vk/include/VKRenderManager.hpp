@@ -51,6 +51,7 @@ public:
 	//--------------------Texture Render--------------------//
 
 	void LoadTexture(const std::filesystem::path& path_);
+	void LoadQuad(glm::vec4 color_);
 	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
 	void InitCommandPool();
@@ -99,6 +100,7 @@ private:
 	VKIndexBuffer* index;
 	std::vector<UniformMatrix> matrices;
 	VKUniformBuffer<UniformMatrix>* uniform;
+	unsigned int quadCount{ 0 };
 
 	//Variable for UniformMatrix
 	TestCamera tesCamera;

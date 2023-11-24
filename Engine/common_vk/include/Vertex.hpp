@@ -7,9 +7,10 @@
 struct Vertex
 {
 	glm::vec4 position;
-	//glm::vec3 color;
+	glm::vec4 color;
 	//glm::vec2 uv;
 	float index;
+	float texIndex;
 };
 
 struct UniformMatrix

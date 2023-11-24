@@ -2,13 +2,16 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 precision mediump float;
 
-#define MAX_MATRICES 1000
+#define MAX_MATRICES 500
 
 layout(location = 0) in vec4 i_pos;
-layout(location = 1) in float texIndex;
+layout(location = 1) in vec4 i_col;
+layout(location = 2) in float index;
+layout(location = 3) in float texIndex;
 
-layout(location = 2) out vec2 o_uv;
-layout(location = 3) out float outTexIndex;
+layout(location = 0) out vec2 o_uv;
+layout(location = 1) out vec4 o_col;
+layout(location = 2) out float outTexIndex;
 
 struct Matrix
 {
@@ -27,6 +30,7 @@ void main()
     o_uv.x = ((i_pos.x + 1) / 2);
     o_uv.y = ((i_pos.y + 1) / 2);
     outTexIndex = texIndex;
+    o_col = i_col;
 
-    gl_Position =  matrix[int(texIndex)].model * i_pos;
+    gl_Position =  matrix[int(index)].model * i_pos;
 }

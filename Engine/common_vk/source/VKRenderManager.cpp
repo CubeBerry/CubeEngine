@@ -736,32 +736,33 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 {
-	int indexCount{ static_cast<int>(textures.size()) };
+	//int indexCount{ static_cast<int>(textures.size()) };
 	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
 	texture->LoadTexture(path_);
-	vertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), textures.size()));
-	vertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), textures.size()));
-	vertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), textures.size()));
-	vertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), textures.size()));
+	vertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	vertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	vertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	vertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
 	if (textures.size() > 0)
 		delete vertex;
 	vertex = new VKVertexBuffer(vkInit, &vertices);
 
-	indices.push_back(4 * indexCount);
-	indices.push_back(4 * indexCount + 1);
-	indices.push_back(4 * indexCount + 2);
-	indices.push_back(4 * indexCount + 2);
-	indices.push_back(4 * indexCount + 1);
-	indices.push_back(4 * indexCount + 3);
+	indices.push_back(4 * quadCount);
+	indices.push_back(4 * quadCount + 1);
+	indices.push_back(4 * quadCount + 2);
+	indices.push_back(4 * quadCount + 2);
+	indices.push_back(4 * quadCount + 1);
+	indices.push_back(4 * quadCount + 3);
 	if (textures.size() > 0)
 		delete index;
 	index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
 
 	textures.push_back(texture);
+	quadCount++;
 
 	if (textures.size() > 1)
 		delete uniform;
-	uniform = new VKUniformBuffer<UniformMatrix>(vkInit, textures.size());
+	uniform = new VKUniformBuffer<UniformMatrix>(vkInit, quadCount);
 
 	//auto& vkUniformBuffer = (*textures[0].GetUniformBuffers())[frameIndex];
 	//auto& vkUniformBuffer2 = (*textures[1].GetUniformBuffers())[frameIndex];
@@ -776,7 +777,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(uniform->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(UniformMatrix) * textures.size();
+				bufferInfo.range = sizeof(UniformMatrix) * quadCount;
 				//bufferInfos.push_back(bufferInfo);
 			//}
 
@@ -822,6 +823,71 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 			descriptorWrite.descriptorCount = 500;
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrite.pImageInfo = imageInfos.data();
+
+			//Update DescriptorSet
+			//DescriptorSet does not have to update every frame since it points same uniform buffer
+			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+		}
+	}
+
+	UniformMatrix mat;
+	mat.model = glm::mat3(1.f);
+	mat.view = glm::mat3(1.f);
+	mat.projection = glm::mat3(1.f);
+	matrices.push_back(mat);
+}
+
+void VKRenderManager::LoadQuad(glm::vec4 color_)
+{
+	vertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 501.f));
+	vertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 501.f));
+	vertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 501.f));
+	vertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 501.f));
+	if (quadCount > 0)
+		delete vertex;
+	vertex = new VKVertexBuffer(vkInit, &vertices);
+
+	indices.push_back(4 * quadCount);
+	indices.push_back(4 * quadCount + 1);
+	indices.push_back(4 * quadCount + 2);
+	indices.push_back(4 * quadCount + 2);
+	indices.push_back(4 * quadCount + 1);
+	indices.push_back(4 * quadCount + 3);
+	if (quadCount > 0)
+		delete index;
+	index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+
+	quadCount++;
+
+	if (textures.size() > 1)
+		delete uniform;
+	uniform = new VKUniformBuffer<UniformMatrix>(vkInit, quadCount);
+
+	//auto& vkUniformBuffer = (*textures[0].GetUniformBuffers())[frameIndex];
+	//auto& vkUniformBuffer2 = (*textures[1].GetUniformBuffers())[frameIndex];
+	for (int frameIndex = 0; frameIndex != 2; ++frameIndex)
+	{
+		currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+		{
+			//Create Vertex Material DescriptorBuffer Info
+			//std::vector<VkDescriptorBufferInfo> bufferInfos;
+			//for (auto& t : textures)
+			//{
+			VkDescriptorBufferInfo bufferInfo;
+			bufferInfo.buffer = (*(uniform->GetUniformBuffers()))[frameIndex];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(UniformMatrix) * quadCount;
+			//bufferInfos.push_back(bufferInfo);
+			//}
+
+			//Define which resource descriptor set will point
+			VkWriteDescriptorSet descriptorWrite{};
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrite.pBufferInfo = &bufferInfo;
 
 			//Update DescriptorSet
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
@@ -896,11 +962,11 @@ void VKRenderManager::Render()
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * textures.size(), 0, &contents);
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * quadCount, 0, &contents);
 
 	//auto material = static_cast<UniformMatrix*>(contents);
 	//*material = *mats.data();
-	memcpy(contents, matrices.data(), sizeof(UniformMatrix) * textures.size());
+	memcpy(contents, matrices.data(), sizeof(UniformMatrix) * quadCount);
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 
@@ -962,7 +1028,7 @@ void VKRenderManager::Render()
 	vkCmdBeginRenderPass(*currentCommandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	//--------------------Begin Draw--------------------//
-
+	
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 	//Bind Vertex Buffer

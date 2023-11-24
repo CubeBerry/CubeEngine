@@ -62,16 +62,16 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
 
-	//{
-	//	//Define Vertex Input Attribute about Color
-	//	VkVertexInputAttributeDescription vertexInputAttribute{};
-	//	vertexInputAttribute.location = 1;
-	//	vertexInputAttribute.binding = 0;
-	//	vertexInputAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-	//	vertexInputAttribute.offset = offsetof(Vertex, color);
+	{
+		//Define Vertex Input Attribute about Color
+		VkVertexInputAttributeDescription vertexInputAttribute{};
+		vertexInputAttribute.location = 1;
+		vertexInputAttribute.binding = 0;
+		vertexInputAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		vertexInputAttribute.offset = offsetof(Vertex, color);
 
-	//	vertexInputAttributes.push_back(vertexInputAttribute);
-	//}
+		vertexInputAttributes.push_back(vertexInputAttribute);
+	}
 
 	//{
 	//	//Define Vertex Input Attribute about Texture
@@ -85,12 +85,23 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//}
 
 	{
-		//Define Vertex Input Attribute about Texture Index
+		//Define Vertex Input Attribute about Quad Index
 		VkVertexInputAttributeDescription vertexInputAttribute{};
-		vertexInputAttribute.location = 1;
+		vertexInputAttribute.location = 2;
 		vertexInputAttribute.binding = 0;
 		vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
 		vertexInputAttribute.offset = offsetof(Vertex, index);
+
+		vertexInputAttributes.push_back(vertexInputAttribute);
+	}
+
+	{
+		//Define Vertex Input Attribute about Texture Index
+		VkVertexInputAttributeDescription vertexInputAttribute{};
+		vertexInputAttribute.location = 3;
+		vertexInputAttribute.binding = 0;
+		vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
+		vertexInputAttribute.offset = offsetof(Vertex, texIndex);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
