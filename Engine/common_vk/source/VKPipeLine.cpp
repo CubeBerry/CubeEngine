@@ -17,7 +17,7 @@ VKPipeLine::~VKPipeLine()
 	device = nullptr;
 }
 
-void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* fragmentModule, VkExtent2D* swapchainImageExtent, VkRenderPass* renderPass)
+void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* fragmentModule, VkExtent2D* swapchainImageExtent, VkRenderPass* renderPass, POLYGON_MODE mode_)
 {
 	//Create Pipeline Shader Stage Info
 	std::array<VkPipelineShaderStageCreateInfo, 2> stageCreateInfos;
@@ -143,7 +143,15 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
 	rasterizationStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	//FILL, LINE, POINT...
-	rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	switch (mode_)
+	{
+	case POLYGON_MODE::FILL:
+		rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+		break;
+	case POLYGON_MODE::LINE:
+		rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
+		break;
+	}
 	//Culling
 	rasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
 	rasterizationStateInfo.lineWidth = 1.0f;
@@ -171,6 +179,15 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	colorBlendStateInfo.attachmentCount = 1;
 	colorBlendStateInfo.pAttachments = &colorBlendAttachment;
 
+	//Create Dynamic State Info
+	VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
+	dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicStateInfo.dynamicStateCount = 1;
+	VkDynamicState dynamicStates[] = {
+		VK_DYNAMIC_STATE_LINE_WIDTH
+	};
+	dynamicStateInfo.pDynamicStates = dynamicStates;
+
 	//Create Pipeline Layout
 	InitPipeLineLayout();
 
@@ -188,6 +205,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	createInfo.pColorBlendState = &colorBlendStateInfo;
 	createInfo.layout = vkPipelineLayout;
 	createInfo.renderPass = *renderPass;
+	createInfo.pDynamicState = &dynamicStateInfo;
 
 	//Create Graphics Pipeline
 	try

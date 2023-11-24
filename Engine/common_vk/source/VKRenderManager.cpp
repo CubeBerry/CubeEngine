@@ -26,11 +26,17 @@ VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
-	vkShader = new VKShader(vkInit->GetDevice());
-	vkShader->LoadShader("../Engine/shader/vertex.vert", "../Engine/shader/fragment.frag");
 	vkDescriptor = new VKDescriptor(vkInit);
-	vkPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline->InitPipeLine(vkShader->GetVertexModule(), vkShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass);
+
+	vkTextureShader = new VKShader(vkInit->GetDevice());
+	vkTextureShader->LoadShader("../Engine/shader/texVertex.vert", "../Engine/shader/texFragment.frag");
+	vkQuadShader = new VKShader(vkInit->GetDevice());
+	vkQuadShader->LoadShader("../Engine/shader/quadVertex.vert", "../Engine/shader/quadFragment.frag");
+
+	vkTexurePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
+	vkQuadPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkQuadPipeline->InitPipeLine(vkQuadShader->GetVertexModule(), vkQuadShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
 	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
 
@@ -736,26 +742,26 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 {
-	//int indexCount{ static_cast<int>(textures.size()) };
+	int indexCount{ static_cast<int>(textures.size()) };
 	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
 	texture->LoadTexture(path_);
-	vertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
-	vertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
-	vertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
-	vertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), glm::vec4(0.f, 0.f, 1.f, 1.f), quadCount, textures.size()));
 	if (textures.size() > 0)
-		delete vertex;
-	vertex = new VKVertexBuffer(vkInit, &vertices);
+		delete texVertex;
+	texVertex = new VKVertexBuffer(vkInit, &texVertices);
 
-	indices.push_back(4 * quadCount);
-	indices.push_back(4 * quadCount + 1);
-	indices.push_back(4 * quadCount + 2);
-	indices.push_back(4 * quadCount + 2);
-	indices.push_back(4 * quadCount + 1);
-	indices.push_back(4 * quadCount + 3);
+	texIndices.push_back(4 * indexCount);
+	texIndices.push_back(4 * indexCount + 1);
+	texIndices.push_back(4 * indexCount + 2);
+	texIndices.push_back(4 * indexCount + 2);
+	texIndices.push_back(4 * indexCount + 1);
+	texIndices.push_back(4 * indexCount + 3);
 	if (textures.size() > 0)
-		delete index;
-	index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+		delete texIndex;
+	texIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
 
 	textures.push_back(texture);
 	quadCount++;
@@ -839,27 +845,28 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 
 void VKRenderManager::LoadQuad(glm::vec4 color_)
 {
-	vertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 501.f));
-	vertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 501.f));
-	vertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 501.f));
-	vertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 501.f));
-	if (quadCount > 0)
-		delete vertex;
-	vertex = new VKVertexBuffer(vkInit, &vertices);
+	quadVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	quadVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	quadVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	quadVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	if (quadVertex != nullptr)
+		delete quadVertex;
+	quadVertex = new VKVertexBuffer(vkInit, &quadVertices);
 
-	indices.push_back(4 * quadCount);
-	indices.push_back(4 * quadCount + 1);
-	indices.push_back(4 * quadCount + 2);
-	indices.push_back(4 * quadCount + 2);
-	indices.push_back(4 * quadCount + 1);
-	indices.push_back(4 * quadCount + 3);
-	if (quadCount > 0)
-		delete index;
-	index = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+	uint64_t indexNumber{ quadVertices.size() / 4 - 1 };
+	quadIndices.push_back(4 * indexNumber);
+	quadIndices.push_back(4 * indexNumber + 1);
+	quadIndices.push_back(4 * indexNumber + 2);
+	quadIndices.push_back(4 * indexNumber + 2);
+	quadIndices.push_back(4 * indexNumber + 1);
+	quadIndices.push_back(4 * indexNumber + 3);
+	if (quadIndex != nullptr)
+		delete quadIndex;
+	quadIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &quadIndices);
 
 	quadCount++;
 
-	if (textures.size() > 1)
+	if (uniform != nullptr)
 		delete uniform;
 	uniform = new VKUniformBuffer<UniformMatrix>(vkInit, quadCount);
 
@@ -1032,17 +1039,30 @@ void VKRenderManager::Render()
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 	//Bind Vertex Buffer
-	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex->GetVertexBuffer(), &vertexBufferOffset);
+	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, texVertex->GetVertexBuffer(), &vertexBufferOffset);
 	//Bind Index Buffer
-	vkCmdBindIndexBuffer(*currentCommandBuffer, *index->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+	vkCmdBindIndexBuffer(*currentCommandBuffer, *texIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 	//Bind Pipeline
-	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLine());
+	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLine());
 	//Bind Material DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 	//Bind Texture DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 	//Draw
-	vkCmdDrawIndexed(*currentCommandBuffer, indices.size(), 1, 0, 0, 0);
+	vkCmdDrawIndexed(*currentCommandBuffer, texIndices.size(), 1, 0, 0, 0);
+
+	//Bind Vertex Buffer
+	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, quadVertex->GetVertexBuffer(), &vertexBufferOffset);
+	//Bind Index Buffer
+	vkCmdBindIndexBuffer(*currentCommandBuffer, *quadIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+	//Bind Pipeline
+	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkQuadPipeline->GetPipeLine());
+	//Bind Material DescriptorSet
+	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkQuadPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+	//Change Line Width
+	vkCmdSetLineWidth(*currentCommandBuffer, 5.0f);
+	//Draw
+	vkCmdDrawIndexed(*currentCommandBuffer, quadIndices.size(), 1, 0, 0, 0);
 
 	//ImGui
 	imguiManager->Begin();

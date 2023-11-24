@@ -1,12 +1,18 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
+constexpr enum class POLYGON_MODE
+{
+	FILL = 0,
+	LINE = 1,
+};
+
 class VKPipeLine
 {
 public:
 	VKPipeLine(VkDevice* device_, std::vector<VkDescriptorSetLayout>* layout_);
 	~VKPipeLine();
-	void InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* fragmentModule, VkExtent2D* swapchainImageExtent, VkRenderPass* renderPass);
+	void InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* fragmentModule, VkExtent2D* swapchainImageExtent, VkRenderPass* renderPass, POLYGON_MODE mode_);
 
 	VkPipeline* GetPipeLine() { return &vkPipeline; };
 	VkPipelineLayout* GetPipeLineLayout() { return &vkPipelineLayout; };

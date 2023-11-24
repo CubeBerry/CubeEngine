@@ -15,8 +15,5 @@ layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 void main()
 {
     vec3 col = texture(tex[int(inTexIndex)], i_uv).rgb;
-    if(inTexIndex > 500.0)
-        fragmentColor = vec4(0, 0, 1.0, 1.0);
-    else
-        fragmentColor = vec4(col, 1.0);
+    fragmentColor = vec4(col, 1.0);
 }

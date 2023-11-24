@@ -29,7 +29,7 @@ void main()
 {
     o_uv.x = ((i_pos.x + 1) / 2);
     o_uv.y = ((i_pos.y + 1) / 2);
-    outTexIndex = texIndex;
+    //outTexIndex = texIndex;
     o_col = i_col;
 
     gl_Position =  matrix[int(index)].model * i_pos;

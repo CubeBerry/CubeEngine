@@ -75,8 +75,10 @@ private:
 	VkRenderPass vkRenderPass{ VK_NULL_HANDLE };
 	std::vector<VkFramebuffer> vkFrameBuffers;
 
-	VKShader* vkShader;
-	VKPipeLine* vkPipeline;
+	VKShader* vkTextureShader;
+	VKShader* vkQuadShader;
+	VKPipeLine* vkTexurePipeline;
+	VKPipeLine* vkQuadPipeline;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
@@ -94,12 +96,19 @@ private:
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
 	ImGuiManager* imguiManager;
-	std::vector<Vertex> vertices;
-	VKVertexBuffer* vertex;
-	std::vector<uint16_t> indices;
-	VKIndexBuffer* index;
+
+	std::vector<Vertex> texVertices;
+	VKVertexBuffer* texVertex{ nullptr };
+	std::vector<uint16_t> texIndices;
+	VKIndexBuffer* texIndex{ nullptr };
+
+	std::vector<Vertex> quadVertices;
+	VKVertexBuffer* quadVertex{ nullptr };
+	std::vector<uint16_t> quadIndices;
+	VKIndexBuffer* quadIndex{ nullptr };
+
 	std::vector<UniformMatrix> matrices;
-	VKUniformBuffer<UniformMatrix>* uniform;
+	VKUniformBuffer<UniformMatrix>* uniform{ nullptr };
 	unsigned int quadCount{ 0 };
 
 	//Variable for UniformMatrix

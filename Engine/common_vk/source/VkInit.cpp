@@ -142,11 +142,32 @@ void VKInit::InitDevice()
 		queueCreateInfo.queueCount = 1;
 		queueCreateInfo.pQueuePriorities = &priority;
 
+		//Create Physical Device Features (for polygon mode line)
+		VkPhysicalDeviceFeatures deviceFeatures{};
+		try
+		{
+			vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &deviceFeatures);
+			if (deviceFeatures.fillModeNonSolid != VK_TRUE)
+			{
+				std::cout << "Does not support fillModeNonSolid" << std::endl;
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Device Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKInit::~VKInit();
+			std::exit(EXIT_FAILURE);
+		}
+		//deviceFeatures.fillModeNonSolid = VK_TRUE;
+
 		//Create 12Features info (for descriptor array)
-		VkPhysicalDeviceVulkan12Features versionFeatures{};
-		versionFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-		versionFeatures.runtimeDescriptorArray = VK_TRUE;
-		versionFeatures.descriptorIndexing = VK_TRUE;
+		VkPhysicalDeviceVulkan12Features version12Features{};
+		version12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+		version12Features.runtimeDescriptorArray = VK_TRUE;
+		version12Features.descriptorIndexing = VK_TRUE;
 		//versionFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 		//versionFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
 		//versionFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
@@ -155,7 +176,7 @@ void VKInit::InitDevice()
 		VkPhysicalDeviceRobustness2FeaturesEXT robustness2Features{};
 		robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
 		robustness2Features.nullDescriptor = VK_TRUE;
-		robustness2Features.pNext = &versionFeatures;
+		robustness2Features.pNext = &version12Features;
 
 		//Create device info
 		VkDeviceCreateInfo deviceCreateInfo{};
@@ -163,6 +184,7 @@ void VKInit::InitDevice()
 		deviceCreateInfo.queueCreateInfoCount = 1;
 		deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
 		deviceCreateInfo.pNext = &robustness2Features;
+		deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
 		//--------------------Device Extensions settings--------------------//
 
