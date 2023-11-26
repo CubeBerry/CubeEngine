@@ -22,7 +22,8 @@ void VerticesDemo::Update(float /*dt*/)
 	glm::mat4 modelMatrix2(1.0f);
 	(*matrices)[2].model = glm::translate(modelMatrix2, { -1.f,1.f,0.f });
 	glm::mat4 modelMatrix3(1.0f);
-	(*matrices)[3].model = glm::translate(modelMatrix3, { -1.f,-1.f,0.f });
+	//(*matrices)[3].model = glm::translate(modelMatrix3, { -1.f,-1.f,0.f });
+	(*matrices)[3].model = glm::scale(modelMatrix3, { 0.5f, 0.5f, 0.f });
 	glm::mat4 modelMatrix4(1.0f);
 	(*matrices)[4].model = glm::translate(modelMatrix4, { 1.f,-1.f,0.f });
 }

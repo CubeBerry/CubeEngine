@@ -36,7 +36,7 @@ VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(
 	vkTexurePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
 	vkQuadPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkQuadPipeline->InitPipeLine(vkQuadShader->GetVertexModule(), vkQuadShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
+	vkQuadPipeline->InitPipeLine(vkQuadShader->GetVertexModule(), vkQuadShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
 
 	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
 
@@ -847,19 +847,24 @@ void VKRenderManager::LoadQuad(glm::vec4 color_)
 {
 	quadVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
 	quadVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	quadVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
 	quadVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	quadVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
 	if (quadVertex != nullptr)
 		delete quadVertex;
 	quadVertex = new VKVertexBuffer(vkInit, &quadVertices);
 
 	uint64_t indexNumber{ quadVertices.size() / 4 - 1 };
+	//quadIndices.push_back(4 * indexNumber);
+	//quadIndices.push_back(4 * indexNumber + 1);
+	//quadIndices.push_back(4 * indexNumber + 2);
+	//quadIndices.push_back(4 * indexNumber + 2);
+	//quadIndices.push_back(4 * indexNumber + 1);
+	//quadIndices.push_back(4 * indexNumber + 3);
 	quadIndices.push_back(4 * indexNumber);
 	quadIndices.push_back(4 * indexNumber + 1);
 	quadIndices.push_back(4 * indexNumber + 2);
-	quadIndices.push_back(4 * indexNumber + 2);
-	quadIndices.push_back(4 * indexNumber + 1);
 	quadIndices.push_back(4 * indexNumber + 3);
+	quadIndices.push_back(4 * indexNumber);
 	if (quadIndex != nullptr)
 		delete quadIndex;
 	quadIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &quadIndices);
@@ -1048,6 +1053,8 @@ void VKRenderManager::Render()
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 	//Bind Texture DescriptorSet
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+	//Change Primitive Topology
+	vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 	//Draw
 	vkCmdDrawIndexed(*currentCommandBuffer, texIndices.size(), 1, 0, 0, 0);
 
@@ -1061,6 +1068,8 @@ void VKRenderManager::Render()
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkQuadPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 	//Change Line Width
 	vkCmdSetLineWidth(*currentCommandBuffer, 5.0f);
+	//Change Primitive Topology
+	vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_STRIP);
 	//Draw
 	vkCmdDrawIndexed(*currentCommandBuffer, quadIndices.size(), 1, 0, 0, 0);
 
