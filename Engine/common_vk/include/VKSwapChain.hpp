@@ -18,7 +18,7 @@ public:
 
 	VkSwapchainKHR* GetSwapChain() { return &vkSwapChain; };
 	std::array<VkFence, BUFFER_COUNT>* GetFences() { return &vkFences; };
-	std::array<VkSemaphore, BUFFER_COUNT>* GetSemaphores() { return &vkSemaphores; };
+	std::array<std::array<VkSemaphore, 2>, BUFFER_COUNT>* GetSemaphores() { return &vkSemaphores; };
 	std::vector<VkImage>* GetSwapChainImages() { return &vkSwapChainImages; };
 	VkExtent2D* GetSwapChainImageExtent() { return &swapchainImageExtent; };
 	std::vector<VkImageView>* GetSwapChainImageViews() { return &vkSwapChainImageViews; };
@@ -30,6 +30,6 @@ private:
 	VkExtent2D swapchainImageExtent{ 0,0 };
 	std::vector<VkImage> vkSwapChainImages;
 	std::array<VkFence, BUFFER_COUNT> vkFences{ VK_NULL_HANDLE };
-	std::array<VkSemaphore, BUFFER_COUNT> vkSemaphores{ VK_NULL_HANDLE };
+	std::array<std::array<VkSemaphore, 2>, BUFFER_COUNT> vkSemaphores{ VK_NULL_HANDLE };
 	std::vector<VkImageView> vkSwapChainImageViews;
 };

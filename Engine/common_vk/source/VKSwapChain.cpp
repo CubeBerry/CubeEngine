@@ -18,9 +18,10 @@ VKSwapChain::~VKSwapChain()
 		vkDestroyFence(*vkInit->GetDevice(), fence, nullptr);
 	}
 	//Destroy Semaphore
-	for (auto& semaphore : vkSemaphores)
+	for (auto& semaphores : vkSemaphores)
 	{
-		vkDestroySemaphore(*vkInit->GetDevice(), semaphore, nullptr);
+		for (auto& semaphore : semaphores)
+			vkDestroySemaphore(*vkInit->GetDevice(), semaphore, nullptr);
 	}
 	//Destroy ImageView
 	for (auto& imageView : vkSwapChainImageViews)
@@ -272,26 +273,29 @@ void VKSwapChain::InitSemaphore()
 	//Create semaphore
 	try
 	{
-		for (auto& semaphore : vkSemaphores)
+		for (auto& semaphores : vkSemaphores)
 		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSemaphore(*vkInit->GetDevice(), &createInfo, nullptr, &semaphore);
-			if (result != VK_SUCCESS)
+			for (auto& semaphore : semaphores)
 			{
-				switch (result)
+				VkResult result{ VK_SUCCESS };
+				result = vkCreateSemaphore(*vkInit->GetDevice(), &createInfo, nullptr, &semaphore);
+				if (result != VK_SUCCESS)
 				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
-					break;
-				default:
-					break;
-				}
-				std::cout << std::endl;
+					switch (result)
+					{
+					case VK_ERROR_OUT_OF_HOST_MEMORY:
+						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+						break;
+					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+						break;
+					default:
+						break;
+					}
+					std::cout << std::endl;
 
-				throw std::runtime_error{ "Semaphore Creation Failed" };
+					throw std::runtime_error{ "Semaphore Creation Failed" };
+				}
 			}
 		}
 	}

@@ -978,11 +978,11 @@ void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 void VKRenderManager::Render()
 {
 	Window* window_ = Engine::Engine().GetWindow();
-	auto& vkSemaphore = (*vkSwapChain->GetSemaphores())[frameIndex];
+	auto& vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
 
 	//Get image index from swapchain
 	//uint32_t swapchainIndex;
-	VkResult result = vkAcquireNextImageKHR(*vkInit->GetDevice(), *vkSwapChain->GetSwapChain(), UINT64_MAX, (*vkSwapChain->GetSemaphores())[IMAGE_AVAILABLE_INDEX], VK_NULL_HANDLE, &swapchainIndex);
+	VkResult result = vkAcquireNextImageKHR(*vkInit->GetDevice(), *vkSwapChain->GetSwapChain(), UINT64_MAX, vkSemaphores[IMAGE_AVAILABLE_INDEX], VK_NULL_HANDLE, &swapchainIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		RecreateSwapChain(window_);
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -1135,9 +1135,9 @@ void VKRenderManager::Render()
 	vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
 
 	//ImGui
-	imguiManager->Begin();
-	ImGui::ShowDemoWindow();
-	imguiManager->End(frameIndex);
+	//imguiManager->Begin();
+	//ImGui::ShowDemoWindow();
+	//imguiManager->End(frameIndex);
 
 	//--------------------End Draw--------------------//
 
@@ -1174,16 +1174,16 @@ void VKRenderManager::Render()
 	//Define pipeline stage that semaphore must be signaled
 	constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &(*vkSwapChain->GetSemaphores())[IMAGE_AVAILABLE_INDEX];
+	submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
 	submitInfo.pWaitDstStageMask = &waitDstStageMask;
 
 	submitInfo.commandBufferCount = 1;
-	//submitInfo.pCommandBuffers = currentCommandBuffer;
-	submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
+	submitInfo.pCommandBuffers = currentCommandBuffer;
+	//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
 
 	//Define semaphore that informs when command buffer is processed
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &(*vkSwapChain->GetSemaphores())[RENDERING_DONE_INDEX];
+	submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
 
 	//Submit queue to command buffer
 	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
@@ -1197,7 +1197,7 @@ void VKRenderManager::Render()
 
 	//Define semaphore that waits to ensure command buffer to be processed
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &(*vkSwapChain->GetSemaphores())[RENDERING_DONE_INDEX];
+	presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
 
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
