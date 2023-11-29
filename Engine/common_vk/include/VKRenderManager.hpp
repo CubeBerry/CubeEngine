@@ -51,7 +51,8 @@ public:
 	//--------------------Texture Render--------------------//
 
 	void LoadTexture(const std::filesystem::path& path_);
-	void LoadQuad(glm::vec4 color_);
+	void LoadQuad(glm::vec4 color_, unsigned int texIndex_);
+	void LoadLineQuad(glm::vec4 color_);
 	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
 	void InitCommandPool();
@@ -76,9 +77,9 @@ private:
 	std::vector<VkFramebuffer> vkFrameBuffers;
 
 	VKShader* vkTextureShader;
-	VKShader* vkQuadShader;
+	VKShader* vkLineShader;
 	VKPipeLine* vkTexurePipeline;
-	VKPipeLine* vkQuadPipeline;
+	VKPipeLine* vkLinePipeline;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
@@ -102,10 +103,10 @@ private:
 	std::vector<uint16_t> texIndices;
 	VKIndexBuffer* texIndex{ nullptr };
 
-	std::vector<Vertex> quadVertices;
-	VKVertexBuffer* quadVertex{ nullptr };
-	std::vector<uint16_t> quadIndices;
-	VKIndexBuffer* quadIndex{ nullptr };
+	std::vector<Vertex> lineVertices;
+	VKVertexBuffer* lineVertex{ nullptr };
+	std::vector<uint16_t> lineIndices;
+	VKIndexBuffer* lineIndex{ nullptr };
 
 	std::vector<UniformMatrix> matrices;
 	VKUniformBuffer<UniformMatrix>* uniform{ nullptr };
