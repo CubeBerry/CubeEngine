@@ -7,6 +7,7 @@ precision mediump float;
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
 layout(location = 2) in float inTexIndex;
+layout(location = 3) in float inIsTex;
 
 layout(location = 0) out vec4 fragmentColor;
 
@@ -14,13 +15,13 @@ layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    if(inTexIndex > 500)
-    {
-        fragmentColor = i_col;
-    }
-    else
+    if(inIsTex == 1.0)
     {
         vec3 col = texture(tex[int(inTexIndex)], i_uv).rgb;
         fragmentColor = vec4(col, 1.0);
+    }
+    else
+    {
+        fragmentColor = i_col;
     }
 }
