@@ -4,18 +4,19 @@
 #include <glm/vec4.hpp>
 #include <glm/matrix.hpp>
 
-struct Vertex
+struct alignas(16) Vertex
 {
 	glm::vec4 position;
 	glm::vec4 color;
 	//glm::vec2 uv;
 	float index;
-	float texIndex;
+	float isTex;
 };
 
-struct UniformMatrix
+struct alignas(16) UniformMatrix
 {
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 projection;
+	float texIndex;
 };

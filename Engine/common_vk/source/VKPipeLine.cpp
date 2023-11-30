@@ -96,12 +96,12 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	}
 
 	{
-		//Define Vertex Input Attribute about Texture Index
+		//Define Vertex Input Attribute about Enable Texture
 		VkVertexInputAttributeDescription vertexInputAttribute{};
 		vertexInputAttribute.location = 3;
 		vertexInputAttribute.binding = 0;
 		vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(Vertex, texIndex);
+		vertexInputAttribute.offset = offsetof(Vertex, isTex);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}

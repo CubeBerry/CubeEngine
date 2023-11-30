@@ -51,7 +51,7 @@ public:
 	//--------------------Texture Render--------------------//
 
 	void LoadTexture(const std::filesystem::path& path_);
-	void LoadQuad(glm::vec4 color_, unsigned int texIndex_);
+	void LoadQuad(glm::vec4 color_, float isTex_);
 	void LoadLineQuad(glm::vec4 color_);
 	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
