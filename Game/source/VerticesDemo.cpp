@@ -48,6 +48,15 @@ void VerticesDemo::Update(float /*dt*/)
 
 	glm::mat4 modelMatrix(1.0f);
 	(*matrices)[1].model = glm::translate(modelMatrix, { 1.f,1.f,0.f });
+	switch (static_cast<int>((*matrices)[1].texIndex))
+	{
+	case 0:
+		(*matrices)[1].texIndex = 1.f;
+		break;
+	case 1:
+		(*matrices)[1].texIndex = 0.f;
+		break;
+	}
 
 	glm::mat4 modelMatrix2(1.0f);
 	(*matrices)[2].model = glm::translate(modelMatrix2, { -1.f,1.f,0.f });
