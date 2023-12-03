@@ -14,7 +14,7 @@ public:
 	virtual void Update(float dt) = 0;
 	virtual void End() = 0;
 
-	Object * GetOwner() const { return owner; }
+	Object* GetOwner() const { return owner; }
 	void SetOwner(Object* owner_) { this->owner = owner_; }
 	ComponentTypes GetType() { return componentType; }
 

@@ -985,7 +985,6 @@ void VKRenderManager::LoadVertices(std::vector<Vertex> vertices_, std::vector<ui
 		delete texVertex;
 	texVertex = new VKVertexBuffer(vkInit, &texVertices);
 	
-
 	uint64_t indexNumber{ texVertices.size() / vertices_.size() - 1 };
 	for (auto index : indices_)
 	{
@@ -1017,7 +1016,6 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 	if (lineVertex != nullptr)
 		delete lineVertex;
 	lineVertex = new VKVertexBuffer(vkInit, &lineVertices);
-
 
 	uint64_t indexNumber{ lineVertices.size() / vertices_.size() - 1 };
 	for (auto index : indices_)
