@@ -53,6 +53,9 @@ public:
 	void LoadTexture(const std::filesystem::path& path_);
 	void LoadQuad(glm::vec4 color_, float isTex_);
 	void LoadLineQuad(glm::vec4 color_);
+
+	void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
+	void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
 	void InitCommandPool();

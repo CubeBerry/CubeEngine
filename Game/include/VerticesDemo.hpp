@@ -1,5 +1,8 @@
 #pragma once
 #include "GameState.hpp"
+#include "Object.hpp"
+
+#include <vector>
 
 class VerticesDemo : public GameState
 {
@@ -13,4 +16,5 @@ public:
 	void Restart() override;
 	void End() override;
 private:
+	std::vector<Object*> objects;
 };
