@@ -52,21 +52,21 @@ void VerticesDemo::Init()
 	(*matrices)[5].model = glm::scale(modelMatrix, { 0.5f, 0.5f, 0.f });
 	(*matrices)[5].texIndex = 0.f;*/
 
-	objects.push_back(new Object({ 0.f,0.f,0.7f }, { 512.f,512.f,0.f }, "0", ObjectType::NONE));
-	objects.at(0)->AddComponent<MaterialComponent>();
-	objects.at(0)->GetComponent<MaterialComponent>()->AddMeshWithTexture(0);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.7f }, glm::vec3{ 512.f,512.f,0.f }, "0", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(0);
 
-	objects.push_back(new Object({ 0.f,0.f,0.5f }, { 256.f,256.f,0.f }, "1", ObjectType::NONE));
-	objects.at(1)->AddComponent<MaterialComponent>();
-	objects.at(1)->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.5f }, glm::vec3{ 256.f,256.f,0.f }, "1", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
 
-	objects.push_back(new Object({ 0.f,0.f,0.3f }, { 128.f,64.f,0.f }, "2", ObjectType::NONE));
-	objects.at(2)->AddComponent<MaterialComponent>();
-	objects.at(2)->GetComponent<MaterialComponent>()->AddMeshWithVertices(vertices, indices);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.3f }, glm::vec3{ 128.f,64.f,0.f }, "2", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithVertices(vertices, indices);
 
-	objects.push_back(new Object({ 256.f,256.f,0.3f }, { 128.f,128.f,0.f }, "3", ObjectType::NONE));
-	objects.at(3)->AddComponent<MaterialComponent>();
-	objects.at(3)->GetComponent<MaterialComponent>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f,256.f,0.3f }, glm::vec3{ 128.f,128.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
 
 }
 
@@ -125,32 +125,27 @@ void VerticesDemo::Update(float dt)
 	//	(*matrices)[5].model = glm::scale(modelMatrix5, { 0.5f, 0.5f, 0.f });
 	//}
 
-	auto matrices = Engine::Engine().GetVKRenderManager()->GetMatrices();
-	switch (static_cast<int>((*matrices)[1].texIndex))
+	switch (static_cast<int>(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->GetTextureId()))
 	{
 	case 0:
-		(*matrices)[1].texIndex = 1.f;
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(1.f);
 		break;
 	case 1:
-		(*matrices)[1].texIndex = 0.f;
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(0.f);
 		break;
 	
 	}
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
-		objects.at(0)->SetXPosition(objects.at(0)->GetPosition().x - 50.f);
+		Engine::Instance().GetObjectManager()->FindObjectWithId(0)->SetXPosition(Engine::Instance().GetObjectManager()->FindObjectWithId(0)->GetPosition().x - 50.f);
 	}
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
-		objects.at(0)->SetXPosition(objects.at(0)->GetPosition().x + 50.f);
+		Engine::Instance().GetObjectManager()->FindObjectWithId(0)->SetXPosition(Engine::Instance().GetObjectManager()->FindObjectWithId(0)->GetPosition().x + 50.f);
 	}
-	objects.at(1)->SetRotate(objects.at(1)->GetRotate() + 50.f * dt);
-	objects.at(2)->SetRotate(objects.at(2)->GetRotate() + 500.f * dt);
-	objects.at(2)->SetXSize(objects.at(2)->GetSize().x + 1.f * dt);
-	for (auto obj : objects)
-	{
-		obj->Update(dt);
-	}
+	Engine::Instance().GetObjectManager()->FindObjectWithId(1)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetRotate() + 50.f * dt);
+	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 500.f * dt);
+	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetXSize(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetSize().x + 1.f * dt);
 }
 
 void VerticesDemo::Draw(float /*dt*/)
@@ -160,9 +155,11 @@ void VerticesDemo::Draw(float /*dt*/)
 
 void VerticesDemo::Restart()
 {
+	Engine::Instance().GetObjectManager()->DestroyAllObjects();
 }
 
 void VerticesDemo::End()
 {
+	Engine::Instance().GetObjectManager()->DestroyAllObjects();
 }
 

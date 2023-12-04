@@ -68,5 +68,6 @@ void MaterialComponent::AddMeshWithTexture(float index)
 
 void MaterialComponent::ChangeTexture(float index)
 {
+	textureId = static_cast<int>(index);
 	Engine::Engine().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = index;
 }

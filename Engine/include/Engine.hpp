@@ -4,6 +4,7 @@
 #include "GameStateManager.hpp"
 #include "VKRenderManager.hpp"
 #include "InputManager.hpp"
+#include "ObjectManager.hpp"
 
 class Engine
 {
@@ -22,6 +23,7 @@ public:
 	static VKRenderManager* GetVKRenderManager() { return Instance().vkRenderManager; }
 	static GameStateManager* GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager* GetInputManager() { return Instance().inputManager; }
+	static ObjectManager* GetObjectManager() { return Instance().objectManager; }
 private:
 
 	bool isRunning = true;
@@ -38,4 +40,5 @@ private:
 	VKRenderManager* vkRenderManager = nullptr;
 	GameStateManager* gameStateManger = nullptr;
 	InputManager* inputManager = nullptr;
+	ObjectManager* objectManager = nullptr;
 };

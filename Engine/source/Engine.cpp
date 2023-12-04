@@ -10,6 +10,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	vkRenderManager = new VKRenderManager(window->GetWindow(), true);
 	gameStateManger = new GameStateManager();
 	inputManager = new InputManager;
+	objectManager = new ObjectManager;
 }
 
 void Engine::Update()
@@ -36,6 +37,7 @@ void Engine::Update()
 			}
 			inputManager->InputPollEvent(event);
 			gameStateManger->Update(deltaTime);
+			objectManager->Update(deltaTime);
 			gameStateManger->Draw(deltaTime);
 
 			timer.ResetLastTimeStamp();
@@ -56,6 +58,7 @@ void Engine::Update()
 
 void Engine::End()
 {
+	delete objectManager;
 	delete inputManager;
 	delete vkRenderManager;
 	delete gameStateManger;

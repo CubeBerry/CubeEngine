@@ -24,6 +24,7 @@ public:
 	void AddMeshWithLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 	void AddMeshWithTexture(float index);
 
+	int GetTextureId() { return textureId; }
 	void ChangeTexture(float index);
 
 private:

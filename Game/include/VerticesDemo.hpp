@@ -16,5 +16,4 @@ public:
 	void Restart() override;
 	void End() override;
 private:
-	std::vector<Object*> objects;
 };
