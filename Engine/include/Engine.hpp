@@ -5,6 +5,7 @@
 #include "VKRenderManager.hpp"
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"
+#include "CameraManager.hpp"
 
 class Engine
 {
@@ -24,6 +25,7 @@ public:
 	static GameStateManager* GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager* GetInputManager() { return Instance().inputManager; }
 	static ObjectManager* GetObjectManager() { return Instance().objectManager; }
+	static CameraManager* GetCameraManager() { return Instance().cameraManager; }
 private:
 
 	bool isRunning = true;
@@ -41,4 +43,5 @@ private:
 	GameStateManager* gameStateManger = nullptr;
 	InputManager* inputManager = nullptr;
 	ObjectManager* objectManager = nullptr;
+	CameraManager* cameraManager = nullptr;
 };

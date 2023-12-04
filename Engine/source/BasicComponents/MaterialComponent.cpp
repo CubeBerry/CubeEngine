@@ -13,6 +13,8 @@ void MaterialComponent::Init()
 
 void MaterialComponent::Update(float /*dt*/)
 {
+	UpdateProjection();
+	UpdateView();
 	UpdateModel();
 }
 
@@ -32,7 +34,17 @@ void MaterialComponent::UpdateModel()
 	modelMatrix = glm::rotate(modelMatrix, glm::radians(GetOwner()->GetRotate()), glm::vec3(0.0f, 0.0f, 1.0f));
 	modelMatrix = glm::scale(modelMatrix, GetOwner()->GetSize() * extent);
 
-	Engine::Engine().GetVKRenderManager()->GetMatrices()->at(materialId).model = modelMatrix;
+	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).model = modelMatrix;
+}
+
+void MaterialComponent::UpdateView()
+{
+	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).view = Engine::Engine().GetCameraManager()->GetViewMatrix();
+}
+
+void MaterialComponent::UpdateProjection()
+{
+	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
 }
 
 void MaterialComponent::AddQuad(glm::vec4 color_, float isTex_)
@@ -69,5 +81,5 @@ void MaterialComponent::AddMeshWithTexture(float index)
 void MaterialComponent::ChangeTexture(float index)
 {
 	textureId = static_cast<int>(index);
-	Engine::Engine().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = index;
+	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = index;
 }

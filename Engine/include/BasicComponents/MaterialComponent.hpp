@@ -17,6 +17,8 @@ public:
     void End() override;
 
 	void UpdateModel();
+	void UpdateView();
+	void UpdateProjection();
 
 	void AddQuad(glm::vec4 color_, float isTex_);
 	void AddQuadLine(glm::vec4 color_);

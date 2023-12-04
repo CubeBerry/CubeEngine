@@ -11,6 +11,8 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	gameStateManger = new GameStateManager();
 	inputManager = new InputManager;
 	objectManager = new ObjectManager;
+	cameraManager = new CameraManager;
+	cameraManager->Init({ windowWidth ,windowHeight });
 }
 
 void Engine::Update()
@@ -36,6 +38,7 @@ void Engine::Update()
 				break;
 			}
 			inputManager->InputPollEvent(event);
+			cameraManager->Update();
 			gameStateManger->Update(deltaTime);
 			objectManager->Update(deltaTime);
 			gameStateManger->Draw(deltaTime);
@@ -58,6 +61,7 @@ void Engine::Update()
 
 void Engine::End()
 {
+	delete cameraManager;
 	delete objectManager;
 	delete inputManager;
 	delete vkRenderManager;
