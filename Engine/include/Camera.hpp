@@ -4,7 +4,8 @@
 enum class CameraType
 {
 	TwoDimension,
-	ThreeDimension
+	ThreeDimension,
+	NONE
 };
 
 enum CameraCenterMode
@@ -20,11 +21,11 @@ class Camera
 public:
 	constexpr Camera() noexcept = default;
 	~Camera() {};
-	//CAMERA
+
 	void Update();
 
 	glm::vec3 GetCenter() const noexcept { return cameraTarget; }
-	void    SetCenter(glm::vec3 centerPosition) noexcept { this->cameraTarget = centerPosition; }
+	void    SetCenter(glm::vec3 centerPosition) noexcept;
 
 	glm::vec3 GetUp() const noexcept { return upVector; }
 	glm::vec3 GetRight() const noexcept { return rightVector; }
@@ -34,9 +35,6 @@ public:
 	void Rotate(float angle) noexcept;
 	void ResetUp(glm::vec3 startUpPosition);
 
-	//CAMERA
-
-	//VIEW
 	glm::mat4		GetViewMatrix() { return view; }
 	glm::mat4		GetProjectionMatrix() { return projection; }
 	void            SetViewSize(int width, int height) noexcept;
@@ -44,8 +42,9 @@ public:
 	float			GetZoom() { return zoom; }
 	void                       SetCameraCenterMode(CameraCenterMode cameraMode) noexcept {};
 	constexpr CameraCenterMode GetCameraCenterMode() const noexcept { return cameraCenterMode; }
-	//VIEW
 
+	float GetRotate2D() { return rotate2D; }
+	void			SetCameraType(CameraType type) { cameraType = type; }
 	void            SetNear(float amount) noexcept { nearClip = amount; }
 	void            SetFar(float amount) noexcept { farClip = amount; }
 private:
@@ -61,8 +60,10 @@ private:
 	float farClip = 100.0f;
 	float pitch = 0.0f;
 	float yaw = -90.0f;
+	float rotate2D = 0.f;
 
 	glm::mat4 view;
 	glm::mat4 projection;
+	CameraType cameraType = CameraType::NONE;
 	CameraCenterMode cameraCenterMode = RightOriginCenter;
 };

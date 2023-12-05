@@ -12,7 +12,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	inputManager = new InputManager;
 	objectManager = new ObjectManager;
 	cameraManager = new CameraManager;
-	cameraManager->Init({ windowWidth ,windowHeight });
+	cameraManager->Init({ windowWidth ,windowHeight }, CameraType::ThreeDimension);
 }
 
 void Engine::Update()

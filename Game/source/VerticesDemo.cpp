@@ -52,19 +52,19 @@ void VerticesDemo::Init()
 	(*matrices)[5].model = glm::scale(modelMatrix, { 0.5f, 0.5f, 0.f });
 	(*matrices)[5].texIndex = 0.f;*/
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.0f }, glm::vec3{ 512.f,512.f,0.f }, "0", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.1f }, glm::vec3{ 512.f,512.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(0);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.0f }, glm::vec3{ 256.f,256.f,0.f }, "1", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.2f }, glm::vec3{ 256.f,256.f,0.f }, "1", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.0f }, glm::vec3{ 128.f,64.f,0.f }, "2", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.3f }, glm::vec3{ 128.f,64.f,0.f }, "2", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithVertices(vertices, indices);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f,256.f,0.0f }, glm::vec3{ 128.f,128.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f,256.f,0.4f }, glm::vec3{ 128.f,128.f,0.f }, "3", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
 
@@ -135,14 +135,31 @@ void VerticesDemo::Update(float dt)
 		break;
 	
 	}
+	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
+	{
+		Engine::Instance().GetCameraManager()->MoveUp(5.f * dt);
+	}
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
+	{
+		Engine::Instance().GetCameraManager()->MoveUp(-5.f * dt);
+	}
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
-		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() - 5.f);
+		Engine::Instance().GetCameraManager()->MoveRight(-5.f * dt);
 	}
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
-		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f);
+		Engine::Instance().GetCameraManager()->MoveRight(5.f * dt);
 	}
+	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::A))
+	{
+		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 5.f);
+	}
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::S))
+	{
+		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() + 5.f);
+	}
+
 	Engine::Instance().GetObjectManager()->FindObjectWithId(1)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetRotate() + 50.f * dt);
 	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 500.f * dt);
 	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetXSize(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetSize().x + 1.f * dt);

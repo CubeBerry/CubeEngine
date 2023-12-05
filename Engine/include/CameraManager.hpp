@@ -13,7 +13,7 @@
 class CameraManager
 {
 public:
-	void Init(glm::vec2 viewSize, float zoom = 45.f, float angle = 0.f);
+	void Init(glm::vec2 viewSize, CameraType type = CameraType::TwoDimension, float zoom = 45.f, float angle = 0.f);
 	void Update();
 	void TargetAt(glm::vec3 targetLocation);
 	void Reset();
@@ -25,6 +25,7 @@ public:
 	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); }
 	void SetViewSize(int width, int height) noexcept { camera.SetViewSize(width, height); }
 
+	float GetRotate2D() { return camera.GetRotate2D(); }
 	float GetZoom() noexcept { return camera.GetZoom(); }
 	glm::vec3 GetCenter() { return camera.GetCenter(); }
 
