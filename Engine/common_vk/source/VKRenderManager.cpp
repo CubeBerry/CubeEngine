@@ -846,9 +846,9 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_)
 {
 	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_));
 	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_));
 	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_));
 	if (texVertex != nullptr)
 		delete texVertex;
 	texVertex = new VKVertexBuffer(vkInit, &texVertices);
@@ -858,8 +858,8 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_)
 	texIndices.push_back(4 * indexNumber + 1);
 	texIndices.push_back(4 * indexNumber + 2);
 	texIndices.push_back(4 * indexNumber + 2);
-	texIndices.push_back(4 * indexNumber + 1);
 	texIndices.push_back(4 * indexNumber + 3);
+	texIndices.push_back(4 * indexNumber);
 	if (texIndex != nullptr)
 		delete texIndex;
 	texIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
@@ -903,18 +903,18 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_)
 	//}
 
 	UniformMatrix mat;
-	mat.model = glm::mat3(1.f);
-	mat.view = glm::mat3(1.f);
-	mat.projection = glm::mat3(1.f);
+	mat.model = glm::mat4(1.f);
+	mat.view = glm::mat4(1.f);
+	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
 }
 
 void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 {
 	lineVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
 	lineVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
 	lineVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	lineVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
 	if (lineVertex != nullptr)
 		delete lineVertex;
 	lineVertex = new VKVertexBuffer(vkInit, &lineVertices);
@@ -924,8 +924,8 @@ void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 	lineIndices.push_back(4 * indexNumber + 1);
 	lineIndices.push_back(4 * indexNumber + 2);
 	lineIndices.push_back(4 * indexNumber + 2);
-	lineIndices.push_back(4 * indexNumber + 1);
 	lineIndices.push_back(4 * indexNumber + 3);
+	lineIndices.push_back(4 * indexNumber);
 	if (lineIndex != nullptr)
 		delete lineIndex;
 	lineIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &lineIndices);
@@ -969,9 +969,9 @@ void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 	//}
 
 	UniformMatrix mat;
-	mat.model = glm::mat3(1.f);
-	mat.view = glm::mat3(1.f);
-	mat.projection = glm::mat3(1.f);
+	mat.model = glm::mat4(1.f);
+	mat.view = glm::mat4(1.f);
+	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
 }
 
@@ -1230,8 +1230,6 @@ void VKRenderManager::Render()
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	if (texIndex != nullptr)
-	{
 		//Bind Vertex Buffer
 		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, texVertex->GetVertexBuffer(), &vertexBufferOffset);
 		//Bind Index Buffer
@@ -1246,10 +1244,7 @@ void VKRenderManager::Render()
 		vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		//Draw
 		vkCmdDrawIndexed(*currentCommandBuffer, texIndices.size(), 1, 0, 0, 0);
-	}
 
-	if (lineIndex != nullptr)
-	{
 		//Bind Vertex Buffer
 		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, lineVertex->GetVertexBuffer(), &vertexBufferOffset);
 		//Bind Index Buffer
@@ -1264,7 +1259,7 @@ void VKRenderManager::Render()
 		vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		//Draw
 		vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
-	}
+
 	//ImGui
 	//imguiManager->Begin();
 	//ImGui::ShowDemoWindow();

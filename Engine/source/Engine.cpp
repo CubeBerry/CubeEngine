@@ -12,7 +12,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	inputManager = new InputManager;
 	objectManager = new ObjectManager;
 	cameraManager = new CameraManager;
-	cameraManager->Init({ windowWidth ,windowHeight }, CameraType::TwoDimension);
+	cameraManager->Init({ windowWidth ,windowHeight }, CameraType::ThreeDimension);
 }
 
 void Engine::Update()
@@ -39,8 +39,8 @@ void Engine::Update()
 			}
 			inputManager->InputPollEvent(event);
 			cameraManager->Update();
-			gameStateManger->Update(deltaTime);
 			objectManager->Update(deltaTime);
+			gameStateManger->Update(deltaTime);
 			gameStateManger->Draw(deltaTime);
 
 			timer.ResetLastTimeStamp();

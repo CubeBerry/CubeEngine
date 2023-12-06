@@ -10,27 +10,15 @@ void VerticesDemo::Init()
 	std::vector<Vertex> vertices =
 	{
 	   {glm::vec4(-1.f, 1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(-1.f, -1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
+	   {glm::vec4(1.f, 1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
 	   {glm::vec4(1.f, -1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(1.f, 1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f}
+	   {glm::vec4(-1.f, -1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f}
 	};
 
 	std::vector<uint64_t> indices
 	{
 		0, 1, 2, //first triangle
 		2, 3, 0  //second triangle
-	};
-
-	std::vector<Vertex> vertices1 =
-	{
-	   {glm::vec4(-1.f, 1.f, 1.f, 1.f), { 0.f, 1.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(-1.f, -1.f, 1.f, 1.f), { 1.f, 0.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(1.f, -1.f, 1.f, 1.f), { 1.f, 1.f, 0.f, 1.f }, 0, 0.f}
-	};
-
-	std::vector<uint64_t> indices1
-	{
-		0, 1, 2, 0
 	};
 
 	//Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");

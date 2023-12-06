@@ -153,7 +153,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		break;
 	}
 	//Culling
-	rasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
+	rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizationStateInfo.lineWidth = 1.0f;
 
 	//Create Multisample State Info(MSAA)

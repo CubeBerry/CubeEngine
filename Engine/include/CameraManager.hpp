@@ -1,12 +1,3 @@
-/**************************************************************************************
- *	File Name        : Camera.hpp
- *	Project Name     : Keyboard Warriors
- *	Primary Author   : JeongHak Kim
- *	Secondary Author : 
- *	Copyright Information :
- *    "All content 2019 DigiPen (USA) Corporation, all rights reserved."
- **************************************************************************************/
-
 #pragma once
 #include "Camera.hpp"
 
