@@ -38,9 +38,9 @@ void Engine::Update()
 				break;
 			}
 			inputManager->InputPollEvent(event);
-			cameraManager->Update();
-			objectManager->Update(deltaTime);
 			gameStateManger->Update(deltaTime);
+			objectManager->Update(deltaTime);
+			cameraManager->Update();
 			gameStateManger->Draw(deltaTime);
 
 			timer.ResetLastTimeStamp();

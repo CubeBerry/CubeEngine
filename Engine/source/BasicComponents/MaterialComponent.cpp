@@ -26,8 +26,8 @@ void MaterialComponent::UpdateModel()
 {
 	glm::mat4 modelMatrix(1.0f);
 
-	glm::vec3 pos(0, 0, 0);
-	glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
+	//glm::vec3 pos(0, 0, 0);
+	//glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
 	glm::vec3 extent(1.f / Engine::GetWindow()->GetWindowSize().x, 1.f / Engine::GetWindow()->GetWindowSize().y, 1.f);
 
 	modelMatrix = glm::translate(modelMatrix, GetOwner()->GetPosition() * extent);
@@ -73,7 +73,7 @@ void MaterialComponent::AddMeshWithLineVertices(std::vector<Vertex> vertices_, s
 
 void MaterialComponent::AddMeshWithTexture(float index)
 {
-	Engine::Instance().GetVKRenderManager()->LoadQuad({1.f,1.f,1.f,1.f}, true);
+	Engine::Instance().GetVKRenderManager()->LoadQuad({1.f,1.f,1.f,1.f}, 1.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	ChangeTexture(index);
 }

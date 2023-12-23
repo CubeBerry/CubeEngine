@@ -39,7 +39,6 @@ public:
     Object* FindObjectWithId(int id) { return objectMap.at(id).get(); }
     Object* GetLastObject() { return objectMap.at(lastObjectID - 1).get(); }
 private:
-
     int                                    lastObjectID = 0;
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
