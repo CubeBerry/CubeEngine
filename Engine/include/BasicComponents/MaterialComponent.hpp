@@ -24,10 +24,10 @@ public:
 	void AddQuadLine(glm::vec4 color_);
 	void AddMeshWithVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 	void AddMeshWithLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-	void AddMeshWithTexture(float index);
+	void AddMeshWithTexture(int index);
 
 	int GetTextureId() { return textureId; }
-	void ChangeTexture(float index);
+	void ChangeTexture(int index);
 
 private:
 	int materialId = 0;

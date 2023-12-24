@@ -18,5 +18,5 @@ struct UniformMatrix
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
-	alignas(4) float texIndex;
+	alignas(4) int texIndex;
 };

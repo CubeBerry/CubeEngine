@@ -71,15 +71,15 @@ void MaterialComponent::AddMeshWithLineVertices(std::vector<Vertex> vertices_, s
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 }
 
-void MaterialComponent::AddMeshWithTexture(float index)
+void MaterialComponent::AddMeshWithTexture(int index)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad({1.f,1.f,1.f,1.f}, 1.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	ChangeTexture(index);
 }
 
-void MaterialComponent::ChangeTexture(float index)
+void MaterialComponent::ChangeTexture(int index)
 {
-	textureId = static_cast<int>(index);
+	textureId = index;
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = index;
 }

@@ -24,8 +24,9 @@ void VerticesDemo::Init()
 	//Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
 	//for (int i = 0; i < 3; ++i)
 	//	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
-	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
+	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
+	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg");
 	/*Engine::Engine().GetVKRenderManager()->LoadQuad(glm::vec4(0.f, 0.f, 1.f, 1.f), 1.f);
 	Engine::Engine().GetVKRenderManager()->LoadQuad(glm::vec4(0.f, 0.f, 1.f, 1.f), 1.f);
 	Engine::Engine().GetVKRenderManager()->LoadQuad(glm::vec4(0.f, 0.f, 1.f, 1.f), 0.f);
@@ -42,11 +43,11 @@ void VerticesDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 512.f,512.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(0);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
 
 	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 256.f,256.f,0.f }, "1", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(2);
 
 	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 128.f,64.f,0.f }, "2", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
@@ -113,16 +114,11 @@ void VerticesDemo::Update(float dt)
 	//	(*matrices)[5].model = glm::scale(modelMatrix5, { 0.5f, 0.5f, 0.f });
 	//}
 
-	switch (static_cast<int>(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->GetTextureId()))
-	{
-	case 0:
-		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(1.f);
-		break;
-	case 1:
+	if(Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_1))
 		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(0.f);
-		break;
-	
-	}
+	else if(Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_2))
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(1.f);
+
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
 	{
 		Engine::Instance().GetCameraManager()->MoveUp(5.f * dt);
@@ -143,7 +139,7 @@ void VerticesDemo::Update(float dt)
 	{
 		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 5.f);
 	}
-	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::S))
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::D))
 	{
 		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() + 5.f);
 	}
