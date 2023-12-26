@@ -31,17 +31,16 @@ void Engine::Update()
 			case SDL_QUIT:
 				isRunning = false;
 				break;
-			case SDL_WINDOWEVENT:
-				//window->Update(&event);
-				break;
 			default:
 				break;
 			}
+
 			inputManager->InputPollEvent(event);
 			gameStateManger->Update(deltaTime);
 			objectManager->Update(deltaTime);
 			cameraManager->Update();
-			gameStateManger->Draw(deltaTime);
+			if (!(SDL_GetWindowFlags(window->GetWindow()) & SDL_WINDOW_MINIMIZED))
+				gameStateManger->Draw(deltaTime);
 
 			timer.ResetLastTimeStamp();
 			frameCount++;

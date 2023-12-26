@@ -1047,7 +1047,7 @@ void VKRenderManager::Render()
 	//Get image index from swapchain
 	//uint32_t swapchainIndex;
 	VkResult result = vkAcquireNextImageKHR(*vkInit->GetDevice(), *vkSwapChain->GetSwapChain(), UINT64_MAX, vkSemaphores[IMAGE_AVAILABLE_INDEX], VK_NULL_HANDLE, &swapchainIndex);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		RecreateSwapChain(window_);
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	//	throw std::runtime_error("Failed Acquring SwapChain Image");
