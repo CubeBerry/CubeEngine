@@ -114,10 +114,22 @@ void VerticesDemo::Update(float dt)
 	//	(*matrices)[5].model = glm::scale(modelMatrix5, { 0.5f, 0.5f, 0.f });
 	//}
 
+	switch (static_cast<int>(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->GetTextureId()))
+	{
+	case 0:
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(1.f);
+		break;
+	case 1:
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(0.f);
+		break;
+	}
+
 	if(Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_1))
 		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(0.f);
 	else if(Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_2))
 		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(1.f);
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_3))
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(2.f);
 
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
 	{
