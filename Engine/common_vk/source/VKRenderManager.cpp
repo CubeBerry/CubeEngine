@@ -1227,6 +1227,19 @@ void VKRenderManager::Render()
 
 	//--------------------Begin Draw--------------------//
 
+	//Create Viewport and Scissor for Dynamic State
+	VkViewport viewport{};
+	viewport.x = 0.f;
+	viewport.y = 0.f;
+	viewport.width = vkSwapChain->GetSwapChainImageExtent()->width;
+	viewport.height = vkSwapChain->GetSwapChainImageExtent()->height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissor{};
+	scissor.offset = { 0,0 };
+	scissor.extent = *vkSwapChain->GetSwapChainImageExtent();
+
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
@@ -1236,6 +1249,9 @@ void VKRenderManager::Render()
 	vkCmdBindIndexBuffer(*currentCommandBuffer, *texIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 	//Bind Pipeline
 	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLine());
+	//Dynamic Viewport & Scissor
+	vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 	//Bind Material DescriptorSet
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 	//Bind Texture DescriptorSet
@@ -1251,6 +1267,9 @@ void VKRenderManager::Render()
 	vkCmdBindIndexBuffer(*currentCommandBuffer, *lineIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 	//Bind Pipeline
 	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLine());
+	//Dynamic Viewport & Scissor
+	vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 	//Bind Material DescriptorSet
 	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 	//Change Line Width

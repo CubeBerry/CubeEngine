@@ -182,12 +182,12 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//Create Dynamic State Info
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 	dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicStateInfo.dynamicStateCount = 2;
+	dynamicStateInfo.dynamicStateCount = 4;
 	VkDynamicState dynamicStates[] = {
 		VK_DYNAMIC_STATE_LINE_WIDTH,
 		VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
-		//VK_DYNAMIC_STATE_VIEWPORT,
-		//VK_DYNAMIC_STATE_SCISSOR
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
 	};
 	dynamicStateInfo.pDynamicStates = dynamicStates;
 
