@@ -7,7 +7,7 @@
 int main(void)
 {
 	Engine& engine = Engine::Instance();
-	engine.Init("Vulkan Demo", 640, 480, false, WindowMode::NORMAL);
+	engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
 	engine.SetFPS(FrameRate::FPS_60);
 
 	engine.GetGameStateManager()->AddLevel(new VerticesDemo);

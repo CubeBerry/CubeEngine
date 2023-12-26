@@ -41,7 +41,7 @@ void VerticesDemo::Init()
 	(*matrices)[5].model = glm::scale(modelMatrix, { 0.5f, 0.5f, 0.f });
 	(*matrices)[5].texIndex = 0.f;*/
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 512.f,512.f,0.f }, "0", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1280.f,720.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
 
