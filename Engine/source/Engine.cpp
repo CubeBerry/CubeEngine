@@ -25,7 +25,7 @@ void Engine::Update()
 		if (deltaTime > 1.f / static_cast<float>(timer.GetFrameRate()))
 		{
 			SDL_PollEvent(&event);
-			vkRenderManager->GetImGuiManager()->FeedEvent(event);
+			//vkRenderManager->GetImGuiManager()->FeedEvent(event);
 			switch (event.type)
 			{
 			case SDL_QUIT:

@@ -74,7 +74,7 @@ private:
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
-	VkImage swapchainImage;
+	//VkImage swapchainImage;
 	uint32_t frameIndex{ 0 };
 
 	VkCommandBuffer* currentCommandBuffer{ VK_NULL_HANDLE };

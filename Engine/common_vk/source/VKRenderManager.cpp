@@ -38,7 +38,7 @@ VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(
 	vkLinePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
-	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
+	//imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
 
 	for (int i = 0; i < 500; ++i)
 	{
@@ -59,6 +59,8 @@ VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(
 
 VKRenderManager::~VKRenderManager()
 {
+	vkDeviceWaitIdle(*vkInit->GetDevice());
+
 	//Destroy Command Pool, also Command Buffer destroys with Command Pool
 	vkDestroyCommandPool(*vkInit->GetDevice(), vkCommandPool, nullptr);
 	//Destroy RenderPass
@@ -68,6 +70,38 @@ VKRenderManager::~VKRenderManager()
 	{
 		vkDestroyFramebuffer(*vkInit->GetDevice(), framebuffer, nullptr);
 	}
+
+	//Destroy Buffers
+	delete texVertex;
+	delete texIndex;
+	delete lineVertex;
+	delete lineIndex;
+	delete uniform;
+
+	//Destroy Texture
+	for (auto t : textures)
+		delete t;
+
+	//Destroy Batch ImageInfo
+	size_t texSize{ textures.size() };
+	for (size_t i = texSize; i < imageInfos.size(); ++i)
+		vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
+	//for(auto& i : imageInfos)
+	//	vkDestroySampler(*vkInit->GetDevice(), i.sampler, nullptr);
+
+	textures.erase(textures.begin(), textures.end());
+	imageInfos.erase(imageInfos.begin(), imageInfos.end());
+	
+	//Destroy Shader
+	delete vkTextureShader;
+	delete vkLineShader;
+
+	//Destroy Pipeline
+	delete vkTexurePipeline;
+	delete vkLinePipeline;
+
+	//Destroy Descriptor
+	delete vkDescriptor;
 
 	delete vkSwapChain;
 	delete vkInit;
@@ -763,6 +797,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 	//	delete texIndex;
 	//texIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
 
+	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);
 	//quadCount++;
 
@@ -1054,7 +1089,7 @@ void VKRenderManager::Render()
 
 	//Get swapchain image
 	//VkImage swapchainImage = (*vkSwapChain->GetSwapChainImages())[swapchainIndex];
-	swapchainImage = (*vkSwapChain->GetSwapChainImages())[swapchainIndex];
+	VkImage swapchainImage = (*vkSwapChain->GetSwapChainImages())[swapchainIndex];
 
 	currentFence = &(*vkSwapChain->GetFences())[frameIndex];
 

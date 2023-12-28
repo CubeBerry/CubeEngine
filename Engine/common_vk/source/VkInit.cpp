@@ -36,8 +36,6 @@ VKInit::VKInit(SDL_Window* window_, bool isDiscrete) : window(window_)
 
 VKInit::~VKInit()
 {
-	vkDeviceWaitIdle(vkDevice);
-
 	//Destroy Surface
 	vkDestroySurfaceKHR(vkInstance, vkSurface, nullptr);
 	//Destroy Device
