@@ -61,10 +61,10 @@ void Engine::Update()
 void Engine::End()
 {
 	delete cameraManager;
-	delete objectManager;
 	delete inputManager;
 	delete vkRenderManager;
 	delete gameStateManger;
+	delete objectManager;
 	delete window;
 }
 
