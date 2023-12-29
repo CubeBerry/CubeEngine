@@ -10,18 +10,14 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-VKRenderManager::VKRenderManager(SDL_Window* window_, bool isDiscrete) : window(window_)
+VKRenderManager::VKRenderManager(bool isDiscrete) : window(Engine::Instance().GetWindow()->GetWindow())
 {
-	vkInit = new VKInit(window, isDiscrete);
-	vkSwapChain = new VKSwapChain(vkInit);
+	vkInit = new VKInit(isDiscrete);
 	
 	InitCommandPool();
 	InitCommandBuffer();
 
-	vkSwapChain->InitSwapChainImage(&vkCommandBuffers[0]);
-	vkSwapChain->InitFence();
-	vkSwapChain->InitSemaphore();
-	vkSwapChain->InitSwapChainImageView();
+	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
@@ -330,7 +326,7 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 	CleanSwapChain();
 
 	vkSwapChain->InitSwapChain();
-	vkSwapChain->InitSwapChainImage(&vkCommandBuffers[0]);
+	vkSwapChain->InitSwapChainImage();
 	vkSwapChain->InitSwapChainImageView();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }

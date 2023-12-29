@@ -5,8 +5,9 @@
 #include <SDL2/SDL_syswm.h>
 #include <string>
 #include <sstream>
+#include "Engine.hpp"
 
-VKInit::VKInit(SDL_Window* window_, bool isDiscrete) : window(window_)
+VKInit::VKInit(bool isDiscrete) : window(Engine::Instance().GetWindow()->GetWindow())
 {
 	InitInstance();
 	SetPhysicalDevice(isDiscrete);

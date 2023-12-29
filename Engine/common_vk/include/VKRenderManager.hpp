@@ -26,25 +26,16 @@ class VKUniformBuffer;
 class VKRenderManager
 {
 public:
-	VKRenderManager(SDL_Window* window_, bool isDiscrete);
+	VKRenderManager(bool isDiscrete);
 	~VKRenderManager();
 
 	void Render();
 	//void EndRender(Window* window_);
 
-	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
 	VKInit* GetVkInit() { return vkInit; }
+	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
+	std::array<VkCommandBuffer, 2>* GetCommandBuffers() { return &vkCommandBuffers; };
 	ImGuiManager* GetImGuiManager() { return imguiManager; };
-
-	//--------------------Texture Render--------------------//
-
-	void LoadTexture(const std::filesystem::path& path_);
-	void LoadQuad(glm::vec4 color_, float isTex_);
-	void LoadLineQuad(glm::vec4 color_);
-
-	void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-	void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 private:
 	void InitCommandPool();
 	void InitCommandBuffer();
@@ -57,7 +48,7 @@ private:
 	//void NewClearColor(Window* window_);
 	//void DrawVerticesTriangle(VkBuffer* buffer_);
 	//void DrawIndicesTriangle(VkBuffer* vertex_, VkBuffer* index_);
-private:
+
 	SDL_Window* window;
 	VKInit* vkInit;
 	VKSwapChain* vkSwapChain;
@@ -83,7 +74,15 @@ private:
 	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
 
 	//--------------------Texture Render--------------------//
+public:
+	void LoadTexture(const std::filesystem::path& path_);
+	void LoadQuad(glm::vec4 color_, float isTex_);
+	void LoadLineQuad(glm::vec4 color_);
 
+	void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
+	void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
+	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
+private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 

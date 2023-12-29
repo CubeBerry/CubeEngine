@@ -7,7 +7,7 @@
 class VKInit
 {
 public:
-	VKInit(SDL_Window* window_, bool isDiscrete);
+	VKInit(bool isDiscrete);
 	~VKInit();
 	//void ValidationCheck();
 	void InitInstance();

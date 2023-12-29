@@ -1,11 +1,16 @@
 #include "VKSwapChain.hpp"
 #include "VKInit.hpp"
+#include "Engine.hpp"
 
 #include <iostream>
 
-VKSwapChain::VKSwapChain(VKInit* init_) : vkInit(init_)
+VKSwapChain::VKSwapChain(VKInit* init_, VkCommandPool* pool_) : vkInit(init_), vkCommandPool(pool_)
 {
 	InitSwapChain();
+	InitSwapChainImage();
+	InitFence();
+	InitSemaphore();
+	InitSwapChainImageView();
 }
 
 VKSwapChain::~VKSwapChain()
@@ -112,7 +117,7 @@ void VKSwapChain::InitSwapChain()
 	}
 }
 
-void VKSwapChain::InitSwapChainImage(VkCommandBuffer* commandBuffer_)
+void VKSwapChain::InitSwapChainImage()
 {
 	//if pSwapchainImages == nullptr -> returns numbers of all available swapchain images
 	uint32_t count{ 0 };
@@ -128,7 +133,16 @@ void VKSwapChain::InitSwapChainImage(VkCommandBuffer* commandBuffer_)
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	//Begin command buffer
-	vkBeginCommandBuffer(*commandBuffer_, &beginInfo);
+	VkCommandBufferAllocateInfo allocateInfo{};
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.commandPool = *vkCommandPool;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer_{};
+	vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer_);
+
+	vkBeginCommandBuffer(commandBuffer_, &beginInfo);
 
 	//Change whole swapchain's image layout from UNDEFINED to PRESENT_SRC
 	std::vector<VkImageMemoryBarrier> barriers;
@@ -150,16 +164,16 @@ void VKSwapChain::InitSwapChainImage(VkCommandBuffer* commandBuffer_)
 	}
 
 	//Record command to command buffer which runs defined barrier
-	vkCmdPipelineBarrier(*commandBuffer_, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, static_cast<uint32_t>(barriers.size()), &barriers[0]);
+	vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, static_cast<uint32_t>(barriers.size()), &barriers[0]);
 
 	//End command buffer
-	vkEndCommandBuffer(*commandBuffer_);
+	vkEndCommandBuffer(commandBuffer_);
 
 	//Create submit info
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = commandBuffer_;
+	submitInfo.pCommandBuffers = &commandBuffer_;
 
 	//Submit command to queue
 	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);

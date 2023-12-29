@@ -8,10 +8,10 @@ class VKInit;
 class VKSwapChain
 {
 public:
-	VKSwapChain(VKInit* init_);
+	VKSwapChain(VKInit* init_, VkCommandPool* pool_);
 	~VKSwapChain();
 	void InitSwapChain();
-	void InitSwapChainImage(VkCommandBuffer* commandBuffer_);
+	void InitSwapChainImage();
 	void InitSwapChainImageView();
 	void InitFence();
 	void InitSemaphore();
@@ -25,6 +25,7 @@ public:
 	const int* GetBufferCount() { return &BUFFER_COUNT; };
 private:
 	VKInit* vkInit;
+	VkCommandPool* vkCommandPool{ VK_NULL_HANDLE };
 
 	VkSwapchainKHR vkSwapChain{ VK_NULL_HANDLE };
 	VkExtent2D swapchainImageExtent{ 0,0 };
