@@ -3,21 +3,23 @@
 
 #include <iostream>
 #include "Camera.hpp"
+#include "Engine.hpp"
 
 void Camera::Update()
 {
-	glm::vec3 frontT;
-	frontT.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	frontT.y = sin(glm::radians(pitch));
-	frontT.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	//glm::vec3 frontT;
+	//frontT.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	//frontT.y = sin(glm::radians(pitch));
+	//frontT.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-	front = glm::normalize(frontT) * glm::rotateZ(glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(rotate2D));
-	std::cout << rotate2D << std::endl;
+	//front = glm::normalize(frontT) * glm::rotateZ(glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(rotate2D))
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:
-		view = glm::lookAt(cameraPosition, cameraPosition + front, upVector);
-		projection = glm::perspective(glm::radians(zoom), aspectRatio, nearClip, farClip);
+		view = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x, -cameraPosition.y, 0.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(cameraViewSize.x / 2.f, cameraViewSize.y / 2.f, 1.0f));
+		projection = glm::ortho(-cameraViewSize.x / 2.f, cameraViewSize.x / 2.f, -cameraViewSize.y / 2.f, cameraViewSize.y / 2.f, -1.f, 1.f);
 		break;
 	case CameraType::ThreeDimension:
 		view = glm::lookAt(cameraPosition, cameraTarget + front, upVector);
@@ -90,6 +92,7 @@ void Camera::ResetUp(glm::vec3 startUpPosition)
 void Camera::SetViewSize(int width, int height) noexcept
 {
 	aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+	cameraViewSize = { width, height };
 	//aspectRatio = aspectRatio > 1.0f ? aspectRatio : 1.0f / aspectRatio;
 }
 

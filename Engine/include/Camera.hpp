@@ -47,6 +47,7 @@ public:
 	void			SetCameraType(CameraType type) { cameraType = type; }
 	void            SetNear(float amount) noexcept { nearClip = amount; }
 	void            SetFar(float amount) noexcept { farClip = amount; }
+	void            SetZoom(glm::vec2 size) noexcept { cameraViewSize = size; }
 private:
 	glm::vec3 cameraPosition{ 0.0f, 0.0f, 1.0f };
 	glm::vec3 cameraTarget{ 0.0f, 0.0f, 0.0f };
@@ -54,7 +55,7 @@ private:
 	glm::vec3 upVector{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 rightVector{ 1.0f, 0.0f, 0.0f };
 
-	float zoom = 45.0f;
+	float zoom = 1.0f;
 	float aspectRatio = 1.f;
 	float nearClip = 0.1f;
 	float farClip = 100.0f;
@@ -64,6 +65,7 @@ private:
 
 	glm::mat4 view;
 	glm::mat4 projection;
+	glm::vec2 cameraViewSize;
 	CameraType cameraType = CameraType::NONE;
 	CameraCenterMode cameraCenterMode = RightOriginCenter;
 };

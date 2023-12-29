@@ -1,4 +1,5 @@
 #include "CameraManager.hpp"
+#include "Engine.hpp"
 
 void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float angle)
 {
@@ -6,6 +7,16 @@ void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float 
 	camera.SetViewSize(viewSize.x, viewSize.y);
 	camera.SetZoom(zoom);
 	camera.Rotate(angle);
+
+	switch (type)
+	{
+	case CameraType::TwoDimension:
+		break;
+	case CameraType::ThreeDimension:
+		break;
+	default:
+		break;
+	}
 }
 
 void CameraManager::Update()

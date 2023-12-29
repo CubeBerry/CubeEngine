@@ -133,27 +133,29 @@ void VerticesDemo::Update(float dt)
 
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
 	{
-		Engine::Instance().GetCameraManager()->MoveUp(5.f * dt);
+		Engine::Instance().GetCameraManager()->MoveUp(5.f);
 	}
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
 	{
-		Engine::Instance().GetCameraManager()->MoveUp(-5.f * dt);
+		Engine::Instance().GetCameraManager()->MoveUp(-5.f);
 	}
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
-		Engine::Instance().GetCameraManager()->MoveRight(-5.f * dt);
+		Engine::Instance().GetCameraManager()->MoveRight(-5.f);
 	}
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
-		Engine::Instance().GetCameraManager()->MoveRight(5.f * dt);
+		Engine::Instance().GetCameraManager()->MoveRight(5.f);
 	}
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::A))
 	{
-		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 5.f);
+		//Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 5.f);
+		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() - 5.f * dt);
 	}
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::D))
 	{
-		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() + 5.f);
+		//Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() + 5.f);
+		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f * dt);
 	}
 
 	Engine::Instance().GetObjectManager()->FindObjectWithId(1)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetRotate() + 50.f * dt);
