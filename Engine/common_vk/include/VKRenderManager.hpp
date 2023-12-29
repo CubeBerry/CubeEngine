@@ -26,7 +26,7 @@ class VKUniformBuffer;
 class VKRenderManager
 {
 public:
-	VKRenderManager(bool isDiscrete);
+	VKRenderManager();
 	~VKRenderManager();
 
 	void Render();

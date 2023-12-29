@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-VKSwapChain::VKSwapChain(VKInit* init_, VkCommandPool* pool_) : vkInit(init_), vkCommandPool(pool_)
+VKSwapChain::VKSwapChain(VkCommandPool* pool_) : vkInit(Engine::Instance().GetVKInit()), vkCommandPool(pool_)
 {
 	InitSwapChain();
 	InitSwapChainImage();

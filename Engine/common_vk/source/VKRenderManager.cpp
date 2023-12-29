@@ -10,28 +10,26 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-VKRenderManager::VKRenderManager(bool isDiscrete) : window(Engine::Instance().GetWindow()->GetWindow())
+VKRenderManager::VKRenderManager() : window(Engine::Instance().GetWindow()->GetWindow()), vkInit(Engine::Instance().GetVKInit())
 {
-	vkInit = new VKInit(isDiscrete);
-	
 	InitCommandPool();
 	InitCommandBuffer();
 
-	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
+	vkSwapChain = new VKSwapChain(&vkCommandPool);
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
-	vkDescriptor = new VKDescriptor(vkInit);
+	vkDescriptor = new VKDescriptor;
 
-	vkTextureShader = new VKShader(vkInit->GetDevice());
+	vkTextureShader = new VKShader();
 	vkTextureShader->LoadShader("../Engine/shader/texVertex.vert", "../Engine/shader/texFragment.frag");
-	vkLineShader = new VKShader(vkInit->GetDevice());
+	vkLineShader = new VKShader();
 	vkLineShader->LoadShader("../Engine/shader/lineVertex.vert", "../Engine/shader/lineFragment.frag");
 
-	vkTexurePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkTexurePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
-	vkLinePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
 	//imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);

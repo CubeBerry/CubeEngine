@@ -8,7 +8,7 @@ class VKInit;
 class VKSwapChain
 {
 public:
-	VKSwapChain(VKInit* init_, VkCommandPool* pool_);
+	VKSwapChain(VkCommandPool* pool_);
 	~VKSwapChain();
 	void InitSwapChain();
 	void InitSwapChainImage();

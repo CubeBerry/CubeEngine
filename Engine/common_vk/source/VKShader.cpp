@@ -1,8 +1,9 @@
 #include "VKShader.hpp"
+#include "Engine.hpp"
 
 #include <fstream>
 
-VKShader::VKShader(VkDevice* device) : device(device)
+VKShader::VKShader() : device(Engine::Instance().GetVKInit()->GetDevice())
 {
 }
 

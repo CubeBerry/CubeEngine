@@ -1,10 +1,11 @@
 #include "VKPipeLine.hpp"
 #include "Vertex.hpp"
+#include "Engine.hpp"
 
 #include <iostream>
 #include <array>
 
-VKPipeLine::VKPipeLine(VkDevice* device_, std::vector<VkDescriptorSetLayout>* layout_) : device(device_), vkDescriptorSetLayout(layout_)
+VKPipeLine::VKPipeLine(std::vector<VkDescriptorSetLayout>* layout_) : device(Engine::Instance().GetVKInit()->GetDevice()), vkDescriptorSetLayout(layout_)
 {
 }
 

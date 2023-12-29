@@ -2,6 +2,7 @@
 #include "Timer.hpp"
 #include "Window.hpp"
 #include "GameStateManager.hpp"
+#include "VKInit.hpp"
 #include "VKRenderManager.hpp"
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"
@@ -21,6 +22,7 @@ public:
 
 	static Engine& Instance() { static Engine instance; return instance; }
 	static Window* GetWindow() { return Instance().window; }
+	static VKInit* GetVKInit() { return Instance().vkInit; }
 	static VKRenderManager* GetVKRenderManager() { return Instance().vkRenderManager; }
 	static GameStateManager* GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager* GetInputManager() { return Instance().inputManager; }
@@ -39,6 +41,7 @@ private:
 	std::string windowTitleWithFrameCount;
 
 	Window* window = nullptr;
+	VKInit* vkInit = nullptr;
 	VKRenderManager* vkRenderManager = nullptr;
 	GameStateManager* gameStateManger = nullptr;
 	InputManager* inputManager = nullptr;
