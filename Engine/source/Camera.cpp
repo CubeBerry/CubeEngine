@@ -18,7 +18,7 @@ void Camera::Update()
 	case CameraType::TwoDimension:
 		view = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x, -cameraPosition.y, 0.0f)) *
 			glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f)) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(cameraViewSize.x / 2.f, cameraViewSize.y / 2.f, 1.0f));
+			glm::scale(glm::mat4(1.0f), glm::vec3(cameraViewSize.x, cameraViewSize.y, 1.0f));
 		projection = glm::ortho(-cameraViewSize.x / 2.f, cameraViewSize.x / 2.f, -cameraViewSize.y / 2.f, cameraViewSize.y / 2.f, -1.f, 1.f);
 		break;
 	case CameraType::ThreeDimension:
