@@ -25,35 +25,25 @@ void VerticesDemo::Init()
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg");
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 640.f,360.f,0.f }, "0", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1280.f,720.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(1);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 256.f,256.f,0.f }, "1", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 512.f,512.f,0.f }, "1", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(2);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 128.f,128.f,0.f }, "2", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 256.f,256.f,0.f }, "2", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithVertices(vertices, indices);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f, 256.f,0.f }, glm::vec3{ 128.f,64.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f, 256.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "3", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
 }
 
 void VerticesDemo::Update(float dt)
 {
-	switch (static_cast<int>(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->GetTextureId()))
-	{
-	case 0:
-		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(1.f);
-		break;
-	case 1:
-		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(0.f);
-		break;
-	}
-
 	if(Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_1))
 		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<MaterialComponent>()->ChangeTexture(0.f);
 	else if(Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_2))
