@@ -6,7 +6,7 @@ precision mediump float;
 
 layout(location = 0) in vec4 i_pos;
 layout(location = 1) in vec4 i_col;
-layout(location = 2) in float index;
+layout(location = 2) in int index;
 layout(location = 3) in float isTex;
 
 layout(location = 0) out vec2 o_uv;
@@ -33,5 +33,5 @@ void main()
     //outTexIndex = texIndex;
     o_col = i_col;
 
-    gl_Position = matrix[int(index)].projection *  matrix[int(index)].view * matrix[int(index)].model * i_pos;
+    gl_Position = matrix[index].projection *  matrix[index].view * matrix[index].model * i_pos;
 }

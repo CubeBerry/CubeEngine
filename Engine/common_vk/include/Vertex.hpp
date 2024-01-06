@@ -9,7 +9,7 @@ struct Vertex
 	alignas(16) glm::vec4 position;
 	alignas(16) glm::vec4 color;
 	//glm::vec2 uv;
-	alignas(4) float index;
+	alignas(4) int index;
 	alignas(4) float isTex;
 };
 

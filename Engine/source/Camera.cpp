@@ -16,7 +16,8 @@ void Camera::Update()
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:
-		view =  glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x, -cameraPosition.y, 0.0f)) *
+		glm::vec2 wSize = Engine::Instance().GetWindow()->GetWindowSize();
+		view =  glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x / wSize.x * 2.f, -cameraPosition.y / wSize.y * 2.f, 0.0f)) *
 				glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
 				glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f));
 		projection = glm::ortho(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f);
@@ -57,6 +58,7 @@ void Camera::MoveRight(float distance) noexcept
 	{
 	case CameraType::TwoDimension:
 		cameraPosition += normalize(rightVector) * distance;
+		std::cout << cameraPosition.x << '\n';
 		break;
 	case CameraType::ThreeDimension:
 		cameraPosition += normalize(glm::cross(front, upVector)) * distance;
