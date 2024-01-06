@@ -28,7 +28,6 @@ public:
 
 	int GetTextureId() { return textureId; }
 	void ChangeTexture(int index);
-
 private:
 	int materialId = 0;
 	int textureId = 0;

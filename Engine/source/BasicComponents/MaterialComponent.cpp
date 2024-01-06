@@ -25,14 +25,7 @@ void MaterialComponent::End()
 void MaterialComponent::UpdateModel()
 {
 	glm::mat4 modelMatrix(1.0f);
-
-	//glm::vec3 pos(0, 0, 0);
-	//glm::vec3 size(Engine::GetWindow()->GetWindowSize(), 0);
-	glm::vec3 extent(1.f / Engine::GetWindow()->GetWindowSize().x, 1.f / Engine::GetWindow()->GetWindowSize().y, 1.f);
-
-	modelMatrix = glm::translate(modelMatrix, GetOwner()->GetPosition() * extent);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(GetOwner()->GetRotate()), glm::vec3(0.0f, 0.0f, 1.0f));
-	modelMatrix = glm::scale(modelMatrix, GetOwner()->GetSize() * extent);
+	modelMatrix = glm::translate(glm::mat4(1.0f), GetOwner()->GetPosition()) * glm::rotate(glm::mat4(1.0f), glm::radians(GetOwner()->GetRotate()), glm::vec3(0.0f, 0.0f, 1.0f)) * glm::scale(glm::mat4(1.0f), GetOwner()->GetSize());
 
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).model = modelMatrix;
 }

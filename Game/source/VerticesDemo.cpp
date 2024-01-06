@@ -33,14 +33,13 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithTexture(2);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 128.f,64.f,0.f }, "2", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 128.f,128.f,0.f }, "2", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithVertices(vertices, indices);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f,256.f,0.f }, glm::vec3{ 128.f,128.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f, 256.f,0.f }, glm::vec3{ 128.f,64.f,0.f }, "3", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
-
 }
 
 void VerticesDemo::Update(float dt)
@@ -80,18 +79,22 @@ void VerticesDemo::Update(float dt)
 	}
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::A))
 	{
-		//Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 5.f);
+		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 50.f * dt);
+	}
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::S))
+	{
+		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() + 50.f * dt);
+	}
+	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::Z))
+	{
 		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() - 5.f * dt);
 	}
-	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::D))
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::X))
 	{
-		//Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() + 5.f);
 		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f * dt);
 	}
-
-	Engine::Instance().GetObjectManager()->FindObjectWithId(1)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetRotate() + 50.f * dt);
-	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 500.f * dt);
-	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetXSize(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetSize().x + 1.f * dt);
+	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
+	Engine::Instance().GetObjectManager()->FindObjectWithId(3)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(3)->GetRotate() + 50.f * dt);
 }
 
 void VerticesDemo::Draw(float /*dt*/)
