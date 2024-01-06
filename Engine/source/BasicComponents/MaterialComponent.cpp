@@ -31,7 +31,7 @@ void MaterialComponent::UpdateModel()
 		glm::scale(glm::mat4(1.0f), glm::vec3(GetOwner()->GetSize().x, GetOwner()->GetSize().y, GetOwner()->GetSize().z));
 
 	glm::vec2 wSize = Engine::Instance().GetWindow()->GetWindowSize();
-	glm::mat4 extent = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / wSize.x, 1.f / wSize.y, GetOwner()->GetSize().z));
+	glm::mat4 extent = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / wSize.x * (wSize.x / wSize.y), 1.f / wSize.y, GetOwner()->GetSize().z));
 
 	modelMatrix = extent * modelMatrix;
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).model = modelMatrix;
