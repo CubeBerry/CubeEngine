@@ -36,5 +36,5 @@ void main()
     outIsTex = isTex;
     o_col = i_col;
 
-    gl_Position =  matrix[int(index)].projection *  matrix[int(index)].view * matrix[int(index)].model * i_pos;
+    gl_Position = matrix[int(index)].projection *  matrix[int(index)].view * matrix[int(index)].model * i_pos;
 }

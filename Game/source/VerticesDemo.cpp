@@ -37,7 +37,7 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddMeshWithVertices(vertices, indices);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 256.f, 256.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f, 360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "3", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<MaterialComponent>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<MaterialComponent>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
 }
