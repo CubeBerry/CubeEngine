@@ -7,7 +7,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	window->Init(title, windowWidth, windowHeight, fullScreen, mode);
 	timer.Init();
 
-	vkInit = new VKInit(true);
+	vkInit = new VKInit();
 	vkRenderManager = new VKRenderManager();
 	gameStateManger = new GameStateManager();
 	inputManager = new InputManager;

@@ -7,10 +7,10 @@
 #include <sstream>
 #include "Engine.hpp"
 
-VKInit::VKInit(bool isDiscrete) : window(Engine::Instance().GetWindow()->GetWindow())
+VKInit::VKInit() : window(Engine::Instance().GetWindow()->GetWindow())
 {
 	InitInstance();
-	SetPhysicalDevice(isDiscrete);
+	SetPhysicalDevice();
 	SetQueueFamilyIndex();
 	InitDevice();
 	InitQueue();
@@ -88,7 +88,7 @@ void VKInit::InitInstance()
 	}
 }
 
-void VKInit::SetPhysicalDevice(bool isDiscrete)
+void VKInit::SetPhysicalDevice()
 {
 	//if pPhysicalDevices == nullptr -> returns numbers of all available GPU
 	uint32_t count{ 0 };
@@ -99,7 +99,13 @@ void VKInit::SetPhysicalDevice(bool isDiscrete)
 	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
 
 	//Set proper physical device
-	vkPhysicalDevice = GetRequiredDevice(physicalDevices, isDiscrete);
+	PrintPhysicalDevices();
+	std::cout << "Input GPU number: ";
+	int deviceNumber{ 0 };
+	std::cin >> deviceNumber;
+	std::cout << std::endl;
+	vkPhysicalDevice = physicalDevices[deviceNumber];
+	//vkPhysicalDevice = GetRequiredDevice(physicalDevices, isDiscrete);
 }
 
 void VKInit::SetQueueFamilyIndex()
@@ -193,8 +199,6 @@ void VKInit::InitDevice()
 			"VK_EXT_robustness2",
 			//For vkCmdSetPrimitiveTopology
 			"VK_EXT_extended_dynamic_state3",
-			//"VK_KHR_maintenance3",
-			//"VK_EXT_descriptor_indexing"
 		};
 
 		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensionNames.size());

@@ -7,11 +7,11 @@
 class VKInit
 {
 public:
-	VKInit(bool isDiscrete);
+	VKInit();
 	~VKInit();
 	//void ValidationCheck();
 	void InitInstance();
-	void SetPhysicalDevice(bool isDiscrete);
+	void SetPhysicalDevice();
 	void SetQueueFamilyIndex();
 	void InitDevice();
 	void InitQueue();
