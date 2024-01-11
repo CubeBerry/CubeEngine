@@ -326,6 +326,13 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 	//vkSwapChain->InitSwapChain();
 	//vkSwapChain->InitSwapChainImage();
 	//vkSwapChain->InitSwapChainImageView();
+
+	//Destroy FrameBuffer
+	for (auto& framebuffer : vkFrameBuffers)
+	{
+		vkDestroyFramebuffer(*vkInit->GetDevice(), framebuffer, nullptr);
+	}
+
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(&vkCommandPool);
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
