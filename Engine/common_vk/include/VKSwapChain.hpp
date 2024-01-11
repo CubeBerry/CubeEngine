@@ -10,11 +10,6 @@ class VKSwapChain
 public:
 	VKSwapChain(VkCommandPool* pool_);
 	~VKSwapChain();
-	void InitSwapChain();
-	void InitSwapChainImage();
-	void InitSwapChainImageView();
-	void InitFence();
-	void InitSemaphore();
 
 	VkSwapchainKHR* GetSwapChain() { return &vkSwapChain; };
 	std::array<VkFence, BUFFER_COUNT>* GetFences() { return &vkFences; };
@@ -24,6 +19,12 @@ public:
 	std::vector<VkImageView>* GetSwapChainImageViews() { return &vkSwapChainImageViews; };
 	const int* GetBufferCount() { return &BUFFER_COUNT; };
 private:
+	void InitSwapChain();
+	void InitSwapChainImage();
+	void InitSwapChainImageView();
+	void InitFence();
+	void InitSemaphore();
+
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool{ VK_NULL_HANDLE };
 

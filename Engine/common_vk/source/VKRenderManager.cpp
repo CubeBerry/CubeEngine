@@ -321,11 +321,13 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 
-	CleanSwapChain();
+	//CleanSwapChain();
 
-	vkSwapChain->InitSwapChain();
-	vkSwapChain->InitSwapChainImage();
-	vkSwapChain->InitSwapChainImageView();
+	//vkSwapChain->InitSwapChain();
+	//vkSwapChain->InitSwapChainImage();
+	//vkSwapChain->InitSwapChainImageView();
+	delete vkSwapChain;
+	vkSwapChain = new VKSwapChain(&vkCommandPool);
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
@@ -1077,7 +1079,10 @@ void VKRenderManager::Render()
 	//uint32_t swapchainIndex;
 	VkResult result = vkAcquireNextImageKHR(*vkInit->GetDevice(), *vkSwapChain->GetSwapChain(), UINT64_MAX, vkSemaphores[IMAGE_AVAILABLE_INDEX], VK_NULL_HANDLE, &swapchainIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
 		RecreateSwapChain(window_);
+		return;
+	}
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	//	throw std::runtime_error("Failed Acquring SwapChain Image");
 
@@ -1380,7 +1385,10 @@ void VKRenderManager::Render()
 	//Render image on screen
 	VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
 	if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
+	{
 		RecreateSwapChain(window_);
+		return;
+	}
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	//	throw std::runtime_error("Failed Acquring SwapChain Image");
 
