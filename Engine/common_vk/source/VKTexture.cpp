@@ -480,6 +480,7 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_)
 		createInfo.minFilter = VK_FILTER_LINEAR;
 		createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
 		try

@@ -22,8 +22,6 @@ public:
 
 	void AddQuad(glm::vec4 color_, float isTex_);
 	void AddQuadLine(glm::vec4 color_);
-	void AddMeshWithVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-	void AddMeshWithLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 	void AddMeshWithTexture(int index);
 
 	int GetTextureId() { return textureId; }

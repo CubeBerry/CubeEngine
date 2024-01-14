@@ -59,18 +59,6 @@ void MaterialComponent::AddQuadLine(glm::vec4 color_)
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 }
 
-void MaterialComponent::AddMeshWithVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_)
-{
-	Engine::Instance().GetVKRenderManager()->LoadVertices(vertices_, indices_);
-	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
-}
-
-void MaterialComponent::AddMeshWithLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_)
-{
-	Engine::Instance().GetVKRenderManager()->LoadLineVertices(vertices_, indices_);
-	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
-}
-
 void MaterialComponent::AddMeshWithTexture(int index)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad({1.f,1.f,1.f,1.f}, 1.f);
