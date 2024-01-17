@@ -7,20 +7,6 @@
 
 void VerticesDemo::Init()
 {
-	std::vector<Vertex> vertices =
-	{
-	   {glm::vec4(-1.f, 1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(1.f, 1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(1.f, -1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f},
-	   {glm::vec4(-1.f, -1.f, 1.f, 1.f), { 1.f, 1.f, 1.f, 1.f }, 0, 0.f}
-	};
-
-	std::vector<uint64_t> indices
-	{
-		0, 1, 2, //first triangle
-		2, 3, 0  //second triangle
-	};
-
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
 	Engine::Engine().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg");
