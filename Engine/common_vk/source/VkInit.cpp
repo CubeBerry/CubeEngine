@@ -1,4 +1,5 @@
 //Author: JEYOON YU
+//Second Author: DOYEONG LEE
 //Project: CubeEngine
 //File: VKInit.cpp
 #include "VKInit.hpp"

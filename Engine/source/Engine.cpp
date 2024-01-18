@@ -1,4 +1,5 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: Engine.cpp
 #include "Engine.hpp"

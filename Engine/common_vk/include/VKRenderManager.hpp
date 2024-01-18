@@ -1,4 +1,5 @@
 //Author: JEYOON YU
+//Second Author: DOYEONG LEE
 //Project: CubeEngine
 //File: VKRenderManager.hpp
 #pragma once
