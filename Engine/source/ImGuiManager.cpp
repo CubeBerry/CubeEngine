@@ -41,7 +41,6 @@ void ImGuiManager::Initialize()
 	initInfo.Queue = *vkInit->GetQueue();
 	initInfo.QueueFamily = *vkInit->GetQueueFamilyIndex();
 	initInfo.PipelineCache = VK_NULL_HANDLE;
-	//initInfo.DescriptorPool = vkDescriptorPool;
 	initInfo.DescriptorPool = vkDescriptorPool;
 	initInfo.MinImageCount = 2;
 	initInfo.ImageCount = 2;

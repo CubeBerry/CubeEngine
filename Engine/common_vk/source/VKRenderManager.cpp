@@ -32,7 +32,7 @@ VKRenderManager::VKRenderManager() : window(Engine::Instance().GetWindow()->GetW
 	vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
-	//imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
+	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
 
 	for (int i = 0; i < 500; ++i)
 	{
@@ -54,6 +54,9 @@ VKRenderManager::VKRenderManager() : window(Engine::Instance().GetWindow()->GetW
 VKRenderManager::~VKRenderManager()
 {
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//delete imGUI
+	delete imguiManager;
 
 	//Destroy Command Pool, also Command Buffer destroys with Command Pool
 	vkDestroyCommandPool(*vkInit->GetDevice(), vkCommandPool, nullptr);
@@ -1321,9 +1324,9 @@ void VKRenderManager::Render()
 	vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
 
 	//ImGui
-	//imguiManager->Begin();
-	//ImGui::ShowDemoWindow();
-	//imguiManager->End(frameIndex);
+	imguiManager->Begin();
+	ImGui::ShowDemoWindow();
+	imguiManager->End(frameIndex);
 
 	//--------------------End Draw--------------------//
 
