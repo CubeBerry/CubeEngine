@@ -25,11 +25,13 @@ public:
 #ifdef _DEBUG
 	void PrintLayers();
 	void PrintInstnaceExtensions();
-	void PrintPhysicalDevices();
+	//void PrintPhysicalDevices();
 	void PrintDeviceExtensions();
 	void PrintPresentModes();
 	void PrintMemoryProperties();
 #endif
+	void PrintPhysicalDevices();
+
 	VkPhysicalDevice GetRequiredDevice(std::vector<VkPhysicalDevice>& physicalDevices, bool isDiscrete);
 
 	VkInstance* GetInstance() { return &vkInstance; };
