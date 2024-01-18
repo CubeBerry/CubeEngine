@@ -20,23 +20,7 @@ VKInit::VKInit() : window(Engine::Instance().GetWindow()->GetWindow())
 	InitQueue();
 	InitSurface();
 
-	//Swapchain
 	SetSurfaceFormat();
-	//InitSwapChain();
-
-	//Renderer
-	//InitCommandPool();
-	//InitCommandBuffer();
-
-	//Swapchain
-	//InitSwapChainImage();
-	//InitFence();
-	//InitSemaphore();
-	//InitSwapChainImageView();
-
-	//Renderer
-	//InitRenderPass();
-	//InitFrameBuffer();
 }
 
 VKInit::~VKInit()
