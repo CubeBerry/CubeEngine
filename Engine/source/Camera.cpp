@@ -17,7 +17,7 @@ void Camera::Update()
 	{
 	case CameraType::TwoDimension:
 		glm::vec2 wSize = Engine::Instance().GetWindow()->GetWindowSize();
-		view =  glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x / wSize.x * 2.f, -cameraPosition.y / wSize.y * 2.f, 0.0f)) *
+		view =  glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x * 2.f, -cameraPosition.y * 2.f, 0.0f)) *
 				glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
 				glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f));
 		projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
