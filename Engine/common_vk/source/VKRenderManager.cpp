@@ -30,6 +30,7 @@ VKRenderManager::VKRenderManager() : window(Engine::Instance().GetWindow()->GetW
 	vkTextureShader->LoadShader("../Engine/shader/texVertex.vert", "../Engine/shader/texFragment.frag");
 	vkLineShader = new VKShader();
 	vkLineShader->LoadShader("../Engine/shader/lineVertex.vert", "../Engine/shader/lineFragment.frag");
+	std::cout << std::endl;
 
 	vkTexurePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
