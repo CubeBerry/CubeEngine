@@ -1,7 +1,9 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: GameStateManager.cpp
 #include "GameStateManager.hpp"
+#include "Engine.hpp"
 
 GameStateManager::GameStateManager()
 {
@@ -25,7 +27,13 @@ void GameStateManager::Update(float dt)
 
 void GameStateManager::Draw(float dt)
 {
-	levelList.at(static_cast<int>(currentLevel))->Draw(dt);
+	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
+	renderManager->BeginRender();
+#ifdef _DEBUG
+	if (!renderManager->GetIsRecreated())
+		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+#endif
+	renderManager->EndRender();
 }
 
 void GameStateManager::End()

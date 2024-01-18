@@ -1084,10 +1084,11 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 	matrices.push_back(mat);
 }
 
-void VKRenderManager::Render()
+void VKRenderManager::BeginRender()
 {
+	isRecreated = false;
 	Window* window_ = Engine::Engine().GetWindow();
-	auto& vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
+	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
 
 	//Get image index from swapchain
 	//uint32_t swapchainIndex;
@@ -1095,6 +1096,7 @@ void VKRenderManager::Render()
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
 		RecreateSwapChain(window_);
+		isRecreated = true;
 		return;
 	}
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -1102,7 +1104,7 @@ void VKRenderManager::Render()
 
 	//Get swapchain image
 	//VkImage swapchainImage = (*vkSwapChain->GetSwapChainImages())[swapchainIndex];
-	VkImage swapchainImage = (*vkSwapChain->GetSwapChainImages())[swapchainIndex];
+	swapchainImage = (*vkSwapChain->GetSwapChainImages())[swapchainIndex];
 
 	currentFence = &(*vkSwapChain->GetFences())[frameIndex];
 
@@ -1327,84 +1329,93 @@ void VKRenderManager::Render()
 	//Draw
 	vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
 
-	//ImGui
+#ifdef _DEBUG
 	imguiManager->Begin();
-	ImGui::ShowDemoWindow();
-	imguiManager->End(frameIndex);
+#endif
+}
 
-	//--------------------End Draw--------------------//
-
-	//End renderpass
-	vkCmdEndRenderPass(*currentCommandBuffer);
-
-	//Change image layout to PRESENT_SRC_KHR
+void VKRenderManager::EndRender()
+{
+	if (!isRecreated)
 	{
-		VkImageMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		barrier.dstAccessMask = 0;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-		barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-		barrier.image = swapchainImage;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.layerCount = 1;
+#ifdef _DEBUG
+		imguiManager->End(frameIndex);
+#endif
 
-		//Record pipeline barrier for chainging image layout
-		vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		//--------------------End Draw--------------------//
+
+		//End renderpass
+		vkCmdEndRenderPass(*currentCommandBuffer);
+
+		//Change image layout to PRESENT_SRC_KHR
+		{
+			VkImageMemoryBarrier barrier{};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.dstAccessMask = 0;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+			barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+			barrier.image = swapchainImage;
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.layerCount = 1;
+
+			//Record pipeline barrier for chainging image layout
+			vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
+
+		//End command buffer
+		vkEndCommandBuffer(*currentCommandBuffer);
+
+		//Create submit info
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		//Wait until swapchain image is ready after calculating pixel's result
+		//Define pipeline stage that semaphore must be signaled
+		constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
+		submitInfo.pWaitDstStageMask = &waitDstStageMask;
+
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = currentCommandBuffer;
+		//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
+
+		//Define semaphore that informs when command buffer is processed
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
+
+		//Submit queue to command buffer
+		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
+
+		//Wait until all submitted command buffers are handled
+		vkDeviceWaitIdle(*vkInit->GetDevice());
+
+		//Create present info
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+		//Define semaphore that waits to ensure command buffer to be processed
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
+
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
+		presentInfo.pImageIndices = &swapchainIndex;
+
+		//Render image on screen
+		VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
+		if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
+		{
+			RecreateSwapChain(Engine::Engine().GetWindow());
+			return;
+		}
+		//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		//	throw std::runtime_error("Failed Acquring SwapChain Image");
+
+		frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
 	}
-
-	//End command buffer
-	vkEndCommandBuffer(*currentCommandBuffer);
-
-	//Create submit info
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	//Wait until swapchain image is ready after calculating pixel's result
-	//Define pipeline stage that semaphore must be signaled
-	constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
-	submitInfo.pWaitDstStageMask = &waitDstStageMask;
-
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = currentCommandBuffer;
-	//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
-
-	//Define semaphore that informs when command buffer is processed
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
-
-	//Submit queue to command buffer
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
-
-	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
-
-	//Create present info
-	VkPresentInfoKHR presentInfo{};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-	//Define semaphore that waits to ensure command buffer to be processed
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
-
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
-	presentInfo.pImageIndices = &swapchainIndex;
-
-	//Render image on screen
-	VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
-	if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
-	{
-		RecreateSwapChain(window_);
-		return;
-	}
-	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-	//	throw std::runtime_error("Failed Acquring SwapChain Image");
-
-	frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
 }

@@ -1,4 +1,5 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: VerticesDemo.hpp
 #pragma once
@@ -15,7 +16,9 @@ public:
 
 	void Init() override;
 	void Update(float dt) override;
-	void Draw(float dt) override;
+#ifdef _DEBUG
+	void ImGuiDraw(float dt) override;
+#endif
 	void Restart() override;
 	void End() override;
 private:

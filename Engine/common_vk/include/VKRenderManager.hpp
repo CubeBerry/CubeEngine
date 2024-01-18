@@ -33,13 +33,17 @@ public:
 	VKRenderManager();
 	~VKRenderManager();
 
-	void Render();
+	void BeginRender();
+	void EndRender();
 	//void EndRender(Window* window_);
 
 	VKInit* GetVkInit() { return vkInit; }
 	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
 	std::array<VkCommandBuffer, 2>* GetCommandBuffers() { return &vkCommandBuffers; };
 	ImGuiManager* GetImGuiManager() { return imguiManager; };
+#ifdef _DEBUG
+	bool GetIsRecreated() { return isRecreated; };
+#endif
 private:
 	void InitCommandPool();
 	void InitCommandBuffer();
@@ -69,8 +73,10 @@ private:
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
-	//VkImage swapchainImage;
+	VkImage swapchainImage;
+	std::array<VkSemaphore, 2> vkSemaphores;
 	uint32_t frameIndex{ 0 };
+	bool isRecreated{ false };
 
 	VkCommandBuffer* currentCommandBuffer{ VK_NULL_HANDLE };
 	VkFence* currentFence{ VK_NULL_HANDLE };

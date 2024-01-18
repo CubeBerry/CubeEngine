@@ -1,4 +1,5 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: VerticesDemo.cpp
 #include "VerticesDemo.hpp"
@@ -72,10 +73,12 @@ void VerticesDemo::Update(float dt)
 	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
 }
 
-void VerticesDemo::Draw(float /*dt*/)
+#ifdef _DEBUG
+void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	Engine::Engine().GetVKRenderManager()->Render();
+	ImGui::ShowDemoWindow();
 }
+#endif
 
 void VerticesDemo::Restart()
 {
