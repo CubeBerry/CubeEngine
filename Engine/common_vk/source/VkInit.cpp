@@ -338,26 +338,26 @@ void VKInit::PrintInstnaceExtensions()
 	}
 }
 
-void VKInit::PrintPhysicalDevices()
-{
-	//if pPhysicalDevices == nullptr -> returns numbers of all available GPU
-	uint32_t count{ 0 };
-	vkEnumeratePhysicalDevices(vkInstance, &count, nullptr);
-
-	//Get physical devices to vector
-	std::vector<VkPhysicalDevice> physicalDevices{ count };
-	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
-
-	//Get physical devices properties
-	std::cout << "--------------------Physical Device Information--------------------" << std::endl;
-	for (auto& device : physicalDevices)
-	{
-		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(device, &properties);
-
-		std::cout << "Device Name : " << properties.deviceName << '\n' << std::endl;
-	}
-}
+//void VKInit::PrintPhysicalDevices()
+//{
+//	//if pPhysicalDevices == nullptr -> returns numbers of all available GPU
+//	uint32_t count{ 0 };
+//	vkEnumeratePhysicalDevices(vkInstance, &count, nullptr);
+//
+//	//Get physical devices to vector
+//	std::vector<VkPhysicalDevice> physicalDevices{ count };
+//	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
+//
+//	//Get physical devices properties
+//	std::cout << "--------------------Physical Device Information--------------------" << std::endl;
+//	for (auto& device : physicalDevices)
+//	{
+//		VkPhysicalDeviceProperties properties;
+//		vkGetPhysicalDeviceProperties(device, &properties);
+//
+//		std::cout << "Device Name : " << properties.deviceName << '\n' << std::endl;
+//	}
+//}
 
 void VKInit::PrintDeviceExtensions()
 {
@@ -510,6 +510,27 @@ void VKInit::PrintMemoryProperties()
 }
 
 #endif
+
+void VKInit::PrintPhysicalDevices()
+{
+	//if pPhysicalDevices == nullptr -> returns numbers of all available GPU
+	uint32_t count{ 0 };
+	vkEnumeratePhysicalDevices(vkInstance, &count, nullptr);
+
+	//Get physical devices to vector
+	std::vector<VkPhysicalDevice> physicalDevices{ count };
+	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
+
+	//Get physical devices properties
+	std::cout << "--------------------Physical Device Information--------------------" << std::endl;
+	for (auto& device : physicalDevices)
+	{
+		VkPhysicalDeviceProperties properties;
+		vkGetPhysicalDeviceProperties(device, &properties);
+
+		std::cout << "Device Name : " << properties.deviceName << '\n' << std::endl;
+	}
+}
 
 VkPhysicalDevice VKInit::GetRequiredDevice(std::vector<VkPhysicalDevice>& physicalDevices, bool isDiscrete)
 {

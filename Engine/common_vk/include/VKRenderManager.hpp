@@ -40,7 +40,9 @@ public:
 	VKInit* GetVkInit() { return vkInit; }
 	VkCommandPool* GetCommandPool() { return &vkCommandPool; };
 	std::array<VkCommandBuffer, 2>* GetCommandBuffers() { return &vkCommandBuffers; };
+#ifdef _DEBUG
 	ImGuiManager* GetImGuiManager() { return imguiManager; };
+#endif
 #ifdef _DEBUG
 	bool GetIsRecreated() { return isRecreated; };
 #endif
@@ -96,7 +98,9 @@ private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
+#ifdef _DEBUG
 	ImGuiManager* imguiManager;
+#endif
 
 	std::vector<Vertex> texVertices;
 	VKVertexBuffer* texVertex{ nullptr };

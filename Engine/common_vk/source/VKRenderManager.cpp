@@ -36,7 +36,9 @@ VKRenderManager::VKRenderManager() : window(Engine::Instance().GetWindow()->GetW
 	vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
+#ifdef _DEBUG
 	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
+#endif
 
 	for (int i = 0; i < 500; ++i)
 	{
@@ -59,8 +61,10 @@ VKRenderManager::~VKRenderManager()
 {
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 
+#ifdef _DEBUG
 	//delete imGUI
 	delete imguiManager;
+#endif
 
 	//Destroy Command Pool, also Command Buffer destroys with Command Pool
 	vkDestroyCommandPool(*vkInit->GetDevice(), vkCommandPool, nullptr);
