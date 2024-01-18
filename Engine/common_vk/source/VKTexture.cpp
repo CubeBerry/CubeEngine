@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKTexture.cpp
 #include "VKTexture.hpp"
 #include "VKInit.hpp"
 #include <iostream>

@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: GameState.hpp
 #pragma once
 
 class GameState

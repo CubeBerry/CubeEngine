@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: InputManager.hpp
 #pragma once
 #include <SDL2/SDL.h>
 #include <unordered_map>

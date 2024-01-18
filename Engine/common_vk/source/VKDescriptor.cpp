@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKDescriptor.cpp
 #include "VKDescriptor.hpp"
 #include "VKInit.hpp"
 #include "Engine.hpp"

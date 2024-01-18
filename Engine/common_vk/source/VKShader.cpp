@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKShader.cpp
 #include "VKShader.hpp"
 #include "Engine.hpp"
 

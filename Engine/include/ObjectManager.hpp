@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: ObjectManager.hpp
 #pragma once
 #include "Object.hpp"
 

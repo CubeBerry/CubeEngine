@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Component.hpp
 #pragma once
 #include "ComponentTypes.hpp"
 

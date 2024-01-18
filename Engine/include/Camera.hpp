@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Camera.hpp
 #pragma once
 #include "glm/glm.hpp"
 

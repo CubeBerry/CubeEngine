@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Timer.hpp
 #pragma once
 #include <chrono>
 #include <iostream>

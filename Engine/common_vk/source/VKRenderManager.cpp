@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKRenderManager.cpp
 #include "VKRenderManager.hpp"
 //#include "VKInit.hpp"
 //#include "VKSwapChain.hpp"

@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKShader.hpp
 #pragma once
 #include <iostream>
 #include <filesystem>

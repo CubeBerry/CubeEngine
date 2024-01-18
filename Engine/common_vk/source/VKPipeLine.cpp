@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKPipeLine.cpp
 #include "VKPipeLine.hpp"
 #include "Vertex.hpp"
 #include "Engine.hpp"

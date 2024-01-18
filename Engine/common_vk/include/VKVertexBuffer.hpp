@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKVertexBuffer.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include "Vertex.hpp"

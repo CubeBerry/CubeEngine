@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKIndexBuffer.cpp
 #include "VKIndexBuffer.hpp"
 #include "VKInit.hpp"
 #include <iostream>

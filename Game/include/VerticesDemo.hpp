@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: VerticesDemo.hpp
 #pragma once
 #include "GameState.hpp"
 #include "Object.hpp"

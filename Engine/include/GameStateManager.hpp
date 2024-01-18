@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: GameStateManager.hpp
 #pragma once
 #include "GameState.hpp"
 #include <vector>

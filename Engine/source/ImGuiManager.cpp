@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: ImGuiManager.cpp
 #include "ImGuiManager.hpp"
 
 #include <iostream>

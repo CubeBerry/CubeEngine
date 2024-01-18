@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Object.hpp
 #pragma once
 #include <string>
 #include <vector>

@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKSwapChain.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
 

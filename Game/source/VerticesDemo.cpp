@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: VerticesDemo.cpp
 #include "VerticesDemo.hpp"
 #include "Engine.hpp"
 #include <glm/gtc/matrix_transform.hpp>

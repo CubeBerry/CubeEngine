@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKUniformBuffer.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include "VKInit.hpp"

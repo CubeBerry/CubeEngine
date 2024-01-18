@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: MaterialComponent.cpp
 #include "BasicComponents/MaterialComponent.hpp"
 #include "Engine.hpp"
 

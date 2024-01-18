@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: CameraManager.cpp
 #include "CameraManager.hpp"
 #include "Engine.hpp"
 

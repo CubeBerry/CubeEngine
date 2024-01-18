@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKSwapChain.cpp
 #include "VKSwapChain.hpp"
 #include "VKInit.hpp"
 #include "Engine.hpp"

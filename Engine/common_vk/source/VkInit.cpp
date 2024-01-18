@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: VKInit.cpp
 #include "VKInit.hpp"
 
 #include <iostream>

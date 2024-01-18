@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: ObjectManager.cpp
 #include "ObjectManager.hpp"
 
 #include <iostream>

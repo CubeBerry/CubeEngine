@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Object.cpp
 #include "Object.hpp"
 
 #include <iostream>

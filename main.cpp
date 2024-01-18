@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: main.cpp
 #include "Engine.hpp"
 
 #include "VerticesDemo.hpp"

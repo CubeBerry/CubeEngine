@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Engine.hpp
 #pragma once
 #include "Timer.hpp"
 #include "Window.hpp"

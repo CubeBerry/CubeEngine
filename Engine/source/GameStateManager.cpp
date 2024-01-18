@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: GameStateManager.cpp
 #include "GameStateManager.hpp"
 
 GameStateManager::GameStateManager()

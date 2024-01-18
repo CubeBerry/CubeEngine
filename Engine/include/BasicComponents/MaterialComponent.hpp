@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: MaterialComponent.hpp
 #pragma once
 #include "Component.hpp"
 #include"../include/Object.hpp"

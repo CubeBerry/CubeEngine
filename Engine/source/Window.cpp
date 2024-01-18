@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Window.cpp
 #include "Window.hpp"
 #include "VKInit.hpp"
 
@@ -46,6 +49,6 @@ void Window::Init(const char* title, int width, int height, bool fullscreen, Win
 		default:
 			break;
 		};
-		std::cout << "Create Window Successful" << std::endl;
+		std::cout << "Create Window Successful" << '\n' << std::endl;
 	}
 }
