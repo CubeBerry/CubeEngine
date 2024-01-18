@@ -250,8 +250,10 @@ void VKDescriptor::InitDescriptorPool()
 		//For Fragment
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+#ifdef _DEBUG
 		//For ImGUI
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+#endif
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
 	};
 
