@@ -14,6 +14,7 @@ struct Vertex
 	//glm::vec2 uv;
 	alignas(4) int index;
 	alignas(4) float isTex;
+	alignas(4) float isTexel;
 };
 
 struct UniformMatrix
@@ -21,5 +22,7 @@ struct UniformMatrix
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
+	alignas(16) glm::vec4 frameSize;
+	alignas(16) glm::vec4 texelPos;
 	alignas(4) int texIndex;
 };

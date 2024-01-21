@@ -37,8 +37,6 @@ public:
 	VKInit* GetVkInit() { return vkInit; }
 #ifdef _DEBUG
 	ImGuiManager* GetImGuiManager() { return imguiManager; };
-#endif
-#ifdef _DEBUG
 	bool GetIsRecreated() { return isRecreated; };
 #endif
 private:
@@ -78,12 +76,14 @@ private:
 	//--------------------Texture Render--------------------//
 public:
 	void LoadTexture(const std::filesystem::path& path_);
-	void LoadQuad(glm::vec4 color_, float isTex_);
+	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_);
 	void LoadLineQuad(glm::vec4 color_);
 
 	void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 	void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
+
 	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
+	std::vector<VKTexture*>* GetTextures() { return &textures; };
 private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;

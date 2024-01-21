@@ -8,6 +8,7 @@ layout(location = 0) in vec4 i_pos;
 layout(location = 1) in vec4 i_col;
 layout(location = 2) in int index;
 layout(location = 3) in float isTex;
+layout(location = 4) in float isTexel;
 
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
@@ -19,6 +20,8 @@ struct Matrix
     mat4 model;
     mat4 view;
     mat4 projection;
+    vec4 frameSize;
+    vec4 texelPos;
     int texIndex;
 };
 
@@ -29,8 +32,11 @@ layout(set = 0, binding = 0) uniform uniformMatrix
 
 void main()
 {
-    o_uv.x = ((i_pos.x + 1) / 2);
-    o_uv.y = ((i_pos.y + 1) / 2);
+    //o_uv.x = ((i_pos.x + 1) / 2);
+    //o_uv.y = ((i_pos.y + 1) / 2);
+
+    o_uv.x = mix((i_pos.x + 1) / 2, ((i_pos.x + 1) / 2) * matrix[index].frameSize.x + matrix[index].texelPos.x, isTexel);
+    o_uv.y = mix((i_pos.y + 1) / 2, ((i_pos.y + 1) / 2) * matrix[index].frameSize.y + matrix[index].texelPos.y, isTexel);
 
     outTexIndex = matrix[index].texIndex;
     outIsTex = isTex;
