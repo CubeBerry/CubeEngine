@@ -110,6 +110,17 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
 
+	{
+		//Define Vertex Input Attribute about Enable Texel
+		VkVertexInputAttributeDescription vertexInputAttribute{};
+		vertexInputAttribute.location = 4;
+		vertexInputAttribute.binding = 0;
+		vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
+		vertexInputAttribute.offset = offsetof(Vertex, isTexel);
+
+		vertexInputAttributes.push_back(vertexInputAttribute);
+	}
+
 	//Create Pipeline Vertex Input State Info
 	VkPipelineVertexInputStateCreateInfo vertexInputStateInfo{};
 	vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -176,6 +187,13 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		| VK_COLOR_COMPONENT_G_BIT
 		| VK_COLOR_COMPONENT_B_BIT
 		| VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	//Create Color Blend State Info
 	VkPipelineColorBlendStateCreateInfo colorBlendStateInfo{};

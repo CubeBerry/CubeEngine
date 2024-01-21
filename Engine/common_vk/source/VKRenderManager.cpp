@@ -358,12 +358,12 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 	textures.push_back(texture);
 }
 
-void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_)
+void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_));
-	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_));
-	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
 	if (texVertex != nullptr)
 		delete texVertex;
 	texVertex = new VKVertexBuffer(vkInit, &texVertices);

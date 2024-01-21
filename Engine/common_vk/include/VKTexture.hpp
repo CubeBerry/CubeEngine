@@ -4,6 +4,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include <filesystem>
+#include <glm/vec2.hpp>
 
 class VKInit;
 
@@ -19,6 +20,7 @@ public:
 	VkImageView* GetImageView() { return &vkTextureImageView; };
 	int GetWidth() const { return width; };
 	int GetHeight() const { return height; };
+	glm::vec2 GetSize() const { return glm::vec2(width, height); };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
