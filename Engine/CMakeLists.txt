@@ -16,5 +16,3 @@ include_directories(${SRC_DIR} ${INC_DIR} ${LIB_DIR})
 
 FILE(GLOB_RECURSE SOURCES "${SRC_DIR}/*.cpp")
 FILE(GLOB_RECURSE INCLUDES "${INC_DIR}/*.hpp")
-
-#add_library(CubeEngine STATIC ${SOURCES} ${INCLUDES})

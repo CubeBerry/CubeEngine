@@ -9,14 +9,21 @@ project(Project)
 set(VK_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk/include")
 include_directories(${VK_INC_DIR})
 
+# ImGui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
-FILE(GLOB_RECURSE IMGUI_SOURCES "${IMGUI_DIR}/*.h" "${IMGUI_DIR}/*.cpp")
+set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
 include_directories(${IMGUI_DIR})
 
+# FMOD
+set(FMOD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
+include_directories(${FMOD_DIR})
+
+# Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
 include_directories(${ENGINE_INC_DIR})
 
+# Game
 set(GAME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/source")
 set(GAME_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
 include_directories(${GAME_INC_DIR})
@@ -35,12 +42,18 @@ file(GLOB_RECURSE GAME_SRC
     "./Game/include/*.hpp"
     "./Game/source/*.cpp"
 )
+FILE(GLOB_RECURSE IMGUI_SOURCES
+    "${IMGUI_DIR}/*.h"
+    "${IMGUI_DIR}/*.cpp"
+    "${IMGUI_BACKEND_DIR}/*.h"
+    "${IMGUI_BACKEND_DIR}/*.cpp"
+)
 
 add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES} ${IMGUI_SOURCES})
 
 source_group("Engine"            FILES ${ENGINE_SRC})
 source_group("Game"            FILES ${GAME_SRC})
-#target_link_libraries(${PROJECT_NAME} CubeEngine)
+source_group("ImGui"            FILES ${IMGUI_SOURCES})
 
 # common_vk
 set(VK_DIR "./Engine/common_vk")
@@ -49,21 +62,19 @@ target_link_libraries(${PROJECT_NAME} common_vk)
 target_include_directories(${PROJECT_NAME} PUBLIC ${VK_INC_DIR})
 
 # SDL2
-set(SDL_DIR "./Engine/libs/SDL2")
-add_subdirectory("${SDL_DIR}")
-target_link_libraries(${PROJECT_NAME} SDL2::SDL2)
-file(COPY ./Engine/libs/SDL2d.dll
+#set(SDL_DIR "./Engine/libs/SDL2")
+#add_subdirectory("${SDL_DIR}")
+#target_link_libraries(${PROJECT_NAME} SDL2::SDL2)
+file(COPY ${Vulkan_INCLUDE_DIR}/../Lib/SDL2.lib
 DESTINATION ${CMAKE_BINARY_DIR}
 )
-#target_include_directories(${PROJECT_NAME} PUBLIC ${SDL2_INCLUDE_DIRS})
-#find_package(SDL2 REQUIRED)
-#include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
-#target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
 
 # glm
-set(GLM_DIR "./Engine/libs/glm")
-add_subdirectory("${GLM_DIR}")
-target_link_libraries(${PROJECT_NAME} glm)
-#find_package(GLM REQUIRED)
-#include_directories(${PROJECT_NAME} ${GLM_INCLUDE_DIRS})
-#target_link_libraries(${PROJECT_NAME} ${GLM_LIBRARIES})
+#set(GLM_DIR "./Engine/libs/glm")
+#add_subdirectory("${GLM_DIR}")
+#target_link_libraries(${PROJECT_NAME} glm)
+
+# FMOD
+file(COPY ./Engine/libs/fmod/lib/x64/fmod.dll
+DESTINATION ${CMAKE_BINARY_DIR}
+)
