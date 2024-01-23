@@ -6,7 +6,8 @@ precision mediump float;
 
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
-layout(location = 2) in float inTexIndex;
+layout(location = 2) flat in int inTexIndex;
+layout(location = 3) in float inIsTex;
 
 layout(location = 0) out vec4 fragmentColor;
 
