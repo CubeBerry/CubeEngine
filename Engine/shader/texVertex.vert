@@ -35,8 +35,19 @@ void main()
     //o_uv.x = ((i_pos.x + 1) / 2);
     //o_uv.y = ((i_pos.y + 1) / 2);
 
-    o_uv.x = mix((i_pos.x + 1) / 2, ((i_pos.x + 1) / 2) * matrix[index].frameSize.x + matrix[index].texelPos.x, isTexel);
-    o_uv.y = mix((i_pos.y + 1) / 2, ((i_pos.y + 1) / 2) * matrix[index].frameSize.y + matrix[index].texelPos.y, isTexel);
+    //o_uv.x = mix((i_pos.x + 1) / 2, ((i_pos.x + 1) / 2) * matrix[index].frameSize.x + matrix[index].texelPos.x, isTexel);
+    //o_uv.y = mix((i_pos.y + 1) / 2, ((i_pos.y + 1) / 2) * matrix[index].frameSize.y + matrix[index].texelPos.y, isTexel);
+
+    if(isTexel == 1.0)
+    {
+        o_uv.x = mix((i_pos.x + 1.0) / 2.0, ((i_pos.x + 1.0) / 2.0) * matrix[index].frameSize.x + matrix[index].texelPos.x, isTexel);
+        o_uv.y = mix((i_pos.y + 1.0) / 2.0, ((i_pos.y + 1.0) / 2.0) * matrix[index].frameSize.y + matrix[index].texelPos.y, isTexel);
+    }
+    else
+    {
+        o_uv.x = ((i_pos.x + 1.0) / 2.0);
+        o_uv.y = ((i_pos.y + 1.0) / 2.0);
+    }
 
     outTexIndex = matrix[index].texIndex;
     outIsTex = isTex;
