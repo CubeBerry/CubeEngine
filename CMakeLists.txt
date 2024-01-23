@@ -11,7 +11,7 @@ include_directories(${VK_INC_DIR})
 
 # ImGui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
-FILE(GLOB_RECURSE IMGUI_SOURCES "${IMGUI_DIR}/*.h" "${IMGUI_DIR}/*.cpp")
+set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
 include_directories(${IMGUI_DIR})
 
 # FMOD
@@ -42,12 +42,18 @@ file(GLOB_RECURSE GAME_SRC
     "./Game/include/*.hpp"
     "./Game/source/*.cpp"
 )
+FILE(GLOB_RECURSE IMGUI_SOURCES
+    "${IMGUI_DIR}/*.h"
+    "${IMGUI_DIR}/*.cpp"
+    "${IMGUI_BACKEND_DIR}/*.h"
+    "${IMGUI_BACKEND_DIR}/*.cpp"
+)
 
 add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES} ${IMGUI_SOURCES})
 
 source_group("Engine"            FILES ${ENGINE_SRC})
 source_group("Game"            FILES ${GAME_SRC})
-#target_link_libraries(${PROJECT_NAME} CubeEngine)
+source_group("ImGui"            FILES ${IMGUI_SOURCES})
 
 # common_vk
 set(VK_DIR "./Engine/common_vk")
@@ -59,7 +65,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${VK_INC_DIR})
 #set(SDL_DIR "./Engine/libs/SDL2")
 #add_subdirectory("${SDL_DIR}")
 #target_link_libraries(${PROJECT_NAME} SDL2::SDL2)
-file(COPY ./Engine/libs/SDL2d.dll
+file(COPY ${Vulkan_INCLUDE_DIR}/../Lib/SDL2.lib
 DESTINATION ${CMAKE_BINARY_DIR}
 )
 

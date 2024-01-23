@@ -9,7 +9,6 @@
 #include <SDL2/SDL_vulkan.h>
 #include <array>
 #include <vector>
-#include "fmod.hpp"
 
 class VKInit;
 class VKSwapChain;
@@ -28,8 +27,6 @@ public:
 		VkRenderPass* pass_
 		);
 	~ImGuiManager();
-	FMOD::Channel* channel();
-	FMOD_RESULT       result;
 
 	void Initialize();
 	void FeedEvent(const SDL_Event& event_);
