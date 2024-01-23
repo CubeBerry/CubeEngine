@@ -75,6 +75,6 @@ DESTINATION ${CMAKE_BINARY_DIR}
 #target_link_libraries(${PROJECT_NAME} glm)
 
 # FMOD
-file(COPY ./Engine/libs/fmod/lib/x64/fmod.dll
+file(COPY ./Engine/libs/fmod/lib/fmod.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
