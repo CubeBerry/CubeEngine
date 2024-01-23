@@ -18,7 +18,6 @@ include_directories(${IMGUI_DIR})
 set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
 set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
 include_directories(${FMOD_INC_DIR})
-include_directories(${FMOD_LIB_DIR})
 
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
