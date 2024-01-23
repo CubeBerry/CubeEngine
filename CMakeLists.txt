@@ -15,8 +15,10 @@ set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
 include_directories(${IMGUI_DIR})
 
 # FMOD
-set(FMOD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
-include_directories(${FMOD_DIR})
+set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
+set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
+include_directories(${FMOD_INC_DIR})
+include_directories(${FMOD_LIB_DIR})
 
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
@@ -65,9 +67,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${VK_INC_DIR})
 #set(SDL_DIR "./Engine/libs/SDL2")
 #add_subdirectory("${SDL_DIR}")
 #target_link_libraries(${PROJECT_NAME} SDL2::SDL2)
-file(COPY ${Vulkan_INCLUDE_DIR}/../Lib/SDL2.lib
-DESTINATION ${CMAKE_BINARY_DIR}
-)
+#file(COPY ${Vulkan_INCLUDE_DIR}/../Lib/SDL2.lib
+#DESTINATION ${CMAKE_BINARY_DIR}
+#)
 
 # glm
 #set(GLM_DIR "./Engine/libs/glm")
@@ -78,3 +80,4 @@ DESTINATION ${CMAKE_BINARY_DIR}
 file(COPY ./Engine/libs/fmod/lib/fmod.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
+target_link_libraries(${PROJECT_NAME} ${FMOD_LIB_DIR}/fmod_vc.lib)
