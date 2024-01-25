@@ -288,7 +288,7 @@ void SoundManager::PauseMusic(int index)
 
 bool SoundManager::IsPlaying(int index)
 {
-	FMOD_BOOL isplay;
+	FMOD_BOOL isplay = false;
 	FMOD_Channel_IsPlaying(Musics[index].channel, &isplay);
 	return isplay;
 }
@@ -326,7 +326,7 @@ float SoundManager::GetMusicPlaybackPosition(int index)
 		{
 			return static_cast<float>(currentTime) / totalLength;
 		}
-		else 
+		else
 		{
 			return 0.0f;
 		}
@@ -365,7 +365,7 @@ void SoundManager::MusicVolumeUp()
 
 void SoundManager::MusicVolumeDown()
 {
-	SetMusicVolume(musicVolume -0.05f);
+	SetMusicVolume(musicVolume - 0.05f);
 }
 
 void SoundManager::SetSoundVolume(float amount)
@@ -477,7 +477,7 @@ void SoundManager::LoadMusicFilesFromFolder(const std::wstring& folderPath)
 #ifdef _DEBUG
 void SoundManager::MusicPlayerForImGui()
 {
-	if(musicMaxIndex > 0)
+	if (musicMaxIndex > 0)
 	{
 		ImGui::Begin("MusicPlayer");
 		ImGui::Text("Now Playing:");
@@ -495,27 +495,36 @@ void SoundManager::MusicPlayerForImGui()
 			}
 			PlayMusic(currentIndex);
 		}
-		ImGui::SameLine();
-		if (ImGui::Button("Play")) //키 입력 함수
+		if (IsPaused(currentIndex) == true)
 		{
-			if (IsPlaying(currentIndex) == true)
+			ImGui::SameLine();
+			if (ImGui::Button("Play"))
 			{
-				StopMusic(currentIndex);
+				if (IsPlaying(currentIndex) != true)
+				{
+					PlayMusic(currentIndex);
+				}
+				else
+				{
+					PauseMusic(currentIndex);
+				}
 			}
-			PlayMusic(currentIndex);
 		}
-		ImGui::SameLine();
-		if (ImGui::Button("Pause")) //키 입력 함수
+		else
 		{
-			PauseMusic(currentIndex);
+			ImGui::SameLine();
+			if (ImGui::Button("Pause"))
+			{
+				PauseMusic(currentIndex);
+			}
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Stop")) //키 입력 함수
+		if (ImGui::Button("Stop"))
 		{
 			StopMusic(currentIndex);
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Next")) //키 입력 함수
+		if (ImGui::Button("Next"))
 		{
 			StopMusic(currentIndex);
 			++currentIndex;
