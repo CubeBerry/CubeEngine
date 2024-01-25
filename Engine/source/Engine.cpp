@@ -18,6 +18,9 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	objectManager = new ObjectManager;
 	cameraManager = new CameraManager;
 	cameraManager->Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
+
+	soundManager = new SoundManager;
+	soundManager->Initialize();
 }
 
 void Engine::Update()
@@ -72,6 +75,7 @@ void Engine::End()
 	delete vkRenderManager;
 	delete gameStateManger;
 	delete objectManager;
+	delete soundManager;
 	delete window;
 }
 

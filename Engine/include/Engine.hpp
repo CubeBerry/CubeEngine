@@ -10,6 +10,7 @@
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"
 #include "CameraManager.hpp"
+#include "SoundManager.hpp"
 
 class Engine
 {
@@ -31,6 +32,7 @@ public:
 	static InputManager* GetInputManager() { return Instance().inputManager; }
 	static ObjectManager* GetObjectManager() { return Instance().objectManager; }
 	static CameraManager* GetCameraManager() { return Instance().cameraManager; }
+	static SoundManager* GetSoundManager() { return Instance().soundManager; }
 private:
 
 	bool isRunning = true;
@@ -50,4 +52,5 @@ private:
 	InputManager* inputManager = nullptr;
 	ObjectManager* objectManager = nullptr;
 	CameraManager* cameraManager = nullptr;
+	SoundManager* soundManager = nullptr;
 };

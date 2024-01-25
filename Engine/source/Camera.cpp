@@ -61,7 +61,6 @@ void Camera::MoveRight(float distance) noexcept
 	{
 	case CameraType::TwoDimension:
 		cameraPosition += normalize(rightVector) * distance;
-		std::cout << cameraPosition.x << '\n';
 		break;
 	case CameraType::ThreeDimension:
 		cameraPosition += normalize(glm::cross(front, upVector)) * distance;

@@ -84,6 +84,7 @@ void VerticesDemo::Update(float dt)
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::ShowDemoWindow();
+	Engine::GetSoundManager()->MusicPlayerForImGui();
 }
 #endif
 
