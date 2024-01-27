@@ -8,7 +8,8 @@
 enum class ComponentTypes
 {
     INVALID = 0,
-    SPRITE
+    SPRITE,
+    PHYSICS2D
 };
 
 inline ComponentTypes StringToComponent(const std::string& /*string*/)

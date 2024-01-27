@@ -23,7 +23,7 @@ public:
     void End() override;
 
 	//Update Matrices
-	void UpdateModel();
+	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle);
 	void UpdateView();
 	void UpdateProjection();
 

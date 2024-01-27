@@ -32,6 +32,7 @@ void Engine::Update()
 		deltaTime = timer.GetDeltaTime();
 		if (deltaTime > 1.f / static_cast<float>(timer.GetFrameRate()))
 		{
+			std::cout << deltaTime << std::endl;
 			SDL_PollEvent(&event);
 #ifdef _DEBUG
 			vkRenderManager->GetImGuiManager()->FeedEvent(event);
