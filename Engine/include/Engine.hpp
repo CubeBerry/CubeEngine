@@ -11,6 +11,7 @@
 #include "ObjectManager.hpp"
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
+#include "SpriteManager.hpp"
 
 class Engine
 {
@@ -33,6 +34,7 @@ public:
 	static ObjectManager* GetObjectManager() { return Instance().objectManager; }
 	static CameraManager* GetCameraManager() { return Instance().cameraManager; }
 	static SoundManager* GetSoundManager() { return Instance().soundManager; }
+	static SpriteManager* GetSpriteManager() { return Instance().spriteManager; }
 private:
 
 	bool isRunning = true;
@@ -53,4 +55,5 @@ private:
 	ObjectManager* objectManager = nullptr;
 	CameraManager* cameraManager = nullptr;
 	SoundManager* soundManager = nullptr;
+	SpriteManager* spriteManager = nullptr;
 };

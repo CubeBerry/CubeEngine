@@ -21,6 +21,8 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 
 	soundManager = new SoundManager;
 	soundManager->Initialize();
+
+	spriteManager = new SpriteManager;
 }
 
 void Engine::Update()
@@ -32,7 +34,6 @@ void Engine::Update()
 		deltaTime = timer.GetDeltaTime();
 		if (deltaTime > 1.f / static_cast<float>(timer.GetFrameRate()))
 		{
-			std::cout << deltaTime << std::endl;
 			SDL_PollEvent(&event);
 #ifdef _DEBUG
 			vkRenderManager->GetImGuiManager()->FeedEvent(event);
@@ -49,6 +50,7 @@ void Engine::Update()
 			inputManager->InputPollEvent(event);
 			gameStateManger->Update(deltaTime);
 			objectManager->Update(deltaTime);
+			spriteManager->Update(deltaTime);
 			cameraManager->Update();
 			if (!(SDL_GetWindowFlags(window->GetWindow()) & SDL_WINDOW_MINIMIZED))
 				gameStateManger->Draw(deltaTime);
@@ -75,6 +77,7 @@ void Engine::End()
 	delete inputManager;
 	delete vkRenderManager;
 	delete gameStateManger;
+	delete spriteManager;
 	delete objectManager;
 	delete soundManager;
 	delete window;

@@ -15,11 +15,12 @@ struct Vertex;
 class Sprite : public Component
 {
 public:
-	Sprite() : Component(ComponentTypes::SPRITE) {};
+	Sprite() : Component(ComponentTypes::SPRITE) { Init(); };
 	~Sprite() override;
 	
 	void Init() override;
 	void Update(float dt) override;
+	void Update(float dt, int matrixId);
     void End() override;
 
 	//Update Matrices
@@ -27,6 +28,9 @@ public:
 	void UpdateView();
 	void UpdateProjection();
 
+	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle, int index);
+	void UpdateView(int index);
+	void UpdateProjection(int index);
 	//Add Mesh
 	void AddQuad(glm::vec4 color_);
 	void AddQuadLine(glm::vec4 color_);
@@ -43,8 +47,12 @@ public:
 	int GetCurrentAnim() const { return currAnim; };
 
 	//Getter
+	int GetMaterialId() { return materialId; };
 	int GetTextureId() { return textureId; };
 	void ChangeTexture(int index);
+	//Setter
+	void SetMaterialId(int index) { materialId = index; }
+	void AddSpriteToManager();
 private:
 	//Animation
 	glm::vec2 GetFrameTexel(int frameNum) const;

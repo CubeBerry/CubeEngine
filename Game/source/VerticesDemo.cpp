@@ -50,10 +50,11 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", 3);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
+	/*Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
 	
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({32.f,16.f});
@@ -74,6 +75,7 @@ void VerticesDemo::Init()
 
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
 
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(mass));
@@ -97,7 +99,7 @@ void VerticesDemo::Init()
 			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetFriction(0.9f);
 			break;
 		}
-	}
+	}*/
 }
 
 void VerticesDemo::Update(float dt)
@@ -154,6 +156,10 @@ void VerticesDemo::Update(float dt)
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::X))
 	{
 		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f * dt);
+	}
+	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::Q))
+	{
+		Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID() - 2);
 	}
 	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
 	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);

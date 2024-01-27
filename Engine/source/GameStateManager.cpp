@@ -7,7 +7,7 @@
 
 GameStateManager::GameStateManager()
 {
-	currentLevel = GameLevel::SHADERDEMO;
+	currentLevel = GameLevel::VERTICESDEMO;
 }
 
 GameStateManager::~GameStateManager()

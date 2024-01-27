@@ -28,7 +28,7 @@ public:
 	Object() = default;
 	Object(glm::vec3 pos_, glm::vec3 size_, std::string name = "", ObjectType objectType = ObjectType::NONE);
 	Object(const Object& rhs);
-	virtual ~Object() = default;
+	~Object() { DestroyAllComponents(); };
 	virtual void Init();
 	virtual void Update(float dt);
 	virtual void Draw(float dt);
@@ -110,6 +110,8 @@ public:
 	}
 
 protected:
+	void DestroyAllComponents();
+
 	glm::vec3 position{ 0.f, 0.f, 0.f };
 	glm::vec3 speed{ 0.f, 0.f, 0.f };
 	glm::vec3 size{ 0.f, 0.f, 0.f };

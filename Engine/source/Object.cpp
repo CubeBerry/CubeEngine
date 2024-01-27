@@ -111,3 +111,11 @@ bool Object::isCollideWithPointIn2D(glm::vec3 point) noexcept
 	return !(max.x < point.x || point.x < min.x || max.y < point.y ||
 		point.y < min.y);
 }
+
+void Object::DestroyAllComponents()
+{
+	for (auto comp : componentList)
+	{
+		delete comp;
+	}
+}
