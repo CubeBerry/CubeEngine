@@ -360,10 +360,10 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
-	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
-	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (texVertex != nullptr)
 		delete texVertex;
 	texVertex = new VKVertexBuffer(vkInit, &texVertices);
@@ -390,14 +390,17 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
+	matrices.back().color = color_;
+	matrices.back().isTex = isTex_;
+	matrices.back().isTexel = isTexel_;
 }
 
 void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 {
-	lineVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	lineVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	lineVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	lineVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	lineVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (lineVertex != nullptr)
 		delete lineVertex;
 	lineVertex = new VKVertexBuffer(vkInit, &lineVertices);
@@ -424,13 +427,14 @@ void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
+	matrices.back().color = color_;
 }
 
 void VKRenderManager::LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_)
 {
 	for (auto vertex : vertices_)
 	{
-		texVertices.push_back(Vertex(vertex.position, vertex.color, quadCount, vertex.isTex));
+		texVertices.push_back(Vertex(vertex.position, quadCount));
 	}
 	if (texVertex != nullptr)
 		delete texVertex;
@@ -462,7 +466,7 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 {
 	for (auto vertex : vertices_)
 	{
-		lineVertices.push_back(Vertex(vertex.position, vertex.color, quadCount, vertex.isTex));
+		lineVertices.push_back(Vertex(vertex.position, quadCount));
 	}
 	if (lineVertex != nullptr)
 		delete lineVertex;

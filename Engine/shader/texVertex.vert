@@ -5,10 +5,7 @@ precision mediump float;
 #define MAX_MATRICES 500
 
 layout(location = 0) in vec4 i_pos;
-layout(location = 1) in vec4 i_col;
-layout(location = 2) in int index;
-layout(location = 3) in float isTex;
-layout(location = 4) in float isTexel;
+layout(location = 1) in int index;
 
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
@@ -20,8 +17,11 @@ struct Matrix
     mat4 model;
     mat4 view;
     mat4 projection;
+    vec4 color;
     vec4 frameSize;
     vec4 texelPos;
+    float isTex;
+    float isTexel;
     int texIndex;
 };
 
@@ -38,10 +38,10 @@ void main()
     //o_uv.x = mix((i_pos.x + 1) / 2, ((i_pos.x + 1) / 2) * matrix[index].frameSize.x + matrix[index].texelPos.x, isTexel);
     //o_uv.y = mix((i_pos.y + 1) / 2, ((i_pos.y + 1) / 2) * matrix[index].frameSize.y + matrix[index].texelPos.y, isTexel);
 
-    if(isTexel == 1.0)
+    if(matrix[index].isTexel == 1.0)
     {
-        o_uv.x = mix((i_pos.x + 1.0) / 2.0, ((i_pos.x + 1.0) / 2.0) * matrix[index].frameSize.x + matrix[index].texelPos.x, isTexel);
-        o_uv.y = mix((i_pos.y + 1.0) / 2.0, ((i_pos.y + 1.0) / 2.0) * matrix[index].frameSize.y + matrix[index].texelPos.y, isTexel);
+        o_uv.x = mix((i_pos.x + 1.0) / 2.0, ((i_pos.x + 1.0) / 2.0) * matrix[index].frameSize.x + matrix[index].texelPos.x, matrix[index].isTexel);
+        o_uv.y = mix((i_pos.y + 1.0) / 2.0, ((i_pos.y + 1.0) / 2.0) * matrix[index].frameSize.y + matrix[index].texelPos.y, matrix[index].isTexel);
     }
     else
     {
@@ -50,8 +50,8 @@ void main()
     }
 
     outTexIndex = matrix[index].texIndex;
-    outIsTex = isTex;
-    o_col = i_col;
+    outIsTex = matrix[index].isTex;
+    o_col = matrix[index].color;
 
     gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
 }
