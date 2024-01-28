@@ -27,11 +27,13 @@ void SpriteManager::AddSprite(Sprite* sprite_)
 void SpriteManager::DeleteSprite(Sprite* sprite_)
 {
 	auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
-	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
 	for (auto it = iterator + 1; it != sprites.end(); it++)
 	{
 		(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
-		std::cout << (*it)->GetMaterialId() << std::endl;
+		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTex;
+		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTexel = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTexel;
+		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).texIndex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).texIndex;
 	}
+	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
 	sprites.erase(iterator);
 }

@@ -270,6 +270,11 @@ void Sprite::AddSpriteToManager()
 	Engine::GetSpriteManager()->AddSprite(this);
 }
 
+void Sprite::SetColor(glm::vec4 color_)
+{
+	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).color = color_;
+}
+
 glm::vec2 Sprite::GetFrameTexel(int frameNum) const
 {
 	if (frameNum < 0 || frameTexel.size() <= frameNum)

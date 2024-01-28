@@ -21,8 +21,7 @@ Object::Object(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType obj
 
 Object::Object(const Object& rhs) : position(rhs.position), speed(rhs.speed), size(rhs.size),
 drawType(rhs.drawType), objectType(rhs.objectType), objectName(rhs.objectName), spriteName(rhs.spriteName),
-angle(rhs.angle), min(rhs.min), max(rhs.max), collisionBoxSize(rhs.collisionBoxSize), collisionBoxPosition(rhs.collisionBoxPosition),
-color(rhs.color), componentList(rhs.componentList)
+angle(rhs.angle), min(rhs.min), max(rhs.max), collisionBoxSize(rhs.collisionBoxSize), collisionBoxPosition(rhs.collisionBoxPosition), componentList(rhs.componentList)
 {
 	for (auto& c : componentList)
 	{

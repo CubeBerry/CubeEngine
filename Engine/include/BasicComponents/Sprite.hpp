@@ -54,6 +54,7 @@ public:
 	//Setter
 	void SetMaterialId(int index) { materialId = index; }
 	void AddSpriteToManager();
+	void SetColor(glm::vec4 color_);
 private:
 	//Animation
 	glm::vec2 GetFrameTexel(int frameNum) const;

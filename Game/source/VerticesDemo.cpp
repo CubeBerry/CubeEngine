@@ -42,21 +42,21 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(2);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f,360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "2", ObjectType::NONE);
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
+	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f,360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "2", ObjectType::NONE);
+	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 70.f, 120.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 70.f, 120.f,0.f }, "Ani", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", 3);
 
-	/*Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
+	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
 
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
+	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
 
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
+	/*Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({32.f,16.f});
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ 0.f,32.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ -32.f,16.f });
@@ -169,6 +169,7 @@ void VerticesDemo::Update(float dt)
 		{
 			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->SetColor({ 0.f,1.f,1.f,0.5f });
 		}
 		else
 		{
@@ -185,10 +186,12 @@ void VerticesDemo::Update(float dt)
 		}
 	}
 	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
-	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
+	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
 
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::SPACE))
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->PlayAnimation(0);
+	{
+		Engine::Instance().GetObjectManager()->FindObjectWithName("Ani")->GetComponent<Sprite>()->PlayAnimation(0);
+	}
 
 	CollideObjects();
 }
