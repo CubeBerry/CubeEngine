@@ -51,7 +51,7 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", 3);
 
 	/*Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
-	
+
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
@@ -63,7 +63,7 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ -16.f,-32.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ 16.f,-32.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
-	
+
 	for (int i = 0; i < 20; i++)
 	{
 		int fric = (rand() % (2 + 1)) + 1;
@@ -157,9 +157,32 @@ void VerticesDemo::Update(float dt)
 	{
 		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f * dt);
 	}
-	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::Q))
+
+	//Add & Delete
+	if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::Q))
 	{
-		Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID() - 2);
+		int spri = (rand() % (2 + 1)) + 1;
+		float x = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
+		float y = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
+		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ x,y,0.f }, glm::vec3{ 32.f,32.f,0.f }, "0", ObjectType::NONE);
+		if (spri == 1)
+		{
+			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		}
+		else
+		{
+			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+		}
+	}
+	else if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::W))
+	{
+		if (Engine::Instance().GetObjectManager()->GetObjectMap().empty() == false)
+		{
+			Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID());
+			std::cout << "Delete" << std::endl;
+		}
 	}
 	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
 	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
