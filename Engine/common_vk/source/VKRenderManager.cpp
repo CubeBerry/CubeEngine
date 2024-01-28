@@ -490,6 +490,23 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 	matrices.push_back(mat);
 }
 
+void VKRenderManager::DeleteWithIndex()
+{
+	quadCount--;
+
+	texVertices.erase(end(texVertices) - 1);
+	vkCmdUpdateBuffer(vkCommandBuffers[frameIndex], *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
+
+	texIndices.erase(end(texIndices) - 1);
+	vkCmdUpdateBuffer(vkCommandBuffers[frameIndex], *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
+
+	matrices.erase(end(matrices) - 1);
+	for (auto u : *uniform->GetUniformBuffers())
+	{
+		vkCmdUpdateBuffer(vkCommandBuffers[frameIndex], u, 0, quadCount * sizeof(UniformMatrix), matrices.data());
+	}
+}
+
 void VKRenderManager::BeginRender()
 {
 	isRecreated = false;

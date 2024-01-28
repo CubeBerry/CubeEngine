@@ -31,6 +31,7 @@ public:
 	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle, int index);
 	void UpdateView(int index);
 	void UpdateProjection(int index);
+
 	//Add Mesh
 	void AddQuad(glm::vec4 color_);
 	void AddQuadLine(glm::vec4 color_);

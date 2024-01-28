@@ -49,8 +49,8 @@ void Engine::Update()
 
 			inputManager->InputPollEvent(event);
 			gameStateManger->Update(deltaTime);
-			objectManager->Update(deltaTime);
 			spriteManager->Update(deltaTime);
+			objectManager->Update(deltaTime);
 			cameraManager->Update();
 			if (!(SDL_GetWindowFlags(window->GetWindow()) & SDL_WINDOW_MINIMIZED))
 				gameStateManger->Draw(deltaTime);
