@@ -181,7 +181,9 @@ void VerticesDemo::Update(float dt)
 	{
 		if (Engine::Instance().GetObjectManager()->GetObjectMap().empty() == false)
 		{
-			Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID());
+			int testIndex{ 0 };
+			//Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID());
+			Engine::Instance().GetObjectManager()->Destroy(testIndex);
 			std::cout << "Delete" << std::endl;
 		}
 	}

@@ -26,14 +26,17 @@ void SpriteManager::AddSprite(Sprite* sprite_)
 
 void SpriteManager::DeleteSprite(Sprite* sprite_)
 {
+	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
+
+	std::vector<UniformMatrix> tempMatrices = *Engine::Instance().GetVKRenderManager()->GetMatrices();
 	auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
 	for (auto it = iterator + 1; it != sprites.end(); it++)
 	{
 		(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTex;
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTexel = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTexel;
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).texIndex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).texIndex;
+		tempMatrices.at((*it)->GetMaterialId()).isTex = tempMatrices.at((*it)->GetMaterialId() + 1).isTex;
+		tempMatrices.at((*it)->GetMaterialId()).isTexel = tempMatrices.at((*it)->GetMaterialId() + 1).isTexel;
+		tempMatrices.at((*it)->GetMaterialId()).texIndex = tempMatrices.at((*it)->GetMaterialId() + 1).texIndex;
 	}
-	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
 	sprites.erase(iterator);
+	*Engine::Instance().GetVKRenderManager()->GetMatrices() = tempMatrices;
 }
