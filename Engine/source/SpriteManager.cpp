@@ -35,6 +35,7 @@ void SpriteManager::DeleteSprite(Sprite* sprite_)
 		tempMatrices.at((*it)->GetMaterialId()).isTex = tempMatrices.at((*it)->GetMaterialId() + 1).isTex;
 		tempMatrices.at((*it)->GetMaterialId()).isTexel = tempMatrices.at((*it)->GetMaterialId() + 1).isTexel;
 		tempMatrices.at((*it)->GetMaterialId()).texIndex = tempMatrices.at((*it)->GetMaterialId() + 1).texIndex;
+		tempMatrices.at((*it)->GetMaterialId()).color = tempMatrices.at((*it)->GetMaterialId() + 1).color;
 	}
 	sprites.erase(iterator);
 	*Engine::Instance().GetVKRenderManager()->GetMatrices() = tempMatrices;
