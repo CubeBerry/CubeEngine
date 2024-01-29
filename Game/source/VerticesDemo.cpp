@@ -165,17 +165,17 @@ void VerticesDemo::Update(float dt)
 		float x = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
 		float y = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
 		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ x,y,0.f }, glm::vec3{ 32.f,32.f,0.f }, "0", ObjectType::NONE);
-		if (spri == 1)
-		{
-			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->SetColor({ 0.f,1.f,1.f,0.5f });
-		}
-		else
-		{
+		//if (spri == 1)
+		//{
+		//	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+		//	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		//	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->SetColor({ 0.f,1.f,1.f,0.5f });
+		//}
+		//else
+		//{
 			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
-		}
+		//}
 	}
 	else if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::W))
 	{

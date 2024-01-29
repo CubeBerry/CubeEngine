@@ -498,52 +498,52 @@ void VKRenderManager::DeleteWithIndex()
 {
 	quadCount--;
 
-	////Create Command Buffer Allocate Info
-	//VkCommandBufferAllocateInfo allocateInfo{};
-	//allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	//allocateInfo.commandPool = vkCommandPool;
-	//allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	//allocateInfo.commandBufferCount = 1;
+	//Create Command Buffer Allocate Info
+	VkCommandBufferAllocateInfo allocateInfo{};
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.commandPool = vkCommandPool;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandBufferCount = 1;
 
-	////Create Command Buffer
-	//VkCommandBuffer commandBuffer;
-	//vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer);
+	//Create Command Buffer
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer);
 
-	////Create Command Buffer Begin Info
-	//VkCommandBufferBeginInfo beginInfo{};
-	//beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	//beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	//Create Command Buffer Begin Info
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	////Begin Command Buffer
-	//vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	//Begin Command Buffer
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 	texVertices.erase(end(texVertices) - 4, end(texVertices));
-	//vkCmdUpdateBuffer(commandBuffer, *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
+	vkCmdUpdateBuffer(commandBuffer, *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
 
 	texIndices.erase(end(texIndices) - 6, end(texIndices));
-	//vkCmdUpdateBuffer(commandBuffer, *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
+	vkCmdUpdateBuffer(commandBuffer, *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
 
 	matrices.erase(end(matrices) - 1);
-	//for (auto u : *uniform->GetUniformBuffers())
-	//{
-	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(UniformMatrix), matrices.data());
-	//}
+	for (auto u : *uniform->GetUniformBuffers())
+	{
+		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(UniformMatrix), matrices.data());
+	}
 
-	////End Command Buffer
-	//vkEndCommandBuffer(commandBuffer);
+	//End Command Buffer
+	vkEndCommandBuffer(commandBuffer);
 
-	////Create Submit Info
-	//VkSubmitInfo submitInfo{};
-	//submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	//submitInfo.commandBufferCount = 1;
-	//submitInfo.pCommandBuffers = &commandBuffer;
+	//Create Submit Info
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
 
-	////Submit Queue to Command Buffer
-	////vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *vkSwapChain->GetFence());
-	//vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	//Submit Queue to Command Buffer
+	//vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *vkSwapChain->GetFence());
+	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 
-	////Wait until all submitted command buffers are handled
-	//vkDeviceWaitIdle(*vkInit->GetDevice());
+	//Wait until all submitted command buffers are handled
+	vkDeviceWaitIdle(*vkInit->GetDevice());
 }
 
 void VKRenderManager::BeginRender()
@@ -698,13 +698,6 @@ void VKRenderManager::BeginRender()
 
 	//Begin command buffer
 	vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo);
-
-	vkCmdUpdateBuffer(vkCommandBuffers[frameIndex], *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
-	vkCmdUpdateBuffer(vkCommandBuffers[frameIndex], *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
-	for (auto u : *uniform->GetUniformBuffers())
-	{
-		vkCmdUpdateBuffer(vkCommandBuffers[frameIndex], u, 0, quadCount * sizeof(UniformMatrix), matrices.data());
-	}
 
 	//Change image layout to TRANSFER_DST_OPTIMAL
 	{
