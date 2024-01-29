@@ -26,9 +26,8 @@ void SpriteManager::AddSprite(Sprite* sprite_)
 
 void SpriteManager::DeleteSprite(Sprite* sprite_)
 {
-	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
-
 	std::vector<UniformMatrix> tempMatrices = *Engine::Instance().GetVKRenderManager()->GetMatrices();
+	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
 	auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
 	for (auto it = iterator + 1; it != sprites.end(); it++)
 	{
