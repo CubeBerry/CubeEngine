@@ -30,9 +30,10 @@ void SpriteManager::DeleteSprite(Sprite* sprite_)
 	for (auto it = iterator + 1; it != sprites.end(); it++)
 	{
 		(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTex;
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTexel = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTexel;
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).texIndex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).texIndex;
+		//Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTex;
+		//Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTexel = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTexel;
+		//Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).texIndex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).texIndex;
+		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()) = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1);
 	}
 	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
 	sprites.erase(iterator);
