@@ -42,27 +42,28 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(2);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f,360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "2", ObjectType::NONE);
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
+	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f,360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "2", ObjectType::NONE);
+	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 70.f, 120.f,0.f }, "3", ObjectType::NONE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 70.f, 120.f,0.f }, "Ani", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", 3);
 
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
-	
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
 
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
+	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
+
+	/*Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({32.f,16.f});
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ 0.f,32.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ -32.f,16.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ -16.f,-32.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ 16.f,-32.f });
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
-	
+
 	for (int i = 0; i < 20; i++)
 	{
 		int fric = (rand() % (2 + 1)) + 1;
@@ -74,6 +75,7 @@ void VerticesDemo::Init()
 
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
 
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(mass));
@@ -97,7 +99,7 @@ void VerticesDemo::Init()
 			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetFriction(0.9f);
 			break;
 		}
-	}
+	}*/
 }
 
 void VerticesDemo::Update(float dt)
@@ -155,11 +157,43 @@ void VerticesDemo::Update(float dt)
 	{
 		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f * dt);
 	}
+
+	//Add & Delete
+	if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::Q))
+	{
+		int spri = (rand() % (2 + 1)) + 1;
+		float x = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
+		float y = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
+		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ x,y,0.f }, glm::vec3{ 32.f,32.f,0.f }, "0", ObjectType::NONE);
+		//if (spri == 1)
+		//{
+		//	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+		//	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		//	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->SetColor({ 0.f,1.f,1.f,0.5f });
+		//}
+		//else
+		//{
+			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+		//}
+	}
+	else if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::W))
+	{
+		if (Engine::Instance().GetObjectManager()->GetObjectMap().empty() == false)
+		{
+			int testIndex{ 0 };
+			//Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID());
+			Engine::Instance().GetObjectManager()->Destroy(testIndex);
+			std::cout << "Delete" << std::endl;
+		}
+	}
 	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
-	Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
+	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
 
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::SPACE))
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->PlayAnimation(0);
+	{
+		Engine::Instance().GetObjectManager()->FindObjectWithName("Ani")->GetComponent<Sprite>()->PlayAnimation(0);
+	}
 
 	CollideObjects();
 }

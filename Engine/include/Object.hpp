@@ -28,7 +28,7 @@ public:
 	Object() = default;
 	Object(glm::vec3 pos_, glm::vec3 size_, std::string name = "", ObjectType objectType = ObjectType::NONE);
 	Object(const Object& rhs);
-	virtual ~Object() = default;
+	~Object() { DestroyAllComponents(); };
 	virtual void Init();
 	virtual void Update(float dt);
 	virtual void Draw(float dt);
@@ -41,7 +41,6 @@ public:
 	glm::vec3     GetMin() { return min; }
 	glm::vec3     GetMax() { return max; }
 	float GetRotate() { return angle; }
-	glm::vec4 GetColor() { return color; }
 
 	DrawType   GetDrawType() { return drawType; }
 	ObjectType GetObjectType() { return objectType; }
@@ -68,7 +67,6 @@ public:
 
 	void       SetCollisionBoxPosition(float x, float y, float z) { collisionBoxPosition = glm::vec3{ x, y, z }; }
 	void       SetCollisionBoxSize(float x, float y, float z) { collisionBoxSize = glm::vec3{ x, y, z }; }
-	void       SetColor(glm::vec4 color4) { color = color4; }
 
 	glm::vec3 GetCollisionBoxSize() { return collisionBoxSize; }
 
@@ -110,6 +108,8 @@ public:
 	}
 
 protected:
+	void DestroyAllComponents();
+
 	glm::vec3 position{ 0.f, 0.f, 0.f };
 	glm::vec3 speed{ 0.f, 0.f, 0.f };
 	glm::vec3 size{ 0.f, 0.f, 0.f };
@@ -119,7 +119,6 @@ protected:
 	glm::vec3 max{ 0.f, 0.f, 0.f };
 	glm::vec3 collisionBoxSize{ 0.f, 0.f, 0.f };
 	glm::vec3 collisionBoxPosition{ 0.f,0.f, 0.f };
-	glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
 
 	int        id = 0;
 	DrawType   drawType = DrawType::NONE;

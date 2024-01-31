@@ -7,8 +7,8 @@
 
 enum class GameLevel
 {
-	SHADERDEMO = 0,
-	VERTICESDEMO,
+	VERTICESDEMO = 0,
+	POCKETBALL,
 	NONE
 };
 

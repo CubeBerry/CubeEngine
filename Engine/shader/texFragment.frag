@@ -15,5 +15,5 @@ layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    fragmentColor = mix(vec4(i_col.xyz, 1.0), texture(tex[inTexIndex], i_uv).rgba, inIsTex);
+    fragmentColor = mix(i_col, texture(tex[inTexIndex], i_uv).rgba, inIsTex);
 }

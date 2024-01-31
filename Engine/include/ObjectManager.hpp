@@ -35,6 +35,7 @@ public:
     void  Draw(float dt);
     void  Destroy(int id);
     void  DestroyAllObjects();
+
     int   GetLastObjectID() { return (lastObjectID - 1); }
     std::map<int, std::unique_ptr<Object>>& GetObjectMap() { return objectMap; }
 

@@ -360,10 +360,10 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
-	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
-	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, isTex_, isTexel_));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (texVertex != nullptr)
 		delete texVertex;
 	texVertex = new VKVertexBuffer(vkInit, &texVertices);
@@ -390,14 +390,18 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
+	matrices.back().color = color_;
+	matrices.back().isTex = isTex_;
+	matrices.back().isTexel = isTexel_;
+	matrices.back().texIndex = 0;
 }
 
 void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 {
-	lineVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
-	lineVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), color_, quadCount, 0.f));
+	lineVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	lineVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	lineVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	lineVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (lineVertex != nullptr)
 		delete lineVertex;
 	lineVertex = new VKVertexBuffer(vkInit, &lineVertices);
@@ -424,13 +428,14 @@ void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
+	matrices.back().color = color_;
 }
 
 void VKRenderManager::LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_)
 {
 	for (auto vertex : vertices_)
 	{
-		texVertices.push_back(Vertex(vertex.position, vertex.color, quadCount, vertex.isTex));
+		texVertices.push_back(Vertex(vertex.position, quadCount));
 	}
 	if (texVertex != nullptr)
 		delete texVertex;
@@ -462,7 +467,7 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 {
 	for (auto vertex : vertices_)
 	{
-		lineVertices.push_back(Vertex(vertex.position, vertex.color, quadCount, vertex.isTex));
+		lineVertices.push_back(Vertex(vertex.position, quadCount));
 	}
 	if (lineVertex != nullptr)
 		delete lineVertex;
@@ -488,6 +493,58 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
 	matrices.push_back(mat);
+}
+
+void VKRenderManager::DeleteWithIndex()
+{
+	quadCount--;
+
+	//Create Command Buffer Allocate Info
+	VkCommandBufferAllocateInfo allocateInfo{};
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.commandPool = vkCommandPool;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandBufferCount = 1;
+
+	//Create Command Buffer
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer);
+
+	//Create Command Buffer Begin Info
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	//Begin Command Buffer
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	texVertices.erase(end(texVertices) - 4, end(texVertices));
+	vkCmdUpdateBuffer(commandBuffer, *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
+
+	texIndices.erase(end(texIndices) - 6, end(texIndices));
+	vkCmdUpdateBuffer(commandBuffer, *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
+
+	matrices.erase(end(matrices) - 1);
+	for (auto u : *uniform->GetUniformBuffers())
+	{
+		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(UniformMatrix), matrices.data());
+	}
+
+	//End Command Buffer
+	vkEndCommandBuffer(commandBuffer);
+
+	//Create Submit Info
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	//Submit Queue to Command Buffer
+	//vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *vkSwapChain->GetFence());
+	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+
+	//Wait until all submitted command buffers are handled
+	vkDeviceWaitIdle(*vkInit->GetDevice());
 }
 
 void VKRenderManager::BeginRender()
@@ -699,41 +756,47 @@ void VKRenderManager::BeginRender()
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	//Bind Vertex Buffer
-	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, texVertex->GetVertexBuffer(), &vertexBufferOffset);
-	//Bind Index Buffer
-	vkCmdBindIndexBuffer(*currentCommandBuffer, *texIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-	//Bind Pipeline
-	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLine());
-	//Dynamic Viewport & Scissor
-	vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-	//Bind Material DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-	//Bind Texture DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
-	//Change Primitive Topology
-	vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-	//Draw
-	vkCmdDrawIndexed(*currentCommandBuffer, texIndices.size(), 1, 0, 0, 0);
+	if (texVertex != nullptr)
+	{
+		//Bind Vertex Buffer
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, texVertex->GetVertexBuffer(), &vertexBufferOffset);
+		//Bind Index Buffer
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *texIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		//Bind Pipeline
+		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLine());
+		//Dynamic Viewport & Scissor
+		vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+		//Bind Material DescriptorSet
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+		//Bind Texture DescriptorSet
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+		//Change Primitive Topology
+		vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		//Draw
+		vkCmdDrawIndexed(*currentCommandBuffer, texIndices.size(), 1, 0, 0, 0);
+	}
 
-	//Bind Vertex Buffer
-	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, lineVertex->GetVertexBuffer(), &vertexBufferOffset);
-	//Bind Index Buffer
-	vkCmdBindIndexBuffer(*currentCommandBuffer, *lineIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-	//Bind Pipeline
-	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLine());
-	//Dynamic Viewport & Scissor
-	vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-	//Bind Material DescriptorSet
-	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-	//Change Line Width
-	vkCmdSetLineWidth(*currentCommandBuffer, 5.0f);
-	//Change Primitive Topology
-	vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-	//Draw
-	vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
+	if (lineVertex != nullptr)
+	{
+		//Bind Vertex Buffer
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, lineVertex->GetVertexBuffer(), &vertexBufferOffset);
+		//Bind Index Buffer
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *lineIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		//Bind Pipeline
+		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLine());
+		//Dynamic Viewport & Scissor
+		vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+		//Bind Material DescriptorSet
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+		//Change Line Width
+		vkCmdSetLineWidth(*currentCommandBuffer, 5.0f);
+		//Change Primitive Topology
+		vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		//Draw
+		vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
+	}
 
 #ifdef _DEBUG
 	imguiManager->Begin();

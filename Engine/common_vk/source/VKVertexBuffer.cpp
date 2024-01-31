@@ -46,7 +46,7 @@ void VKVertexBuffer::InitVertexBuffer(std::vector<Vertex>* vertices_)
 	VkBufferCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	createInfo.size = sizeof(Vertex) * vertices_->size();
-	createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 	//Create Vertex Buffer
 	try
