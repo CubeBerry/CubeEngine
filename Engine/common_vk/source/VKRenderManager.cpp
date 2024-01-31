@@ -393,6 +393,7 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	matrices.back().color = color_;
 	matrices.back().isTex = isTex_;
 	matrices.back().isTexel = isTexel_;
+	matrices.back().texIndex = 0;
 }
 
 void VKRenderManager::LoadLineQuad(glm::vec4 color_)
