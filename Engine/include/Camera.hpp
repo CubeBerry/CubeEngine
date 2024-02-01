@@ -41,6 +41,7 @@ public:
 	glm::mat4		GetViewMatrix() { return view; }
 	glm::mat4		GetProjectionMatrix() { return projection; }
 	void            SetViewSize(int width, int height) noexcept;
+	glm::vec2		GetViewSize() { return cameraViewSize; }
 	void            SetZoom(float amount) noexcept;
 	float			GetZoom() { return zoom; }
 	void                       SetCameraCenterMode(CameraCenterMode cameraMode) noexcept {};

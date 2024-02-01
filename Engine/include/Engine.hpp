@@ -12,6 +12,7 @@
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
+#include "Particle/ParticleManager.hpp"
 
 class Engine
 {
@@ -35,6 +36,7 @@ public:
 	static CameraManager* GetCameraManager() { return Instance().cameraManager; }
 	static SoundManager* GetSoundManager() { return Instance().soundManager; }
 	static SpriteManager* GetSpriteManager() { return Instance().spriteManager; }
+	static ParticleManager* GetParticleManager() { return Instance().particleManager; }
 private:
 
 	bool isRunning = true;
@@ -56,4 +58,5 @@ private:
 	CameraManager* cameraManager = nullptr;
 	SoundManager* soundManager = nullptr;
 	SpriteManager* spriteManager = nullptr;
+	ParticleManager* particleManager = nullptr;
 };

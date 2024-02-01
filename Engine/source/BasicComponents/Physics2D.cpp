@@ -89,6 +89,41 @@ void Physics2D::Update(float dt)
 
 }
 
+void Physics2D::UpdateForParticle(float dt, glm::vec3& pos)
+{
+	acceleration.x = force.x / mass * dt;
+	acceleration.y = force.y / mass * dt;
+
+	velocity.x += acceleration.x;
+	velocity.y += acceleration.y;
+
+	velocity.x *= friction;
+	velocity.y *= friction;
+
+	force = { 0.f, 0.f };
+
+	if (std::abs(velocity.x) < velocityMin.x)
+	{
+		velocity.x = 0.f;
+	}
+	if (std::abs(velocity.y) < velocityMin.y)
+	{
+		velocity.y = 0.f;
+	}
+
+	pos.x = (pos.x + velocity.x);
+	pos.y = (pos.y + velocity.y);
+}
+
+void Physics2D::Gravity(float dt)
+{
+	velocity.y += 1.0f * gravity * dt;
+	if (std::abs(velocity.y) > velocityMax.y)
+	{
+		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
+	}
+}
+
 bool Physics2D::CheckCollision(Object& obj)
 {
 	switch (collideType)

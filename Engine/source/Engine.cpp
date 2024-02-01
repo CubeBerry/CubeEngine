@@ -23,6 +23,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	soundManager->Initialize();
 
 	spriteManager = new SpriteManager;
+	particleManager = new ParticleManager();
 }
 
 void Engine::Update()
@@ -51,6 +52,7 @@ void Engine::Update()
 			gameStateManger->Update(deltaTime);
 			spriteManager->Update(deltaTime);
 			objectManager->Update(deltaTime);
+			particleManager->Update(deltaTime);
 			cameraManager->Update();
 			if (!(SDL_GetWindowFlags(window->GetWindow()) & SDL_WINDOW_MINIMIZED))
 				gameStateManger->Draw(deltaTime);
@@ -73,12 +75,13 @@ void Engine::Update()
 
 void Engine::End()
 {
+	delete gameStateManger;
 	delete cameraManager;
 	delete inputManager;
-	delete vkRenderManager;
-	delete gameStateManger;
-	delete spriteManager;
+	delete particleManager;
 	delete objectManager;
+	delete spriteManager;
+	delete vkRenderManager;
 	delete soundManager;
 	delete window;
 }

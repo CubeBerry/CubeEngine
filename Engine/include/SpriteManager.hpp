@@ -11,7 +11,7 @@ class SpriteManager
 {
 public:
     SpriteManager()  = default;
-    ~SpriteManager() = default;
+    ~SpriteManager();
 
 	void Update(float dt);
     void End();

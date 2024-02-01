@@ -159,80 +159,15 @@ class InputManager
 public:
 	InputManager() {}
 
-	void InputPollEvent(SDL_Event& event)
-	{
-		switch (event.type)
-		{
-		case SDL_KEYDOWN:
-			KeyDown(static_cast<KEYBOARDKEYS>(event.key.keysym.sym));
-			break;
-		case SDL_KEYUP:
-			KeyUp(static_cast<KEYBOARDKEYS>(event.key.keysym.sym));
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			MouseButtonDown(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
-			break;
-		case SDL_MOUSEBUTTONUP:
-			MouseButtonUp(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
-			break;
-		default:
-			break;
-		}
-	}
+	void InputPollEvent(SDL_Event& event);
 
-	bool IsKeyPressed(KEYBOARDKEYS keycode)
-	{
-		auto it = keyStates.find(keycode);
-		if (it != keyStates.end())
-		{
-			keyStatePrev[keycode] = it->second;
-			return it->second;
-		}
-		return false;
-	}
+	bool IsKeyPressed(KEYBOARDKEYS keycode);
+	bool IsKeyPressedOnce(KEYBOARDKEYS keycode);
 
-	bool IsKeyPressedOnce(KEYBOARDKEYS keycode)
-	{
-		auto it = keyStates.find(keycode);
-		if (it != keyStates.end())
-		{
-			bool isPressed = it->second && !keyStatePrev[keycode];
-			keyStatePrev[keycode] = it->second;
-			return isPressed;
-		}
-		return false;
-	}
+	bool IsMouseButtonPressed(MOUSEBUTTON button);
+	bool IsMouseButtonPressedOnce(MOUSEBUTTON button);
+	glm::vec2 GetMousePosition();
 
-	bool IsMouseButtonPressed(MOUSEBUTTON button)
-	{
-		auto it = mouseButtonStates.find(button);
-		if (it != mouseButtonStates.end())
-		{
-			mouseButtonStatePrev[button] = it->second;
-			return it->second;
-		}
-		return false;
-	}
-
-	bool IsMouseButtonPressedOnce(MOUSEBUTTON button)
-	{
-		auto it = mouseButtonStates.find(button);
-		if (it != mouseButtonStates.end())
-		{
-			bool isPressed = it->second && !mouseButtonStatePrev[button];
-			mouseButtonStatePrev[button] = it->second;
-			return isPressed;
-		}
-		return false;
-	}
-
-	glm::vec2 GetMousePosition()
-	{
-		int mouseX, mouseY;
-		SDL_GetMouseState(&mouseX, &mouseY);
-		glm::vec2 pos = { mouseX, mouseY };
-		return pos;
-	}
 
 protected:
 	void KeyDown(KEYBOARDKEYS keycode)

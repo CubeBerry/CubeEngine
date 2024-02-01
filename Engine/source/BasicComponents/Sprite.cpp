@@ -15,7 +15,10 @@ Sprite::~Sprite()
 		delete anim;
 	}
 	animations.clear();
-	Engine::GetSpriteManager()->DeleteSprite(this);
+	if (this != nullptr)
+	{
+		Engine::GetSpriteManager()->DeleteSprite(this);
+	}
 }
 
 void Sprite::Init()

@@ -6,6 +6,10 @@
 
 #include <iostream>
 
+SpriteManager::~SpriteManager()
+{
+}
+
 void SpriteManager::Update(float dt)
 {
 	//for (int i = 0; i < sprites.size(); i++)
@@ -26,15 +30,15 @@ void SpriteManager::AddSprite(Sprite* sprite_)
 
 void SpriteManager::DeleteSprite(Sprite* sprite_)
 {
-	auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
-	for (auto it = iterator + 1; it != sprites.end(); it++)
+	if (sprites.empty() != true)
 	{
-		(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
-		//Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTex;
-		//Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).isTexel = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).isTexel;
-		//Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()).texIndex = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1).texIndex;
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()) = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1);
+		auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
+		for (auto it = iterator + 1; it != sprites.end(); it++)
+		{
+			(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
+			Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()) = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1);
+		}
+		Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
+		sprites.erase(iterator);
 	}
-	Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
-	sprites.erase(iterator);
 }

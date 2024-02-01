@@ -29,7 +29,6 @@ void ObjectManager::Destroy(int id)
 void ObjectManager::DestroyAllObjects()
 {
 	lastObjectID = 0;
-
 	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.erase(id); });
 	objectsToBeDeleted.clear();
 	objectMap.clear();

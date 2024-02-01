@@ -22,6 +22,7 @@ public:
 	float GetRotate2D() { return camera.GetRotate2D(); }
 	float GetZoom() noexcept { return camera.GetZoom(); }
 	glm::vec3 GetCenter() { return camera.GetCenter(); }
+	glm::vec2 GetViewSize() { return camera.GetViewSize(); }
 
 	glm::mat4		GetViewMatrix() { return camera.GetViewMatrix(); }
 	glm::mat4		GetProjectionMatrix() { return camera.GetProjectionMatrix(); }

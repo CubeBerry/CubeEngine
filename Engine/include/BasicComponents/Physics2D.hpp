@@ -44,12 +44,14 @@ public:
 
 	void Init() override ;
 	void Update(float dt) override;
+	void UpdateForParticle(float dt, glm::vec3& pos);
 	void End() override {};
 
 	void SetVelocity(glm::vec2 v) { velocity = v; }
 	void SetVelocityX(float v) { velocity.x = v; }
 	void SetVelocityY(float v) { velocity.y = v; }
 
+	void Gravity(float dt);
 	void SetMinVelocity(glm::vec2 v) { velocityMin = v; }
 	void SetMaxVelocity(glm::vec2 v) { velocityMax = v; }
 

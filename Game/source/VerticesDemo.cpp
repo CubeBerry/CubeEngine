@@ -111,36 +111,7 @@ void VerticesDemo::Update(float dt)
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_3))
 		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture(2.f);
 
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
-	{
-		//Engine::Instance().GetCameraManager()->MoveUp(5.f);
-		Engine::Instance().GetObjectManager()->FindObjectWithName("A")->GetComponent<Physics2D>()->AddForceY(20.f);
-	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
-	{
-		//Engine::Instance().GetCameraManager()->MoveUp(-5.f);
-		Engine::Instance().GetObjectManager()->FindObjectWithName("A")->GetComponent<Physics2D>()->AddForceY(-20.f);
-	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
-	{
-		//Engine::Instance().GetCameraManager()->MoveRight(-5.f);
-		Engine::Instance().GetObjectManager()->FindObjectWithName("A")->GetComponent<Physics2D>()->AddForceX(-20.f);
-	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
-	{
-		//Engine::Instance().GetCameraManager()->MoveRight(5.f);
-		Engine::Instance().GetObjectManager()->FindObjectWithName("A")->GetComponent<Physics2D>()->AddForceX(20.f);
-	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::C))
-	{
-		//Engine::Instance().GetCameraManager()->MoveRight(5.f);
-		Engine::Instance().GetObjectManager()->FindObjectWithName("A")->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithName("A")->GetRotate() - 5.f);
-	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::V))
-	{
-		//Engine::Instance().GetCameraManager()->MoveRight(5.f);
-		Engine::Instance().GetObjectManager()->FindObjectWithName("A")->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithName("A")->GetRotate() + 5.f);
-	}
+	
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::A))
 	{
 		Engine::Instance().GetCameraManager()->SetRotate(Engine::Instance().GetCameraManager()->GetRotate2D() - 10.f);
@@ -158,37 +129,36 @@ void VerticesDemo::Update(float dt)
 		Engine::Instance().GetCameraManager()->SetZoom(Engine::Instance().GetCameraManager()->GetZoom() + 5.f * dt);
 	}
 
-	//Add & Delete
-	if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::Q))
+	//ParticleTest
+	if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::LEFT))
 	{
-		int spri = (rand() % (2 + 1)) + 1;
-		float x = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
-		float y = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
-		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ x,y,0.f }, glm::vec3{ 32.f,32.f,0.f }, "0", ObjectType::NONE);
-		//if (spri == 1)
-		//{
-		//	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-		//	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-		//	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->SetColor({ 0.f,1.f,1.f,0.5f });
-		//}
-		//else
-		//{
-			Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
-		//}
-	}
-	else if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::W))
-	{
-		if (Engine::Instance().GetObjectManager()->GetObjectMap().empty() == false)
+		int fade = (rand() % (2 + 1)) + 1;
+		int time = (rand() % (3 + 1)) + 1;
+		int amount = (rand() % (8 + 4)) + 4;
+		int colorR = (rand() % (10 + 0)) + 0;
+		int colorG = (rand() % (10 + 0)) + 0;
+		int colorB = (rand() % (10 + 0)) + 0;
+		int colorA = (rand() % (10 + 5)) + 5;
+		float x = Engine::Instance().GetInputManager()->GetMousePosition().x;
+		float y = Engine::Instance().GetInputManager()->GetMousePosition().y;
+		float speedX = (float)(rand() % (15 - (-30) + 1) - 15);
+		float speedY = (float)(rand() % (15 - (-30) + 1) - 15);
+
+		if (fade == 1)
 		{
-			int testIndex{ 0 };
-			//Engine::Instance().GetObjectManager()->Destroy(Engine::Instance().GetObjectManager()->GetLastObjectID());
-			Engine::Instance().GetObjectManager()->Destroy(testIndex);
-			std::cout << "Delete" << std::endl;
+			Engine::Instance().GetParticleManager()->AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
+				{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) });
+		}
+		else
+		{
+			Engine::Instance().GetParticleManager()->AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
+				{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) }, ParticleType::REC, 0, true);
 		}
 	}
-	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
-	//Engine::Instance().GetObjectManager()->FindObjectWithId(2)->SetRotate(Engine::Instance().GetObjectManager()->FindObjectWithId(2)->GetRotate() + 50.f * dt);
+	else if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::RIGHT))
+	{
+		End();
+	}
 
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::SPACE))
 	{
@@ -213,6 +183,7 @@ void VerticesDemo::Restart()
 
 void VerticesDemo::End()
 {
+	Engine::Instance().GetParticleManager()->Clear();
 	Engine::Instance().GetObjectManager()->DestroyAllObjects();
 }
 
