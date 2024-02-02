@@ -103,6 +103,7 @@ void Sprite::UpdateProjection(int index)
 
 void Sprite::AddQuad(glm::vec4 color_)
 {
+	color = color_;
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 0.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	AddSpriteToManager();
@@ -110,6 +111,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 void Sprite::AddQuadLine(glm::vec4 color_)
 {
+	color = color_;
 	Engine::Instance().GetVKRenderManager()->LoadLineQuad(color_);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	AddSpriteToManager();
@@ -117,7 +119,7 @@ void Sprite::AddQuadLine(glm::vec4 color_)
 
 void Sprite::AddMeshWithTexture(int index)
 {
-	Engine::Instance().GetVKRenderManager()->LoadQuad({1.f,1.f,1.f,1.f}, 1.f, 0.f);
+	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	ChangeTexture(index);
 	textureSize = (*Engine::Instance().GetVKRenderManager()->GetTextures())[index]->GetSize();
@@ -126,7 +128,7 @@ void Sprite::AddMeshWithTexture(int index)
 
 void Sprite::AddMeshWithTexel(int index)
 {
-	Engine::Instance().GetVKRenderManager()->LoadQuad({ 1.f,1.f,1.f,1.f }, 1.f, 1.f);
+	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 1.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	ChangeTexture(index);
 	textureSize = (*Engine::Instance().GetVKRenderManager()->GetTextures())[index]->GetSize();
