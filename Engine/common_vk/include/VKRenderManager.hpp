@@ -35,9 +35,9 @@ public:
 	//void EndRender(Window* window_);
 
 	VKInit* GetVkInit() { return vkInit; }
+	bool GetIsRecreated() { return isRecreated; };
 #ifdef _DEBUG
 	ImGuiManager* GetImGuiManager() { return imguiManager; };
-	bool GetIsRecreated() { return isRecreated; };
 #endif
 private:
 	void InitCommandPool();
