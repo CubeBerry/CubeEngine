@@ -499,6 +499,23 @@ void VKRenderManager::DeleteWithIndex()
 {
 	quadCount--;
 
+	if (quadCount == 0)
+	{
+		texVertices.erase(end(texVertices) - 4, end(texVertices));
+		delete texVertex;
+		texVertex = nullptr;
+
+		texIndices.erase(end(texIndices) - 6, end(texIndices));
+		delete texIndex;
+		texIndex = nullptr;
+
+		matrices.erase(end(matrices) - 1);
+		delete uniform;
+		uniform = nullptr;
+
+		return;
+	}
+
 	//Create Command Buffer Allocate Info
 	VkCommandBufferAllocateInfo allocateInfo{};
 	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -580,110 +597,113 @@ void VKRenderManager::BeginRender()
 
 	//--------------------Descriptor Update--------------------//
 
-	currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+	if (uniform != nullptr)
 	{
-		//Create Vertex Material DescriptorBuffer Info
-		//std::vector<VkDescriptorBufferInfo> bufferInfos;
-		//for (auto& t : textures)
-		//{
-		VkDescriptorBufferInfo bufferInfo;
-		bufferInfo.buffer = (*(uniform->GetUniformBuffers()))[frameIndex];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformMatrix) * quadCount;
-		//bufferInfos.push_back(bufferInfo);
-		//}
-
-		//Define which resource descriptor set will point
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-
-		//Update DescriptorSet
-		//DescriptorSet does not have to update every frame since it points same uniform buffer
-		vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-	}
-
-	currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
-	{
-		//Create Texture DescriptorBuffer Info
-		//std::vector<VkDescriptorImageInfo> imageInfos;
-		//for (auto& t : textures)
-		//{
-		//	VkDescriptorImageInfo imageInfo{};
-		//	imageInfo.sampler = *t->GetSampler();
-		//	imageInfo.imageView = *t->GetImageView();
-		//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		//	imageInfos.push_back(imageInfo);
-		//}
-
-		for (int i = 0; i < textures.size(); ++i)
+		currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 		{
-			imageInfos[i].sampler = *textures[i]->GetSampler();
-			imageInfos[i].imageView = *textures[i]->GetImageView();
-			imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			//Create Vertex Material DescriptorBuffer Info
+			//std::vector<VkDescriptorBufferInfo> bufferInfos;
+			//for (auto& t : textures)
+			//{
+			VkDescriptorBufferInfo bufferInfo;
+			bufferInfo.buffer = (*(uniform->GetUniformBuffers()))[frameIndex];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(UniformMatrix) * quadCount;
+			//bufferInfos.push_back(bufferInfo);
+			//}
+
+			//Define which resource descriptor set will point
+			VkWriteDescriptorSet descriptorWrite{};
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrite.pBufferInfo = &bufferInfo;
+
+			//Update DescriptorSet
+			//DescriptorSet does not have to update every frame since it points same uniform buffer
+			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 		}
 
-		//Define which resource descriptor set will point
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = *currentTextureDescriptorSet;
-		descriptorWrite.dstBinding = 1;
-		descriptorWrite.descriptorCount = 500;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite.pImageInfo = imageInfos.data();
+		currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+		{
+			//Create Texture DescriptorBuffer Info
+			//std::vector<VkDescriptorImageInfo> imageInfos;
+			//for (auto& t : textures)
+			//{
+			//	VkDescriptorImageInfo imageInfo{};
+			//	imageInfo.sampler = *t->GetSampler();
+			//	imageInfo.imageView = *t->GetImageView();
+			//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			//	imageInfos.push_back(imageInfo);
+			//}
 
-		//Update DescriptorSet
-		//DescriptorSet does not have to update every frame since it points same uniform buffer
-		vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			for (int i = 0; i < textures.size(); ++i)
+			{
+				imageInfos[i].sampler = *textures[i]->GetSampler();
+				imageInfos[i].imageView = *textures[i]->GetImageView();
+				imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			}
+
+			//Define which resource descriptor set will point
+			VkWriteDescriptorSet descriptorWrite{};
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = *currentTextureDescriptorSet;
+			descriptorWrite.dstBinding = 1;
+			descriptorWrite.descriptorCount = 500;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrite.pImageInfo = imageInfos.data();
+
+			//Update DescriptorSet
+			//DescriptorSet does not have to update every frame since it points same uniform buffer
+			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+		}
+
+		//auto& vkUniformBuffer = (*uniform_->GetUniformBuffers())[frameIndex];
+		//currentMaterialDescriptorSet = &(*vkDescriptor->GetMaterialDescriptorSets())[frameIndex];
+		//{
+		//	//Create Fragment Material DescriptorBuffer Info
+		//	VkDescriptorBufferInfo bufferInfo{};
+		//	bufferInfo.buffer = vkUniformBuffer;
+		//	bufferInfo.offset = 0;
+		//	bufferInfo.range = sizeof(Material);
+
+		//	//Define which resource descriptor set will point
+		//	VkWriteDescriptorSet descriptorWrite{};
+		//	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		//	descriptorWrite.dstSet = *currentMaterialDescriptorSet;
+		//	descriptorWrite.dstBinding = 0;
+		//	descriptorWrite.descriptorCount = 1;
+		//	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		//	descriptorWrite.pBufferInfo = &bufferInfo;
+
+		//	//Update DescriptorSet
+		//	//DescriptorSet does not have to update every frame since it points same uniform buffer
+		//	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+		//}
+
+		//Update Uniform Material
+
+		//Includes Updating Uniform Function
+		//textures[0].Resize(mats.data(), frameIndex);
+
+		VkDeviceMemory vkUniformDeviceMemory = (*(uniform->GetUniformDeviceMemories()))[frameIndex];
+
+		//Get Virtual Address for CPU to access Memory
+		void* contents;
+		vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * quadCount, 0, &contents);
+
+		//auto material = static_cast<UniformMatrix*>(contents);
+		//*material = *mats.data();
+		memcpy(contents, matrices.data(), sizeof(UniformMatrix) * quadCount);
+
+		vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
+
+		//textures[1].Resize(uniMat2, frameIndex);
+		//textures[2].Resize(uniMat3, frameIndex);
+		//uniform_->UpdateUniform(mat, frameIndex);
 	}
-
-	//auto& vkUniformBuffer = (*uniform_->GetUniformBuffers())[frameIndex];
-	//currentMaterialDescriptorSet = &(*vkDescriptor->GetMaterialDescriptorSets())[frameIndex];
-	//{
-	//	//Create Fragment Material DescriptorBuffer Info
-	//	VkDescriptorBufferInfo bufferInfo{};
-	//	bufferInfo.buffer = vkUniformBuffer;
-	//	bufferInfo.offset = 0;
-	//	bufferInfo.range = sizeof(Material);
-
-	//	//Define which resource descriptor set will point
-	//	VkWriteDescriptorSet descriptorWrite{};
-	//	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//	descriptorWrite.dstSet = *currentMaterialDescriptorSet;
-	//	descriptorWrite.dstBinding = 0;
-	//	descriptorWrite.descriptorCount = 1;
-	//	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//	descriptorWrite.pBufferInfo = &bufferInfo;
-
-	//	//Update DescriptorSet
-	//	//DescriptorSet does not have to update every frame since it points same uniform buffer
-	//	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-	//}
-
-	//Update Uniform Material
-
-	//Includes Updating Uniform Function
-	//textures[0].Resize(mats.data(), frameIndex);
-
-	VkDeviceMemory vkUniformDeviceMemory = (*(uniform->GetUniformDeviceMemories()))[frameIndex];
-
-	//Get Virtual Address for CPU to access Memory
-	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(UniformMatrix) * quadCount, 0, &contents);
-
-	//auto material = static_cast<UniformMatrix*>(contents);
-	//*material = *mats.data();
-	memcpy(contents, matrices.data(), sizeof(UniformMatrix) * quadCount);
-
-	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
-
-	//textures[1].Resize(uniMat2, frameIndex);
-	//textures[2].Resize(uniMat3, frameIndex);
-	//uniform_->UpdateUniform(mat, frameIndex);
 
 	//--------------------Descriptor Update End--------------------//
 
@@ -805,86 +825,83 @@ void VKRenderManager::BeginRender()
 
 void VKRenderManager::EndRender()
 {
-	if (!isRecreated)
-	{
 #ifdef _DEBUG
-		imguiManager->End(frameIndex);
+	imguiManager->End(frameIndex);
 #endif
 
-		//--------------------End Draw--------------------//
+	//--------------------End Draw--------------------//
 
-		//End renderpass
-		vkCmdEndRenderPass(*currentCommandBuffer);
+	//End renderpass
+	vkCmdEndRenderPass(*currentCommandBuffer);
 
-		//Change image layout to PRESENT_SRC_KHR
-		{
-			VkImageMemoryBarrier barrier{};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.dstAccessMask = 0;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-			barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-			barrier.image = swapchainImage;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			barrier.subresourceRange.levelCount = 1;
-			barrier.subresourceRange.layerCount = 1;
+	//Change image layout to PRESENT_SRC_KHR
+	{
+		VkImageMemoryBarrier barrier{};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrier.dstAccessMask = 0;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+		barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+		barrier.image = swapchainImage;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.layerCount = 1;
 
-			//Record pipeline barrier for chainging image layout
-			vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-		}
-
-		//End command buffer
-		vkEndCommandBuffer(*currentCommandBuffer);
-
-		//Create submit info
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-		//Wait until swapchain image is ready after calculating pixel's result
-		//Define pipeline stage that semaphore must be signaled
-		constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
-		submitInfo.pWaitDstStageMask = &waitDstStageMask;
-
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = currentCommandBuffer;
-		//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
-
-		//Define semaphore that informs when command buffer is processed
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
-
-		//Submit queue to command buffer
-		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
-
-		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*vkInit->GetDevice());
-
-		//Create present info
-		VkPresentInfoKHR presentInfo{};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-		//Define semaphore that waits to ensure command buffer to be processed
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
-
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
-		presentInfo.pImageIndices = &swapchainIndex;
-
-		//Render image on screen
-		VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
-		if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
-		{
-			RecreateSwapChain(Engine::Engine().GetWindow());
-			return;
-		}
-		//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-		//	throw std::runtime_error("Failed Acquring SwapChain Image");
-
-		frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
+		//Record pipeline barrier for chainging image layout
+		vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	}
+
+	//End command buffer
+	vkEndCommandBuffer(*currentCommandBuffer);
+
+	//Create submit info
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	//Wait until swapchain image is ready after calculating pixel's result
+	//Define pipeline stage that semaphore must be signaled
+	constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
+	submitInfo.pWaitDstStageMask = &waitDstStageMask;
+
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = currentCommandBuffer;
+	//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
+
+	//Define semaphore that informs when command buffer is processed
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
+
+	//Submit queue to command buffer
+	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
+
+	//Wait until all submitted command buffers are handled
+	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//Create present info
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	//Define semaphore that waits to ensure command buffer to be processed
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
+
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
+	presentInfo.pImageIndices = &swapchainIndex;
+
+	//Render image on screen
+	VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
+	if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
+	{
+		RecreateSwapChain(Engine::Engine().GetWindow());
+		return;
+	}
+	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	//	throw std::runtime_error("Failed Acquring SwapChain Image");
+
+	frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
 }

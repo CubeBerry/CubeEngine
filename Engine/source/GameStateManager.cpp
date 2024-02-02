@@ -28,12 +28,17 @@ void GameStateManager::Update(float dt)
 void GameStateManager::Draw(float dt)
 {
 	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
-	renderManager->BeginRender();
+	//if (renderManager->GetMatrices()->size() > 0)
+	//{
+		renderManager->BeginRender();
+		if (!renderManager->GetIsRecreated())
+		{
 #ifdef _DEBUG
-	if (!renderManager->GetIsRecreated())
-		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+			levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
 #endif
-	renderManager->EndRender();
+			renderManager->EndRender();
+		}
+	//}
 }
 
 void GameStateManager::End()
