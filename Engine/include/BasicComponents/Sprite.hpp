@@ -58,7 +58,6 @@ public:
 private:
 	//Animation
 	glm::vec2 GetFrameTexel(int frameNum) const;
-
 	glm::vec2 textureSize;
 	glm::vec2 frameSize;
 	std::vector<glm::vec2> frameTexel;
@@ -66,6 +65,8 @@ private:
 
 	int currAnim;
 	std::vector<Animation*> animations;
+
+	glm::vec4 color = { 1.f,1.f,1.f,1.f };
 
 	int materialId = 0;
 	int textureId = 0;
