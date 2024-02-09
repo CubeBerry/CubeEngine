@@ -14,13 +14,16 @@ public:
 	VKTexture(VKInit* init_, VkCommandPool* pool_);
 	~VKTexture();
 
-	void LoadTexture(const std::filesystem::path& path_);
+	void LoadTexture(const std::filesystem::path& path_, std::string name_);
+	void SetTextureID(int id) { texID = id; }
 
 	VkSampler* GetSampler() { return &vkTextureSampler; };
 	VkImageView* GetImageView() { return &vkTextureImageView; };
 	int GetWidth() const { return width; };
 	int GetHeight() const { return height; };
 	glm::vec2 GetSize() const { return glm::vec2(width, height); };
+	std::string GetName() const { return name; };
+	int GetTextrueId() { return texID; }
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
@@ -32,4 +35,6 @@ private:
 	VkSampler vkTextureSampler{ VK_NULL_HANDLE };
 
 	int width, height;
+	int texID;
+	std::string name;
 };

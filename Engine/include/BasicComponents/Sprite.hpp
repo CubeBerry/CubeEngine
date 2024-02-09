@@ -8,6 +8,7 @@
 #include "Animation.hpp"
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 struct Vertex;
@@ -35,11 +36,11 @@ public:
 	//Add Mesh
 	void AddQuad(glm::vec4 color_);
 	void AddQuadLine(glm::vec4 color_);
-	void AddMeshWithTexture(int index);
-	void AddMeshWithTexel(int index);
+	void AddMeshWithTexture(std::string name);
+	void AddMeshWithTexel(std::string name);
 
 	//Animation
-	void LoadAnimation(const std::filesystem::path& spriteInfoFile, int index);
+	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
 	glm::vec2 GetHotSpot(int index);
 	glm::vec2 GetFrameSize() const { return frameSize; };
 
@@ -49,8 +50,7 @@ public:
 
 	//Getter
 	int GetMaterialId() { return materialId; };
-	int GetTextureId() { return textureId; };
-	void ChangeTexture(int index);
+	void ChangeTexture(std::string name);
 	//Setter
 	void SetMaterialId(int index) { materialId = index; }
 	void AddSpriteToManager();
@@ -69,5 +69,4 @@ private:
 	glm::vec4 color = { 1.f,1.f,1.f,1.f };
 
 	int materialId = 0;
-	int textureId = 0;
 };
