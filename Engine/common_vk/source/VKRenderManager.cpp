@@ -349,10 +349,10 @@ void VKRenderManager::RecreateSwapChain(Window* window_)
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
-void VKRenderManager::LoadTexture(const std::filesystem::path& path_)
+void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)
 {
 	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
-	texture->LoadTexture(path_);
+	texture->LoadTexture(path_, name_);
 
 	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);

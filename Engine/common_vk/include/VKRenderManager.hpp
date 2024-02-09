@@ -75,7 +75,7 @@ private:
 
 	//--------------------Texture Render--------------------//
 public:
-	void LoadTexture(const std::filesystem::path& path_);
+	void LoadTexture(const std::filesystem::path& path_, std::string name_);
 	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_);
 	void LoadLineQuad(glm::vec4 color_);
 	void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);

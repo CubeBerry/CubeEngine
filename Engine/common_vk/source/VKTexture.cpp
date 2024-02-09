@@ -46,8 +46,10 @@ uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_
 	return UINT32_MAX;
 }
 
-void VKTexture::LoadTexture(const std::filesystem::path& path_)
+void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name_)
 {
+	name = name_;
+
 	auto path = path_;
 	int color;
 	//Read in image file
