@@ -15,14 +15,14 @@ layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    //fragmentColor = mix(i_col, i_col * texture(tex[inTexIndex], i_uv).rgba, inIsTex);
+    fragmentColor = mix(i_col, i_col * texture(tex[inTexIndex], i_uv).rgba, inIsTex);
 
-    if(inIsTex == 1.0)
-    {
-        fragmentColor = i_col * texture(tex[inTexIndex], i_uv).rgba;
-    }
-    else
-    {
-        fragmentColor = i_col;
-    }
+    // if(inIsTex == 1.0)
+    // {
+    //     fragmentColor = i_col * texture(tex[inTexIndex], i_uv).rgba;
+    // }
+    // else
+    // {
+    //     fragmentColor = i_col;
+    // }
 }
