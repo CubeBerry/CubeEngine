@@ -19,6 +19,7 @@ public:
 	~GameStateManager();
 
 	void LevelInit();
+	void LevelInit(GameLevel currentLevel_);
 	void Update(float dt);
 	void Draw(float dt);
     void End();

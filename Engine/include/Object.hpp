@@ -5,22 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "ObjectType.hpp"
 #include "glm/glm.hpp"
 #include "Component.hpp"
-
-enum class DrawType
-{
-	NONE,
-	RECTANGLE,
-	RECTANGLELINE,
-	SPRITE,
-	SPRITEANIMATION,
-};
-
-enum class ObjectType
-{
-	NONE,
-};
 
 class Object
 {
@@ -38,11 +25,8 @@ public:
 	glm::vec3     GetSize() { return size; }
 	glm::vec3     GetSpeed() { return speed; }
 
-	glm::vec3     GetMin() { return min; }
-	glm::vec3     GetMax() { return max; }
 	float GetRotate() { return angle; }
 
-	DrawType   GetDrawType() { return drawType; }
 	ObjectType GetObjectType() { return objectType; }
 	std::string GetName() { return objectName; }
 	std::string GetSpriteName() { return spriteName; }
@@ -62,19 +46,7 @@ public:
 
 	void       SetName(std::string name) { objectName = name; }
 	void       SetSpriteName(std::string name);
-	void       SetDrawType(DrawType type) { drawType = type; }
 	void       SetObjectType(ObjectType type) { objectType = type; }
-
-	void       SetCollisionBoxPosition(float x, float y, float z) { collisionBoxPosition = glm::vec3{ x, y, z }; }
-	void       SetCollisionBoxSize(float x, float y, float z) { collisionBoxSize = glm::vec3{ x, y, z }; }
-
-	glm::vec3 GetCollisionBoxSize() { return collisionBoxSize; }
-
-	void  SetMinMax();
-
-	bool isCollideWithObjectIn2D(Object& object) noexcept;
-	bool isCollideWithPointIn2D(glm::vec3 point) noexcept;
-
 
 	template <typename ComponentTypes> bool HasComponent()
 	{
@@ -115,13 +87,7 @@ protected:
 	glm::vec3 size{ 0.f, 0.f, 0.f };
 	float angle = 0.f;
 
-	glm::vec3 min{ 0.f, 0.f, 0.f };
-	glm::vec3 max{ 0.f, 0.f, 0.f };
-	glm::vec3 collisionBoxSize{ 0.f, 0.f, 0.f };
-	glm::vec3 collisionBoxPosition{ 0.f,0.f, 0.f };
-
 	int        id = 0;
-	DrawType   drawType = DrawType::NONE;
 	ObjectType objectType = ObjectType::NONE;
 
 	std::string objectName = "";

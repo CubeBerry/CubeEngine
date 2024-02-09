@@ -23,11 +23,11 @@ void Physics2D::Init()
 
 void Physics2D::Update(float dt)
 {
-	acceleration.x = force.x / mass * dt;
-	acceleration.y = force.y / mass * dt;
+	acceleration.x = force.x / mass;
+	acceleration.y = force.y / mass;
 
-	velocity.x += acceleration.x;
-	velocity.y += acceleration.y;
+	velocity.x += acceleration.x * dt;
+	velocity.y += acceleration.y * dt;
 
 	velocity.x *= friction;
 	velocity.y *= friction;
@@ -189,6 +189,7 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
 			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
+			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
 				return false; // 충돌이 없음
@@ -205,6 +206,7 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
 			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
+			axis = normalize(axis); 
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
 				return false; // 충돌이 없음
@@ -215,9 +217,6 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 				normal = axis;
 			}
 		}
-
-		depth /= Length(normal);
-		normal = normalize(normal);
 
 		glm::vec2 direction = FindSATCenter(rotatedPoints2) - FindSATCenter(rotatedPoints1);
 		if (glm::dot(direction, normal) < 0.f)
@@ -334,6 +333,7 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		float axisDepth = 0.f;
 		glm::vec2 edge = rotatedPoints[(i + 1) % rotatedPoints.size()] - rotatedPoints[i];
 		glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
+		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
 			return false; // 충돌이 없음
@@ -349,6 +349,7 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		glm::vec2 closestPoint = FindClosestPointOnSegment(circleCenter, rotatedPoints);
 		float axisDepth = 0.f;
 		glm::vec2 axis = closestPoint - circleCenter;
+		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
 			return false; // 충돌이 없음
@@ -359,8 +360,6 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 			normal = axis;
 		}
 	}
-	depth /= Length(normal);
-	normal = normalize(normal);
 
 	glm::vec2 direction = FindSATCenter(rotatedPoints) - circleCenter;
 	if (glm::dot(direction, normal) < 0.f)
@@ -594,7 +593,7 @@ void Physics2D::CalculateLinearVelocity(Physics2D& body, Physics2D& body2, glm::
 {
 	glm::vec2 relativeVelocity = body2.GetVelocity() - body.GetVelocity();
 
-	float j = -(1.f) * glm::dot(relativeVelocity, normal);
+	float j = -(1.f + 1.f) * glm::dot(relativeVelocity, normal);
 	j /= (1.f / body.mass) + (1.f / body2.mass);
 
 	if (body.GetBodyType() == BodyType::RIGID)

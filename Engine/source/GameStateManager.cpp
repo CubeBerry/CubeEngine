@@ -20,6 +20,12 @@ void GameStateManager::LevelInit()
 	levelList.at(static_cast<int>(currentLevel))->Init();
 }
 
+void GameStateManager::LevelInit(GameLevel currentLevel_)
+{
+	currentLevel = currentLevel_; 
+	LevelInit();
+}
+
 void GameStateManager::Update(float dt)
 {
 	levelList.at(static_cast<int>(currentLevel))->Update(dt);
