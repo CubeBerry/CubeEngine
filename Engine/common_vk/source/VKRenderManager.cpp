@@ -356,6 +356,9 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);
+
+	int texId = textures.size() - 1;
+	textures.at(texId)->SetTextureID(texId);
 }
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
@@ -562,6 +565,22 @@ void VKRenderManager::DeleteWithIndex()
 
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+}
+
+VKTexture* VKRenderManager::GetTexture(std::string name)
+{
+	/*auto tex = std::find_if(textures.begin(), textures.end(),
+		[&name](const VKTexture& texture) {
+		return texture.GetName() == name;});
+	return const_cast<VKTexture*>(*tex);*/
+	for (auto& tex : textures)
+	{
+		if (tex->GetName() == name)
+		{
+			return tex;
+		}
+	}
+	return nullptr;
 }
 
 void VKRenderManager::BeginRender()

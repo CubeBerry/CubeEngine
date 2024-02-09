@@ -117,25 +117,25 @@ void Sprite::AddQuadLine(glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void Sprite::AddMeshWithTexture(int index)
+void Sprite::AddMeshWithTexture(std::string name)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
-	ChangeTexture(index);
-	textureSize = (*Engine::Instance().GetVKRenderManager()->GetTextures())[index]->GetSize();
+	ChangeTexture(name);
+	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetSize();
 	AddSpriteToManager();
 }
 
-void Sprite::AddMeshWithTexel(int index)
+void Sprite::AddMeshWithTexel(std::string name)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 1.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
-	ChangeTexture(index);
-	textureSize = (*Engine::Instance().GetVKRenderManager()->GetTextures())[index]->GetSize();
+	ChangeTexture(name);
+	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetSize();
 	AddSpriteToManager();
 }
 
-void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, int index)
+void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
 {
 	hotSpotList.clear();
 	frameTexel.clear();
@@ -156,8 +156,8 @@ void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, int inde
 	inFile >> text;
 	//texturePtr = Engine::GetTextureManager().Load(text, true);
 	//frameSize = texturePtr->GetSize();
-	Engine::Instance().GetVKRenderManager()->LoadTexture(text);
-	AddMeshWithTexel(index);
+	Engine::Instance().GetVKRenderManager()->LoadTexture(text, name);
+	AddMeshWithTexel(name);
 
 	inFile >> text;
 	while (inFile.eof() == false)
@@ -264,10 +264,9 @@ void Sprite::PlayAnimation(int anim)
 	}
 }
 
-void Sprite::ChangeTexture(int index)
+void Sprite::ChangeTexture(std::string name)
 {
-	textureId = index;
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = index;
+	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetTextrueId();
 }
 
 void Sprite::AddSpriteToManager()

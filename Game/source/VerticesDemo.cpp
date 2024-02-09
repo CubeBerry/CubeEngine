@@ -30,17 +30,17 @@ void CollideObjects()
 
 void VerticesDemo::Init()
 {
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample.png", "2");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg", "3");
 
 	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1280.f,720.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("1");
 
 	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 512.f,512.f,0.f }, "1", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(2);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("2");
 
 	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f,360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "2", ObjectType::NONE);
 	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
@@ -48,7 +48,7 @@ void VerticesDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 70.f, 120.f,0.f }, "Ani", ObjectType::NONE);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", 3);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", "4");
 
 	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
 
@@ -105,11 +105,11 @@ void VerticesDemo::Init()
 void VerticesDemo::Update(float dt)
 {
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_1))
-		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture(0.f);
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture("1");
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_2))
-		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture(1.f);
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture("2");
 	else if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::NUMBER_3))
-		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture(2.f);
+		Engine::Instance().GetObjectManager()->FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture("3");
 
 	
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::A))
@@ -152,7 +152,7 @@ void VerticesDemo::Update(float dt)
 		else
 		{
 			Engine::Instance().GetParticleManager()->AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
-				{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) }, ParticleType::REC, 0, true);
+				{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) }, ParticleType::REC, "", true);
 		}
 	}
 	else if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::RIGHT))

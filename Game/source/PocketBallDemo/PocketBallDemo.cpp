@@ -34,12 +34,12 @@ void PocketBallDemo::CollideObjects()
 
 void PocketBallDemo::Init()
 {
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball.png");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball1.png");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball.png", "White");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball1.png", "Black");
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(0);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("White");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollideCircle(16.f);
@@ -47,7 +47,7 @@ void PocketBallDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ - 120.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "1", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Black");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(1.f));
@@ -57,7 +57,7 @@ void PocketBallDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "2", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Black");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(1.f));
@@ -67,7 +67,7 @@ void PocketBallDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,-16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "3", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Black");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(1.f));
@@ -77,7 +77,7 @@ void PocketBallDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,32.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "4", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Black");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(1.f));
@@ -87,7 +87,7 @@ void PocketBallDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "5", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Black");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(1.f));
@@ -97,7 +97,7 @@ void PocketBallDemo::Init()
 
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,-32.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "6", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(1);
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Black");
 
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(1.f));

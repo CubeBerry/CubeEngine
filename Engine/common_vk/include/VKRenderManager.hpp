@@ -85,6 +85,7 @@ public:
 
 	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
 	std::vector<VKTexture*>* GetTextures() { return &textures; };
+	VKTexture* GetTexture(std::string name);
 private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
