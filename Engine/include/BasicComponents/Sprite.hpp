@@ -34,10 +34,10 @@ public:
 	void UpdateProjection(int index);
 
 	//Add Mesh
-	void AddQuad(glm::vec4 color_);
-	void AddQuadLine(glm::vec4 color_);
-	void AddMeshWithTexture(std::string name);
-	void AddMeshWithTexel(std::string name);
+	void AddQuad(glm::vec4 color);
+	void AddQuadLine(glm::vec4 color);
+	void AddMeshWithTexture(std::string name, glm::vec4 color = {1.f,1.f,1.f,1.f});
+	void AddMeshWithTexel(std::string name, glm::vec4 color = { 1.f,1.f,1.f,1.f });
 
 	//Animation
 	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
@@ -54,7 +54,7 @@ public:
 	//Setter
 	void SetMaterialId(int index) { materialId = index; }
 	void AddSpriteToManager();
-	void SetColor(glm::vec4 color_);
+	void SetColor(glm::vec4 color);
 private:
 	//Animation
 	glm::vec2 GetFrameTexel(int frameNum) const;
@@ -65,8 +65,6 @@ private:
 
 	int currAnim;
 	std::vector<Animation*> animations;
-
-	glm::vec4 color = { 1.f,1.f,1.f,1.f };
 
 	int materialId = 0;
 };

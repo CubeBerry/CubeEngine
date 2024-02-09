@@ -101,23 +101,21 @@ void Sprite::UpdateProjection(int index)
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
 }
 
-void Sprite::AddQuad(glm::vec4 color_)
+void Sprite::AddQuad(glm::vec4 color)
 {
-	color = color_;
-	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 0.f, 0.f);
+	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 0.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	AddSpriteToManager();
 }
 
-void Sprite::AddQuadLine(glm::vec4 color_)
+void Sprite::AddQuadLine(glm::vec4 color)
 {
-	color = color_;
-	Engine::Instance().GetVKRenderManager()->LoadLineQuad(color_);
+	Engine::Instance().GetVKRenderManager()->LoadLineQuad(color);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	AddSpriteToManager();
 }
 
-void Sprite::AddMeshWithTexture(std::string name)
+void Sprite::AddMeshWithTexture(std::string name, glm::vec4 color)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
@@ -126,7 +124,7 @@ void Sprite::AddMeshWithTexture(std::string name)
 	AddSpriteToManager();
 }
 
-void Sprite::AddMeshWithTexel(std::string name)
+void Sprite::AddMeshWithTexel(std::string name, glm::vec4 color)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 1.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
@@ -274,9 +272,8 @@ void Sprite::AddSpriteToManager()
 	Engine::GetSpriteManager()->AddSprite(this);
 }
 
-void Sprite::SetColor(glm::vec4 color_)
+void Sprite::SetColor(glm::vec4 color)
 {
-	color = color_;
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).color = color;
 }
 
