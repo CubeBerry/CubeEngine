@@ -15,9 +15,6 @@ int main(void)
 	engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
 	engine.SetFPS(FrameRate::FPS_60);
 
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball.png");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball1.png");
-
 	engine.GetSoundManager()->LoadMusicFilesFromFolder(L"..\\Game\\assets\\Musics");
 	engine.GetSoundManager()->LoadSoundFilesFromFolder("../Game/assets/Sounds");
 

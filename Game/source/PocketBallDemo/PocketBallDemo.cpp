@@ -25,18 +25,6 @@ void PocketBallDemo::CollideObjects()
 				{
 					if (target.second->GetObjectType() == ObjectType::WALL && object.second->GetObjectType() == ObjectType::BALL)
 					{
-						//Physics2D* BallP = object.second->GetComponent<Physics2D>();
-
-						//glm::vec2 ballCenter = glm::vec2(object.second->GetPosition().x, object.second->GetPosition().y) + glm::vec2(BallP->GetCircleCollideRadius(), BallP->GetCircleCollideRadius());
-						//glm::vec2 wallCenter = glm::vec2(target.second->GetPosition().x, target.second->GetPosition().y) + 0.5f * glm::vec2(target.second->GetSize().x, target.second->GetSize().y);
-
-						//glm::vec2 collisionVector = ballCenter - wallCenter;
-						//float collisionAngle = atan2(collisionVector.y, collisionVector.x);
-
-						//float newVelocityMagnitude = std::hypot(BallP->GetVelocity().x, BallP->GetVelocity().y);
-
-						//// 충돌 위치에 따라 반발력을 적용
-						//BallP->SetVelocity({ newVelocityMagnitude * cos(collisionAngle), newVelocityMagnitude * sin(collisionAngle) });
 					}
 				}
 			}
@@ -46,6 +34,9 @@ void PocketBallDemo::CollideObjects()
 
 void PocketBallDemo::Init()
 {
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball.png");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball1.png");
+
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::BALL);
 	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture(0);
