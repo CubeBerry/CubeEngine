@@ -101,35 +101,35 @@ void Sprite::UpdateProjection(int index)
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
 }
 
-void Sprite::AddQuad(glm::vec4 color)
+void Sprite::AddQuad(glm::vec4 color_)
 {
-	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 0.f, 0.f);
+	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 0.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	AddSpriteToManager();
 }
 
-void Sprite::AddQuadLine(glm::vec4 color)
+void Sprite::AddQuadLine(glm::vec4 color_)
 {
-	Engine::Instance().GetVKRenderManager()->LoadLineQuad(color);
+	Engine::Instance().GetVKRenderManager()->LoadLineQuad(color_);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
 	AddSpriteToManager();
 }
 
-void Sprite::AddMeshWithTexture(std::string name, glm::vec4 color)
+void Sprite::AddMeshWithTexture(std::string name_, glm::vec4 color_)
 {
-	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 0.f);
+	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 1.f, 0.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
-	ChangeTexture(name);
-	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetSize();
+	ChangeTexture(name_);
+	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name_)->GetSize();
 	AddSpriteToManager();
 }
 
-void Sprite::AddMeshWithTexel(std::string name, glm::vec4 color)
+void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 {
-	Engine::Instance().GetVKRenderManager()->LoadQuad(color, 1.f, 1.f);
+	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 1.f, 1.f);
 	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
-	ChangeTexture(name);
-	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetSize();
+	ChangeTexture(name_);
+	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name_)->GetSize();
 	AddSpriteToManager();
 }
 

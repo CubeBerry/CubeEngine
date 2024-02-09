@@ -161,7 +161,6 @@ void VKInit::InitDevice()
 		version12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 		version12Features.runtimeDescriptorArray = VK_TRUE;
 		version12Features.descriptorIndexing = VK_TRUE; 
-		version12Features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
 		//versionFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 		//versionFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
 		//versionFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
