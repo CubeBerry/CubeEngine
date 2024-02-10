@@ -55,6 +55,10 @@ void PocketBallSystem::Update(float dt)
 
 	playerPosition = glm::vec2(Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetPosition().x, Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetPosition().y);
 	shotAngle = std::atan2(playerPosition.y - cursorPosition.y, playerPosition.x - cursorPosition.x);
+	if (shotAngle * 60.f > 180.f || shotAngle * 60.f < -180.f)
+	{
+		shotAngle = 180.f;
+	}
 
 	if (isShot == false)
 	{
@@ -108,6 +112,10 @@ void PocketBallSystem::Controll(float dt)
 			if (distanceMax.x >= 0.f)
 			{
 				distanceMax -= 150.f * dt;
+				if (distanceMax.x < 0.f)
+				{
+					distanceMax = { 0.f, 0.f };
+				}
 				cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 			}
 		}
@@ -118,12 +126,12 @@ void PocketBallSystem::Controll(float dt)
 		}
 		if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 		{
-			angle -= 2.5f * dt;
+			angle -= 1.5f * dt;
 			cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 		}
 		if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 		{
-			angle += 2.5f * dt;
+			angle += 1.5f * dt;
 			cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 		}
 		if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::SPACE))
