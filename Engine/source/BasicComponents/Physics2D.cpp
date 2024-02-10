@@ -3,7 +3,7 @@
 //File: Physics2D.cpp
 #include "BasicComponents/Physics2D.hpp"
 #include "BasicComponents/Sprite.hpp"
-
+#include <iostream>
 Physics2D::~Physics2D()
 {
 #ifdef _DEBUG
@@ -592,8 +592,8 @@ bool Physics2D::IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::v
 void Physics2D::CalculateLinearVelocity(Physics2D& body, Physics2D& body2, glm::vec2 normal, float* /*axisDepth*/)
 {
 	glm::vec2 relativeVelocity = body2.GetVelocity() - body.GetVelocity();
-
-	float j = -(1.f + 1.f) * glm::dot(relativeVelocity, normal);
+	float res = std::min(body.GetRestitution(), body2.GetRestitution());
+	float j = -(1.f - res) * glm::dot(relativeVelocity, normal);
 	j /= (1.f / body.mass) + (1.f / body2.mass);
 
 	if (body.GetBodyType() == BodyType::RIGID)

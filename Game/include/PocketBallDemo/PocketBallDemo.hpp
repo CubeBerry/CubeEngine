@@ -3,6 +3,7 @@
 //File: PocketBallDemo.hpp
 #pragma once
 #include "GameState.hpp"
+#include "PocketBallDemo/PocketBallSystem.hpp"
 
 #include <vector>
 
@@ -22,4 +23,7 @@ public:
 
 private:
 	void CollideObjects();
+
+	PocketBallSystem* pocketBallSystem = nullptr;
+	int ballAmount = 0;
 };

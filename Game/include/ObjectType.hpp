@@ -8,4 +8,5 @@ enum class ObjectType
 	NONE,
 	BALL,
 	WALL,
+	GOAL
 };

@@ -65,6 +65,14 @@ public:
 	void SetFriction(float f) { friction = f; }
 	void SetGravity(float g) { gravity = g; }
 	void SetMass(float amount) { mass = amount; }
+	void SetRestitution(float amount) { restitution = amount; }
+	void SetBodyType(BodyType type) { bodyType = type; };
+
+	BodyType GetBodyType() { return bodyType; };
+	CollideType GetCollideType() { return collideType; };
+	float GetCircleCollideRadius() { return circle.radius; }
+	std::vector<glm::vec2>& GetCollidePolygon() { return collidePolygon; }
+	float GetRestitution() { return restitution; }
 
 	bool CheckCollision(Object& obj);
 	bool CollisionPP(Object& obj, Object& obj2);
@@ -75,12 +83,6 @@ public:
 	void AddCollidePolygon(glm::vec2 position);
 	void AddCollidePolygonAABB(glm::vec2 min, glm::vec2 max);
 	void AddCollidePolygonAABB(glm::vec2 size);
-	std::vector<glm::vec2>& GetCollidePolygon() { return collidePolygon; }
-
-	void SetBodyType(BodyType type) { bodyType = type; };
-	BodyType GetBodyType() { return bodyType; };
-	CollideType GetCollideType() { return collideType; };
-	float GetCircleCollideRadius() { return circle.radius; }
 private:
 	glm::vec2 FindSATCenter(const std::vector<glm::vec2>& points);
 	glm::vec2 FindClosestPointOnSegment(const glm::vec2& circleCenter, std::vector<glm::vec2>& vertices);
@@ -114,7 +116,7 @@ private:
 	float friction = 0.9f;
 	float gravity = 4.0f;
 	float mass = 1.f;
-
+	float restitution = 0.f;
 	//float rotateVelocity = 0.f;
 
 	CollideType collideType = CollideType::NONE;
