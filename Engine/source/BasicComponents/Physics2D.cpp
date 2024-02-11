@@ -117,7 +117,7 @@ void Physics2D::UpdateForParticle(float dt, glm::vec3& pos)
 
 void Physics2D::Gravity(float dt)
 {
-	velocity.y += 1.0f * gravity * dt;
+	velocity.y -= gravity * dt;
 	if (std::abs(velocity.y) > velocityMax.y)
 	{
 		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);

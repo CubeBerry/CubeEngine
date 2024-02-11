@@ -2,15 +2,9 @@
 //Project: CubeEngine
 //File: GameStateManager.hpp
 #pragma once
+#include "GameLevelType.hpp"
 #include "GameState.hpp"
 #include <vector>
-
-enum class GameLevel
-{
-	VERTICESDEMO = 0,
-	POCKETBALL,
-	NONE
-};
 
 class GameStateManager
 {

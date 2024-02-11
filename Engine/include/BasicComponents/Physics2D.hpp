@@ -114,7 +114,7 @@ private:
 	glm::vec2 acceleration = { 0.f, 0.f };
 	glm::vec2 force = { 0.f,0.f };
 	float friction = 0.9f;
-	float gravity = 4.0f;
+	float gravity = 9.8f;
 	float mass = 1.f;
 	float restitution = 0.f;
 	//float rotateVelocity = 0.f;

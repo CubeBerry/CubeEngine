@@ -16,7 +16,7 @@ public:
 	void Update(float dt);
 	void End();
 
-	void Controll(float dt);
+	void Control(float dt);
 	void SetBallNum(int num) { ballNum = num; }
 private:
 	Sprite* cursor = nullptr;

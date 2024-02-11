@@ -94,7 +94,7 @@ void PocketBallSystem::Update(float dt)
 			}
 		}
 	}
-	Controll(dt);
+	Control(dt);
 }
 
 void PocketBallSystem::End()
@@ -103,7 +103,7 @@ void PocketBallSystem::End()
 	delete powerMeter;
 }
 
-void PocketBallSystem::Controll(float dt)
+void PocketBallSystem::Control(float dt)
 {
 	if (isShot == false)
 	{
