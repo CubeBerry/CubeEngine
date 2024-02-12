@@ -25,14 +25,12 @@ void PlatformDemo::CollideObjects()
 				{
 					if (target.second->GetObjectType() == ObjectType::PLAYER && object.second->GetObjectType() == ObjectType::WALL)
 					{
-						if (target.second->GetPosition().y > object.second->GetPosition().y &&
+						/*if (target.second->GetPosition().y > object.second->GetPosition().y &&
 							target.second->GetPosition().x - target.second->GetSize().x / 2.f <= object.second->GetPosition().x
 							+ object.second->GetSize().x / 2.f && target.second->GetPosition().x + 
 							target.second->GetSize().x / 2.f > object.second->GetPosition().x - object.second->GetSize().x / 2.f)
 						{
-							std::cout << "!" << std::endl;
-							static_cast<PPlayer*>(target.second.get())->SetStateOn(States::ONGROUND);
-						}
+						}*/
 					}
 				}
 			}
