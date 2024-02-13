@@ -726,42 +726,6 @@ void VKRenderManager::BeginRender()
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
 			vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 		}
-
-		//auto& vkUniformBuffer = (*uniform_->GetUniformBuffers())[frameIndex];
-		//currentMaterialDescriptorSet = &(*vkDescriptor->GetMaterialDescriptorSets())[frameIndex];
-		//{
-		//	//Create Fragment Material DescriptorBuffer Info
-		//	VkDescriptorBufferInfo bufferInfo{};
-		//	bufferInfo.buffer = vkUniformBuffer;
-		//	bufferInfo.offset = 0;
-		//	bufferInfo.range = sizeof(Material);
-
-		//	//Define which resource descriptor set will point
-		//	VkWriteDescriptorSet descriptorWrite{};
-		//	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		//	descriptorWrite.dstSet = *currentMaterialDescriptorSet;
-		//	descriptorWrite.dstBinding = 0;
-		//	descriptorWrite.descriptorCount = 1;
-		//	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		//	descriptorWrite.pBufferInfo = &bufferInfo;
-
-		//	//Update DescriptorSet
-		//	//DescriptorSet does not have to update every frame since it points same uniform buffer
-		//	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-		//}
-
-		//Update Uniform Material
-
-		//Includes Updating Uniform Function
-		//textures[0].Resize(mats.data(), frameIndex);
-
-		//VkDeviceMemory vkUniformDeviceMemory = (*(uVertex->GetUniformDeviceMemories()))[frameIndex];
-
-		//Get Virtual Address for CPU to access Memory
-		//void* contents;
-		//vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(VertexUniform) * quadCount, 0, &contents);
-		//memcpy(contents, vertexVector.data(), sizeof(VertexUniform) * quadCount);
-		//vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 		uFragment->UpdateUniform(fragVector, frameIndex);
 	}
 

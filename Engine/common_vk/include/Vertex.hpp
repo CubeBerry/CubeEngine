@@ -27,7 +27,7 @@ struct VertexUniform
 	alignas(4) float isTexel;
 };
 
-struct FragmentUniform
+struct alignas(16) FragmentUniform
 {
 	alignas(4) int texIndex;
 };
