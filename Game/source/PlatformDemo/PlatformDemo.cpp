@@ -51,6 +51,7 @@ void PlatformDemo::Update(float dt)
 void PlatformDemo::ImGuiDraw(float dt)
 {
 	ImGui::ShowDemoWindow();
+	Engine::GetGameStateManager()->StateChanger();
 	Engine::GetSoundManager()->MusicPlayerForImGui();
 	platformDemoSystem->Update(dt);
 }

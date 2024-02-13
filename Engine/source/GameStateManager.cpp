@@ -4,6 +4,9 @@
 //File: GameStateManager.cpp
 #include "GameStateManager.hpp"
 #include "Engine.hpp"
+#ifdef _DEBUG
+#include "imgui.h"
+#endif
 
 GameStateManager::GameStateManager()
 {
@@ -69,3 +72,48 @@ void GameStateManager::RestartLevel()
 {
 	levelList.at(static_cast<int>(currentLevel))->Restart();
 }
+
+#ifdef _DEBUG
+void GameStateManager::StateChanger()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        GameLevel levelSelected = currentLevel;
+        if (ImGui::BeginMenu("Change Level"))
+        {
+			for (int i = 0; i < levelList.size(); i++)
+			{
+				std::string levelName = GameLevelTypeEnumToChar(static_cast<GameLevel>(i));
+				if (ImGui::MenuItem(levelName.c_str(), std::to_string(i).c_str(), levelSelected == static_cast<GameLevel>(i)))
+				{
+					levelSelected = static_cast<GameLevel>(i);
+				}
+			}
+            ImGui::EndMenu();
+        }
+
+        if (levelSelected != currentLevel)
+        {
+			ChangeLevel(levelSelected);
+        }
+        ImGui::EndMainMenuBar();
+    }
+}
+
+const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
+{
+	switch (type)
+	{
+	case GameLevel::VERTICESDEMO:
+		return "VERTICESDEMO";
+		break;
+	case GameLevel::POCKETBALL:
+		return "POCKETBALL";
+		break;
+	case GameLevel::PLATFORMDEMO:
+		return "PLATFORMDEMO";
+		break;
+	}
+	return "NONE";
+}
+#endif

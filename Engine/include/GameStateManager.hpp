@@ -23,7 +23,17 @@ public:
 	void RestartLevel();
 
 	GameLevel GetCurrentLevel() { return currentLevel; }
+
+
+#ifdef _DEBUG
+	void StateChanger();
+#endif
 private:
+#ifdef _DEBUG
+	const char* GameLevelTypeEnumToChar(GameLevel type);
+#endif
+
+
 	GameLevel currentLevel;
 	std::vector<GameState*> levelList;
 };

@@ -173,6 +173,7 @@ void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::ShowDemoWindow();
 	Engine::GetSoundManager()->MusicPlayerForImGui();
+	Engine::GetGameStateManager()->StateChanger();
 }
 #endif
 

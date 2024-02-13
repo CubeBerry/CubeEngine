@@ -167,6 +167,7 @@ void PocketBallDemo::Update(float dt)
 void PocketBallDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::ShowDemoWindow();
+	Engine::GetGameStateManager()->StateChanger();
 	Engine::GetSoundManager()->MusicPlayerForImGui();
 }
 #endif
@@ -179,8 +180,10 @@ void PocketBallDemo::Restart()
 
 void PocketBallDemo::End()
 {
-	//Engine::Instance().GetParticleManager()->Clear();
+	Engine::Instance().GetParticleManager()->Clear();
 	pocketBallSystem->End();
+	delete pocketBallSystem;
+	pocketBallSystem = nullptr;
 	Engine::Instance().GetObjectManager()->DestroyAllObjects();
 }
 
