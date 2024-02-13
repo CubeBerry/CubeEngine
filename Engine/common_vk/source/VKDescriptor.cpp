@@ -138,7 +138,6 @@ void VKDescriptor::InitDescriptorSetLayouts()
 
 		vkDescriptorSetLayouts.push_back(vkFragmentMaterialDescriptorSetLayout);
 	}
-
 }
 
 void VKDescriptor::InitDescriptorPool()
@@ -165,7 +164,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 1009;
+	createInfo.maxSets = 1005;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = &poolSize[0];
 	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;

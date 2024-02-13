@@ -83,7 +83,8 @@ public:
 
 	void DeleteWithIndex();
 
-	std::vector<UniformMatrix>* GetMatrices() { return &matrices; };
+	std::vector<VertexUniform>* GetVertexVector() { return &vertexVector; };
+	std::vector<FragmentUniform>* GetFragmentVector() { return &fragVector; };
 	std::vector<VKTexture*>* GetTextures() { return &textures; };
 	VKTexture* GetTexture(std::string name);
 private:
@@ -97,14 +98,17 @@ private:
 	std::vector<Vertex> texVertices;
 	VKVertexBuffer* texVertex{ nullptr };
 	std::vector<uint16_t> texIndices;
-	VKIndexBuffer* texIndex{ nullptr };
+	VKIndexBuffer* texIndex { nullptr };
 
 	std::vector<Vertex> lineVertices;
 	VKVertexBuffer* lineVertex{ nullptr };
 	std::vector<uint16_t> lineIndices;
 	VKIndexBuffer* lineIndex{ nullptr };
 
-	std::vector<UniformMatrix> matrices;
-	VKUniformBuffer<UniformMatrix>* uniform{ nullptr };
+	std::vector<VertexUniform> vertexVector;
+	VKUniformBuffer<VertexUniform>* uVertex{ nullptr };
+	std::vector<FragmentUniform> fragVector;
+	VKUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+
 	unsigned int quadCount{ 0 };
 };

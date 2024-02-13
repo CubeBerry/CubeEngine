@@ -36,7 +36,8 @@ void SpriteManager::DeleteSprite(Sprite* sprite_)
 		for (auto it = iterator + 1; it != sprites.end(); it++)
 		{
 			(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
-			Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId()) = Engine::Instance().GetVKRenderManager()->GetMatrices()->at((*it)->GetMaterialId() + 1);
+			Engine::Instance().GetVKRenderManager()->GetVertexVector()->at((*it)->GetMaterialId()) = Engine::Instance().GetVKRenderManager()->GetVertexVector()->at((*it)->GetMaterialId() + 1);
+			Engine::Instance().GetVKRenderManager()->GetFragmentVector()->at((*it)->GetMaterialId()) = Engine::Instance().GetVKRenderManager()->GetFragmentVector()->at((*it)->GetMaterialId() + 1);
 		}
 		Engine::Instance().GetVKRenderManager()->DeleteWithIndex();
 		sprites.erase(iterator);
