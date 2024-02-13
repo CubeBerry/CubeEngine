@@ -21,17 +21,12 @@ public:
 	
 	void Init() override;
 	void Update(float dt) override;
-	void Update(float dt, int matrixId);
     void End() override;
 
 	//Update Matrices
 	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle);
 	void UpdateView();
 	void UpdateProjection();
-
-	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle, int index);
-	void UpdateView(int index);
-	void UpdateProjection(int index);
 
 	//Add Mesh
 	void AddQuad(glm::vec4 color_);

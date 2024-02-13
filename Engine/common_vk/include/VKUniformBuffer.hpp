@@ -14,7 +14,7 @@ public:
 	~VKUniformBuffer();
 
 	void InitUniformBuffer(const int size_);
-	void UpdateUniform(Material* material_, const uint32_t frameIndex_);
+	void UpdateUniform(std::vector<Material> vector_, const uint32_t frameIndex_);
 
 	std::array<VkBuffer, 2>* GetUniformBuffers() { return &vkUniformBuffers; };
 	std::array<VkDeviceMemory, 2>* GetUniformDeviceMemories() { return &vkUniformDeviceMemories; };
@@ -167,16 +167,17 @@ inline void VKUniformBuffer<Material>::InitUniformBuffer(const int size_)
 }
 
 template<typename Material>
-inline void VKUniformBuffer<Material>::UpdateUniform(Material* material_, const uint32_t frameIndex_)
+inline void VKUniformBuffer<Material>::UpdateUniform(std::vector<Material> vector_, const uint32_t frameIndex_)
 {
 	auto& vkUniformDeviceMemory = vkUniformDeviceMemories[frameIndex_];
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material) * 3, 0, &contents);
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material) * vector_.size(), 0, &contents);
 
-	auto material = static_cast<Material*>(contents);
-	*material = *material_;
+	//auto material = static_cast<Material*>(contents);
+	//*material = *material_;
+	memcpy(contents, vector_.data(), sizeof(Material) * vector_.size());
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 }

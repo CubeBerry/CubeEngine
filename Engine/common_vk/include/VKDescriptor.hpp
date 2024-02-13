@@ -30,9 +30,7 @@ private:
 	std::vector<VkDescriptorSetLayout> vkDescriptorSetLayouts;
 	VkDescriptorSetLayout vkVertexMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
 	VkDescriptorSetLayout vkFragmentMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
-	//VkDescriptorSetLayout vkTextureDescriptorSetLayout{ VK_NULL_HANDLE };
 	VkDescriptorPool vkDescriptorPool{ VK_NULL_HANDLE };
 	std::array<VkDescriptorSet, 2> vkVertexMaterialDescriptorSets{ VK_NULL_HANDLE };
 	std::array<VkDescriptorSet, 2> vkFragmentMaterialDescriptorSets{ VK_NULL_HANDLE };
-	//std::array<VkDescriptorSet, 2> vkTextureDescriptorSets{ VK_NULL_HANDLE };
 };

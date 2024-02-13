@@ -9,10 +9,10 @@ layout(location = 1) in int index;
 
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
-layout(location = 2) out int outTexIndex;
-layout(location = 3) out float outIsTex;
+layout(location = 2) out float outIsTex;
+layout(location = 3) out int outIndex;
 
-struct Matrix
+struct vMatrix
 {
     mat4 model;
     mat4 view;
@@ -22,12 +22,11 @@ struct Matrix
     vec4 texelPos;
     float isTex;
     float isTexel;
-    int texIndex;
 };
 
-layout(set = 0, binding = 0) uniform uniformMatrix
+layout(set = 0, binding = 0) uniform vUniformMatrix
 {
-    Matrix matrix[MAX_MATRICES];
+    vMatrix matrix[MAX_MATRICES];
 };
 
 void main()
@@ -49,9 +48,9 @@ void main()
         o_uv.y = ((i_pos.y + 1.0) / 2.0);
     }
 
-    outTexIndex = matrix[index].texIndex;
     outIsTex = matrix[index].isTex;
     o_col = matrix[index].color;
+    outIndex = index;
 
     gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
 }

@@ -15,7 +15,7 @@ struct Vertex
 	alignas(4) int index;
 };
 
-struct UniformMatrix
+struct VertexUniform
 {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
@@ -25,5 +25,9 @@ struct UniformMatrix
 	alignas(16) glm::vec4 texelPos;
 	alignas(4) float isTex;
 	alignas(4) float isTexel;
+};
+
+struct alignas(16) FragmentUniform
+{
 	alignas(4) int texIndex;
 };

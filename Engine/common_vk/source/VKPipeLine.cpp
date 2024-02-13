@@ -269,7 +269,8 @@ void VKPipeLine::InitPipeLineLayout()
 	VkPipelineLayoutCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	createInfo.setLayoutCount = static_cast<uint32_t>(vkDescriptorSetLayout->size());
-	createInfo.pSetLayouts = &(*vkDescriptorSetLayout)[0];
+	//createInfo.pSetLayouts = &(*vkDescriptorSetLayout)[0];
+	createInfo.pSetLayouts = vkDescriptorSetLayout->data();
 
 	//Create Pipeline Layout
 	try

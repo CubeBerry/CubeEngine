@@ -67,17 +67,20 @@ public:
 	void SetMass(float amount) { mass = amount; }
 	void SetRestitution(float amount) { restitution = amount; }
 	void SetBodyType(BodyType type) { bodyType = type; };
+	void SetGhostCollision(bool state) { isGhostCollision = state; }
 
 	BodyType GetBodyType() { return bodyType; };
 	CollideType GetCollideType() { return collideType; };
 	float GetCircleCollideRadius() { return circle.radius; }
 	std::vector<glm::vec2>& GetCollidePolygon() { return collidePolygon; }
 	float GetRestitution() { return restitution; }
+	bool GetIsGhostCollision() { return isGhostCollision; }
 
 	bool CheckCollision(Object& obj);
 	bool CollisionPP(Object& obj, Object& obj2);
 	bool CollisionCC(Object& obj, Object& obj2);
 	bool CollisionPC(Object& poly, Object& cir);
+	bool CollisionPPWithoutPhysics(Object& obj, Object& obj2);
 
 	void AddCollideCircle(float r);
 	void AddCollidePolygon(glm::vec2 position);
@@ -114,14 +117,14 @@ private:
 	glm::vec2 acceleration = { 0.f, 0.f };
 	glm::vec2 force = { 0.f,0.f };
 	float friction = 0.9f;
-	float gravity = 4.0f;
+	float gravity = 9.8f;
 	float mass = 1.f;
 	float restitution = 0.f;
 	//float rotateVelocity = 0.f;
 
 	CollideType collideType = CollideType::NONE;
 	BodyType bodyType = BodyType::RIGID;
-
+	bool isGhostCollision = false;
 #ifdef _DEBUG
 	void AddPoint(glm::vec2 pos);
 	std::vector<Point> points;

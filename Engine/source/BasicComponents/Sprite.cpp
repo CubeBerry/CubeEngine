@@ -34,22 +34,8 @@ void Sprite::Update(float dt)
 	if (currAnim >= 0 && currAnim < animations.size())
 	{
 		animations[currAnim]->Update(dt);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
-	}
-}
-
-void Sprite::Update(float dt, int matrixId)
-{	
-	UpdateProjection(matrixId);
-	UpdateView(matrixId);
-	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate(), matrixId);
-
-	if (currAnim >= 0 && currAnim < animations.size())
-	{
-		animations[currAnim]->Update(dt);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at(matrixId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at(matrixId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
+		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
+		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
 	}
 }
 
@@ -61,64 +47,42 @@ void Sprite::End()
 void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 {
 	glm::mat4 modelMatrix(1.0f);
-	glm::vec3 pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
+	glm::vec3 pos = glm::vec3(pos_.x * 2, -pos_.y * 2, pos_.z);
 	modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
 		glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).model = modelMatrix;
+	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).model = modelMatrix;
 }
 
 void Sprite::UpdateView()
 {
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).view = Engine::Engine().GetCameraManager()->GetViewMatrix();
+	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).view = Engine::Engine().GetCameraManager()->GetViewMatrix();
 }
 
 void Sprite::UpdateProjection()
 {
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
-}
-
-
-void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle, int index)
-{
-	glm::mat4 modelMatrix(1.0f);
-	glm::vec3 pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-	modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-		glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-		glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).model = modelMatrix;
-}
-
-void Sprite::UpdateView(int index)
-{
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).view = Engine::Engine().GetCameraManager()->GetViewMatrix();
-}
-
-void Sprite::UpdateProjection(int index)
-{
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
+	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
 }
 
 void Sprite::AddQuad(glm::vec4 color_)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 0.f, 0.f);
-	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
+	materialId = Engine::Instance().GetVKRenderManager()->GetVertexVector()->size() - 1;
 	AddSpriteToManager();
 }
 
 void Sprite::AddQuadLine(glm::vec4 color_)
 {
 	Engine::Instance().GetVKRenderManager()->LoadLineQuad(color_);
-	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
+	materialId = Engine::Instance().GetVKRenderManager()->GetVertexVector()->size() - 1;
 	AddSpriteToManager();
 }
 
 void Sprite::AddMeshWithTexture(std::string name_, glm::vec4 color_)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 1.f, 0.f);
-	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
+	materialId = Engine::Instance().GetVKRenderManager()->GetVertexVector()->size() - 1;
 	ChangeTexture(name_);
 	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name_)->GetSize();
 	AddSpriteToManager();
@@ -127,7 +91,7 @@ void Sprite::AddMeshWithTexture(std::string name_, glm::vec4 color_)
 void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 {
 	Engine::Instance().GetVKRenderManager()->LoadQuad(color_, 1.f, 1.f);
-	materialId = Engine::Instance().GetVKRenderManager()->GetMatrices()->size() - 1;
+	materialId = Engine::Instance().GetVKRenderManager()->GetVertexVector()->size() - 1;
 	ChangeTexture(name_);
 	textureSize = Engine::Instance().GetVKRenderManager()->GetTexture(name_)->GetSize();
 	AddSpriteToManager();
@@ -264,7 +228,7 @@ void Sprite::PlayAnimation(int anim)
 
 void Sprite::ChangeTexture(std::string name)
 {
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).texIndex = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetTextrueId();
+	Engine::Instance().GetVKRenderManager()->GetFragmentVector()->at(materialId).texIndex = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetTextrueId();
 }
 
 void Sprite::AddSpriteToManager()
@@ -274,7 +238,7 @@ void Sprite::AddSpriteToManager()
 
 void Sprite::SetColor(glm::vec4 color)
 {
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).color = color;
+	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).color = color;
 }
 
 glm::vec2 Sprite::GetFrameTexel(int frameNum) const
