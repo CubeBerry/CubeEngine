@@ -15,7 +15,7 @@ int main(void)
     engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
     engine.SetFPS(FrameRate::FPS_60);
 
-    engine.GetSoundManager()->LoadMusicFilesFromFolder(L"..\Game\assets\Musics");
+    engine.GetSoundManager()->LoadMusicFilesFromFolder(L"..\\Game\\assets\\Musics");
     engine.GetSoundManager()->LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
     engine.GetGameStateManager()->AddLevel(new VerticesDemo);
