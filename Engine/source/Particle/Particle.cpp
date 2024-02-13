@@ -60,7 +60,7 @@ void Particle::Update(float dt)
         break;
     }
 
-    sprite->UpdateModel(position, size, angle);
+    sprite->UpdateModel({ position.x, -position.y, position.z}, size, angle);
     sprite->UpdateProjection();
     sprite->UpdateView();
     sprite->SetColor(color);

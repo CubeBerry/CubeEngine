@@ -4,6 +4,7 @@
 #include "PlatformDemo/PPlayer.hpp"
 #include "BasicComponents/Sprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
+#include "PlatformDemo/PlatformDemoSystem.hpp"
 #include "Engine.hpp"
 
 #include <iostream>
@@ -40,7 +41,7 @@ void PPlayer::Update(float dt)
 
 	if (GetComponent<Physics2D>()->GetVelocity().y > 0.f)
 	{
-		if (IsStateOn(States::JUMPING) == false )
+		if (IsStateOn(States::JUMPING) == false)
 		{
 			SetStateOn(States::JUMPING);
 			SetStateOff(States::FALLING);
@@ -53,7 +54,6 @@ void PPlayer::Update(float dt)
 	{
 		if (IsStateOn(States::FALLING) == true)
 		{
-			std::cout << GetComponent<Physics2D>()->GetVelocity().y << std::endl;
 			SetStateOff(States::FALLING);
 			SetStateOff(States::JUMPING);
 			std::cout << "ONGROUND" << std::endl;
@@ -69,12 +69,13 @@ void PPlayer::Update(float dt)
 			std::cout << "FALL" << std::endl;
 		}
 		GetComponent<Sprite>()->SetColor({ 0.f,0.f,1.f,1.f });
-		std::cout << GetComponent<Physics2D>()->GetVelocity().y << std::endl;
 	}
 }
 
 void PPlayer::End()
 {
+	Engine::Instance().GetParticleManager()->Clear();
+	Engine::Instance().GetObjectManager()->DestroyAllObjects();
 }
 
 void PPlayer::Control(float dt)

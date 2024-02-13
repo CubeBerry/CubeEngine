@@ -25,12 +25,6 @@ void PlatformDemo::CollideObjects()
 				{
 					if (target.second->GetObjectType() == ObjectType::PLAYER && object.second->GetObjectType() == ObjectType::WALL)
 					{
-						/*if (target.second->GetPosition().y > object.second->GetPosition().y &&
-							target.second->GetPosition().x - target.second->GetSize().x / 2.f <= object.second->GetPosition().x
-							+ object.second->GetSize().x / 2.f && target.second->GetPosition().x + 
-							target.second->GetSize().x / 2.f > object.second->GetPosition().x - object.second->GetSize().x / 2.f)
-						{
-						}*/
 					}
 				}
 			}
@@ -40,25 +34,12 @@ void PlatformDemo::CollideObjects()
 
 void PlatformDemo::Init()
 {
+	platformDemoSystem = new PlatformDemoSystem();
+	platformDemoSystem->Init();
+
 	Engine::Instance().GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "Player");
-
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,-192.f,0.f }, glm::vec3{ 320.f, 32.f,0.f }, "Wall", ObjectType::WALL);
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,  Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(1.f);
-
-	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 128.f,-64.f,0.f }, glm::vec3{ 96.f, 32.f,0.f }, "Wall", ObjectType::WALL);
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-
-	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,  Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(1.f);
+	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
+	//platformDemoSystem->SetIsEditorMod(true);
 }
 
 void PlatformDemo::Update(float dt)
@@ -67,10 +48,11 @@ void PlatformDemo::Update(float dt)
 }
 
 #ifdef _DEBUG
-void PlatformDemo::ImGuiDraw(float /*dt*/)
+void PlatformDemo::ImGuiDraw(float dt)
 {
 	ImGui::ShowDemoWindow();
 	Engine::GetSoundManager()->MusicPlayerForImGui();
+	platformDemoSystem->Update(dt);
 }
 #endif
 
@@ -82,7 +64,10 @@ void PlatformDemo::Restart()
 
 void PlatformDemo::End()
 {
-	//Engine::Instance().GetParticleManager()->Clear();
+	delete platformDemoSystem;
+	platformDemoSystem = nullptr;
+
+	Engine::Instance().GetParticleManager()->Clear();
 	Engine::Instance().GetObjectManager()->DestroyAllObjects();
 }
 

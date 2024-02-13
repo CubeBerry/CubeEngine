@@ -3,6 +3,7 @@
 //File: PlatformDemo.hpp
 #pragma once
 #include "GameState.hpp"
+#include "PlatformDemo/PlatformDemoSystem.hpp"
 
 #include <vector>
 
@@ -22,4 +23,6 @@ public:
 
 private:
 	void CollideObjects();
+
+	PlatformDemoSystem* platformDemoSystem = nullptr;
 };
