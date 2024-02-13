@@ -39,20 +39,6 @@ void Sprite::Update(float dt)
 	}
 }
 
-void Sprite::Update(float dt, int matrixId)
-{	
-	UpdateProjection(matrixId);
-	UpdateView(matrixId);
-	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate(), matrixId);
-
-	if (currAnim >= 0 && currAnim < animations.size())
-	{
-		animations[currAnim]->Update(dt);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at(matrixId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
-		Engine::Instance().GetVKRenderManager()->GetMatrices()->at(matrixId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
-	}
-}
-
 void Sprite::End()
 {
 	Engine::GetSpriteManager()->DeleteSprite(this);
@@ -77,28 +63,6 @@ void Sprite::UpdateView()
 void Sprite::UpdateProjection()
 {
 	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(materialId).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
-}
-
-
-void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle, int index)
-{
-	glm::mat4 modelMatrix(1.0f);
-	glm::vec3 pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-	modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-		glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-		glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).model = modelMatrix;
-}
-
-void Sprite::UpdateView(int index)
-{
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).view = Engine::Engine().GetCameraManager()->GetViewMatrix();
-}
-
-void Sprite::UpdateProjection(int index)
-{
-	Engine::Instance().GetVKRenderManager()->GetMatrices()->at(index).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
 }
 
 void Sprite::AddQuad(glm::vec4 color_)

@@ -76,7 +76,7 @@ void Physics2D::Update(float dt)
 		float angle = std::atan2(B.y - A.y, B.x - A.x);
 		float distance = Distance(A, B);
 
-		points[i].sprite->UpdateModel({ midPoint.x, midPoint.y , 0.f }, { distance, 1.f ,0.f }, angle * 180 / 3.14);
+		points[i].sprite->UpdateModel({ midPoint.x, midPoint.y , 0.f }, { distance, 1.f ,0.f }, -angle * 180 / 3.14);
 		points[i].sprite->UpdateProjection();
 		points[i].sprite->UpdateView();
 		i++;
