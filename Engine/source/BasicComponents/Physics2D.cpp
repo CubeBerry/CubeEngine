@@ -76,7 +76,7 @@ void Physics2D::Update(float dt)
 		float angle = std::atan2(B.y - A.y, B.x - A.x);
 		float distance = Distance(A, B);
 
-		points[i].sprite->UpdateModel({ midPoint.x, midPoint.y , 0.f }, { distance, 1.f ,0.f }, angle * 180 / 3.14);
+		points[i].sprite->UpdateModel({ midPoint.x, midPoint.y , 0.f }, { distance, 1.f ,0.f }, -angle * 180 / 3.14);
 		points[i].sprite->UpdateProjection();
 		points[i].sprite->UpdateView();
 		i++;
@@ -224,28 +224,32 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			normal = -normal;
 		}
 
-		if (a->GetBodyType() == BodyType::RIGID &&
-			b->GetBodyType() == BodyType::RIGID)
+		if (a->GetIsGhostCollision() == false &&
+			b->GetIsGhostCollision() == false)
 		{
-			obj.SetXPosition(obj.GetPosition().x + (-normal * depth / 2.f).x);
-			obj.SetYPosition(obj.GetPosition().y + (-normal * depth / 2.f).y);
+			if (a->GetBodyType() == BodyType::RIGID &&
+				b->GetBodyType() == BodyType::RIGID)
+			{
+				obj.SetXPosition(obj.GetPosition().x + (-normal * depth / 2.f).x);
+				obj.SetYPosition(obj.GetPosition().y + (-normal * depth / 2.f).y);
 
-			obj2.SetXPosition(obj2.GetPosition().x + (normal * depth / 2.f).x);
-			obj2.SetYPosition(obj2.GetPosition().y + (normal * depth / 2.f).y);
+				obj2.SetXPosition(obj2.GetPosition().x + (normal * depth / 2.f).x);
+				obj2.SetYPosition(obj2.GetPosition().y + (normal * depth / 2.f).y);
+			}
+			else if (a->GetBodyType() == BodyType::RIGID &&
+				b->GetBodyType() == BodyType::BLOCK)
+			{
+				obj.SetXPosition(obj.GetPosition().x + (-normal * depth / 2.f).x);
+				obj.SetYPosition(obj.GetPosition().y + (-normal * depth / 2.f).y);
+			}
+			else if (a->GetBodyType() == BodyType::BLOCK &&
+				b->GetBodyType() == BodyType::RIGID)
+			{
+				obj2.SetXPosition(obj2.GetPosition().x + (normal * depth / 2.f).x);
+				obj2.SetYPosition(obj2.GetPosition().y + (normal * depth / 2.f).y);
+			}
+			CalculateLinearVelocity(*a, *b, normal, &depth);
 		}
-		else if (a->GetBodyType() == BodyType::RIGID &&
-			b->GetBodyType() == BodyType::BLOCK)
-		{
-			obj.SetXPosition(obj.GetPosition().x + (-normal * depth / 2.f).x);
-			obj.SetYPosition(obj.GetPosition().y + (-normal * depth / 2.f).y);
-		}
-		else if (a->GetBodyType() == BodyType::BLOCK &&
-			b->GetBodyType() == BodyType::RIGID)
-		{
-			obj2.SetXPosition(obj2.GetPosition().x + (normal * depth / 2.f).x);
-			obj2.SetYPosition(obj2.GetPosition().y + (normal * depth / 2.f).y);
-		}
-		CalculateLinearVelocity(*a, *b, normal, &depth);
 		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;
@@ -278,28 +282,32 @@ bool Physics2D::CollisionCC(Object& obj, Object& obj2)
 		depth = overlap - distance;
 
 		// 각 원의 위치 조정
-		if (a->GetBodyType() == BodyType::RIGID &&
-			b->GetBodyType() == BodyType::RIGID)
+		if (a->GetIsGhostCollision() == false &&
+			b->GetIsGhostCollision() == false)
 		{
-			obj.SetXPosition(obj.GetPosition().x + (overlap * unitX));
-			obj.SetYPosition(obj.GetPosition().y + (overlap * unitY));
+			if (a->GetBodyType() == BodyType::RIGID &&
+				b->GetBodyType() == BodyType::RIGID)
+			{
+				obj.SetXPosition(obj.GetPosition().x + (overlap * unitX));
+				obj.SetYPosition(obj.GetPosition().y + (overlap * unitY));
 
-			obj2.SetXPosition(obj2.GetPosition().x - (overlap * unitX));
-			obj2.SetYPosition(obj2.GetPosition().y - (overlap * unitY));
+				obj2.SetXPosition(obj2.GetPosition().x - (overlap * unitX));
+				obj2.SetYPosition(obj2.GetPosition().y - (overlap * unitY));
+			}
+			else if (a->GetBodyType() == BodyType::RIGID &&
+				b->GetBodyType() == BodyType::BLOCK)
+			{
+				obj.SetXPosition(obj.GetPosition().x + (overlap * unitX));
+				obj.SetYPosition(obj.GetPosition().y + (overlap * unitY));
+			}
+			else if (a->GetBodyType() == BodyType::BLOCK &&
+				b->GetBodyType() == BodyType::RIGID)
+			{
+				obj2.SetXPosition(obj2.GetPosition().x - (overlap * unitX));
+				obj2.SetYPosition(obj2.GetPosition().y - (overlap * unitY));
+			}
+			CalculateLinearVelocity(*a, *b, -normal, &depth);
 		}
-		else if (a->GetBodyType() == BodyType::RIGID &&
-			b->GetBodyType() == BodyType::BLOCK)
-		{
-			obj.SetXPosition(obj.GetPosition().x + (overlap * unitX));
-			obj.SetYPosition(obj.GetPosition().y + (overlap * unitY));
-		}
-		else if (a->GetBodyType() == BodyType::BLOCK &&
-			b->GetBodyType() == BodyType::RIGID)
-		{
-			obj2.SetXPosition(obj2.GetPosition().x - (overlap * unitX));
-			obj2.SetYPosition(obj2.GetPosition().y - (overlap * unitY));
-		}
-		CalculateLinearVelocity(*a, *b, -normal, &depth);
 		return true; // 충돌 발생
 	}
 	return false; // 충돌 없음
@@ -368,29 +376,107 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 	}
 
 
-	if (p->GetBodyType() == BodyType::RIGID &&
-		c->GetBodyType() == BodyType::RIGID)
+	if (p->GetIsGhostCollision() == false &&
+		c->GetIsGhostCollision() == false)
 	{
-		poly.SetXPosition(poly.GetPosition().x + (normal * depth / 2.f).x);
-		poly.SetYPosition(poly.GetPosition().y + (normal * depth / 2.f).y);
+		if (p->GetBodyType() == BodyType::RIGID &&
+			c->GetBodyType() == BodyType::RIGID)
+		{
+			poly.SetXPosition(poly.GetPosition().x + (normal * depth / 2.f).x);
+			poly.SetYPosition(poly.GetPosition().y + (normal * depth / 2.f).y);
 
-		cir.SetXPosition(cir.GetPosition().x + (-normal * depth / 2.f).x);
-		cir.SetYPosition(cir.GetPosition().y + (-normal * depth / 2.f).y);
+			cir.SetXPosition(cir.GetPosition().x + (-normal * depth / 2.f).x);
+			cir.SetYPosition(cir.GetPosition().y + (-normal * depth / 2.f).y);
+		}
+		else if (p->GetBodyType() == BodyType::RIGID &&
+			c->GetBodyType() == BodyType::BLOCK)
+		{
+			poly.SetXPosition(poly.GetPosition().x + (normal * depth / 2.f).x);
+			poly.SetYPosition(poly.GetPosition().y + (normal * depth / 2.f).y);
+		}
+		else if (p->GetBodyType() == BodyType::BLOCK &&
+			c->GetBodyType() == BodyType::RIGID)
+		{
+			cir.SetXPosition(cir.GetPosition().x + (-normal * depth / 2.f).x);
+			cir.SetYPosition(cir.GetPosition().y + (-normal * depth / 2.f).y);
+		}
+		CalculateLinearVelocity(*p, *c, normal, &depth);
 	}
-	else if (p->GetBodyType() == BodyType::RIGID &&
-		c->GetBodyType() == BodyType::BLOCK)
-	{
-		poly.SetXPosition(poly.GetPosition().x + (normal * depth / 2.f).x);
-		poly.SetYPosition(poly.GetPosition().y + (normal * depth / 2.f).y);
-	}
-	else if (p->GetBodyType() == BodyType::BLOCK &&
-		c->GetBodyType() == BodyType::RIGID)
-	{
-		cir.SetXPosition(cir.GetPosition().x + (-normal * depth / 2.f).x);
-		cir.SetYPosition(cir.GetPosition().y + (-normal * depth / 2.f).y);
-	}
-	CalculateLinearVelocity(*p, *c, normal, &depth);
 	return true;
+}
+
+bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
+{
+	if (obj.GetComponent<Physics2D>()->GetCollidePolygon().empty() == false && obj2.GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
+	{
+		Physics2D* a = obj.GetComponent<Physics2D>();
+		Physics2D* b = obj2.GetComponent<Physics2D>();
+
+		std::vector<glm::vec2> rotatedPoints1;
+		std::vector<glm::vec2> rotatedPoints2;
+		float depth = INFINITY;
+		glm::vec2 normal = { 0.f, 0.f };
+
+		float min1 = INFINITY;
+		float min2 = INFINITY;
+		float max1 = -INFINITY;
+		float max2 = -INFINITY;
+
+		// 첫 번째 다각형 회전
+		for (const glm::vec2& point : collidePolygon)
+		{
+			rotatedPoints1.push_back(RotatePoint(obj.GetPosition(), point, DegreesToRadians(obj.GetRotate())));
+		}
+
+		// 두 번째 다각형 회전
+		for (const glm::vec2& point : b->GetCollidePolygon())
+		{
+			rotatedPoints2.push_back(RotatePoint(obj2.GetPosition(), point, DegreesToRadians(obj2.GetRotate())));
+		}
+
+		for (size_t i = 0; i < rotatedPoints1.size(); ++i)
+		{
+			float axisDepth = 0.f;
+			glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
+			axis = normalize(axis);
+			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
+			{
+				return false; // 충돌이 없음
+			}
+			if (axisDepth < depth)
+			{
+				depth = axisDepth;
+				normal = axis;
+			}
+		}
+
+		for (size_t i = 0; i < rotatedPoints2.size(); ++i)
+		{
+			float axisDepth = 0.f;
+			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
+			axis = normalize(axis);
+			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
+			{
+				return false; // 충돌이 없음
+			}
+			if (axisDepth < depth)
+			{
+				depth = axisDepth;
+				normal = axis;
+			}
+		}
+
+		glm::vec2 direction = FindSATCenter(rotatedPoints2) - FindSATCenter(rotatedPoints1);
+		if (glm::dot(direction, normal) < 0.f)
+		{
+			normal = -normal;
+		}
+
+		return true; // 모든 축에서 겹침이 없음
+	}
+	return false;
 }
 
 void Physics2D::AddCollideCircle(float r)
