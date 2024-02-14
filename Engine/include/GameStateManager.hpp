@@ -32,8 +32,7 @@ private:
 #ifdef _DEBUG
 	const char* GameLevelTypeEnumToChar(GameLevel type);
 #endif
-
-
 	GameLevel currentLevel;
+	GameLevel levelSelected;
 	std::vector<GameState*> levelList;
 };

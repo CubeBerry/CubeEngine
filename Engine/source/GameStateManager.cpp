@@ -48,6 +48,11 @@ void GameStateManager::Draw(float dt)
 			renderManager->EndRender();
 		}
 	//}
+		if (levelSelected != currentLevel)
+		{
+			ChangeLevel(levelSelected);
+		}
+
 }
 
 void GameStateManager::End()
@@ -76,9 +81,9 @@ void GameStateManager::RestartLevel()
 #ifdef _DEBUG
 void GameStateManager::StateChanger()
 {
+	levelSelected = currentLevel;
     if (ImGui::BeginMainMenuBar())
     {
-        GameLevel levelSelected = currentLevel;
         if (ImGui::BeginMenu("Change Level"))
         {
 			for (int i = 0; i < levelList.size(); i++)
@@ -91,13 +96,13 @@ void GameStateManager::StateChanger()
 			}
             ImGui::EndMenu();
         }
-
-        if (levelSelected != currentLevel)
-        {
-			ChangeLevel(levelSelected);
-        }
         ImGui::EndMainMenuBar();
     }
+
+	//if (levelSelected != currentLevel)
+	//{
+	//	ChangeLevel(levelSelected);
+	//}
 }
 
 const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
