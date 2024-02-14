@@ -114,11 +114,11 @@ void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 void PDemoMapEditorDemo::Init()
 {
 	//if (isEditorMod == true)
-	{
+	//{
 		target = new Target();
 		target->rect = new Sprite();
 		target->rect->AddQuad({ 0.f,1.f,0.f,0.0f });
-	}
+	//}
 }
 
 void PDemoMapEditorDemo::Update(float dt)
@@ -166,6 +166,7 @@ void PDemoMapEditorDemo::Update(float dt)
 void PDemoMapEditorDemo::End()
 {
 	delete target->rect;
+	delete target;
 	for (auto* target : objects)
 	{
 		delete target;
@@ -286,6 +287,7 @@ void PlatformDemoSystem::End()
 	healthBar = nullptr;
 #ifdef _DEBUG
 	mapEditor->End();
+	delete mapEditor;
 #endif
 }
 
