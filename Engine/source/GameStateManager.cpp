@@ -48,10 +48,12 @@ void GameStateManager::Draw(float dt)
 			renderManager->EndRender();
 		}
 	//}
+#ifdef _DEBUG
 		if (levelSelected != currentLevel)
 		{
 			ChangeLevel(levelSelected);
 		}
+#endif
 
 }
 

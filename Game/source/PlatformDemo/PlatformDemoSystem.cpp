@@ -271,7 +271,7 @@ void PlatformDemoSystem::Update(float dt)
 {
 	glm::vec2 viewSize = Engine::GetCameraManager()->GetViewSize();
 	glm::vec2 center = Engine::GetCameraManager()->GetCenter();
-	healthBar->UpdateModel({ (-viewSize.x / 2.f + 320.f) + center.x , (viewSize.y / 2.f - 128.f) + center.y , 0.f }, { 320.f * (1.f / maxHp * hp), 64.f, 0.f }, 0.f);
+	healthBar->UpdateModel({ (-viewSize.x / 2.f + 320.f) + center.x , (viewSize.y / 2.f - 128.f) + center.y, 0.f }, { 320.f * (1.f / maxHp * hp), 64.f, 0.f }, 0.f);
 	healthBar->UpdateProjection();
 	healthBar->UpdateView();
 
