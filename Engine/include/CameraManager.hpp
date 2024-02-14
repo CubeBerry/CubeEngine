@@ -4,6 +4,7 @@
 #pragma once
 #include "Camera.hpp"
 
+class Object;
 class CameraManager
 {
 public:
@@ -18,6 +19,7 @@ public:
 	void SetRotate(float angle) noexcept { camera.Rotate(angle); }
 	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); }
 	void SetViewSize(int width, int height) noexcept { camera.SetViewSize(width, height); }
+	void SetCenter(glm::vec3 pos) { camera.SetCenter(pos); }
 
 	float GetRotate2D() { return camera.GetRotate2D(); }
 	float GetZoom() noexcept { return camera.GetZoom(); }
@@ -27,7 +29,8 @@ public:
 	glm::mat4		GetViewMatrix() { return camera.GetViewMatrix(); }
 	glm::mat4		GetProjectionMatrix() { return camera.GetProjectionMatrix(); }
 
-	void                       SetCameraCenterMode(CameraCenterMode cameraCenterMode) noexcept { camera.SetCameraCenterMode(cameraCenterMode); }
+	void            SetCameraCenterMode(CameraCenterMode cameraCenterMode) noexcept { camera.SetCameraCenterMode(cameraCenterMode); }
+	bool IsInCamera(Object* object);
 private:
 	Camera camera;
 };

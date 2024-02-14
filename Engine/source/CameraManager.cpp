@@ -38,3 +38,18 @@ void CameraManager::Reset()
 	camera.SetCenter({0.f,0.f,0.f});
 	camera.SetZoom(1.f);
 }
+
+bool CameraManager::IsInCamera(Object* object)
+{
+	glm::vec2 position = { object->GetPosition().x, object->GetPosition().y };
+	glm::vec2 size = { object->GetSize().x, object->GetSize().y };
+	glm::vec2 viewSize = GetViewSize();
+	glm::vec2 cameraCenter = GetCenter();
+
+	if (position.x - (size.x) < (viewSize.x / 2.f + cameraCenter.x) && position.x + (size.x) > -(viewSize.x / 2.f - cameraCenter.x)
+		&& position.y - (size.y) < (viewSize.y / 2.f + cameraCenter.y) && position.y + (size.y) > -(viewSize.y / 2.f - cameraCenter.y))
+	{
+		return true;
+	}
+	return false;
+}

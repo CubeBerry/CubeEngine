@@ -61,7 +61,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			{
 				Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
 				Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });
 
 				Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
 				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,  Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f });
@@ -72,7 +72,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			{
 				Object* temp = new Object(glm::vec3{ posX, posY,0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
 				temp->AddComponent<Sprite>();
-				temp->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+				temp->GetComponent<Sprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
 				temp->AddComponent<Physics2D>();
 				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x / 2.f,  temp->GetSize().y / 2.f });
@@ -115,7 +115,7 @@ void PDemoMapEditorDemo::Init()
 {
 	//if (isEditorMod == true)
 	{
-		target = new TargetWall();
+		target = new Target();
 		target->rect = new Sprite();
 		target->rect->AddQuad({ 0.f,1.f,0.f,0.0f });
 	}
@@ -233,7 +233,7 @@ void PDemoMapEditorDemo::WallCreator()
 			{
 				Object* temp = new Object(glm::vec3{ midPoint.x, -midPoint.y,0.f }, glm::vec3{ abs(target->endPos.x - target->startPos.x) , abs(target->endPos.y - target->startPos.y),0.f }, "Wall", ObjectType::WALL);
 				temp->AddComponent<Sprite>();
-				temp->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+				temp->GetComponent<Sprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
 				temp->AddComponent<Physics2D>();
 				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x / 2.f,  temp->GetSize().y / 2.f });
@@ -260,6 +260,8 @@ void PDemoMapEditorDemo::WallCreator()
 void PlatformDemoSystem::Init()
 {
 	mapEditor = new PDemoMapEditorDemo();
+	healthBar = new Sprite();
+	healthBar->AddQuad({ 0.f,1.f,0.f,1.f });
 #ifdef _DEBUG
 	mapEditor->Init();
 #endif
@@ -267,6 +269,12 @@ void PlatformDemoSystem::Init()
 
 void PlatformDemoSystem::Update(float dt)
 {
+	glm::vec2 viewSize = Engine::GetCameraManager()->GetViewSize();
+	glm::vec2 center = Engine::GetCameraManager()->GetCenter();
+	healthBar->UpdateModel({ (-viewSize.x / 2.f + 320.f) + center.x , (viewSize.y / 2.f - 128.f) + center.y , 0.f }, { 320.f * (1.f / maxHp * hp), 64.f, 0.f }, 0.f);
+	healthBar->UpdateProjection();
+	healthBar->UpdateView();
+
 #ifdef _DEBUG
 	mapEditor->Update(dt);
 #endif
@@ -274,7 +282,16 @@ void PlatformDemoSystem::Update(float dt)
 
 void PlatformDemoSystem::End()
 {
+	delete healthBar;
+	healthBar = nullptr;
 #ifdef _DEBUG
 	mapEditor->End();
 #endif
 }
+
+#ifdef _DEBUG
+void PlatformDemoSystem::UpdateMapEditor(float dt)
+{
+	mapEditor->Update(dt);
+}
+#endif

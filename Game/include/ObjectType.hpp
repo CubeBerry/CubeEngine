@@ -9,5 +9,8 @@ enum class ObjectType
 	BALL,
 	WALL,
 	GOAL,
-	PLAYER
+	PLAYER,
+	ENEMY,
+	BULLET,
+	ENEMYBULLET
 };

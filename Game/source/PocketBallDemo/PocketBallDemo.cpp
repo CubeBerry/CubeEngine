@@ -180,10 +180,12 @@ void PocketBallDemo::Restart()
 
 void PocketBallDemo::End()
 {
-	Engine::Instance().GetParticleManager()->Clear();
 	pocketBallSystem->End();
 	delete pocketBallSystem;
 	pocketBallSystem = nullptr;
-	Engine::Instance().GetObjectManager()->DestroyAllObjects();
+
+	Engine::GetCameraManager()->Reset();
+	Engine::GetParticleManager()->Clear();
+	Engine::GetObjectManager()->DestroyAllObjects();
 }
 

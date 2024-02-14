@@ -6,7 +6,7 @@
 #include <vector>
 #include "BasicComponents/Sprite.hpp"
 
-struct TargetWall
+struct Target
 {
 	Sprite* rect = nullptr;
 	glm::vec2 startPos{ 0.f,0.f };
@@ -53,7 +53,7 @@ private:
 	std::vector<Object*> objects;
 	std::vector<Object*> walls;
 
-	TargetWall* target = nullptr;
+	Target* target = nullptr;
 	bool isWallSetting = false;
 
 	glm::vec2 gridSize = { 32.f, 32.f };
@@ -74,6 +74,16 @@ public:
 
 	void SetIsEditorMod(bool state) { mapEditor->SetIsEditorMod(state); }
 	bool GetIsEditorMod() { return mapEditor->GetIsEditorMod(); }
-private:
+
+	void HpDecrease(float damage) { hp -= damage; }
+
+#ifdef _DEBUG
+	void UpdateMapEditor(float dt);
+#endif
+protected:
 	PDemoMapEditorDemo* mapEditor = nullptr;
+	Sprite* healthBar = nullptr;
+
+	float maxHp = 100.f;
+	float hp = 100.f;
 };

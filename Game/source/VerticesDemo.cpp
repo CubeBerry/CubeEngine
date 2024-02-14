@@ -184,6 +184,7 @@ void VerticesDemo::Restart()
 
 void VerticesDemo::End()
 {
-	Engine::Instance().GetParticleManager()->Clear();
-	Engine::Instance().GetObjectManager()->DestroyAllObjects();
+	Engine::GetCameraManager()->Reset();
+	Engine::GetParticleManager()->Clear();
+	Engine::GetObjectManager()->DestroyAllObjects();
 }

@@ -27,7 +27,6 @@ public:
 	//void Draw(float dt) override;
 	void End();
 
-
 	void SetInvincibleState(bool state_) { isInvincible = state_; }
 	bool GetInvincibleState() { return isInvincible; }
 
@@ -44,6 +43,13 @@ public:
 	bool IsStateOn(States state_) { return state & static_cast<const int>(state_); }
 private:
 	void Control (float dt);
+	void Jumping();
+
 	bool isInvincible = false;
+	bool canAttack = true;
+
+	float attackDelay = 0.f;
+	float invincibleDelay = 0.f;
+
 	int    state = 1;
 };
