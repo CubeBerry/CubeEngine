@@ -3,12 +3,18 @@
 //File: PEnemy.hpp
 #pragma once
 #include "Object.hpp"
+enum class EnemyType
+{
+	NORMAL,
+	BIG,
+	NONE
+};
 
 class PEnemy : public Object
 {
 public:
     PEnemy() = default;
-	PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name);
+	PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type);
 	~PEnemy() {};
 
 	void Init() override;
@@ -44,4 +50,5 @@ protected:
 	bool isInvincible = false;
 
 	glm::vec2 spawnPosition = { 0.f,0.f };
+	EnemyType eType = EnemyType::NONE;
 };

@@ -5,6 +5,7 @@
 
 #include <vector>
 #include "BasicComponents/Sprite.hpp"
+#include "Background.hpp"
 
 struct Target
 {
@@ -17,6 +18,11 @@ struct Target
 	std::string name = "";
 	std::string spriteName = "";
 	ObjectType type = ObjectType::NONE;
+
+	BackgroundType backgroundType = BackgroundType::NORMAL;
+	glm::vec2 speed{ 0.f,0.f };
+	float depth = 0.f;
+	bool isAnimation = false;
 };
 
 enum class EditorMode
@@ -44,8 +50,10 @@ public:
 
 	bool GetIsEditorMod() { return isEditorMod; }
 	void SetIsEditorMod(bool state) { isEditorMod = state; }
+	void SetBackgroundManager(BackgroundManager* backGroundManager_) { bgm = backGroundManager_; }
 private:
 	void ObjectCreator();
+	void BackgroundCreator();
 	void WallCreator();
 
 	bool isEditorMod = false;
@@ -56,7 +64,10 @@ private:
 	Target* target = nullptr;
 	bool isWallSetting = false;
 
-	glm::vec2 gridSize = { 32.f, 32.f };
+	glm::vec2 gridSize = { 16.f, 16.f };
+	BackgroundManager* bgm = nullptr;
+	int backGSpriteNum = 0;
+	int objectNum = 0;
 };
 
 class PlatformDemoSystem
@@ -72,15 +83,17 @@ public:
 	void LoadLevelData(const std::filesystem::path& filePath) { mapEditor->LoadLevelData(filePath); };
 	void SaveLevelData(const std::filesystem::path& outFilePath) { mapEditor->SaveLevelData(outFilePath); };
 
-	void SetIsEditorMod(bool state) { mapEditor->SetIsEditorMod(state); }
+	void SetIsEditorMod(bool state) { mapEditor->SetIsEditorMod(state); backGroundManager->SetEditorMod(state); }
 	bool GetIsEditorMod() { return mapEditor->GetIsEditorMod(); }
 
 	void HpDecrease(float damage) { hp -= damage; }
 
+	void InitHealthBar();
 #ifdef _DEBUG
 	void UpdateMapEditor(float dt);
 #endif
 protected:
+	BackgroundManager* backGroundManager = nullptr;
 	PDemoMapEditorDemo* mapEditor = nullptr;
 	Sprite* healthBar = nullptr;
 

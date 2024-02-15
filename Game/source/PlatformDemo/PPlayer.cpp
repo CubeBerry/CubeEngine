@@ -21,7 +21,7 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name)
 	: Object(pos_, size_, name, ObjectType::PLAYER)
 {
 	AddComponent<Sprite>();
-	GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/player.spt", "Player");
 
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
@@ -39,19 +39,17 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
-	Engine::GetCameraManager()->SetCenter({ Object::position.x, 0.f, 0.f});
 	Object::Update(dt);
+
 	GetComponent<Physics2D>()->Gravity(dt);
-	Control(dt);
 	Jumping();
+	Control(dt);
 
 	if (canAttack == false)
 	{
-		attackDelay += dt;
-		if (attackDelay > 1.f)
+		if (GetComponent<Sprite>()->IsAnimationDone() == true)
 		{
 			canAttack = true;
-			attackDelay = 0.f;
 		}
 	}
 
@@ -87,6 +85,7 @@ void PPlayer::Control(float dt)
 	}
 	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
+
 		SetStateOn(States::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(20.f);
 	}
@@ -100,6 +99,7 @@ void PPlayer::Control(float dt)
 	{
 		if (canAttack == true)
 		{
+			GetComponent<Sprite>()->PlayAnimation(3);
 			Engine::GetObjectManager()->AddObject<PBullet>(position, glm::vec3{ 8.f,8.f,0.f }, "Bullet");
 			if (IsStateOn(States::DIRECTION))
 			{
@@ -119,11 +119,14 @@ void PPlayer::Jumping()
 	{
 		if (IsStateOn(States::JUMPING) == false)
 		{
+			if (canAttack == true)
+			{
+				GetComponent<Sprite>()->PlayAnimation(2);
+			}
+
 			SetStateOn(States::JUMPING);
 			SetStateOff(States::FALLING);
-			std::cout << "JUMP" << std::endl;
 		}
-		GetComponent<Sprite>()->SetColor({ 1.f,0.f,0.f,1.f - invincibleDelay });
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
 		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
@@ -132,18 +135,31 @@ void PPlayer::Jumping()
 		{
 			SetStateOff(States::FALLING);
 			SetStateOff(States::JUMPING);
-			std::cout << "ONGROUND" << std::endl;
+			if (canAttack == true)
+			{
+				if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
+					GetComponent<Physics2D>()->GetVelocity().x > -0.5f)
+				{
+					GetComponent<Sprite>()->PlayAnimation(0);
+				}
+				else
+				{
+					GetComponent<Sprite>()->PlayAnimation(1);
+				}
+			}
 		}
-		GetComponent<Sprite>()->SetColor({ 1.f,1.f,1.f,1.f - invincibleDelay });
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 	{
+		if (canAttack == true)
+		{
+			GetComponent<Sprite>()->PlayAnimation(2);
+		}
+
 		if (IsStateOn(States::FALLING) == false)
 		{
 			SetStateOn(States::FALLING);
 			SetStateOff(States::JUMPING);
-			std::cout << "FALL" << std::endl;
 		}
-		GetComponent<Sprite>()->SetColor({ 0.f,0.f,1.f,1.f - invincibleDelay });
 	}
 }

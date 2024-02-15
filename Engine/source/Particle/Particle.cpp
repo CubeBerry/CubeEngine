@@ -26,7 +26,7 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float
         break;
     case ParticleType::SPRI:
         sprite = new Sprite();
-        sprite->AddMeshWithTexture(spriteName);
+        sprite->LoadAnimation(spriteName, spriteName);
         sprite->SetColor(color);
         break;
     case ParticleType::REC:
@@ -58,6 +58,11 @@ void Particle::Update(float dt)
         break;
     default:
         break;
+    }
+
+    if (particleType == ParticleType::ANIMESPRI && sprite->IsAnimationDone() == true)
+    {
+        lifeTime = 0.f;
     }
 
     sprite->UpdateModel({ position.x, -position.y, position.z}, size, angle);

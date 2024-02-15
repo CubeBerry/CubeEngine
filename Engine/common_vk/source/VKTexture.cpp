@@ -481,8 +481,8 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 		//Create Sampler Info
 		VkSamplerCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		createInfo.magFilter = VK_FILTER_LINEAR;
-		createInfo.minFilter = VK_FILTER_LINEAR;
+		createInfo.magFilter = VK_FILTER_NEAREST;
+		createInfo.minFilter = VK_FILTER_NEAREST;
 		createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.unnormalizedCoordinates = VK_FALSE;

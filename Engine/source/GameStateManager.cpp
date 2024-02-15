@@ -10,7 +10,7 @@
 
 GameStateManager::GameStateManager()
 {
-	currentLevel = GameLevel::VERTICESDEMO;
+	currentLevel = GameLevel::NONE;
 }
 
 GameStateManager::~GameStateManager()
@@ -111,9 +111,9 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 {
 	switch (type)
 	{
-	case GameLevel::VERTICESDEMO:
-		return "VERTICESDEMO";
-		break;
+	//case GameLevel::VERTICESDEMO:
+	//	return "VERTICESDEMO";
+	//	break;
 	case GameLevel::POCKETBALL:
 		return "POCKETBALL";
 		break;

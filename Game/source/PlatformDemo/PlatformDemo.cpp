@@ -71,13 +71,18 @@ void PlatformDemo::Init()
 {
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();
+	
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/train_editor.png", "train_editor");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building1.png", "building1");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building2.png", "building2");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building3.png", "building3");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/rail.png", "rail");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
 
-	Engine::Instance().GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player");
-
-	Engine::Instance().GetObjectManager()->AddObject<PEnemy>(glm::vec3{ 64.f,196.f,0.f }, glm::vec3{ 64.f, 128.f,0.f }, "Enemy");
-	Engine::Instance().GetObjectManager()->AddObject<PEnemy>(glm::vec3{ -128.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy");
+	platformDemoSystem->SetIsEditorMod(true);
 	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
-	//platformDemoSystem->SetIsEditorMod(true);
+
+	platformDemoSystem->InitHealthBar();
 }
 
 void PlatformDemo::Update(float dt)

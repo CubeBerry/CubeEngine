@@ -228,7 +228,15 @@ void Sprite::PlayAnimation(int anim)
 
 void Sprite::ChangeTexture(std::string name)
 {
-	Engine::Instance().GetVKRenderManager()->GetFragmentVector()->at(materialId).texIndex = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetTextrueId();
+	if (Engine::Instance().GetVKRenderManager()->GetTexture(name) != nullptr)
+	{
+		Engine::Instance().GetVKRenderManager()->GetFragmentVector()->at(materialId).texIndex = Engine::Instance().GetVKRenderManager()->GetTexture(name)->GetTextrueId();
+		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).isTex = true;
+	}
+	else
+	{
+		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).isTex = false;
+	}
 }
 
 void Sprite::AddSpriteToManager()

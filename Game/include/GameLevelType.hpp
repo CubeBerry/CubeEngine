@@ -5,7 +5,7 @@
 
 enum class GameLevel
 {
-	VERTICESDEMO = 0,
+	//VERTICESDEMO = 0,
 	POCKETBALL,
 	PLATFORMDEMO,
 	NONE

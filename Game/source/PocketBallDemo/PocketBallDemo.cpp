@@ -36,10 +36,20 @@ void PocketBallDemo::CollideObjects()
 
 void PocketBallDemo::Init()
 {
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball.png", "White");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Ball1.png", "Black");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/1.png", "1");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/2.png", "2");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/3.png", "3");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/4.png", "4");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/5.png", "5");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/6.png", "6");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Table.png", "Table");
+	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Arrow.png", "Arrow");
 
-	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "P", BallType::WHITE);
+	Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,-38.f,-0.1f }, glm::vec3{ 368.f*2 + 32.f, 510.f + 88.f,0.f }, "Table");
+	Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Table");
+	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "White", BallType::WHITE);
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -120.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "1", BallType::OTHER);
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "2", BallType::OTHER);
 	Engine::Instance().GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,-16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "3", BallType::OTHER);

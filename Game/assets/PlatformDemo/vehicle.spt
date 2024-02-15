@@ -1,0 +1,7 @@
+../Game/assets/PlatformDemo/vehicle.png
+FrameSize 176 125
+HotSpot 35 4
+Frame 0 0
+Frame 176 0
+Frame 352 0
+Anim ../Game/assets/PlatformDemo/vehicle.anm

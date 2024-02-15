@@ -1,0 +1,13 @@
+../Game/assets/PlatformDemo/explosion.png
+FrameSize 32 32
+HotSpot 35 4
+Frame 0 0
+Frame 32 0
+Frame 64 0
+Frame 96 0
+Frame 128 0
+Frame 160 0
+Frame 192 0
+Frame 224 0
+Frame 256 0
+Anim ../Game/assets/PlatformDemo/explosion.anm

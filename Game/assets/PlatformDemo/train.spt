@@ -1,0 +1,6 @@
+../Game/assets/PlatformDemo/train.png
+FrameSize 320 48
+HotSpot 35 4
+Frame 0 0
+Frame 320 0
+Anim ../Game/assets/PlatformDemo/train.anm

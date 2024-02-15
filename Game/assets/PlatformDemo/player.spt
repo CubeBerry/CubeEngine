@@ -1,0 +1,24 @@
+../Game/assets/PlatformDemo/player.png
+FrameSize 32 32
+HotSpot 35 4
+Frame 0 0
+Frame 64 0
+Frame 96 0
+Frame 128 0
+Frame 160 0
+Frame 256 0
+Frame 320 0
+Frame 352 0
+Frame 384 0
+Frame 416 0
+Frame 480 0
+Frame 512 0
+Frame 544 0
+Frame 576 0
+Frame 608 0
+Frame 640 0
+Anim ../Game/assets/PlatformDemo/player_idle.anm
+Anim ../Game/assets/PlatformDemo/player_run.anm
+Anim ../Game/assets/PlatformDemo/player_jump.anm
+Anim ../Game/assets/PlatformDemo/player_attack.anm
+Anim ../Game/assets/PlatformDemo/player_death.anm

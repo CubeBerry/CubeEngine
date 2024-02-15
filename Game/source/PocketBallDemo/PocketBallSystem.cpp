@@ -9,12 +9,12 @@
 void PocketBallSystem::Init()
 {
 	cursor = new Sprite();
-	cursor->AddQuad({ 0.f,0.f,0.f,1.f });
+	cursor->AddMeshWithTexture("Arrow",{ 1.f, 1.f, 1.f, 1.f });
 
 	powerMeter = new Sprite();
 	powerMeter->AddQuad({ 1.f,0.f,0.f,1.f });
 
-	playerPosition = glm::vec2(Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetPosition().x, Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetPosition().y);
+	playerPosition = glm::vec2(Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetPosition().x, Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetPosition().y);
 	cursorPosition = playerPosition;
 	distanceMax = { 0.f, 0.f };
 }
@@ -45,7 +45,7 @@ void PocketBallSystem::Update(float dt)
 			}
 		}
 	}
-	cursor->UpdateModel({ cursorPosition.x, cursorPosition.y, 0.f }, { 32.f,32.f,0.f }, shotAngle * 60.f);
+	cursor->UpdateModel({ cursorPosition.x, cursorPosition.y, 0.f }, { 32.f,32.f,0.f }, -shotAngle * 60.f);
 	cursor->UpdateProjection();
 	cursor->UpdateView();
 
@@ -53,7 +53,7 @@ void PocketBallSystem::Update(float dt)
 	powerMeter->UpdateProjection();
 	powerMeter->UpdateView();
 
-	playerPosition = glm::vec2(Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetPosition().x, Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetPosition().y);
+	playerPosition = glm::vec2(Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetPosition().x, Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetPosition().y);
 	shotAngle = std::atan2(playerPosition.y - cursorPosition.y, playerPosition.x - cursorPosition.x);
 	if (shotAngle * 60.f > 180.f || shotAngle * 60.f < -180.f)
 	{
@@ -80,6 +80,9 @@ void PocketBallSystem::Update(float dt)
 				{
 					ballStopNum++;
 				}
+			}
+			else if (obj.second->GetName() == "Table")
+			{
 			}
 			else
 			{
@@ -136,7 +139,7 @@ void PocketBallSystem::Control(float dt)
 		}
 		if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::SPACE))
 		{
-			Engine::Instance().GetObjectManager()->FindObjectWithName("P")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle), power * -sin(shotAngle) });
+			Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle), power * -sin(shotAngle) });
 			isShot = true;
 		}
 	}

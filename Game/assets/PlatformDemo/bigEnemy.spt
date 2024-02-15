@@ -1,0 +1,36 @@
+../Game/assets/PlatformDemo/BigEnemy.png
+FrameSize 64 64
+HotSpot 35 4
+Frame 0 0
+Frame 64 0
+Frame 128 0
+Frame 192 0
+Frame 320 0
+Frame 384 0
+Frame 448 0
+Frame 512 0
+Frame 576 0
+Frame 640 0
+Frame 704 0
+Frame 768 0
+Frame 896 0
+Frame 960 0
+Frame 1024 0
+Frame 1088 0
+Frame 1152 0
+Frame 1280 0
+Frame 1344 0
+Frame 1408 0
+Frame 1472 0
+Frame 1600 0
+Frame 1664 0
+Frame 1728 0
+Frame 1792 0
+Frame 1856 0
+Frame 1920 0
+Frame 1984 0
+Anim ../Game/assets/PlatformDemo/enemy_idle.anm
+Anim ../Game/assets/PlatformDemo/enemy_run.anm
+Anim ../Game/assets/PlatformDemo/enemy_attack.anm
+Anim ../Game/assets/PlatformDemo/enemy_attack1.anm
+Anim ../Game/assets/PlatformDemo/enemy_death.anm

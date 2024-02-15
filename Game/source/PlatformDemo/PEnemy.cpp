@@ -7,7 +7,7 @@
 #include "BasicComponents/Physics2D.hpp"
 #include "Engine.hpp"
 
-PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name)
+PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type)
 	: Object(pos_, size_, name, ObjectType::ENEMY)
 {
 	AddComponent<Physics2D>();
@@ -20,6 +20,7 @@ PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name)
 
 	AddComponent<Sprite>();
 	GetComponent<Sprite>()->AddQuad({ 1.f,0.f,0.f,1.f });
+	eType = type;
 }
 
 void PEnemy::Init()
