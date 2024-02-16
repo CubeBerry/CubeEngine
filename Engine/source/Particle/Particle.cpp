@@ -65,7 +65,7 @@ void Particle::Update(float dt)
         lifeTime = 0.f;
     }
 
-    sprite->UpdateModel({ position.x, -position.y, position.z}, size, angle);
+    sprite->UpdateModel({ position.x, position.y, position.z}, size, angle);
     sprite->UpdateProjection();
     sprite->UpdateView();
     sprite->SetColor(color);
