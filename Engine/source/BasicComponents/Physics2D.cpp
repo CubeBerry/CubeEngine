@@ -47,7 +47,7 @@ void Physics2D::Update(float dt)
 	Component::GetOwner()->SetYPosition(Component::GetOwner()->GetPosition().y + velocity.y);
 
 #ifdef _DEBUG
-	/*std::vector<glm::vec2> rotatedPoints1;
+	std::vector<glm::vec2> rotatedPoints1;
 	int i = 0;
 	for (auto& v : points)
 	{
@@ -84,7 +84,7 @@ void Physics2D::Update(float dt)
 	glm::vec2 centerP = FindSATCenter(rotatedPoints1);
 	points[0].sprite->UpdateModel({ centerP.x, centerP.y , 0.f }, { 2.f,2.f,0.f }, 0.f);
 	points[0].sprite->UpdateProjection();
-	points[0].sprite->UpdateView();*/
+	points[0].sprite->UpdateView();
 #endif // _DEBUG
 
 }
@@ -699,25 +699,25 @@ void Physics2D::AddPoint(glm::vec2 pos)
 	{
 		Point temp;
 		temp.pos = { 0.f,0.f };
-		//temp.sprite = new Sprite();
-		//temp.sprite->AddQuad({ 1.f,0.f,0.f,1.f });
+		temp.sprite = new Sprite();
+		temp.sprite->AddQuad({ 1.f,0.f,0.f,1.f });
 		points.push_back(std::move(temp));
 	}
 	Point temp;
 	temp.pos = pos;
-	//temp.sprite = new Sprite();
-	//switch (bodyType)
-	//{
-	//case BodyType::RIGID:
-	//	temp.sprite->AddQuad({ 0.f,1.f,0.f,1.f });
-	//	break;
-	//case BodyType::BLOCK:
-	//	temp.sprite->AddQuad({ 0.f,0.f,1.f,1.f });
-	//	break;
-	//default:
-	//	temp.sprite->AddQuad({ 1.f,1.f,1.f,1.f });
-	//	break;
-	//}
+	temp.sprite = new Sprite();
+	switch (bodyType)
+	{
+	case BodyType::RIGID:
+		temp.sprite->AddQuad({ 0.f,1.f,0.f,1.f });
+		break;
+	case BodyType::BLOCK:
+		temp.sprite->AddQuad({ 0.f,0.f,1.f,1.f });
+		break;
+	default:
+		temp.sprite->AddQuad({ 1.f,1.f,1.f,1.f });
+		break;
+	}
 	points.push_back(std::move(temp));
 }
 #endif

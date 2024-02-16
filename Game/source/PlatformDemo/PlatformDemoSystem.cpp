@@ -194,8 +194,8 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 				{
 					bgm->AddHorizonParallexBackground(spriteName, objectName, { posX, posY }, { sizeX, sizeY }, 0.f, speedX, depth, isAnimation);
 				}
-				bgm->AddSaveBackgroundList(spriteName, "none", BackgroundTypeCharToEnum(bType.c_str()), { posX, posY }, { sizeX, sizeY },
-					0.f, { speedX, speedY }, { 0.f,0.f }, depth, false, isAnimation);
+				/*bgm->AddSaveBackgroundList(spriteName, "none", BackgroundTypeCharToEnum(bType.c_str()), { posX, posY }, { sizeX, sizeY },
+					0.f, { speedX, speedY }, { 0.f,0.f }, depth, false, isAnimation);*/
 			}
 			else
 			{
@@ -210,7 +210,27 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 {
 	std::ofstream saveLoad(outFilePath);
-	for (auto& group : bgm->GetSaveBackgroundList())
+
+	for (auto& target : walls)
+	{
+		saveLoad << target->GetName() << ' ';
+		saveLoad << target->GetPosition().x << ' ';
+		saveLoad << target->GetPosition().y << ' ';
+		saveLoad << target->GetSize().x << ' ';
+		saveLoad << target->GetSize().y << ' ';
+		switch (target->GetObjectType())
+		{
+		case ObjectType::PLAYER:
+			saveLoad << "PLAYER" << ' ';
+			break;
+		case ObjectType::WALL:
+			saveLoad << "WALL" << ' ';
+			break;
+		}
+
+		saveLoad << '\n';
+	}
+	for (auto& group : bgm->GetVerticalParallaxBackgroundList())
 	{
 		for (auto& background : group.second)
 		{
@@ -246,23 +266,37 @@ void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 			saveLoad << '\n';
 		}
 	}
-	for (auto& target : walls)
+	for (auto& group : bgm->GetNormalBackgroundList())
 	{
-		saveLoad << target->GetName() << ' ';
-		saveLoad << target->GetPosition().x << ' ';
-		saveLoad << target->GetPosition().y << ' ';
-		saveLoad << target->GetSize().x << ' ';
-		saveLoad << target->GetSize().y << ' ';
-		switch (target->GetObjectType())
+		float speedX;
+		float speedY;
+		float depth;
+		std::string bType;
+		bool isScrolled;
+		bool isAnimation;
+
+		saveLoad << "group" << ' ';
+		saveLoad << group.position.x << ' ';
+		saveLoad << group.position.y << ' ';
+		saveLoad << group.size.x << ' ';
+		saveLoad << group.size.y << ' ';
+		saveLoad << "BACKGROUND" << ' ';
+		saveLoad << group.speed.x << ' ';
+		saveLoad << group.speed.y << ' ';
+		saveLoad << group.depth << ' ';
+
+		switch (group.type)
 		{
-		case ObjectType::PLAYER:
-			saveLoad << "PLAYER" << ' ';
+		case BackgroundType::NORMAL:
+			saveLoad << "NORMAL" << ' ';
 			break;
-		case ObjectType::WALL:
-			saveLoad << "WALL" << ' ';
+		case BackgroundType::VPARALLEX:
+			saveLoad << "VPARALLEX" << ' ';
 			break;
 		}
-
+		saveLoad << group.isScrolled << ' ';
+		saveLoad << group.isAnimation << ' ';
+		saveLoad << group.spriteName << ' ';
 		saveLoad << '\n';
 	}
 	for (auto& target : objects)
@@ -326,16 +360,16 @@ void PDemoMapEditorDemo::Update(float dt)
 		}
 
 
-		if (ImGui::Button("ObjectCreator"))
+		/*if (ImGui::Button("ObjectCreator"))
 		{
 			mode = EditorMode::OBJCREATOR;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("BackGroundCreator"))
-		{
-			target->rect->ChangeTexture(BackgroundSpriteNumToChar(backGSpriteNum));
-			mode = EditorMode::BACKGCREATOR;
-		}
+		}*/
+		//ImGui::SameLine();
+		//if (ImGui::Button("BackGroundCreator"))
+		//{
+		//	target->rect->ChangeTexture(BackgroundSpriteNumToChar(backGSpriteNum));
+		//	mode = EditorMode::BACKGCREATOR;
+		//}
 		ImGui::SameLine();
 		if (ImGui::Button("WallCreator"))
 		{
@@ -550,7 +584,7 @@ void PDemoMapEditorDemo::WallCreator()
 		target->rect->UpdateProjection();
 		target->rect->UpdateView();
 
-		if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::MIDDLE))
+		if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::LEFT))
 		{
 			if (isWallSetting == true)
 			{

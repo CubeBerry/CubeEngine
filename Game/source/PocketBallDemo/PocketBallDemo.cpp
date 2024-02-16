@@ -25,6 +25,21 @@ void PocketBallDemo::CollideObjects()
 				{
 					if (target.second->GetObjectType() == ObjectType::GOAL && object.second->GetObjectType() == ObjectType::BALL)
 					{
+						int time = (rand() % (3 + 1)) + 1;
+						int amount = (rand() % (8 + 4)) + 4;
+						int colorR = (rand() % (10 + 0)) + 0;
+						int colorG = (rand() % (10 + 0)) + 0;
+						int colorB = (rand() % (10 + 0)) + 0;
+						int colorA = (rand() % (10 + 5)) + 5;
+						float x = object.second->GetPosition().x;
+						float y = object.second->GetPosition().y;
+						float speedX = (float)(rand() % (15 - (-30) + 1) - 15);
+						float speedY = (float)(rand() % (15 - (-30) + 1) - 15);
+
+						{
+							Engine::Instance().GetParticleManager()->AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
+								{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) });
+						}
 						Engine::Instance().GetObjectManager()->Destroy(object.second.get()->GetId());
 						pocketBallSystem->SetBallNum(--ballAmount);
 					}
@@ -61,7 +76,7 @@ void PocketBallDemo::Init()
 		glm::vec2 tempS{ 0.f,0.f };
 		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,192.f,0.f }, glm::vec3{ 640.f, 32.f,0.f }, "Wall", ObjectType::WALL);
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 
 		tempS = { Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f };
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
@@ -77,7 +92,7 @@ void PocketBallDemo::Init()
 
 		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,-192.f,0.f }, glm::vec3{ 640.f, 32.f,0.f }, "Wall", ObjectType::WALL);
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 		Engine::Instance().GetObjectManager()->GetLastObject()->SetRotate(180.f);
 
 		tempS = { Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f };
@@ -94,7 +109,7 @@ void PocketBallDemo::Init()
 
 		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ -336.f,0.f,0.f }, glm::vec3{ 352.f, 32.f,0.f }, "Wall", ObjectType::WALL);
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 
 		tempS = { Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f };
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
@@ -110,7 +125,7 @@ void PocketBallDemo::Init()
 
 		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 336.f,0.f,0.f }, glm::vec3{ 352.f, 32.f,0.f }, "Wall", ObjectType::WALL);
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 
 		tempS = { Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f };
 		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();

@@ -55,10 +55,7 @@ void PocketBallSystem::Update(float dt)
 
 	playerPosition = glm::vec2(Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetPosition().x, Engine::Instance().GetObjectManager()->FindObjectWithName("White")->GetPosition().y);
 	shotAngle = std::atan2(playerPosition.y - cursorPosition.y, playerPosition.x - cursorPosition.x);
-	if (shotAngle * 60.f > 180.f || shotAngle * 60.f < -180.f)
-	{
-		shotAngle = 180.f;
-	}
+	
 
 	if (isShot == false)
 	{
@@ -98,6 +95,10 @@ void PocketBallSystem::Update(float dt)
 		}
 	}
 	Control(dt);
+	if (shotAngle * 60.f > 180.f || shotAngle * 60.f < -180.f)
+	{
+		shotAngle -= 180.f;
+	}
 }
 
 void PocketBallSystem::End()

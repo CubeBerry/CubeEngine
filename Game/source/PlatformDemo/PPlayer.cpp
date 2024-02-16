@@ -47,7 +47,7 @@ void PPlayer::Update(float dt)
 
 	if (canAttack == false)
 	{
-		if (GetComponent<Sprite>()->IsAnimationDone() == true)
+		//if (GetComponent<Sprite>()->IsAnimationDone() == true)
 		{
 			canAttack = true;
 		}

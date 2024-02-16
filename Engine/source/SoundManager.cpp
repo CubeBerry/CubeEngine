@@ -10,6 +10,7 @@
 #include <codecvt>
 
 #include "SoundManager.hpp"
+#include "Engine.hpp"
 #ifdef _DEBUG
 #include "imgui.h"
 #endif
@@ -493,7 +494,7 @@ void SoundManager::MusicPlayerForImGui()
 			{
 				currentIndex = GetAmontOfMusics() - 1;
 			}
-			PlayMusic(currentIndex);
+			PlayMusicInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 1280.f);
 		}
 		if (IsPaused(currentIndex) == true)
 		{
@@ -502,7 +503,7 @@ void SoundManager::MusicPlayerForImGui()
 			{
 				if (IsPlaying(currentIndex) != true)
 				{
-					PlayMusic(currentIndex);
+					PlayMusicInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 360.f);
 				}
 				else
 				{
@@ -532,10 +533,10 @@ void SoundManager::MusicPlayerForImGui()
 			{
 				currentIndex = 0;
 			}
-			PlayMusic(currentIndex);
+			PlayMusicInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 1280.f);
 		}
 		//Button
-
+		UpdateMusicVolumeInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 360.f);
 		//music playback
 		float currentPlaybackPosition = GetMusicPlaybackPosition(currentIndex);
 		PlaybackTime pTime = GetMusicPlaybackTime(currentIndex, currentPlaybackPosition);

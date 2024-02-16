@@ -765,9 +765,9 @@ void VKRenderManager::BeginRender()
 
 	//Set clear color
 	VkClearValue clearValue{};
-	clearValue.color.float32[0] = 1.0f;	//R
+	clearValue.color.float32[0] = 0.0f;	//R
 	clearValue.color.float32[1] = 0.0f;	//G
-	clearValue.color.float32[2] = 1.0f;	//B
+	clearValue.color.float32[2] = 0.7f;	//B
 	clearValue.color.float32[3] = 1.0f;	//A
 
 	//Create renderpass begin info
