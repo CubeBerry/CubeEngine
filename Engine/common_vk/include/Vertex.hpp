@@ -7,27 +7,27 @@
 #include <glm/vec4.hpp>
 #include <glm/matrix.hpp>
 
-struct Vertex
+struct alignas(16) Vertex
 {
-	alignas(16) glm::vec4 position;
+	glm::vec4 position;
 	//alignas(16) glm::vec4 color;
 	//glm::vec2 uv;
-	alignas(4) int index;
+	int index;
 };
 
-struct VertexUniform
+struct alignas(16) VertexUniform
 {
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 projection;
-	alignas(16) glm::vec4 color;
-	alignas(16) glm::vec4 frameSize;
-	alignas(16) glm::vec4 texelPos;
-	alignas(4) float isTex;
-	alignas(4) float isTexel;
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
+	glm::vec4 color;
+	glm::vec4 frameSize;
+	glm::vec4 texelPos;
+	float isTex;
+	float isTexel;
 };
 
 struct alignas(16) FragmentUniform
 {
-	alignas(4) int texIndex;
+	int texIndex;
 };
