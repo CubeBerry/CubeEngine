@@ -29,7 +29,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 void Engine::Update()
 {
 	SDL_Event event;
-	while (isRunning)
+	while (gameStateManger->GetGameState() != State::SHUTDOWN)
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
@@ -42,20 +42,11 @@ void Engine::Update()
 			switch (event.type)
 			{
 			case SDL_QUIT:
-				isRunning = false;
+				gameStateManger->SetGameState(State::UNLOAD);
 				break;
 			default:
 				break;
 			}
-
-			inputManager->InputPollEvent(event);
-			gameStateManger->Update(deltaTime);
-			spriteManager->Update(deltaTime);
-			objectManager->Update(deltaTime);
-			particleManager->Update(deltaTime);
-			cameraManager->Update();
-			if (!(SDL_GetWindowFlags(window->GetWindow()) & SDL_WINDOW_MINIMIZED))
-				gameStateManger->Draw(deltaTime);
 
 			timer.ResetLastTimeStamp();
 			frameCount++;
@@ -68,8 +59,10 @@ void Engine::Update()
 				timer.ResetFPSCalculateTime();
 				frameCount = 0;
 			}//fps
-		}
 
+			inputManager->InputPollEvent(event);
+			gameStateManger->Update(deltaTime);
+		}
 	}
 }
 

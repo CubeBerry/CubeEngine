@@ -63,7 +63,7 @@ void BackgroundManager::AddNormalBackground(std::string spriteName_, glm::vec2 p
 	}
 
 	normalBackgroundList.push_back(temp);
-	saveBackgroundList["none"].push_back(temp);
+	//saveBackgroundList["none"].push_back(temp);
 }
 
 void BackgroundManager::AddVerticalParallexBackground(std::string spriteName_, std::string groupName, glm::vec2 position_, glm::vec2 size_, float angle_, float speedY_, float depth_, bool isAnimated)
@@ -78,7 +78,7 @@ void BackgroundManager::AddVerticalParallexBackground(std::string spriteName_, s
 	saveb.depth = depth_;
 	saveb.type = BackgroundType::VPARALLEX;
 	saveb.isAnimation = isAnimated;
-	saveBackgroundList[groupName].push_back(saveb);
+	//saveBackgroundList[groupName].push_back(saveb);
 
 	glm::vec2 windowSize = { static_cast<float>(Engine::GetCameraManager()->GetViewSize().x) , static_cast<float>(Engine::GetCameraManager()->GetViewSize().y) };
 	int amount = static_cast<int>(windowSize.y / (size_.y * 2.f)) + 1;
@@ -134,7 +134,7 @@ void BackgroundManager::AddHorizonParallexBackground(std::string spriteName_, st
 	saveb.depth = depth_;
 	saveb.isAnimation = isAnimated;
 	saveb.type = BackgroundType::VPARALLEX; // 수정필요
-	saveBackgroundList[groupName].push_back(saveb);
+	//saveBackgroundList[groupName].push_back(saveb);
 
 	glm::vec2 windowSize = { static_cast<float>(Engine::GetCameraManager()->GetViewSize().x) , static_cast<float>(Engine::GetCameraManager()->GetViewSize().y) };
 	int amount = static_cast<int>(windowSize.x / (size_.x )) + 1;

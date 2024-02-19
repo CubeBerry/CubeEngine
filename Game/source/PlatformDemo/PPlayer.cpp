@@ -47,7 +47,7 @@ void PPlayer::Update(float dt)
 
 	if (canAttack == false)
 	{
-		//if (GetComponent<Sprite>()->IsAnimationDone() == true)
+		if (GetComponent<Sprite>()->IsAnimationDone() == true)
 		{
 			canAttack = true;
 		}
@@ -62,40 +62,48 @@ void PPlayer::Update(float dt)
 			invincibleDelay = 0.f;
 		}
 	}
+	if (IsStateOn(States::DIRECTION))
+	{
+		Object::SetXSize(-Object::GetSize().x);
+	}
+	else
+	{
+
+	}
 }
 
 void PPlayer::End()
 {
-	Engine::Instance().GetParticleManager()->Clear();
-	Engine::Instance().GetObjectManager()->DestroyAllObjects();
+	Engine::GetParticleManager()->Clear();
+	Engine::GetObjectManager()->DestroyAllObjects();
 }
 
 void PPlayer::Control(float dt)
 {
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
+	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
 	{
 	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
+	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
 	{
 	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
+	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
 		SetStateOff(States::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(-20.f);
 	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
+	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
 
 		SetStateOn(States::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(20.f);
 	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::X)
+	if (Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::X)
 		&& IsStateOn(States::FALLING) == false && IsStateOn(States::JUMPING) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
 		GetComponent<Physics2D>()->SetVelocityY(40.f);
 	}
-	if (Engine::Instance().GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::Z))
+	if (Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::Z))
 	{
 		if (canAttack == true)
 		{

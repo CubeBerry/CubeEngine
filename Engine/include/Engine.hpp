@@ -38,9 +38,6 @@ public:
 	static SpriteManager* GetSpriteManager() { return Instance().spriteManager; }
 	static ParticleManager* GetParticleManager() { return Instance().particleManager; }
 private:
-
-	bool isRunning = true;
-
 	Timer timer;
 	std::chrono::system_clock::time_point lastTick;
 	std::chrono::system_clock::time_point fpsCalcTime;

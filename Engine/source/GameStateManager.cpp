@@ -15,23 +15,96 @@ GameStateManager::GameStateManager()
 
 GameStateManager::~GameStateManager()
 {
-	End();
+	for (auto& lev : levelList)
+	{
+		delete lev;
+	}
+	levelList.clear();
 }
 
 void GameStateManager::LevelInit()
 {
 	levelList.at(static_cast<int>(currentLevel))->Init();
+
+	if (state != State::CHANGE)
+		levelSelected = currentLevel;
 }
 
 void GameStateManager::LevelInit(GameLevel currentLevel_)
 {
-	currentLevel = currentLevel_; 
+	currentLevel = currentLevel_;
 	LevelInit();
+	state = State::UPDATE;
+#ifdef _DEBUG
+	std::cout << "Load Complete" << std::endl;
+#endif
 }
 
 void GameStateManager::Update(float dt)
 {
-	levelList.at(static_cast<int>(currentLevel))->Update(dt);
+	switch (state)
+	{
+	case State::START:
+		if (levelList.empty())
+		{
+			state = State::SHUTDOWN;
+		}
+		else
+		{
+			state = State::LOAD;
+		}
+		break;
+	case State::LOAD:
+		LevelInit();
+#ifdef _DEBUG
+		std::cout << "Load Complete" << std::endl;
+#endif
+		state = State::UPDATE;
+#ifdef _DEBUG
+		std::cout << "Upadte" << std::endl;
+#endif
+		break;
+	case State::UPDATE:
+		if (levelSelected != currentLevel)
+		{
+			state = State::CHANGE;
+		}
+		else
+		{
+			levelList.at(static_cast<int>(currentLevel))->Update(dt);
+			Engine::GetSpriteManager()->Update(dt);
+			Engine::GetObjectManager()->Update(dt);
+			Engine::GetParticleManager()->Update(dt);
+			Engine::GetCameraManager()->Update();
+			if (!(SDL_GetWindowFlags(Engine::GetWindow()->GetWindow()) & SDL_WINDOW_MINIMIZED))
+				Draw(dt);
+		}
+		break;
+	case State::CHANGE:
+		levelList.at(static_cast<int>(currentLevel))->End();
+		currentLevel = levelSelected;
+#ifdef _DEBUG
+		std::cout << "Level Change" << std::endl;
+#endif
+		state = State::LOAD;
+		break;
+	case State::RESTART:
+		LevelEnd();
+		state = State::LOAD;
+#ifdef _DEBUG
+		std::cout << "Level Restart" << std::endl;
+#endif
+		break;
+	case State::UNLOAD:
+		LevelEnd();
+		state = State::SHUTDOWN;
+#ifdef _DEBUG
+		std::cout << "ShutDown" << std::endl;
+#endif
+		break;
+	case State::SHUTDOWN:
+		break;
+	}
 }
 
 void GameStateManager::Draw(float dt)
@@ -39,28 +112,21 @@ void GameStateManager::Draw(float dt)
 	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
 	//if (renderManager->GetMatrices()->size() > 0)
 	//{
-		renderManager->BeginRender();
-		if (!renderManager->GetIsRecreated())
-		{
+	renderManager->BeginRender();
+	if (!renderManager->GetIsRecreated())
+	{
 #ifdef _DEBUG
-			levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
 #endif
-			renderManager->EndRender();
-		}
+		renderManager->EndRender();
+	}
 	//}
-#ifdef _DEBUG
-		if (levelSelected != currentLevel)
-		{
-			ChangeLevel(levelSelected);
-		}
-#endif
 
 }
 
-void GameStateManager::End()
+void GameStateManager::LevelEnd()
 {
 	levelList.at(static_cast<int>(currentLevel))->End();
-	levelList.clear();
 }
 
 void GameStateManager::AddLevel(GameState* level)
@@ -68,11 +134,9 @@ void GameStateManager::AddLevel(GameState* level)
 	levelList.push_back(level);
 }
 
-void GameStateManager::ChangeLevel(GameLevel changeLV)
+void GameStateManager::ChangeLevel(GameLevel lev)
 {
-	levelList.at(static_cast<int>(currentLevel))->End();
-	currentLevel = changeLV;
-	levelList.at(static_cast<int>(currentLevel))->Init();
+	levelSelected = lev;
 }
 
 void GameStateManager::RestartLevel()
@@ -83,11 +147,10 @@ void GameStateManager::RestartLevel()
 #ifdef _DEBUG
 void GameStateManager::StateChanger()
 {
-	levelSelected = currentLevel;
-    if (ImGui::BeginMainMenuBar())
-    {
-        if (ImGui::BeginMenu("Change Level"))
-        {
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("Change Level"))
+		{
 			for (int i = 0; i < levelList.size(); i++)
 			{
 				std::string levelName = GameLevelTypeEnumToChar(static_cast<GameLevel>(i));
@@ -96,24 +159,19 @@ void GameStateManager::StateChanger()
 					levelSelected = static_cast<GameLevel>(i);
 				}
 			}
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
-
-	//if (levelSelected != currentLevel)
-	//{
-	//	ChangeLevel(levelSelected);
-	//}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
 }
 
 const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 {
 	switch (type)
 	{
-	//case GameLevel::VERTICESDEMO:
-	//	return "VERTICESDEMO";
-	//	break;
+		//case GameLevel::VERTICESDEMO:
+		//	return "VERTICESDEMO";
+		//	break;
 	case GameLevel::POCKETBALL:
 		return "POCKETBALL";
 		break;

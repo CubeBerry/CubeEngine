@@ -6,6 +6,17 @@
 #include "GameState.hpp"
 #include <vector>
 
+enum class State
+{
+	START,
+	LOAD,
+	UPDATE,
+	UNLOAD,
+	SHUTDOWN,
+	RESTART,
+	CHANGE,
+};
+
 class GameStateManager
 {
 public:
@@ -16,15 +27,16 @@ public:
 	void LevelInit(GameLevel currentLevel_);
 	void Update(float dt);
 	void Draw(float dt);
-    void End();
+    void LevelEnd();
 	
 	void AddLevel(GameState* level);
-	void ChangeLevel(GameLevel changeLV);
+	void ChangeLevel(GameLevel lev);
 	void RestartLevel();
 
 	GameLevel GetCurrentLevel() { return currentLevel; }
 
-
+	void SetGameState(State state_) { state = state_; }
+	State GetGameState() { return state; }
 #ifdef _DEBUG
 	void StateChanger();
 #endif
@@ -32,7 +44,8 @@ private:
 #ifdef _DEBUG
 	const char* GameLevelTypeEnumToChar(GameLevel type);
 #endif
-	GameLevel currentLevel;
-	GameLevel levelSelected;
+	GameLevel currentLevel = GameLevel::NONE;
+	GameLevel levelSelected = GameLevel::NONE;
 	std::vector<GameState*> levelList;
+	State state = State::START;
 };

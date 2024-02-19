@@ -52,9 +52,11 @@ public:
 	void SetIsEditorMod(bool state) { isEditorMod = state; }
 	void SetBackgroundManager(BackgroundManager* backGroundManager_) { bgm = backGroundManager_; }
 private:
+#ifdef _DEBUG
 	void ObjectCreator();
 	void BackgroundCreator();
 	void WallCreator();
+#endif
 
 	bool isEditorMod = false;
 	EditorMode mode = EditorMode::WALLCREATOR;

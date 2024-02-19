@@ -18,9 +18,9 @@
 
 void PlatformDemo::CollideObjects()
 {
-	for (auto& target : Engine::Instance().GetObjectManager()->GetObjectMap())
+	for (auto& target : Engine::GetObjectManager()->GetObjectMap())
 	{
-		for (auto& object : Engine::Instance().GetObjectManager()->GetObjectMap())
+		for (auto& object : Engine::GetObjectManager()->GetObjectMap())
 		{
 			if (target.second != nullptr && object.second != nullptr && target.second != object.second
 				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
@@ -72,26 +72,35 @@ void PlatformDemo::Init()
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();
 
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/train_editor.png", "train_editor");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building1.png", "building1");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building2.png", "building2");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building3.png", "building3");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/rail.png", "rail");
-	Engine::Instance().GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
+	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/train_editor.png", "train_editor");
+	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building1.png", "building1");
+	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building2.png", "building2");
+	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building3.png", "building3");
+	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/rail.png", "rail");
+	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
 
 	//platformDemoSystem->SetIsEditorMod(true);
 
 	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
-	Engine::Instance().GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player");
+	Engine::GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player");
 
-	Engine::Instance().GetObjectManager()->AddObject<PEnemy>(glm::vec3{ 64.f,196.f,0.f }, glm::vec3{ 64.f, 128.f,0.f }, "Enemy", EnemyType::NORMAL);
-	Engine::Instance().GetObjectManager()->AddObject<PEnemy>(glm::vec3{ -128.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
+	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ 64.f,196.f,0.f }, glm::vec3{ 64.f, 128.f,0.f }, "Enemy", EnemyType::NORMAL);
+	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ -128.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
 
 	platformDemoSystem->InitHealthBar();
 }
 
 void PlatformDemo::Update(float dt)
 {
+	if (Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_1))
+	{
+		Engine::GetGameStateManager()->ChangeLevel(GameLevel::POCKETBALL);
+	}
+	else if(Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_2))
+	{
+		Engine::GetGameStateManager()->ChangeLevel(GameLevel::PLATFORMDEMO);
+	}
+
 	CollideObjects();
 	platformDemoSystem->Update(dt);
 }

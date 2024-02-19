@@ -119,7 +119,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 		{
 			if (isEditorMod == false)
 			{
-				Engine::Instance().GetObjectManager()->AddObject<PPlayer>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Player", ObjectType::PLAYER);
+				Engine::GetObjectManager()->AddObject<PPlayer>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Player", ObjectType::PLAYER);
 			}
 			else
 			{
@@ -133,7 +133,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			inStream >> eType;
 			if (isEditorMod == false)
 			{
-				Engine::Instance().GetObjectManager()->AddObject<PEnemy>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Enemy", static_cast<EnemyType>(eType));
+				Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Enemy", static_cast<EnemyType>(eType));
 			}
 			else
 			{
@@ -145,14 +145,14 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 		{
 			if (isEditorMod == false)
 			{
-				Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
-				Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });
+				Engine::GetObjectManager()->AddObject<Object>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
+				Engine::GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
+				Engine::GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });
 
-				Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
-				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().x / 2.f,  Engine::Instance().GetObjectManager()->GetLastObject()->GetSize().y / 2.f });
-				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
-				Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(1.f);
+				Engine::GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
+				Engine::GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::GetObjectManager()->GetLastObject()->GetSize().x / 2.f,  Engine::GetObjectManager()->GetLastObject()->GetSize().y / 2.f });
+				Engine::GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
+				Engine::GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(1.f);
 			}
 			else
 			{
@@ -199,8 +199,11 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			}
 			else
 			{
+#ifdef _DEBUG
+
 				bgm->AddSaveBackgroundList(spriteName, "none", BackgroundTypeCharToEnum(bType.c_str()), { posX, posY }, { sizeX, sizeY },
 					0.f, { speedX, speedY }, { 0.f,0.f }, depth, false, isAnimation);
+#endif
 			}
 		}
 	}
@@ -410,7 +413,6 @@ void PDemoMapEditorDemo::End()
 	objects.clear();
 	walls.clear();
 }
-#endif
 
 void PDemoMapEditorDemo::ObjectCreator()
 {
@@ -439,7 +441,7 @@ void PDemoMapEditorDemo::ObjectCreator()
 	target->name = newName;
 
 	ImGui::InputFloat2("Position", targetP);
-	glm::vec2 mPos = Engine::Instance().GetInputManager()->GetMousePosition();
+	glm::vec2 mPos = Engine::GetInputManager()->GetMousePosition();
 	glm::vec2 newPosition = { mPos.x - std::fmod(mPos.x, gridSize.x),  mPos.y - std::fmod(mPos.y, gridSize.y) };
 	target->pos = newPosition;
 
@@ -522,7 +524,7 @@ void PDemoMapEditorDemo::BackgroundCreator()
 	}
 
 	ImGui::InputFloat2("Position", targetP);
-	glm::vec2 mPos = Engine::Instance().GetInputManager()->GetMousePosition();
+	glm::vec2 mPos = Engine::GetInputManager()->GetMousePosition();
 	glm::vec2 newPosition = { mPos.x - std::fmod(mPos.x, gridSize.x),  -(mPos.y - std::fmod(mPos.y, gridSize.y)) };
 	target->pos = newPosition;
 
@@ -571,20 +573,20 @@ void PDemoMapEditorDemo::WallCreator()
 		glm::vec2 midPoint = { (target->startPos.x + target->endPos.x) / 2.f, (target->startPos.y + target->endPos.y) / 2.f };
 		if (isWallSetting == false)
 		{
-			glm::vec2 mPos = Engine::Instance().GetInputManager()->GetMousePosition();
+			glm::vec2 mPos = Engine::GetInputManager()->GetMousePosition();
 			target->startPos = { mPos.x - std::fmod(mPos.x, gridSize.x),  mPos.y - std::fmod(mPos.y, gridSize.y) };
 			target->rect->UpdateModel({ target->startPos.x, -target->startPos.y, 0.f }, { 4.f,4.f,0.f }, 0.f);
 		}
 		else
 		{
-			glm::vec2 mPos = Engine::Instance().GetInputManager()->GetMousePosition();
+			glm::vec2 mPos = Engine::GetInputManager()->GetMousePosition();
 			target->endPos = { mPos.x - std::fmod(mPos.x, gridSize.x),  mPos.y - std::fmod(mPos.y, gridSize.y) };
 			target->rect->UpdateModel({ midPoint.x, -midPoint.y, 0.f }, { abs(target->endPos.x - target->startPos.x) , abs(target->endPos.y - target->startPos.y),0.f }, 0.f);
 		}
 		target->rect->UpdateProjection();
 		target->rect->UpdateView();
 
-		if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::LEFT))
+		if (Engine::GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::LEFT))
 		{
 			if (isWallSetting == true)
 			{
@@ -604,7 +606,7 @@ void PDemoMapEditorDemo::WallCreator()
 				isWallSetting = true;
 			}
 		}
-		else if (Engine::Instance().GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::RIGHT))
+		else if (Engine::GetInputManager()->IsMouseButtonPressedOnce(MOUSEBUTTON::RIGHT))
 		{
 			if (isWallSetting == true)
 			{
@@ -613,14 +615,13 @@ void PDemoMapEditorDemo::WallCreator()
 		}
 	}
 }
+#endif
 
 void PlatformDemoSystem::Init()
 {
 	mapEditor = new PDemoMapEditorDemo();
 	backGroundManager = new BackgroundManager();
-#ifdef _DEBUG
 	mapEditor->SetBackgroundManager(backGroundManager);
-#endif
 }
 
 void PlatformDemoSystem::Update(float dt)
@@ -642,6 +643,7 @@ void PlatformDemoSystem::End()
 	delete healthBar;
 	healthBar = nullptr;
 	delete backGroundManager;
+	mapEditor->SetBackgroundManager(nullptr);
 #ifdef _DEBUG
 	mapEditor->End();
 	delete mapEditor;
