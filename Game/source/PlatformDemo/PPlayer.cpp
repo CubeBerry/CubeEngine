@@ -39,8 +39,6 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
-	Object::Update(dt);
-
 	GetComponent<Physics2D>()->Gravity(dt);
 	Jumping();
 	Control(dt);
@@ -49,6 +47,7 @@ void PPlayer::Update(float dt)
 	{
 		if (GetComponent<Sprite>()->IsAnimationDone() == true)
 		{
+			std::cout << "Done" << std::endl;
 			canAttack = true;
 		}
 	}
@@ -62,14 +61,7 @@ void PPlayer::Update(float dt)
 			invincibleDelay = 0.f;
 		}
 	}
-	if (IsStateOn(States::DIRECTION))
-	{
-		Object::SetXSize(-Object::GetSize().x);
-	}
-	else
-	{
-
-	}
+	Object::Update(dt);
 }
 
 void PPlayer::End()
@@ -88,12 +80,19 @@ void PPlayer::Control(float dt)
 	}
 	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
+		if (IsStateOn(States::DIRECTION) == true)
+		{
+			Object::SetXSize(-Object::GetSize().x);
+		}
 		SetStateOff(States::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(-20.f);
 	}
 	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
-
+		if (IsStateOn(States::DIRECTION) == false)
+		{
+			Object::SetXSize(-Object::GetSize().x);
+		}
 		SetStateOn(States::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(20.f);
 	}
@@ -107,7 +106,11 @@ void PPlayer::Control(float dt)
 	{
 		if (canAttack == true)
 		{
-			GetComponent<Sprite>()->PlayAnimation(3);
+			{
+				GetComponent<Sprite>()->PlayAnimation(3);
+				canAttack = false;
+			}
+
 			Engine::GetObjectManager()->AddObject<PBullet>(position, glm::vec3{ 8.f,8.f,0.f }, "Bullet");
 			if (IsStateOn(States::DIRECTION))
 			{
