@@ -16,57 +16,6 @@
 #include <iostream>
 #include <cmath>
 
-void PlatformDemo::CollideObjects()
-{
-	for (auto& target : Engine::GetObjectManager()->GetObjectMap())
-	{
-		for (auto& object : Engine::GetObjectManager()->GetObjectMap())
-		{
-			if (target.second != nullptr && object.second != nullptr && target.second != object.second
-				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
-			{
-				if ((target.second->GetObjectType() != ObjectType::WALL && object.second->GetObjectType() == ObjectType::WALL)
-					|| (target.second->GetObjectType() == ObjectType::WALL && object.second->GetObjectType() != ObjectType::WALL))
-				{
-					target.second->GetComponent<Physics2D>()->CheckCollision(*object.second);
-				}
-				else if (target.second->GetObjectType() == ObjectType::BULLET && object.second->GetObjectType() == ObjectType::ENEMY)
-				{
-					if (static_cast<PEnemy*>(object.second.get())->GetInvincibleState() == false && target.second->GetComponent<Physics2D>()->CheckCollision(*object.second) == true)
-					{
-						PEnemy* e = static_cast<PEnemy*>(object.second.get());
-						PBullet* b = static_cast<PBullet*>(target.second.get());
-
-						e->SetHp(e->GetHp() - b->GetDamage());
-						e->SetIsHit(true);
-
-						Engine::GetObjectManager()->Destroy(b->GetId());
-						b = nullptr;
-						e = nullptr;
-						break;
-					}
-				}
-				else if (target.second->GetObjectType() == ObjectType::PLAYER && object.second->GetObjectType() == ObjectType::ENEMYBULLET)
-				{
-					if (static_cast<PPlayer*>(target.second.get())->GetInvincibleState() == false && target.second->GetComponent<Physics2D>()->CheckCollision(*object.second) == true)
-					{
-						PPlayer* p = static_cast<PPlayer*>(target.second.get());
-						PEnemyBullet* b = static_cast<PEnemyBullet*>(object.second.get());
-
-						platformDemoSystem->HpDecrease(b->GetDamage());
-						p->SetInvincibleState(true);
-
-						Engine::GetObjectManager()->Destroy(b->GetId());
-						p = nullptr;
-						b = nullptr;
-						break;
-					}
-				}
-			}
-		}
-	}
-}
-
 void PlatformDemo::Init()
 {
 	platformDemoSystem = new PlatformDemoSystem();
@@ -80,7 +29,7 @@ void PlatformDemo::Init()
 	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
 
 	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
-	Engine::GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player");
+	Engine::GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player", platformDemoSystem);
 	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ -64.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
 	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ 640.f,0.f,0.f }, glm::vec3{ 320.f, 320.f,0.f }, "Enemy", EnemyType::AIRSHIP);
 	platformDemoSystem->InitHealthBar();
@@ -101,7 +50,6 @@ void PlatformDemo::Update(float dt)
 		Engine::GetGameStateManager()->SetGameState(State::RESTART);
 	}
 
-	CollideObjects();
 	platformDemoSystem->Update(dt);
 }
 

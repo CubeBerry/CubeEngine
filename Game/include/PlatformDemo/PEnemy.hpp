@@ -21,6 +21,7 @@ enum class EnemyStates
 	FALLING = 16,
 	ONGROUND = 32,
 	DEATH = 64,
+	TARGETFOUND = 128,
 };
 
 class PEnemy : public Object
@@ -32,6 +33,7 @@ public:
 
 	void Init() override;
 	void Update(float dt) override;
+	void CollideObject(Object* obj) override;
 
 	void SetHp(float amount) { hp = amount;}
 	void SetMaxHp(float amount) { MaxHp = amount; }

@@ -468,7 +468,7 @@ void PDemoMapEditorDemo::ObjectCreator()
 		switch (objectNum)
 		{
 		case 0:
-			objects.push_back(new PPlayer({ target->pos.x, target->pos.y, 0.f }, { target->size.x, target->size.y, 0.f }, "Player"));
+			objects.push_back(new PPlayer({ target->pos.x, target->pos.y, 0.f }, { target->size.x, target->size.y, 0.f }, "Player", pSys));
 			break;
 		case 1:
 			objects.push_back(new PEnemy({ target->pos.x, target->pos.y, 0.f }, { target->size.x, target->size.y, 0.f }, "Enemy", EnemyType::NORMAL));
@@ -619,7 +619,7 @@ void PDemoMapEditorDemo::WallCreator()
 
 void PlatformDemoSystem::Init()
 {
-	mapEditor = new PDemoMapEditorDemo();
+	mapEditor = new PDemoMapEditorDemo(this);
 	backGroundManager = new BackgroundManager();
 	mapEditor->SetBackgroundManager(backGroundManager);
 }

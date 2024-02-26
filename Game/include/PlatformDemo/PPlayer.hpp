@@ -14,18 +14,20 @@ enum class PlayerStates
 	ONGROUND = 32,
 };
 
+class PlatformDemoSystem;
 class PPlayer : public Object
 {
 public:
 	PPlayer() = default;
 	PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType objectType);
-	PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name);
+	PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, PlatformDemoSystem* sys);
 	~PPlayer() { End(); }
 
 	void Init() override;
 	void Update(float dt) override;
 	//void Draw(float dt) override;
 	void End();
+	void CollideObject(Object* obj) override;
 
 	void SetInvincibleState(bool state_) { isInvincible = state_; }
 	bool GetInvincibleState() { return isInvincible; }
@@ -52,4 +54,6 @@ private:
 	float invincibleDelay = 0.f;
 
 	int    state = 1;
+
+	PlatformDemoSystem* platformDemoSystem = nullptr;
 };

@@ -44,6 +44,8 @@ private:
 #ifdef _DEBUG
 	const char* GameLevelTypeEnumToChar(GameLevel type);
 #endif
+	void CollideObjects();
+
 	GameLevel currentLevel = GameLevel::NONE;
 	GameLevel levelSelected = GameLevel::NONE;
 	std::vector<GameState*> levelList;

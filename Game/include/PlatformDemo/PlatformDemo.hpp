@@ -22,7 +22,5 @@ public:
 	void End() override;
 
 private:
-	void CollideObjects();
-
 	PlatformDemoSystem* platformDemoSystem = nullptr;
 };

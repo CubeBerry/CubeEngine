@@ -3,6 +3,8 @@
 //File: PEnemy.cpp
 #include "PlatformDemo/PEnemy.hpp"
 #include "PlatformDemo/PEnemyBullet.hpp"
+#include "PlatformDemo/PBullet.hpp"
+
 #include "BasicComponents/Sprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "Engine.hpp"
@@ -68,6 +70,29 @@ void PEnemy::Update(float dt)
 		break;
 	case EnemyType::AIRSHIP:
 		UpdateEnemyAirShip(dt);
+		break;
+	}
+}
+
+void PEnemy::CollideObject(Object* obj)
+{
+	switch (obj->GetObjectType())
+	{
+	case ObjectType::WALL:
+		GetComponent<Physics2D>()->CheckCollision(*obj);
+		obj->GetComponent<Physics2D>()->CheckCollision(*this);
+		break;
+	case ObjectType::BULLET:
+		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(*obj) == true)
+		{
+			PBullet* b = static_cast<PBullet*>(obj);
+
+			SetHp(GetHp() - b->GetDamage());
+			SetIsHit(true);
+
+			Engine::GetObjectManager()->Destroy(b->GetId());
+			b = nullptr;
+		}
 		break;
 	}
 }
@@ -141,7 +166,7 @@ void PEnemy::UpdateEnemyNormal(float dt)
 		}
 
 
-		if (Engine::GetObjectManager()->FindObjectWithName("Player")->GetPosition().x > Object::GetPosition().x)
+		if (Engine::GetObjectManager()->FindObjectWithName("Player")->GetPosition().x > Object::position.x + abs(Object::size.x) / 3.f)
 		{
 			if (IsStateOn(EnemyStates::DIRECTION) == false)
 			{
@@ -149,7 +174,7 @@ void PEnemy::UpdateEnemyNormal(float dt)
 				SetStateOn(EnemyStates::DIRECTION);
 			}
 		}
-		else
+		else if (Engine::GetObjectManager()->FindObjectWithName("Player")->GetPosition().x < Object::position.x - abs(Object::size.x) / 3.f)
 		{
 			if (IsStateOn(EnemyStates::DIRECTION) == true)
 			{
@@ -222,28 +247,50 @@ void PEnemy::UpdateEnemyBig(float dt)
 
 			if (IsStateOn(EnemyStates::ATTACK) == false)
 			{
-				if (playerPos.x > Object::position.x - 512.f && playerPos.x < Object::position.x)
+				if (playerPos.x > Object::position.x - 512.f && playerPos.x < Object::position.x - abs(Object::size.x) / 3.f)
 				{
 					SetStateOn(EnemyStates::MOVE);
+					SetStateOn(EnemyStates::TARGETFOUND);
 					if (IsStateOn(EnemyStates::DIRECTION) == true)
 					{
 						Object::SetXSize(-Object::GetSize().x);
 						SetStateOff(EnemyStates::DIRECTION);
 					}
 				}
-				else if (playerPos.x < Object::position.x + 512.f && playerPos.x >= Object::position.x)
+				else if (playerPos.x < Object::position.x + 512.f && playerPos.x > Object::position.x + abs(Object::size.x) / 3.f)
 				{
 					SetStateOn(EnemyStates::MOVE);
+					SetStateOn(EnemyStates::TARGETFOUND);
 					if (IsStateOn(EnemyStates::DIRECTION) == false)
 					{
 						Object::SetXSize(-Object::GetSize().x);
 						SetStateOn(EnemyStates::DIRECTION);
 					}
 				}
+				else if ((playerPos.x > Object::position.x + 2.f && playerPos.x < Object::position.x + abs(Object::size.x) / 3.f))
+				{
+					SetStateOff(EnemyStates::MOVE);
+					SetStateOn(EnemyStates::TARGETFOUND);
+					if (GetComponent<Sprite>()->GetCurrentAnim() != 0)
+					{
+						GetComponent<Sprite>()->PlayAnimation(0);
+					}
+				}
+				else if ((playerPos.x < Object::position.x - 2.f && playerPos.x > Object::position.x - abs(Object::size.x) / 3.f))
+				{
+					std::cout << Object::size.x << std::endl;
+					SetStateOff(EnemyStates::MOVE);
+					SetStateOn(EnemyStates::TARGETFOUND);
+					if (GetComponent<Sprite>()->GetCurrentAnim() != 0)
+					{
+						GetComponent<Sprite>()->PlayAnimation(0);
+					}
+				}
 				else
 				{
 					if (IsStateOn(EnemyStates::MOVE) == true)
 					{
+						SetStateOff(EnemyStates::TARGETFOUND);
 						GetComponent<Sprite>()->PlayAnimation(0);
 						SetStateOff(EnemyStates::MOVE);
 						attackDelay = 0.f;
@@ -251,20 +298,23 @@ void PEnemy::UpdateEnemyBig(float dt)
 				}
 			}
 
-			if (IsStateOn(EnemyStates::ATTACK) == false && IsStateOn(EnemyStates::MOVE) == true)
+			if (IsStateOn(EnemyStates::ATTACK) == false && IsStateOn(EnemyStates::TARGETFOUND) == true)
 			{
-				if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+				if (IsStateOn(EnemyStates::MOVE) == true)
 				{
-					GetComponent<Sprite>()->PlayAnimation(1);
-				}
+					if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+					{
+						GetComponent<Sprite>()->PlayAnimation(1);
+					}
 
-				if (IsStateOn(EnemyStates::DIRECTION) == false)
-				{
-					GetComponent<Physics2D>()->SetVelocityX(-1.5f);
-				}
-				else
-				{
-					GetComponent<Physics2D>()->SetVelocityX(1.5f);
+					if (IsStateOn(EnemyStates::DIRECTION) == false)
+					{
+						GetComponent<Physics2D>()->SetVelocityX(-1.5f);
+					}
+					else
+					{
+						GetComponent<Physics2D>()->SetVelocityX(1.5f);
+					}
 				}
 
 				attackDelay += dt;
@@ -321,7 +371,7 @@ void PEnemy::UpdateEnemyBig(float dt)
 		else
 		{
 			GetComponent<Physics2D>()->Gravity(dt);
-			if (GetComponent<Physics2D>()->GetVelocity().y > -0.8f &&
+			if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
 				GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
 			{
 				SetStateOn(EnemyStates::ONGROUND);
@@ -345,8 +395,8 @@ void PEnemy::UpdateEnemyAirShip(float dt)
 			if (attackDelay > 0.1f)
 			{
 				attackDelay = 0.f;
-				Engine::GetParticleManager()->AddSingleParticle({ Object::position.x + 48.f, Object::position.y + 48.f, 0.f}, {96.f,96.f,0.f},
-					{0.f,0.f,0.f}, 0.f, 10.f, {1.f,1.f,1.f,1.f}, ParticleType::ANIMESPRI, "../Game/assets/PlatformDemo/explosion.spt");
+				Engine::GetParticleManager()->AddSingleParticle({ Object::position.x + 48.f, Object::position.y + 48.f, 0.f }, { 96.f,96.f,0.f },
+					{ 0.f,0.f,0.f }, 0.f, 10.f, { 1.f,1.f,1.f,1.f }, ParticleType::ANIMESPRI, "../Game/assets/PlatformDemo/explosion.spt");
 			}
 
 			if (Object::position.y <= -328.f)

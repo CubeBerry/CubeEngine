@@ -22,8 +22,6 @@ public:
 	void End() override;
 
 private:
-	void CollideObjects();
-
 	PocketBallSystem* pocketBallSystem = nullptr;
 	int ballAmount = 0;
 };

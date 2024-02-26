@@ -33,11 +33,13 @@ enum class EditorMode
 	BACKGCREATOR
 };
 
+class PlatformDemoSystem;
 class PDemoMapEditorDemo
 {
 public:
 	PDemoMapEditorDemo() = default;
-	~PDemoMapEditorDemo() {};
+	PDemoMapEditorDemo(PlatformDemoSystem* sys) { pSys = sys; }
+	~PDemoMapEditorDemo() { pSys = nullptr; }
 
 	void LoadLevelData(const std::filesystem::path& filePath);
 	void SaveLevelData(const std::filesystem::path& outFilePath);
@@ -67,6 +69,7 @@ private:
 	bool isWallSetting = false;
 
 	glm::vec2 gridSize = { 16.f, 16.f };
+	PlatformDemoSystem* pSys = nullptr;
 	BackgroundManager* bgm = nullptr;
 	int backGSpriteNum = 0;
 	int objectNum = 0;

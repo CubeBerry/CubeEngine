@@ -13,10 +13,6 @@ void PocketBallSystem::Init()
 
 	powerMeter = new Sprite();
 	powerMeter->AddQuad({ 1.f,0.f,0.f,1.f });
-
-	playerPosition = glm::vec2(Engine::GetObjectManager()->FindObjectWithName("White")->GetPosition().x, Engine::GetObjectManager()->FindObjectWithName("White")->GetPosition().y);
-	cursorPosition = playerPosition;
-	distanceMax = { 0.f, 0.f };
 }
 
 void PocketBallSystem::Update(float dt)
@@ -144,4 +140,11 @@ void PocketBallSystem::Control(float dt)
 			isShot = true;
 		}
 	}
+}
+
+void PocketBallSystem::SetPlayerBall(Object* obj)
+{
+	playerPosition = glm::vec2(obj->GetPosition().x, obj->GetPosition().y);
+	cursorPosition = playerPosition;
+	distanceMax = { 0.f, 0.f };
 }

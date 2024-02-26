@@ -18,6 +18,9 @@ public:
 
 	void Control(float dt);
 	void SetBallNum(int num) { ballNum = num; }
+	int GetBallNum() { return ballNum; }
+
+	void SetPlayerBall(Object* obj);
 private:
 	Sprite* cursor = nullptr;
 	Sprite* powerMeter = nullptr;

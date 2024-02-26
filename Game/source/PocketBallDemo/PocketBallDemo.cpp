@@ -12,43 +12,6 @@
 #include <iostream>
 #include <cmath>
 
-void PocketBallDemo::CollideObjects()
-{
-	for (auto& target : Engine::GetObjectManager()->GetObjectMap())
-	{
-		for (auto& object : Engine::GetObjectManager()->GetObjectMap())
-		{
-			if (target.second != nullptr && object.second != nullptr && target.second != object.second
-				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
-			{
-				if (target.second->GetComponent<Physics2D>()->CheckCollision(*object.second) == true)
-				{
-					if (target.second->GetObjectType() == ObjectType::GOAL && object.second->GetObjectType() == ObjectType::BALL)
-					{
-						int time = (rand() % (3 + 1)) + 1;
-						int amount = (rand() % (8 + 4)) + 4;
-						int colorR = (rand() % (10 + 0)) + 0;
-						int colorG = (rand() % (10 + 0)) + 0;
-						int colorB = (rand() % (10 + 0)) + 0;
-						int colorA = (rand() % (10 + 5)) + 5;
-						float x = object.second->GetPosition().x;
-						float y = object.second->GetPosition().y;
-						float speedX = (float)(rand() % (15 - (-30) + 1) - 15);
-						float speedY = (float)(rand() % (15 - (-30) + 1) - 15);
-
-						{
-							Engine::GetParticleManager()->AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
-								{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) });
-						}
-						Engine::GetObjectManager()->Destroy(object.second.get()->GetId());
-						pocketBallSystem->SetBallNum(--ballAmount);
-					}
-				}
-			}
-		}
-	}
-}
-
 void PocketBallDemo::Init()
 {
 	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White");
@@ -61,16 +24,24 @@ void PocketBallDemo::Init()
 	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Table.png", "Table");
 	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PocketBall/Arrow.png", "Arrow");
 
+	ballAmount = 7;
+	pocketBallSystem = new PocketBallSystem();
+
 	Engine::GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,-38.f,-0.1f }, glm::vec3{ 368.f*2 + 32.f, 510.f + 88.f,0.f }, "Table");
 	Engine::GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Table");
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "White", BallType::WHITE);
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -120.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "1", BallType::OTHER);
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "2", BallType::OTHER);
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,-16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "3", BallType::OTHER);
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,32.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "4", BallType::OTHER);
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "5", BallType::OTHER);
-	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,-32.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "6", BallType::OTHER);
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "White", BallType::WHITE, pocketBallSystem);
+	pocketBallSystem->SetPlayerBall(Engine::GetObjectManager()->GetLastObject());
+
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -120.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "1", BallType::OTHER, pocketBallSystem);
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "2", BallType::OTHER, pocketBallSystem);
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -152.f,-16.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "3", BallType::OTHER, pocketBallSystem);
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,32.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "4", BallType::OTHER, pocketBallSystem);
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "5", BallType::OTHER, pocketBallSystem);
+	Engine::GetObjectManager()->AddObject<Ball>(glm::vec3{ -184.f,-32.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "6", BallType::OTHER, pocketBallSystem);
+
+	pocketBallSystem->Init();
+	pocketBallSystem->SetBallNum(ballAmount);
 
 	{
 		glm::vec2 tempS{ 0.f,0.f };
@@ -175,11 +146,6 @@ void PocketBallDemo::Init()
 		Engine::GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
 		Engine::GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(4.f);
 	}
-
-	ballAmount = 7;
-	pocketBallSystem = new PocketBallSystem();
-	pocketBallSystem->Init();
-	pocketBallSystem->SetBallNum(ballAmount);
 }
 
 void PocketBallDemo::Update(float dt)
@@ -192,8 +158,6 @@ void PocketBallDemo::Update(float dt)
 	{
 		Engine::GetGameStateManager()->ChangeLevel(GameLevel::PLATFORMDEMO);
 	}
-
-	CollideObjects();
 	pocketBallSystem->Update(dt);
 }
 

@@ -3,6 +3,8 @@
 //File: PPlayer.cpp
 #include "PlatformDemo/PPlayer.hpp"
 #include "PlatformDemo/PBullet.hpp"
+#include "PlatformDemo/PEnemyBullet.hpp"
+#include "PlatformDemo/PlatformDemoSystem.hpp"
 
 #include "BasicComponents/Sprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
@@ -17,7 +19,7 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType o
 {
 }
 
-PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name)
+PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, PlatformDemoSystem* sys)
 	: Object(pos_, size_, name, ObjectType::PLAYER)
 {
 	AddComponent<Sprite>();
@@ -31,6 +33,7 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name)
 	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 2.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	GetComponent<Sprite>()->PlayAnimation(0);
+	platformDemoSystem = sys;
 }
 
 
@@ -40,11 +43,9 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
-	//std::cout << GetComponent<Physics2D>()->GetVelocity().y << std::endl;
 	Object::Update(dt);
 	GetComponent<Physics2D>()->Gravity(dt);
 	Jumping();
-	//std::cout << GetComponent<Physics2D>()->GetVelocity().y << "\n" << std::endl;
 	Control(dt);
 
 	if (canAttack == false)
@@ -68,8 +69,32 @@ void PPlayer::Update(float dt)
 
 void PPlayer::End()
 {
+	platformDemoSystem = nullptr;
 	Engine::GetParticleManager()->Clear();
 	Engine::GetObjectManager()->DestroyAllObjects();
+}
+
+void PPlayer::CollideObject(Object* obj)
+{
+	switch (obj->GetObjectType())
+	{
+	case ObjectType::WALL:
+		GetComponent<Physics2D>()->CheckCollision(*obj);
+		obj->GetComponent<Physics2D>()->CheckCollision(*this);
+		break;
+	case ObjectType::ENEMYBULLET:
+		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(*obj) == true)
+		{
+			PEnemyBullet* b = static_cast<PEnemyBullet*>(obj);
+
+			platformDemoSystem->HpDecrease(b->GetDamage());
+			SetInvincibleState(true);
+
+			Engine::GetObjectManager()->Destroy(b->GetId());
+			b = nullptr;
+		}
+		break;
+	}
 }
 
 void PPlayer::Control(float dt)
