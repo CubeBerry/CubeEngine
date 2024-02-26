@@ -31,7 +31,7 @@ void Sprite::Update(float dt)
 	UpdateView();
 	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate());
 
-	UpdateAnimation(dt); 
+	UpdateAnimation(dt);
 }
 
 void Sprite::End()
