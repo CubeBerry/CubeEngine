@@ -31,12 +31,7 @@ void Sprite::Update(float dt)
 	UpdateView();
 	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate());
 
-	if (currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
-	{
-		animations[currAnim]->Update(dt);
-		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
-		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
-	}
+	UpdateAnimation(dt);
 }
 
 void Sprite::End()
@@ -223,6 +218,16 @@ void Sprite::PlayAnimation(int anim)
 	{
 		currAnim = anim;
 		animations[currAnim]->ResetAnimation();
+	}
+}
+
+void Sprite::UpdateAnimation(float dt)
+{
+	if (currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
+	{
+		animations[currAnim]->Update(dt);
+		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
+		Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
 	}
 }
 

@@ -42,6 +42,7 @@ public:
 	void PlayAnimation(int anim);
 	bool IsAnimationDone() { return animations[currAnim]->IsAnimationDone(); };
 	int GetCurrentAnim() const { return currAnim; };
+	void UpdateAnimation(float dt);
 
 	//Getter
 	int GetMaterialId() { return materialId; };

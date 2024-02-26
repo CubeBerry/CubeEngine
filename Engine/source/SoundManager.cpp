@@ -494,7 +494,7 @@ void SoundManager::MusicPlayerForImGui()
 			{
 				currentIndex = GetAmontOfMusics() - 1;
 			}
-			PlayMusicInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 1280.f);
+			PlayMusic(currentIndex);
 		}
 		if (IsPaused(currentIndex) == true)
 		{
@@ -503,7 +503,7 @@ void SoundManager::MusicPlayerForImGui()
 			{
 				if (IsPlaying(currentIndex) != true)
 				{
-					PlayMusicInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 360.f);
+					PlayMusic(currentIndex);
 				}
 				else
 				{
@@ -533,10 +533,10 @@ void SoundManager::MusicPlayerForImGui()
 			{
 				currentIndex = 0;
 			}
-			PlayMusicInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 1280.f);
+			PlayMusic(currentIndex);
 		}
 		//Button
-		UpdateMusicVolumeInArea2D(currentIndex, { Engine::GetInputManager()->GetMousePosition().x, Engine::GetInputManager()->GetMousePosition().y }, 360.f);
+		
 		//music playback
 		float currentPlaybackPosition = GetMusicPlaybackPosition(currentIndex);
 		PlaybackTime pTime = GetMusicPlaybackTime(currentIndex, currentPlaybackPosition);

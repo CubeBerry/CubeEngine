@@ -4,7 +4,7 @@
 #pragma once
 #include "Object.hpp"
 
-enum class States
+enum class PlayerStates
 {
 	DIRECTION = 1, // off : LEFT, on : RIGHT
 	MOVE = 2,
@@ -30,17 +30,17 @@ public:
 	void SetInvincibleState(bool state_) { isInvincible = state_; }
 	bool GetInvincibleState() { return isInvincible; }
 
-	void SetStateOn(States state_)
+	void SetStateOn(PlayerStates state_)
 	{
 		if (IsStateOn(state_) == false)
 			state = state | static_cast<const int>(state_);
 	}
-	void SetStateOff(States state_)
+	void SetStateOff(PlayerStates state_)
 	{
 		if (IsStateOn(state_) == true)
 			state = state ^ static_cast<const int>(state_);
 	}
-	bool IsStateOn(States state_) { return state & static_cast<const int>(state_); }
+	bool IsStateOn(PlayerStates state_) { return state & static_cast<const int>(state_); }
 private:
 	void Control (float dt);
 	void Jumping();

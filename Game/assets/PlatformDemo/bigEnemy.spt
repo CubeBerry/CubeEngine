@@ -29,8 +29,8 @@ Frame 1792 0
 Frame 1856 0
 Frame 1920 0
 Frame 1984 0
-Anim ../Game/assets/PlatformDemo/enemy_idle.anm
-Anim ../Game/assets/PlatformDemo/enemy_run.anm
-Anim ../Game/assets/PlatformDemo/enemy_attack.anm
-Anim ../Game/assets/PlatformDemo/enemy_attack1.anm
-Anim ../Game/assets/PlatformDemo/enemy_death.anm
+Anim ../Game/assets/PlatformDemo/bigEnemy_idle.anm
+Anim ../Game/assets/PlatformDemo/bigEnemy_run.anm
+Anim ../Game/assets/PlatformDemo/bigEnemy_attack.anm
+Anim ../Game/assets/PlatformDemo/bigEnemy_attack1.anm
+Anim ../Game/assets/PlatformDemo/bigEnemy_death.anm

@@ -39,15 +39,17 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
+	//std::cout << GetComponent<Physics2D>()->GetVelocity().y << std::endl;
+	Object::Update(dt);
 	GetComponent<Physics2D>()->Gravity(dt);
 	Jumping();
+	//std::cout << GetComponent<Physics2D>()->GetVelocity().y << "\n" << std::endl;
 	Control(dt);
 
 	if (canAttack == false)
 	{
 		if (GetComponent<Sprite>()->IsAnimationDone() == true)
 		{
-			std::cout << "Done" << std::endl;
 			canAttack = true;
 		}
 	}
@@ -61,7 +63,6 @@ void PPlayer::Update(float dt)
 			invincibleDelay = 0.f;
 		}
 	}
-	Object::Update(dt);
 }
 
 void PPlayer::End()
@@ -80,24 +81,24 @@ void PPlayer::Control(float dt)
 	}
 	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
-		if (IsStateOn(States::DIRECTION) == true)
+		if (IsStateOn(PlayerStates::DIRECTION) == true)
 		{
 			Object::SetXSize(-Object::GetSize().x);
 		}
-		SetStateOff(States::DIRECTION);
+		SetStateOff(PlayerStates::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(-20.f);
 	}
 	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
-		if (IsStateOn(States::DIRECTION) == false)
+		if (IsStateOn(PlayerStates::DIRECTION) == false)
 		{
 			Object::SetXSize(-Object::GetSize().x);
 		}
-		SetStateOn(States::DIRECTION);
+		SetStateOn(PlayerStates::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(20.f);
 	}
 	if (Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::X)
-		&& IsStateOn(States::FALLING) == false && IsStateOn(States::JUMPING) == false)
+		&& IsStateOn(PlayerStates::FALLING) == false && IsStateOn(PlayerStates::JUMPING) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
 		GetComponent<Physics2D>()->SetVelocityY(40.f);
@@ -112,7 +113,7 @@ void PPlayer::Control(float dt)
 			}
 
 			Engine::GetObjectManager()->AddObject<PBullet>(position, glm::vec3{ 8.f,8.f,0.f }, "Bullet");
-			if (IsStateOn(States::DIRECTION))
+			if (IsStateOn(PlayerStates::DIRECTION))
 			{
 				Engine::GetObjectManager()->GetLastObject()->SetXSpeed(1000.f);
 			}
@@ -128,24 +129,24 @@ void PPlayer::Jumping()
 {
 	if (GetComponent<Physics2D>()->GetVelocity().y > 0.f)
 	{
-		if (IsStateOn(States::JUMPING) == false)
+		if (IsStateOn(PlayerStates::JUMPING) == false)
 		{
 			if (canAttack == true)
 			{
 				GetComponent<Sprite>()->PlayAnimation(2);
 			}
 
-			SetStateOn(States::JUMPING);
-			SetStateOff(States::FALLING);
+			SetStateOn(PlayerStates::JUMPING);
+			SetStateOff(PlayerStates::FALLING);
 		}
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
 		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
 	{
-		if (IsStateOn(States::FALLING) == true)
+		if (IsStateOn(PlayerStates::FALLING) == true)
 		{
-			SetStateOff(States::FALLING);
-			SetStateOff(States::JUMPING);
+			SetStateOff(PlayerStates::FALLING);
+			SetStateOff(PlayerStates::JUMPING);
 			if (canAttack == true)
 			{
 				if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
@@ -167,10 +168,10 @@ void PPlayer::Jumping()
 			GetComponent<Sprite>()->PlayAnimation(2);
 		}
 
-		if (IsStateOn(States::FALLING) == false)
+		if (IsStateOn(PlayerStates::FALLING) == false)
 		{
-			SetStateOn(States::FALLING);
-			SetStateOff(States::JUMPING);
+			SetStateOn(PlayerStates::FALLING);
+			SetStateOff(PlayerStates::JUMPING);
 		}
 	}
 }

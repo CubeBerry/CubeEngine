@@ -44,6 +44,14 @@ void Engine::Update()
 			case SDL_QUIT:
 				gameStateManger->SetGameState(State::UNLOAD);
 				break;
+			case SDL_WINDOWEVENT:
+				if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED || event.window.event == SDL_WINDOWEVENT_MOVED ||
+					event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+				{
+					deltaTime = 0.f;
+					std::cout << deltaTime << ", Window" << std::endl;
+				}
+				break;
 			default:
 				break;
 			}
@@ -60,6 +68,14 @@ void Engine::Update()
 				frameCount = 0;
 			}//fps
 
+			if (gameStateManger->GetGameState() != State::UPDATE)
+			{
+				deltaTime = 0.f;
+			}
+			if (deltaTime > 1.f)
+			{
+				std::cout << deltaTime << std::endl;
+			}
 			inputManager->InputPollEvent(event);
 			gameStateManger->Update(deltaTime);
 		}

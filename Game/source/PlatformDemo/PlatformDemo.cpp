@@ -79,13 +79,12 @@ void PlatformDemo::Init()
 	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/rail.png", "rail");
 	Engine::GetVKRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
 
-	//platformDemoSystem->SetIsEditorMod(true);
-
 	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
 	Engine::GetObjectManager()->AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player");
 
-	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ 64.f,196.f,0.f }, glm::vec3{ 64.f, 128.f,0.f }, "Enemy", EnemyType::NORMAL);
-	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ -128.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
+	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ -64.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
+
+	Engine::GetObjectManager()->AddObject<PEnemy>(glm::vec3{ 640.f,0.f,0.f }, glm::vec3{ 320.f, 320.f,0.f }, "Enemy", EnemyType::AIRSHIP);
 
 	platformDemoSystem->InitHealthBar();
 }
@@ -99,6 +98,10 @@ void PlatformDemo::Update(float dt)
 	else if(Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_2))
 	{
 		Engine::GetGameStateManager()->ChangeLevel(GameLevel::PLATFORMDEMO);
+	}
+	else if (Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::R))
+	{
+		Engine::GetGameStateManager()->SetGameState(State::RESTART);
 	}
 
 	CollideObjects();
