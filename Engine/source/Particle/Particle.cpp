@@ -39,14 +39,12 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float
 
 Particle::~Particle()
 {
-	//delete sprite;
 }
 
 void Particle::Update(float dt)
 {
 	position.x += speed.x * dt;
 	position.y += speed.y * dt;
-	//pPhysics.Gravity(dt);
 	pPhysics.UpdateForParticle(dt, position);
 	switch (effect)
 	{
