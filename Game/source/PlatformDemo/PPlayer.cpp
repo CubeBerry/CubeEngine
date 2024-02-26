@@ -30,6 +30,7 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name)
 	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,20.f });
 	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 2.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
+	GetComponent<Sprite>()->PlayAnimation(0);
 }
 
 

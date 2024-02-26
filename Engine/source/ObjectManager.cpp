@@ -6,7 +6,7 @@
 #include <iostream>
 void ObjectManager::Update(float dt)
 {
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
+	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) {obj.second->Update(dt);});
 	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.erase(id); });
 	objectsToBeDeleted.clear();
 }
