@@ -50,6 +50,13 @@ FILE(GLOB_RECURSE IMGUI_SOURCES
     "${IMGUI_BACKEND_DIR}/*.cpp"
 )
 
+if (MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
 add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES} ${IMGUI_SOURCES})
 
 source_group("Engine"            FILES ${ENGINE_SRC})
