@@ -358,7 +358,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);
 
-	int texId = textures.size() - 1;
+	int texId = static_cast<int>(textures.size() - 1);
 	textures.at(texId)->SetTextureID(texId);
 }
 

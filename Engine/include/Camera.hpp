@@ -44,7 +44,8 @@ public:
 	glm::vec2		GetViewSize() { return cameraViewSize; }
 	void            SetZoom(float amount) noexcept;
 	float			GetZoom() { return zoom; }
-	void                       SetCameraCenterMode(CameraCenterMode cameraMode) noexcept {};
+	void                       SetCameraCenterMode(CameraCenterMode mode) noexcept { cameraCenterMode = mode
+; };
 	constexpr CameraCenterMode GetCameraCenterMode() const noexcept { return cameraCenterMode; }
 
 	float GetRotate2D() { return rotate2D; }
@@ -67,9 +68,9 @@ private:
 	float yaw = -90.0f;
 	float rotate2D = 0.f;
 
-	glm::mat4 view;
-	glm::mat4 projection;
-	glm::vec2 cameraViewSize;
+	glm::mat4 view = glm::mat4(0.f);
+	glm::mat4 projection = glm::mat4(0.f);
+	glm::vec2 cameraViewSize = glm::vec2(0.f);
 	CameraType cameraType = CameraType::NONE;
 	CameraCenterMode cameraCenterMode = RightOriginCenter;
 };

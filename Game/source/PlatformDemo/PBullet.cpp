@@ -37,15 +37,15 @@ void PBullet::Update(float dt)
 
 void PBullet::MakeHitParticle()
 {
-	//rand() % (마지막 값 - 시작 값 + 1) + 시작 값
-	int amount = rand() % (10 - 5 + 1) + 5;
-	for (int i = 0; i < amount; i++)
-	{
-		float colorG = static_cast<float>(rand() % (9 - 3 + 1) + 3) * 0.1f;
-		float pSize = static_cast<float>(rand() % (20 - 10 + 1) + 10) * 0.1f;
+	////rand() % (마지막 값 - 시작 값 + 1) + 시작 값
+	//int amount = rand() % (10 - 5 + 1) + 5;
+	//for (int i = 0; i < amount; i++)
+	//{
+	//	float colorG = static_cast<float>(rand() % (9 - 3 + 1) + 3) * 0.1f;
+	//	float pSize = static_cast<float>(rand() % (20 - 10 + 1) + 10) * 0.1f;
 
-		glm::vec2 newVel = { static_cast<float>(rand() % (2 - (-2) + 1) + (-2)) , -(static_cast<float>(rand() % ((10) - (5) + 1) + (5))) };
-		float lifeTime = static_cast<float>(rand() % (16 - 8 + 1) + 8);
-		//ParticleSystem::Instance().AddSingleParticle(position, { pSize, pSize }, newVel, 0.f, lifeTime, { 1.f, colorG, 0.f,1.f }, ParticleType::REC, "", 0.5f);
-	}
+	//	glm::vec2 newVel = { static_cast<float>(rand() % (2 - (-2) + 1) + (-2)) , -(static_cast<float>(rand() % ((10) - (5) + 1) + (5))) };
+	//	float lifeTime = static_cast<float>(rand() % (16 - 8 + 1) + 8);
+	//	//ParticleSystem::Instance().AddSingleParticle(position, { pSize, pSize }, newVel, 0.f, lifeTime, { 1.f, colorG, 0.f,1.f }, ParticleType::REC, "", 0.5f);
+	//}
 }

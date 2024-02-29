@@ -14,10 +14,10 @@ public:
 	void Init() override;
 	void Update(float dt) override;
 
-	void SetDamage(int amount) { damage = amount;}
-	int GetDamage() {return damage;}
+	void SetDamage(float amount) { damage = amount;}
+	float GetDamage() {return damage;}
 
 protected:
-	int damage = 5;
+	float damage = 5.f;
 	float delay = 0.f;
 };

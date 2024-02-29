@@ -31,11 +31,11 @@ const char* BackgroundTypeEnumToChar(BackgroundType type)
 
 BackgroundType BackgroundTypeCharToEnum(const char* type)
 {
-	if (type == "NORMAL")
+	if (std::string(type) == "NORMAL")
 	{
 		return BackgroundType::NORMAL;
 	}
-	else if (type == "VPARALLEX")
+	else if (std::string(type) == "VPARALLEX")
 	{
 		return BackgroundType::VPARALLEX;
 	}
@@ -214,14 +214,14 @@ void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 {
 	std::ofstream saveLoad(outFilePath);
 
-	for (auto& target : walls)
+	for (auto& wall : walls)
 	{
-		saveLoad << target->GetName() << ' ';
-		saveLoad << target->GetPosition().x << ' ';
-		saveLoad << target->GetPosition().y << ' ';
-		saveLoad << target->GetSize().x << ' ';
-		saveLoad << target->GetSize().y << ' ';
-		switch (target->GetObjectType())
+		saveLoad << wall->GetName() << ' ';
+		saveLoad << wall->GetPosition().x << ' ';
+		saveLoad << wall->GetPosition().y << ' ';
+		saveLoad << wall->GetSize().x << ' ';
+		saveLoad << wall->GetSize().y << ' ';
+		switch (wall->GetObjectType())
 		{
 		case ObjectType::PLAYER:
 			saveLoad << "PLAYER" << ' ';
@@ -237,13 +237,6 @@ void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 	{
 		for (auto& background : group.second)
 		{
-			float speedX;
-			float speedY;
-			float depth;
-			std::string bType;
-			bool isScrolled;
-			bool isAnimation;
-
 			saveLoad << group.first << ' ';
 			saveLoad << background.position.x << ' ';
 			saveLoad << background.position.y << ' ';
@@ -271,12 +264,6 @@ void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 	}
 	for (auto& group : bgm->GetNormalBackgroundList())
 	{
-		float speedX;
-		float speedY;
-		float depth;
-		std::string bType;
-		bool isScrolled;
-		bool isAnimation;
 
 		saveLoad << "group" << ' ';
 		saveLoad << group.position.x << ' ';
@@ -302,14 +289,14 @@ void PDemoMapEditorDemo::SaveLevelData(const std::filesystem::path& outFilePath)
 		saveLoad << group.spriteName << ' ';
 		saveLoad << '\n';
 	}
-	for (auto& target : objects)
+	for (auto& obj : objects)
 	{
-		saveLoad << target->GetName() << ' ';
-		saveLoad << target->GetPosition().x << ' ';
-		saveLoad << target->GetPosition().y << ' ';
-		saveLoad << target->GetSize().x << ' ';
-		saveLoad << target->GetSize().y << ' ';
-		switch (target->GetObjectType())
+		saveLoad << obj->GetName() << ' ';
+		saveLoad << obj->GetPosition().x << ' ';
+		saveLoad << obj->GetPosition().y << ' ';
+		saveLoad << obj->GetSize().x << ' ';
+		saveLoad << obj->GetSize().y << ' ';
+		switch (obj->GetObjectType())
 		{
 		case ObjectType::PLAYER:
 			saveLoad << "PLAYER" << ' ';
@@ -402,13 +389,13 @@ void PDemoMapEditorDemo::End()
 {
 	delete target->rect;
 	delete target;
-	for (auto* target : objects)
+	for (auto* obj : objects)
 	{
-		delete target;
+		delete obj;
 	}
-	for (auto* target : walls)
+	for (auto* obj : walls)
 	{
-		delete target;
+		delete obj;
 	}
 	objects.clear();
 	walls.clear();
@@ -569,7 +556,7 @@ void PDemoMapEditorDemo::WallCreator()
 	//bool cursor_over_imgui_window = ImGui::IsMouseHoveringAnyWindow();
 	//if()
 	{
-		float distance = glm::distance(target->startPos, target->endPos);
+		//float distance = glm::distance(target->startPos, target->endPos);
 		glm::vec2 midPoint = { (target->startPos.x + target->endPos.x) / 2.f, (target->startPos.y + target->endPos.y) / 2.f };
 		if (isWallSetting == false)
 		{

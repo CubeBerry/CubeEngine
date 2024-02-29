@@ -423,7 +423,7 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 		float max2 = -INFINITY;
 
 		// 첫 번째 다각형 회전
-		for (const glm::vec2& point : collidePolygon)
+		for (const glm::vec2& point : a->GetCollidePolygon())
 		{
 			rotatedPoints1.push_back(RotatePoint(obj.GetPosition(), point, DegreesToRadians(obj.GetRotate())));
 		}
@@ -530,16 +530,16 @@ void Physics2D::AddCollidePolygonAABB(glm::vec2 size)
 	collidePolygon = { {-size.x, -size.y}, {-size.x, size.y}, {size.x, size.y}, {size.x, -size.y} };
 }
 
-glm::vec2 Physics2D::FindSATCenter(const std::vector<glm::vec2>& points)
+glm::vec2 Physics2D::FindSATCenter(const std::vector<glm::vec2>& points_)
 {
 	float totalArea = 0.0f;
 	float centerX = 0.0f;
 	float centerY = 0.0f;
 
-	for (size_t i = 0; i < points.size(); ++i)
+	for (size_t i = 0; i < points_.size(); ++i)
 	{
-		glm::vec2 currentPoint = points[i];
-		glm::vec2 nextPoint = points[(i + 1) % points.size()];
+		glm::vec2 currentPoint = points_[i];
+		glm::vec2 nextPoint = points_[(i + 1) % points_.size()];
 
 		float crossProduct = (currentPoint.x * nextPoint.y) - (nextPoint.x * currentPoint.y);
 
@@ -597,7 +597,7 @@ float Physics2D::calculatePolygonRadius(const std::vector<glm::vec2>& vertices)
 
 float Physics2D::DegreesToRadians(float degrees)
 {
-	return degrees * 3.14 / 180.f;
+	return degrees * 3.14f / 180.f;
 }
 
 glm::vec2 Physics2D::RotatePoint(const glm::vec2& point, const glm::vec2& size, float angle)

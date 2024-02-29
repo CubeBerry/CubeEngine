@@ -62,8 +62,8 @@ private:
 		virtual Command GetType() override { return Command::End; }
 	};
 
-	bool isAnimationDone;
-	int animSequenceIndex;
-	PlayFrame* currPlayFrameData;
+	bool isAnimationDone = false;
+	int animSequenceIndex = 0;
+	PlayFrame* currPlayFrameData = nullptr;
 	std::vector<CommandData*> animations;
 };

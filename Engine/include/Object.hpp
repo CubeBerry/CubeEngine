@@ -19,7 +19,7 @@ public:
 	virtual void Init();
 	virtual void Update(float dt);
 	virtual void Draw(float dt);
-	virtual void CollideObject(Object* obj) {};
+	virtual void CollideObject(Object* /*obj*/) {};
 
 	int        GetId() { return id; }
 	glm::vec3     GetPosition() { return position; }

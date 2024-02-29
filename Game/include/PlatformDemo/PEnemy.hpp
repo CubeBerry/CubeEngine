@@ -40,8 +40,8 @@ public:
 	float GetHp() { return hp; }
 	float GetMaxHp() { return MaxHp; }
 
-	void SetIsHit(bool state) { isHit = state; }
-	void SetInvincibleState(bool state) { isInvincible = state;}
+	void SetIsHit(bool state_) { isHit = state_; }
+	void SetInvincibleState(bool state_) { isInvincible = state_;}
 	bool GetInvincibleState() { return isInvincible; }
 
 	glm::vec2 GetSpawnPosition() { return spawnPosition; }

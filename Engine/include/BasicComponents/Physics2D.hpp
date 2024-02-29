@@ -87,7 +87,7 @@ public:
 	void AddCollidePolygonAABB(glm::vec2 min, glm::vec2 max);
 	void AddCollidePolygonAABB(glm::vec2 size);
 private:
-	glm::vec2 FindSATCenter(const std::vector<glm::vec2>& points);
+	glm::vec2 FindSATCenter(const std::vector<glm::vec2>& points_);
 	glm::vec2 FindClosestPointOnSegment(const glm::vec2& circleCenter, std::vector<glm::vec2>& vertices);
 	float calculatePolygonRadius(const std::vector<glm::vec2>& vertices);
 

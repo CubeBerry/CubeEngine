@@ -10,7 +10,7 @@ SpriteManager::~SpriteManager()
 {
 }
 
-void SpriteManager::Update(float dt)
+void SpriteManager::Update(float /*dt*/)
 {
 	//for (int i = 0; i < sprites.size(); i++)
 	//{

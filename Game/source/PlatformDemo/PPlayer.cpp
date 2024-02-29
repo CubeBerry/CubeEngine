@@ -97,7 +97,7 @@ void PPlayer::CollideObject(Object* obj)
 	}
 }
 
-void PPlayer::Control(float dt)
+void PPlayer::Control(float /*dt*/)
 {
 	if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
 	{

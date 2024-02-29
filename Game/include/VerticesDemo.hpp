@@ -12,7 +12,7 @@ class VerticesDemo : public GameState
 {
 public:
 	VerticesDemo() = default;
-	~VerticesDemo() {};
+	~VerticesDemo() override {}
 
 	void Init() override;
 	void Update(float dt) override;

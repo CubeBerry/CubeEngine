@@ -11,7 +11,7 @@ class PlatformDemo : public GameState
 {
 public:
 	PlatformDemo() = default;
-	~PlatformDemo() {};
+	~PlatformDemo() override {}
 
 	void Init() override;
 	void Update(float dt) override;

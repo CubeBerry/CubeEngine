@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <windows.h>
 #include <cmath>
+
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <codecvt>
 
 #include "SoundManager.hpp"
@@ -17,8 +19,13 @@
 
 std::string ConvertWideStringToUTF8(const std::wstring& wideString)
 {
-	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-	return converter.to_bytes(wideString);
+	int requiredSize = WideCharToMultiByte(CP_UTF8, 0, wideString.c_str(), -1, nullptr, 0, nullptr, nullptr);
+	std::string utf8String(requiredSize, 0);
+	WideCharToMultiByte(CP_UTF8, 0, wideString.c_str(), -1, &utf8String[0], requiredSize, nullptr, nullptr);
+	return utf8String;
+
+	/*std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+	return converter.to_bytes(wideString);*/
 }
 
 SoundManager::~SoundManager()
@@ -86,14 +93,15 @@ void SoundManager::LoadSoundFile(std::string filepath, std::string name, bool lo
 void SoundManager::LoadMusicFile(std::wstring filepath, std::wstring name, bool loop)
 {
 	Musics.push_back(Music());
+	std::string path = ConvertWideStringToUTF8(filepath);
 	if (loop == true)
 	{
-		result = FMOD_System_CreateSound(system, ConvertWideStringToUTF8(filepath).c_str(), FMOD_LOOP_NORMAL | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
+		result = FMOD_System_CreateSound(system, path.c_str(), FMOD_LOOP_NORMAL | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
 		ErrorCheck(result);
 	}
 	else
 	{
-		result = FMOD_System_CreateSound(system, ConvertWideStringToUTF8(filepath).c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
+		result = FMOD_System_CreateSound(system, path.c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
 		ErrorCheck(result);
 	}
 	FMOD_CHANNEL* channel = nullptr;
@@ -424,7 +432,8 @@ void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 			std::string filePath = folderPath + "/" + fileName;
 
 			std::string extension = filePath.substr(filePath.find_last_of('.') + 1);
-			std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+			std::transform(extension.begin(), extension.end(), extension.begin(),
+				[](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
 
 			if (extension == "wav")
 			{
@@ -458,8 +467,10 @@ void SoundManager::LoadMusicFilesFromFolder(const std::wstring& folderPath)
 			std::wstring fileName = findData.cFileName;
 			std::wstring filePath = folderPath + L"\\" + fileName;
 
-			std::wstring extension = filePath.substr(filePath.find_last_of('.') + 1);
-			std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+			std::wstring extension = filePath.substr(filePath.find_last_of('.') + 1); 
+			std::transform(extension.begin(), extension.end(), extension.begin(),
+				[](wchar_t c) { return std::tolower(c, std::locale()); });
+
 
 			if (extension == L"mp3" || extension == L"ogg")
 			{

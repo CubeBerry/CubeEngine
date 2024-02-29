@@ -11,7 +11,7 @@ class PocketBallDemo : public GameState
 {
 public:
 	PocketBallDemo() = default;
-	~PocketBallDemo() {};
+	~PocketBallDemo() override {}
 
 	void Init() override;
 	void Update(float dt) override;

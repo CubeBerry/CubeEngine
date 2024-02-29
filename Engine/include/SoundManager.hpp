@@ -96,7 +96,7 @@ private:
 	FMOD_VECTOR listenerPosition = { 0.f,0.f,0.f };
 
 	FMOD_SYSTEM* system = nullptr;
-	FMOD_RESULT result;
+	FMOD_RESULT result = FMOD_OK;
 
 	float soundVolume = 0.5f;
 	float musicVolume = 0.5f;
