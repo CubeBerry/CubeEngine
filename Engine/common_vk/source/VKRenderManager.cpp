@@ -373,12 +373,12 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texVertex = new VKVertexBuffer(vkInit, &texVertices);
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
-	texIndices.push_back(4 * indexNumber);
-	texIndices.push_back(4 * indexNumber + 1);
-	texIndices.push_back(4 * indexNumber + 2);
-	texIndices.push_back(4 * indexNumber + 2);
-	texIndices.push_back(4 * indexNumber + 3);
-	texIndices.push_back(4 * indexNumber);
+	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
+	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
+	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
 	if (texIndex != nullptr)
 		delete texIndex;
 	texIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
@@ -418,12 +418,12 @@ void VKRenderManager::LoadLineQuad(glm::vec4 color_)
 	lineVertex = new VKVertexBuffer(vkInit, &lineVertices);
 
 	uint64_t indexNumber{ lineVertices.size() / 4 - 1 };
-	lineIndices.push_back(4 * indexNumber);
-	lineIndices.push_back(4 * indexNumber + 1);
-	lineIndices.push_back(4 * indexNumber + 2);
-	lineIndices.push_back(4 * indexNumber + 2);
-	lineIndices.push_back(4 * indexNumber + 3);
-	lineIndices.push_back(4 * indexNumber);
+	lineIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	lineIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
+	lineIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	lineIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	lineIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
+	lineIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
 	if (lineIndex != nullptr)
 		delete lineIndex;
 	lineIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &lineIndices);
@@ -463,7 +463,7 @@ void VKRenderManager::LoadVertices(std::vector<Vertex> vertices_, std::vector<ui
 	uint64_t indexNumber{ texVertices.size() / vertices_.size() - 1 };
 	for (auto index : indices_)
 	{
-		texIndices.push_back(vertices_.size() * indexNumber + index);
+		texIndices.push_back(static_cast<uint16_t>(vertices_.size() * indexNumber + index));
 	}
 	if (texIndex != nullptr)
 		delete texIndex;
@@ -503,7 +503,7 @@ void VKRenderManager::LoadLineVertices(std::vector<Vertex> vertices_, std::vecto
 	uint64_t indexNumber{ lineVertices.size() / vertices_.size() - 1 };
 	for (auto index : indices_)
 	{
-		lineIndices.push_back(vertices_.size() * indexNumber + index);
+		lineIndices.push_back(static_cast<uint16_t>(vertices_.size() * indexNumber + index));
 	}
 	if (lineIndex != nullptr)
 		delete lineIndex;
@@ -788,8 +788,8 @@ void VKRenderManager::BeginRender()
 	VkViewport viewport{};
 	viewport.x = 0.f;
 	viewport.y = 0.f;
-	viewport.width = vkSwapChain->GetSwapChainImageExtent()->width;
-	viewport.height = vkSwapChain->GetSwapChainImageExtent()->height;
+	viewport.width = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->width);
+	viewport.height = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -818,7 +818,7 @@ void VKRenderManager::BeginRender()
 		//Change Primitive Topology
 		vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		//Draw
-		vkCmdDrawIndexed(*currentCommandBuffer, texIndices.size(), 1, 0, 0, 0);
+		vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(texIndices.size()), 1, 0, 0, 0);
 	}
 
 	//if (lineVertex != nullptr)

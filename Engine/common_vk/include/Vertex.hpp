@@ -2,6 +2,8 @@
 //Project: CubeEngine
 //File: Vertex.hpp
 #pragma once
+#pragma warning( disable : 4324 )
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
