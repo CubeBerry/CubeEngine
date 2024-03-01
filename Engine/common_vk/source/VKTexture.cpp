@@ -6,7 +6,9 @@
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
+#pragma warning(push, 0)
 #include "stb-master/stb_image.h"
+#pragma warning(pop)
 
 VKTexture::VKTexture(VKInit* init_, VkCommandPool* pool_) : vkInit(init_), vkCommandPool(pool_)
 {
