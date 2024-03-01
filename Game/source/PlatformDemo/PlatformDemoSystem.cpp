@@ -341,7 +341,13 @@ void PDemoMapEditorDemo::Update(float dt)
 			o->GetComponent<Physics2D>()->Update(dt);
 			o->GetComponent<Sprite>()->Update(dt);
 		}
+	}
+}
 
+void PDemoMapEditorDemo::UpdateImGui()
+{
+	if (isEditorMod == true)
+	{
 		ImGui::Begin("MapEditor");
 		//Button
 		if (ImGui::Button("SaveFile"))
@@ -385,6 +391,7 @@ void PDemoMapEditorDemo::Update(float dt)
 		}
 	}
 }
+
 void PDemoMapEditorDemo::End()
 {
 	delete target->rect;
@@ -620,9 +627,9 @@ void PlatformDemoSystem::Update(float dt)
 	healthBar->UpdateView();
 
 	backGroundManager->Update(dt);
-	//#ifdef _DEBUG
-	//	mapEditor->Update(dt);
-	//#endif
+	#ifdef _DEBUG
+	UpdateMapEditor(dt);
+	#endif
 }
 
 void PlatformDemoSystem::End()
@@ -649,5 +656,9 @@ void PlatformDemoSystem::InitHealthBar()
 void PlatformDemoSystem::UpdateMapEditor(float dt)
 {
 	mapEditor->Update(dt);
+}
+void PlatformDemoSystem::UpdateMapEditorImGui()
+{
+	mapEditor->UpdateImGui();
 }
 #endif

@@ -278,7 +278,6 @@ void PEnemy::UpdateEnemyBig(float dt)
 				}
 				else if ((playerPos.x < Object::position.x - 2.f && playerPos.x > Object::position.x - abs(Object::size.x) / 3.f))
 				{
-					std::cout << Object::size.x << std::endl;
 					SetStateOff(EnemyStates::MOVE);
 					SetStateOn(EnemyStates::TARGETFOUND);
 					if (GetComponent<Sprite>()->GetCurrentAnim() != 0)

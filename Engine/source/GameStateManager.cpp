@@ -79,7 +79,13 @@ void GameStateManager::Update(float dt)
 			CollideObjects();
 
 			if (!(SDL_GetWindowFlags(Engine::GetWindow()->GetWindow()) & SDL_WINDOW_MINIMIZED))
-				Draw(dt);
+			{
+#ifdef _DEBUG
+				DrawWithImGui(dt);
+#else
+				Draw();
+#endif
+			}
 		}
 		break;
 	case State::CHANGE:
@@ -109,7 +115,7 @@ void GameStateManager::Update(float dt)
 	}
 }
 
-void GameStateManager::Draw(float dt)
+void GameStateManager::Draw()
 {
 	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
 	//if (renderManager->GetMatrices()->size() > 0)
@@ -117,13 +123,9 @@ void GameStateManager::Draw(float dt)
 	renderManager->BeginRender();
 	if (!renderManager->GetIsRecreated())
 	{
-#ifdef _DEBUG
-		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
-#endif
 		renderManager->EndRender();
 	}
 	//}
-
 }
 
 void GameStateManager::LevelEnd()
@@ -164,6 +166,18 @@ void GameStateManager::StateChanger()
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
+	}
+}
+
+void GameStateManager::DrawWithImGui(float dt)
+{
+	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
+
+	renderManager->BeginRender();
+	if (!renderManager->GetIsRecreated())
+	{
+		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+		renderManager->EndRender();
 	}
 }
 

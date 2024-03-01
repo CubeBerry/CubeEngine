@@ -54,12 +54,12 @@ void PlatformDemo::Update(float dt)
 }
 
 #ifdef _DEBUG
-void PlatformDemo::ImGuiDraw(float dt)
+void PlatformDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::ShowDemoWindow();
 	Engine::GetGameStateManager()->StateChanger();
 	Engine::GetSoundManager()->MusicPlayerForImGui();
-	platformDemoSystem->UpdateMapEditor(dt);
+	platformDemoSystem->UpdateMapEditorImGui();
 }
 #endif
 

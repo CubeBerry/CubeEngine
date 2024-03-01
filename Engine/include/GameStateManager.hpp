@@ -26,7 +26,7 @@ public:
 	void LevelInit();
 	void LevelInit(GameLevel currentLevel_);
 	void Update(float dt);
-	void Draw(float dt);
+	void Draw();
     void LevelEnd();
 	
 	void AddLevel(GameState* level);
@@ -39,6 +39,7 @@ public:
 	State GetGameState() { return state; }
 #ifdef _DEBUG
 	void StateChanger();
+	void DrawWithImGui(float dt);
 #endif
 private:
 #ifdef _DEBUG

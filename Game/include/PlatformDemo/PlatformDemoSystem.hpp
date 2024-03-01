@@ -47,6 +47,7 @@ public:
 #ifdef _DEBUG
 	void Init();
 	void Update(float dt);
+	void UpdateImGui();
 	void End();
 #endif
 
@@ -96,6 +97,7 @@ public:
 	void InitHealthBar();
 #ifdef _DEBUG
 	void UpdateMapEditor(float dt);
+	void UpdateMapEditorImGui();
 #endif
 protected:
 	BackgroundManager* backGroundManager = nullptr;
