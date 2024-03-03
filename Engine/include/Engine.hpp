@@ -17,28 +17,27 @@
 class Engine
 {
 public:
+	Engine() = default;
 	~Engine() = default;
+
+	static Engine& Instance() { static Engine instance; return instance; }
+	static Window& GetWindow() { return Instance().window; }
+	static VKInit& GetVKInit() { return Instance().vkInit; }
+	static VKRenderManager& GetVKRenderManager() { return Instance().vkRenderManager; }
+	static GameStateManager& GetGameStateManager() { return Instance().gameStateManger; }
+	static InputManager& GetInputManager() { return Instance().inputManager; }
+	static ObjectManager& GetObjectManager() { return Instance().objectManager; }
+	static CameraManager& GetCameraManager() { return Instance().cameraManager; }
+	static SoundManager& GetSoundManager() { return Instance().soundManager; }
+	static SpriteManager& GetSpriteManager() { return Instance().spriteManager; }
+	static ParticleManager& GetParticleManager() { return Instance().particleManager; }
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
 	void End();
 
 	void SetFPS(FrameRate fps);
-
-	static Engine& Instance() { static Engine instance; return instance; }
-	static Window* GetWindow() { return &Instance().window; }
-	static VKInit* GetVKInit() { return Instance().vkInit; }
-	static VKRenderManager* GetVKRenderManager() { return Instance().vkRenderManager; }
-	static GameStateManager* GetGameStateManager() { return Instance().gameStateManger; }
-	static InputManager* GetInputManager() { return Instance().inputManager; }
-	static ObjectManager* GetObjectManager() { return Instance().objectManager; }
-	static CameraManager* GetCameraManager() { return Instance().cameraManager; }
-	static SoundManager* GetSoundManager() { return Instance().soundManager; }
-	static SpriteManager* GetSpriteManager() { return Instance().spriteManager; }
-	static ParticleManager* GetParticleManager() { return Instance().particleManager; }
 private:
-	Engine() {};
-
 	Timer timer;
 	std::chrono::system_clock::time_point lastTick;
 	std::chrono::system_clock::time_point fpsCalcTime;
@@ -48,13 +47,13 @@ private:
 	std::string windowTitleWithFrameCount;
 
 	Window window;
-	VKInit* vkInit = nullptr;
-	VKRenderManager* vkRenderManager = nullptr;
-	GameStateManager* gameStateManger = nullptr;
-	InputManager* inputManager = nullptr;
-	ObjectManager* objectManager = nullptr;
-	CameraManager* cameraManager = nullptr;
-	SoundManager* soundManager = nullptr;
-	SpriteManager* spriteManager = nullptr;
-	ParticleManager* particleManager = nullptr;
+	VKInit vkInit;
+	VKRenderManager vkRenderManager;
+	GameStateManager gameStateManger;
+	InputManager inputManager;
+	ObjectManager objectManager;
+	CameraManager cameraManager;
+	SoundManager soundManager;
+	SpriteManager spriteManager;
+	ParticleManager particleManager;
 };

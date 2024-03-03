@@ -27,8 +27,9 @@ class VKUniformBuffer;
 class VKRenderManager
 {
 public:
-	VKRenderManager();
+	VKRenderManager() = default;
 	~VKRenderManager();
+	void Initialize(SDL_Window* window_);
 
 	void BeginRender();
 	void EndRender();

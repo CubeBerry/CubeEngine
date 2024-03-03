@@ -11,25 +11,27 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	window.Init(title, windowWidth, windowHeight, fullScreen, mode);
 	timer.Init();
 
-	vkInit = new VKInit();
-	vkRenderManager = new VKRenderManager();
-	gameStateManger = new GameStateManager();
-	inputManager = new InputManager;
-	objectManager = new ObjectManager;
-	cameraManager = new CameraManager;
-	cameraManager->Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
+	//vkInit = new VKInit();
+	//vkRenderManager = new VKRenderManager();
+	//gameStateManger = new GameStateManager();
+	//inputManager = new InputManager;
+	//objectManager = new ObjectManager;
+	//cameraManager = new CameraManager;
+	vkInit.Initialize(window.GetWindow());
+	vkRenderManager.Initialize(window.GetWindow());
+	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 
-	soundManager = new SoundManager;
-	soundManager->Initialize();
+	//soundManager = new SoundManager;
+	soundManager.Initialize();
 
-	spriteManager = new SpriteManager;
-	particleManager = new ParticleManager();
+	//spriteManager = new SpriteManager;
+	//particleManager = new ParticleManager();
 }
 
 void Engine::Update()
 {
 	SDL_Event event;
-	while (gameStateManger->GetGameState() != State::SHUTDOWN)
+	while (gameStateManger.GetGameState() != State::SHUTDOWN)
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
@@ -37,12 +39,12 @@ void Engine::Update()
 		{
 			SDL_PollEvent(&event);
 #ifdef _DEBUG
-			vkRenderManager->GetImGuiManager()->FeedEvent(event);
+			vkRenderManager.GetImGuiManager()->FeedEvent(event);
 #endif
 			switch (event.type)
 			{
 			case SDL_QUIT:
-				gameStateManger->SetGameState(State::UNLOAD);
+				gameStateManger.SetGameState(State::UNLOAD);
 				break;
 			//case SDL_WINDOWEVENT:
 			//	if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED || event.window.event == SDL_WINDOWEVENT_MOVED ||
@@ -68,24 +70,24 @@ void Engine::Update()
 				frameCount = 0;
 			}//fps
 
-			inputManager->InputPollEvent(event);
-			gameStateManger->Update(deltaTime);
+			inputManager.InputPollEvent(event);
+			gameStateManger.Update(deltaTime);
 		}
 	}
 }
 
 void Engine::End()
 {
-	delete gameStateManger;
-	delete cameraManager;
-	delete inputManager;
-	delete particleManager;
-	delete objectManager;
-	delete spriteManager;
-	delete vkRenderManager;
-	delete soundManager;
+	//delete gameStateManger;
+	//delete cameraManager;
+	//delete inputManager;
+	//delete particleManager;
+	//delete objectManager;
+	//delete spriteManager;
+	//delete vkRenderManager;
+	//delete soundManager;
 	//delete window;
-	delete vkInit;
+	//delete vkInit;
 }
 
 void Engine::SetFPS(FrameRate fps)

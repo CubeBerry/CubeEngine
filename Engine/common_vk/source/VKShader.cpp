@@ -6,7 +6,7 @@
 
 #include <fstream>
 
-VKShader::VKShader() : device(Engine::Instance().GetVKInit()->GetDevice())
+VKShader::VKShader() : device(Engine::Instance().GetVKInit().GetDevice())
 {
 }
 

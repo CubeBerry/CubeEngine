@@ -7,8 +7,10 @@
 #include "Engine.hpp"
 #include <iostream>
 
-VKDescriptor::VKDescriptor() : vkInit(Engine::Instance().GetVKInit())
+VKDescriptor::VKDescriptor()
 {
+	vkInit = &Engine::Instance().GetVKInit();
+
 	InitDescriptorSetLayouts();
 	InitDescriptorPool();
 	InitDescriptorSets();

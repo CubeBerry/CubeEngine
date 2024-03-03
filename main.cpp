@@ -22,18 +22,18 @@ int main(void)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     //_CrtSetBreakAlloc(159);
-    _crtBreakAlloc = 157;
+    //_crtBreakAlloc = 157;
 
     Engine& engine = Engine::Instance();
     engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
     engine.SetFPS(FrameRate::FPS_60);
 
-    engine.GetSoundManager()->LoadMusicFilesFromFolder(L"..\\Game\\assets\\Musics");
-    engine.GetSoundManager()->LoadSoundFilesFromFolder("../Game/assets/Sounds");
+    engine.GetSoundManager().LoadMusicFilesFromFolder(L"..\\Game\\assets\\Musics");
+    engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
-    engine.GetGameStateManager()->AddLevel(new PocketBallDemo);
-    engine.GetGameStateManager()->AddLevel(new PlatformDemo);
-    engine.GetGameStateManager()->LevelInit(GameLevel::PLATFORMDEMO);
+    engine.GetGameStateManager().AddLevel(new PocketBallDemo);
+    engine.GetGameStateManager().AddLevel(new PlatformDemo);
+    engine.GetGameStateManager().LevelInit(GameLevel::PLATFORMDEMO);
 
     engine.Update();
     engine.End();

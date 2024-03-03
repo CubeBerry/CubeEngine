@@ -7,8 +7,10 @@
 
 #include <iostream>
 
-VKSwapChain::VKSwapChain(VkCommandPool* pool_) : vkInit(Engine::Instance().GetVKInit()), vkCommandPool(pool_)
+VKSwapChain::VKSwapChain(VkCommandPool* pool_) : vkCommandPool(pool_)
 {
+	vkInit = &Engine::Instance().GetVKInit();
+
 	InitSwapChain();
 	InitSwapChainImage();
 	InitFence();

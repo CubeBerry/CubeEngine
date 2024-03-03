@@ -13,50 +13,6 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-VKRenderManager::VKRenderManager() : window(Engine::Instance().GetWindow()->GetWindow()), vkInit(Engine::Instance().GetVKInit())
-{
-	InitCommandPool();
-	InitCommandBuffer();
-
-	vkSwapChain = new VKSwapChain(&vkCommandPool);
-
-	InitRenderPass();
-	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
-
-	vkDescriptor = new VKDescriptor;
-
-	vkTextureShader = new VKShader();
-	vkTextureShader->LoadShader("../Engine/shader/texVertex.vert", "../Engine/shader/texFragment.frag");
-	vkLineShader = new VKShader();
-	vkLineShader->LoadShader("../Engine/shader/lineVertex.vert", "../Engine/shader/lineFragment.frag");
-	std::cout << std::endl;
-
-	vkTexurePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
-	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
-	//vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
-	//vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
-
-#ifdef _DEBUG
-	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
-#endif
-
-	for (int i = 0; i < 500; ++i)
-	{
-		VkSamplerCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-		VkSampler immutableSampler;
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler = immutableSampler;
-		imageInfo.imageView = VK_NULL_HANDLE;
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfos.push_back(imageInfo);
-	}
-}
-
 VKRenderManager::~VKRenderManager()
 {
 	vkDeviceWaitIdle(*vkInit->GetDevice());
@@ -111,6 +67,53 @@ VKRenderManager::~VKRenderManager()
 
 	delete vkSwapChain;
 	//delete vkInit;
+}
+
+void VKRenderManager::Initialize(SDL_Window* window_)
+{
+	window = window_;
+	vkInit = &Engine::Instance().GetVKInit();
+
+	InitCommandPool();
+	InitCommandBuffer();
+
+	vkSwapChain = new VKSwapChain(&vkCommandPool);
+
+	InitRenderPass();
+	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
+
+	vkDescriptor = new VKDescriptor;
+
+	vkTextureShader = new VKShader();
+	vkTextureShader->LoadShader("../Engine/shader/texVertex.vert", "../Engine/shader/texFragment.frag");
+	vkLineShader = new VKShader();
+	vkLineShader->LoadShader("../Engine/shader/lineVertex.vert", "../Engine/shader/lineFragment.frag");
+	std::cout << std::endl;
+
+	vkTexurePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
+	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
+	//vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
+	//vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
+
+#ifdef _DEBUG
+	imguiManager = new ImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
+#endif
+
+	for (int i = 0; i < 500; ++i)
+	{
+		VkSamplerCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+		VkSampler immutableSampler;
+		VkResult result{ VK_SUCCESS };
+		result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
+
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.sampler = immutableSampler;
+		imageInfo.imageView = VK_NULL_HANDLE;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfos.push_back(imageInfo);
+	}
 }
 
 void VKRenderManager::InitCommandPool()
@@ -628,7 +631,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 void VKRenderManager::BeginRender()
 {
 	isRecreated = false;
-	Window* window_ = Engine::GetWindow();
+	Window* window_ = &Engine::GetWindow();
 	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
 
 	//Get image index from swapchain
@@ -921,7 +924,7 @@ void VKRenderManager::EndRender()
 	VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
 	if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
 	{
-		RecreateSwapChain(Engine::GetWindow());
+		RecreateSwapChain(&Engine::GetWindow());
 		return;
 	}
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)

@@ -49,7 +49,7 @@ void PocketBallSystem::Update(float dt)
 	powerMeter->UpdateProjection();
 	powerMeter->UpdateView();
 
-	playerPosition = glm::vec2(Engine::GetObjectManager()->FindObjectWithName("White")->GetPosition().x, Engine::GetObjectManager()->FindObjectWithName("White")->GetPosition().y);
+	playerPosition = glm::vec2(Engine::GetObjectManager().FindObjectWithName("White")->GetPosition().x, Engine::GetObjectManager().FindObjectWithName("White")->GetPosition().y);
 	shotAngle = std::atan2(playerPosition.y - cursorPosition.y, playerPosition.x - cursorPosition.x);
 	
 
@@ -65,7 +65,7 @@ void PocketBallSystem::Update(float dt)
 	int ballStopNum = 0;
 	if (isShot == true)
 	{
-		for (auto& obj : Engine::GetObjectManager()->GetObjectMap())
+		for (auto& obj : Engine::GetObjectManager().GetObjectMap())
 		{
 			if (obj.second->GetObjectType() == ObjectType::BALL)
 			{
@@ -107,7 +107,7 @@ void PocketBallSystem::Control(float dt)
 {
 	if (isShot == false)
 	{
-		if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::DOWN))
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN))
 		{
 			if (distanceMax.x >= 0.f)
 			{
@@ -119,24 +119,24 @@ void PocketBallSystem::Control(float dt)
 				cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 			}
 		}
-		if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::UP))
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP))
 		{
 			distanceMax += 150.f * dt;
 			cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 		}
-		if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::LEFT))
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT))
 		{
 			angle -= 1.5f * dt;
 			cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 		}
-		if (Engine::GetInputManager()->IsKeyPressed(KEYBOARDKEYS::RIGHT))
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT))
 		{
 			angle += 1.5f * dt;
 			cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 		}
-		if (Engine::GetInputManager()->IsKeyPressedOnce(KEYBOARDKEYS::SPACE))
+		if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::SPACE))
 		{
-			Engine::GetObjectManager()->FindObjectWithName("White")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle), power * -sin(shotAngle) });
+			Engine::GetObjectManager().FindObjectWithName("White")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle), power * -sin(shotAngle) });
 			isShot = true;
 		}
 	}

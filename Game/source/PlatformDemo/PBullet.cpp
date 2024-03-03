@@ -29,9 +29,9 @@ void PBullet::Update(float dt)
 	position.x += speed.x * dt;
 	position.y += speed.y * dt;
 
-	if (Engine::GetCameraManager()->IsInCamera(this) == false)
+	if (Engine::GetCameraManager().IsInCamera(this) == false)
 	{
-		Engine::GetObjectManager()->Destroy(Object::id);
+		Engine::GetObjectManager().Destroy(Object::id);
 	}
 }
 

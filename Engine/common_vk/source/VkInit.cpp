@@ -11,18 +11,6 @@
 #include <sstream>
 #include "Engine.hpp"
 
-VKInit::VKInit() : window(Engine::Instance().GetWindow()->GetWindow())
-{
-	InitInstance();
-	SetPhysicalDevice();
-	SetQueueFamilyIndex();
-	InitDevice();
-	InitQueue();
-	InitSurface();
-
-	SetSurfaceFormat();
-}
-
 VKInit::~VKInit()
 {
 	//Destroy Surface
@@ -31,6 +19,20 @@ VKInit::~VKInit()
 	vkDestroyDevice(vkDevice, nullptr);
 	//Destroy Instance
 	vkDestroyInstance(vkInstance, nullptr);
+}
+
+void VKInit::Initialize(SDL_Window* window_)
+{
+	window = window_;
+
+	InitInstance();
+	SetPhysicalDevice();
+	SetQueueFamilyIndex();
+	InitDevice();
+	InitQueue();
+	InitSurface();
+
+	SetSurfaceFormat();
 }
 
 void VKInit::InitInstance()

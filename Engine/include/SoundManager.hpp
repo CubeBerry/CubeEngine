@@ -30,7 +30,7 @@ struct Music
 
 class SoundManager {
 public:
-	SoundManager() {};
+	SoundManager() = default;
 	~SoundManager();
 
 	void Initialize();

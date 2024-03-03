@@ -157,7 +157,7 @@ enum class KEYBOARDKEYS
 class InputManager
 {
 public:
-	InputManager() {}
+	InputManager() = default;
 	~InputManager() = default;
 
 	void InputPollEvent(SDL_Event& event);

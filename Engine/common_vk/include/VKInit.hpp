@@ -11,8 +11,10 @@
 class VKInit
 {
 public:
-	VKInit();
+	VKInit() = default;
 	~VKInit();
+	void Initialize(SDL_Window* window_);
+
 	//void ValidationCheck();
 	void InitInstance();
 	void SetPhysicalDevice();

@@ -71,13 +71,13 @@ void GameStateManager::Update(float dt)
 		else
 		{
 			levelList.at(static_cast<int>(currentLevel))->Update(dt);
-			Engine::GetSpriteManager()->Update(dt);
-			Engine::GetObjectManager()->Update(dt);
-			Engine::GetParticleManager()->Update(dt);
-			Engine::GetCameraManager()->Update();
+			Engine::GetSpriteManager().Update(dt);
+			Engine::GetObjectManager().Update(dt);
+			Engine::GetParticleManager().Update(dt);
+			Engine::GetCameraManager().Update();
 			CollideObjects();
 
-			if (!(SDL_GetWindowFlags(Engine::GetWindow()->GetWindow()) & SDL_WINDOW_MINIMIZED))
+			if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
 			{
 #ifdef _DEBUG
 				DrawWithImGui(dt);
@@ -116,7 +116,7 @@ void GameStateManager::Update(float dt)
 
 void GameStateManager::Draw()
 {
-	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
+	VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();
 	//if (renderManager->GetMatrices()->size() > 0)
 	//{
 	renderManager->BeginRender();
@@ -170,7 +170,7 @@ void GameStateManager::StateChanger()
 
 void GameStateManager::DrawWithImGui(float dt)
 {
-	VKRenderManager* renderManager = Engine::Instance().GetVKRenderManager();
+	VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();
 
 	renderManager->BeginRender();
 	if (!renderManager->GetIsRecreated())
@@ -200,9 +200,9 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 
 void GameStateManager::CollideObjects()
 {
-	for (auto& target : Engine::GetObjectManager()->GetObjectMap())
+	for (auto& target : Engine::GetObjectManager().GetObjectMap())
 	{
-		for (auto& object : Engine::GetObjectManager()->GetObjectMap())
+		for (auto& object : Engine::GetObjectManager().GetObjectMap())
 		{
 			if (target.second != nullptr && object.second != nullptr && target.second != object.second
 				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
