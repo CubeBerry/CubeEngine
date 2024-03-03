@@ -628,7 +628,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 void VKRenderManager::BeginRender()
 {
 	isRecreated = false;
-	Window* window_ = Engine::Engine().GetWindow();
+	Window* window_ = Engine::GetWindow();
 	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
 
 	//Get image index from swapchain
@@ -921,7 +921,7 @@ void VKRenderManager::EndRender()
 	VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
 	if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
 	{
-		RecreateSwapChain(Engine::Engine().GetWindow());
+		RecreateSwapChain(Engine::GetWindow());
 		return;
 	}
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)

@@ -22,7 +22,7 @@ int main(void)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     //_CrtSetBreakAlloc(159);
-    //_crtBreakAlloc = 3367;
+    _crtBreakAlloc = 157;
 
     Engine& engine = Engine::Instance();
     engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);

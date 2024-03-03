@@ -10,7 +10,6 @@
 
 GameStateManager::GameStateManager()
 {
-	currentLevel = GameLevel::NONE;
 }
 
 GameStateManager::~GameStateManager()

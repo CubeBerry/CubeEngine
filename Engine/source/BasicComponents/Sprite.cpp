@@ -52,12 +52,12 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 
 void Sprite::UpdateView()
 {
-	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).view = Engine::Engine().GetCameraManager()->GetViewMatrix();
+	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).view = Engine::GetCameraManager()->GetViewMatrix();
 }
 
 void Sprite::UpdateProjection()
 {
-	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).projection = Engine::Engine().GetCameraManager()->GetProjectionMatrix();
+	Engine::Instance().GetVKRenderManager()->GetVertexVector()->at(materialId).projection = Engine::GetCameraManager()->GetProjectionMatrix();
 }
 
 void Sprite::AddQuad(glm::vec4 color_)

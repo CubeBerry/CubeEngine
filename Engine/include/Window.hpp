@@ -20,6 +20,7 @@ class Window
 {
 public:
 	Window() = default;
+	~Window() = default;
 	void Init(const char* title, int width, int height, bool fullscreen, WindowMode mode);
 
 	SDL_Window* GetWindow() { return window.get(); };

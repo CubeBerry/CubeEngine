@@ -17,7 +17,6 @@
 class Engine
 {
 public:
-	Engine() {};
 	~Engine() = default;
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
@@ -27,7 +26,7 @@ public:
 	void SetFPS(FrameRate fps);
 
 	static Engine& Instance() { static Engine instance; return instance; }
-	static Window* GetWindow() { return Instance().window; }
+	static Window* GetWindow() { return &Instance().window; }
 	static VKInit* GetVKInit() { return Instance().vkInit; }
 	static VKRenderManager* GetVKRenderManager() { return Instance().vkRenderManager; }
 	static GameStateManager* GetGameStateManager() { return Instance().gameStateManger; }
@@ -38,6 +37,8 @@ public:
 	static SpriteManager* GetSpriteManager() { return Instance().spriteManager; }
 	static ParticleManager* GetParticleManager() { return Instance().particleManager; }
 private:
+	Engine() {};
+
 	Timer timer;
 	std::chrono::system_clock::time_point lastTick;
 	std::chrono::system_clock::time_point fpsCalcTime;
@@ -46,7 +47,7 @@ private:
 	int frameCount = 0;
 	std::string windowTitleWithFrameCount;
 
-	Window* window = nullptr;
+	Window window;
 	VKInit* vkInit = nullptr;
 	VKRenderManager* vkRenderManager = nullptr;
 	GameStateManager* gameStateManger = nullptr;

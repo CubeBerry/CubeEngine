@@ -158,6 +158,7 @@ class InputManager
 {
 public:
 	InputManager() {}
+	~InputManager() = default;
 
 	void InputPollEvent(SDL_Event& event);
 

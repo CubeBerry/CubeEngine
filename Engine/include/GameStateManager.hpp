@@ -23,7 +23,6 @@ public:
 	GameStateManager();
 	~GameStateManager();
 
-	void LevelInit();
 	void LevelInit(GameLevel currentLevel_);
 	void Update(float dt);
 	void Draw();
@@ -45,6 +44,7 @@ private:
 #ifdef _DEBUG
 	const char* GameLevelTypeEnumToChar(GameLevel type);
 #endif
+	void LevelInit();
 	void CollideObjects();
 
 	GameLevel currentLevel = GameLevel::NONE;
