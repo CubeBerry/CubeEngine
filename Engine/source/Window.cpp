@@ -2,7 +2,6 @@
 //Project: CubeEngine
 //File: Window.cpp
 #include "Window.hpp"
-#include "VKInit.hpp"
 
 #include <iostream>
 
@@ -29,22 +28,22 @@ void Window::Init(const char* title, int width, int height, bool fullscreen, Win
 		switch (mode)
 		{
 		case WindowMode::NORMAL:
-			window = SDL_CreateWindow(
+			window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
 				title,
 				SDL_WINDOWPOS_CENTERED,
 				SDL_WINDOWPOS_CENTERED,
 				(int)wSize.x,
 				(int)wSize.y,
-				flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
+				flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
 			break;
 		case WindowMode::BORADLESS:
-			window = SDL_CreateWindow(
+			window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
 				title,
 				SDL_WINDOWPOS_CENTERED,
 				SDL_WINDOWPOS_CENTERED,
 				(int)wSize.x,
 				(int)wSize.y,
-				flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
+				flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
 			break;
 		default:
 			break;

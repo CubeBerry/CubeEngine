@@ -85,6 +85,7 @@ void Engine::End()
 	delete vkRenderManager;
 	delete soundManager;
 	delete window;
+	delete vkInit;
 }
 
 void Engine::SetFPS(FrameRate fps)

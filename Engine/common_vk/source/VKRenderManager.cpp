@@ -110,7 +110,7 @@ VKRenderManager::~VKRenderManager()
 	delete vkDescriptor;
 
 	delete vkSwapChain;
-	delete vkInit;
+	//delete vkInit;
 }
 
 void VKRenderManager::InitCommandPool()
