@@ -7,8 +7,6 @@
 
 void Window::Init(const char* title, int width, int height, bool fullscreen, WindowMode mode)
 {
-	isQuit = false;
-
 	int flags = 0;
 	wSize.x = (float)width;
 	wSize.y = (float)height;
