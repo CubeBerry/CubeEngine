@@ -4,6 +4,11 @@
 #include "ObjectManager.hpp"
 
 #include <iostream>
+ObjectManager::~ObjectManager()
+{
+	//End();
+}
+
 void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
@@ -29,23 +34,24 @@ void ObjectManager::Destroy(int id)
 void ObjectManager::DestroyAllObjects()
 {
 	lastObjectID = 0;
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { Destroy(obj.first); });
-	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.erase(id); });
+	for (auto& obj : objectMap) 
+	{
+		obj.second.reset();
+	}
 	objectsToBeDeleted.clear();
 	objectMap.clear();
 }
 
 Object* ObjectManager::FindObjectWithName(std::string name)
 {
-	Object* temp = nullptr;
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj)
+	for (auto& obj : objectMap)
 	{
 		if (obj.second->GetName() == name)
 		{
-			temp = obj.second.get();
+			return obj.second.get();
 		}
-	});
-	return temp;
+	}
+	return nullptr;
 }
 
 

@@ -192,6 +192,8 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
+				a = nullptr;
+				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -206,9 +208,11 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
 			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
-			axis = normalize(axis); 
+			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
+				a = nullptr;
+				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -250,6 +254,8 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			}
 			CalculateLinearVelocity(*a, *b, normal, &depth);
 		}
+		a = nullptr;
+		b = nullptr;
 		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;
@@ -308,8 +314,12 @@ bool Physics2D::CollisionCC(Object& obj, Object& obj2)
 			}
 			CalculateLinearVelocity(*a, *b, -normal, &depth);
 		}
+		a = nullptr;
+		b = nullptr;
 		return true; // 충돌 발생
 	}
+	a = nullptr;
+	b = nullptr;
 	return false; // 충돌 없음
 }
 
@@ -344,6 +354,8 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
+			p = nullptr;
+			c = nullptr;
 			return false; // 충돌이 없음
 		}
 		if (axisDepth < depth)
@@ -360,6 +372,8 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
+			p = nullptr;
+			c = nullptr;
 			return false; // 충돌이 없음
 		}
 		if (axisDepth < depth)
@@ -402,6 +416,8 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		}
 		CalculateLinearVelocity(*p, *c, normal, &depth);
 	}
+	p = nullptr;
+	c = nullptr;
 	return true;
 }
 
@@ -442,6 +458,8 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
+				a = nullptr;
+				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -459,6 +477,8 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
+				a = nullptr;
+				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -474,6 +494,8 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 			normal = -normal;
 		}
 
+		a = nullptr;
+		b = nullptr;
 		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;

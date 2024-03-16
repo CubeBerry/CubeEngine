@@ -17,6 +17,14 @@
 #include "imgui.h"
 #endif
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#if _DEBUG
+#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+#define malloc(s) _malloc_dbg(s,_NORMAL_BLOCK,__FILE__,__LINE__)
+#endif
 std::string ConvertWideStringToUTF8(const std::wstring& wideString)
 {
 	int requiredSize = WideCharToMultiByte(CP_UTF8, 0, wideString.c_str(), -1, nullptr, 0, nullptr, nullptr);
@@ -54,6 +62,9 @@ void SoundManager::Shutdown()
 	Channels.clear();
 
 	ClearMusicList();
+
+	result = FMOD_System_Release(system);
+	ErrorCheck(result);
 }
 
 void SoundManager::ClearMusicList()
@@ -87,7 +98,7 @@ void SoundManager::LoadSoundFile(std::string filepath, std::string name, bool lo
 		ErrorCheck(result);
 	}
 	FMOD_CHANNEL* channel = NULL;
-	Channels[name] = channel;
+	Channels[name] = std::move(channel);
 }
 
 void SoundManager::LoadMusicFile(std::wstring filepath, std::wstring name, bool loop)
@@ -104,8 +115,8 @@ void SoundManager::LoadMusicFile(std::wstring filepath, std::wstring name, bool 
 		result = FMOD_System_CreateSound(system, path.c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
 		ErrorCheck(result);
 	}
-	FMOD_CHANNEL* channel = nullptr;
-	Musics[musicMaxIndex].channel = channel;
+	FMOD_CHANNEL* channel = NULL;
+	Musics[musicMaxIndex].channel = std::move(channel);
 	Musics[musicMaxIndex].name = ConvertWideStringToUTF8(name);
 	Musics[musicMaxIndex].nameL = name;
 	++musicMaxIndex;
