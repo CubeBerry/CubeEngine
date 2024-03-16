@@ -13,7 +13,7 @@ class VKInit
 public:
 	VKInit() = default;
 	~VKInit();
-	void Initialize(SDL_Window* window_);
+	void Initialize();
 
 	//void ValidationCheck();
 	void InitInstance();
@@ -43,7 +43,6 @@ public:
 	uint32_t* GetQueueFamilyIndex() { return &queueFamilyIndex; };
 	VkQueue* GetQueue() { return &vkQueue; };
 private:
-	SDL_Window* window{ nullptr };
 	VkInstance vkInstance{ VK_NULL_HANDLE };
 	VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };
 	VkDevice vkDevice{ VK_NULL_HANDLE };

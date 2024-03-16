@@ -4,10 +4,6 @@
 #include "ObjectManager.hpp"
 
 #include <iostream>
-ObjectManager::~ObjectManager()
-{
-	//End();
-}
 
 void ObjectManager::Update(float dt)
 {

@@ -21,10 +21,8 @@ VKInit::~VKInit()
 	vkDestroyInstance(vkInstance, nullptr);
 }
 
-void VKInit::Initialize(SDL_Window* window_)
+void VKInit::Initialize()
 {
-	window = window_;
-
 	InitInstance();
 	SetPhysicalDevice();
 	SetQueueFamilyIndex();
@@ -235,7 +233,7 @@ void VKInit::InitSurface()
 		//}
 
 		//Create sruface using SDL_Vulkan_CreateSurface function
-		if (SDL_Vulkan_CreateSurface(window, vkInstance, &vkSurface) == SDL_FALSE)
+		if (SDL_Vulkan_CreateSurface(Engine::Instance().GetWindow().GetWindow(), vkInstance, &vkSurface) == SDL_FALSE)
 		{
 			throw std::runtime_error{ "vkSurface Creation Failed" };
 		}

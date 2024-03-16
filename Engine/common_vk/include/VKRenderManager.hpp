@@ -29,13 +29,13 @@ class VKRenderManager
 public:
 	VKRenderManager() = default;
 	~VKRenderManager();
-	void Initialize(SDL_Window* window_);
+	void Initialize();
 
 	void BeginRender();
 	void EndRender();
 	//void EndRender(Window* window_);
 
-	VKInit* GetVkInit() { return vkInit; }
+	//VKInit* GetVkInit() { return &vkInit; }
 	bool GetIsRecreated() { return isRecreated; };
 #ifdef _DEBUG
 	ImGuiManager* GetImGuiManager() { return imguiManager; };
@@ -48,8 +48,6 @@ private:
 	void CleanSwapChain();
 	void RecreateSwapChain(Window* window_);
 
-	SDL_Window* window;
-	VKInit* vkInit;
 	VKSwapChain* vkSwapChain;
 
 	VkCommandPool vkCommandPool{ VK_NULL_HANDLE };
