@@ -79,11 +79,11 @@ void PEnemy::CollideObject(Object* obj)
 	switch (obj->GetObjectType())
 	{
 	case ObjectType::WALL:
-		GetComponent<Physics2D>()->CheckCollision(*obj);
-		obj->GetComponent<Physics2D>()->CheckCollision(*this);
+		GetComponent<Physics2D>()->CheckCollision(obj);
+		obj->GetComponent<Physics2D>()->CheckCollision(this);
 		break;
 	case ObjectType::BULLET:
-		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(*obj) == true)
+		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(obj) == true)
 		{
 			PBullet* b = static_cast<PBullet*>(obj);
 
@@ -165,7 +165,27 @@ void PEnemy::UpdateEnemyNormal(float dt)
 			GetComponent<Physics2D>()->Gravity(dt);
 		}
 
-
+		/*if (Engine::GetObjectManager().FindObjectWithName("Player") != nullptr)
+		{
+			Object* pTemp = Engine::GetObjectManager().FindObjectWithName("Player");
+			if (pTemp->GetPosition().x > Object::position.x + abs(Object::size.x) / 3.f)
+			{
+				if (IsStateOn(EnemyStates::DIRECTION) == false)
+				{
+					Object::SetXSize(-Object::GetSize().x);
+					SetStateOn(EnemyStates::DIRECTION);
+				}
+			}
+			else if (pTemp->GetPosition().x < Object::position.x - abs(Object::size.x) / 3.f)
+			{
+				if (IsStateOn(EnemyStates::DIRECTION) == true)
+				{
+					Object::SetXSize(-Object::GetSize().x);
+					SetStateOff(EnemyStates::DIRECTION);
+				}
+			}
+			pTemp = nullptr;
+		}*/
 		if (Engine::GetObjectManager().FindObjectWithName("Player")->GetPosition().x > Object::position.x + abs(Object::size.x) / 3.f)
 		{
 			if (IsStateOn(EnemyStates::DIRECTION) == false)

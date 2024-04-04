@@ -57,14 +57,14 @@ void Ball::CollideObject(Object* obj)
 	switch (obj->GetObjectType())
 	{
 	case ObjectType::WALL:
-		GetComponent<Physics2D>()->CheckCollision(*obj);
-		obj->GetComponent<Physics2D>()->CheckCollision(*this);
+		GetComponent<Physics2D>()->CheckCollision(obj);
+		obj->GetComponent<Physics2D>()->CheckCollision(this);
 		break;
 	case ObjectType::BALL:
-		GetComponent<Physics2D>()->CheckCollision(*obj);
+		GetComponent<Physics2D>()->CheckCollision(obj);
 		break;
 	case ObjectType::GOAL:
-		if (obj->GetComponent<Physics2D>()->CheckCollision(*this) == true)
+		if (obj->GetComponent<Physics2D>()->CheckCollision(this) == true)
 		{
 			int time = (rand() % (3 + 1)) + 1;
 			int amount = (rand() % (8 + 4)) + 4;

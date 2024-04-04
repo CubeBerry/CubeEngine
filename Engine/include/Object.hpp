@@ -30,7 +30,6 @@ public:
 
 	ObjectType GetObjectType() { return objectType; }
 	std::string GetName() { return objectName; }
-	std::string GetSpriteName() { return spriteName; }
 	
 	void       SetId(int value) { id = value; }
 	void       SetRotate(float value);
@@ -46,7 +45,6 @@ public:
 	void       SetZSize(float newZ) { size.z = newZ; }
 
 	void       SetName(std::string name) { objectName = name; }
-	void       SetSpriteName(std::string name);
 	void       SetObjectType(ObjectType type) { objectType = type; }
 
 	template <typename ComponentTypes> bool HasComponent()
@@ -67,7 +65,7 @@ public:
 		}
 		ComponentTypes* componentType = new ComponentTypes();
 		dynamic_cast<Component*>(componentType)->SetOwner(this);
-		this->componentList.push_back(componentType);
+		this->componentList.push_back(std::move(componentType));
 	}
 
 	template<typename ComponentTypes> ComponentTypes* GetComponent()
@@ -79,6 +77,39 @@ public:
 		}
 		return nullptr;
 	}
+
+	//template <typename T> bool HasComponent()
+	//{
+	//	for (auto list : componentList)
+	//	{
+	//		if (typeid(*list).name() == typeid(T).name())
+	//			return true;
+	//	}
+	//	return false;
+	//}
+
+	//template<typename T> constexpr void AddComponent()
+	//{
+	//	if (HasComponent<T>())
+	//	{
+	//		return;
+	//	}/*
+	//	ComponentTypes* componentType = new ComponentTypes();
+	//	dynamic_cast<Component*>(componentType)->SetOwner(this);
+	//	this->componentList.push_back(std::move(componentType));*/
+	//	this->componentList.push_back(std::move(new T()));
+	//	this->componentList.at(this->componentList.size() - 1)->SetOwner(this);
+	//}
+
+	//template<typename T> T* GetComponent()
+	//{
+	//	for (auto list : componentList)
+	//	{
+	//		if (typeid(*list).name() == typeid(T).name())
+	//			return dynamic_cast<T*>(list);
+	//	}
+	//	return nullptr;
+	//}
 
 protected:
 	void DestroyAllComponents();
@@ -92,7 +123,6 @@ protected:
 	ObjectType objectType = ObjectType::NONE;
 
 	std::string objectName = "";
-	std::string spriteName = "";
 	bool isDrawAble = true;
 	std::vector<Component*> componentList;
 };

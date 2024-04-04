@@ -79,11 +79,11 @@ void PPlayer::CollideObject(Object* obj)
 	switch (obj->GetObjectType())
 	{
 	case ObjectType::WALL:
-		GetComponent<Physics2D>()->CheckCollision(*obj);
-		obj->GetComponent<Physics2D>()->CheckCollision(*this);
+		GetComponent<Physics2D>()->CheckCollision(obj);
+		obj->GetComponent<Physics2D>()->CheckCollision(this);
 		break;
 	case ObjectType::ENEMYBULLET:
-		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(*obj) == true)
+		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(obj) == true)
 		{
 			PEnemyBullet* b = static_cast<PEnemyBullet*>(obj);
 

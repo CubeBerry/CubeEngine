@@ -124,28 +124,28 @@ void Physics2D::Gravity(float dt)
 	}
 }
 
-bool Physics2D::CheckCollision(Object& obj)
+bool Physics2D::CheckCollision(Object* obj)
 {
 	switch (collideType)
 	{
 	case CollideType::POLYGON:
-		if (obj.GetComponent<Physics2D>()->GetCollideType() == CollideType::POLYGON)
+		if (obj->GetComponent<Physics2D>()->GetCollideType() == CollideType::POLYGON)
 		{
-			return CollisionPP(*GetOwner(), obj);
+			return CollisionPP(GetOwner(), obj);
 		}
-		else if (obj.GetComponent<Physics2D>()->GetCollideType() == CollideType::CIRCLE)
+		else if (obj->GetComponent<Physics2D>()->GetCollideType() == CollideType::CIRCLE)
 		{
-			return CollisionPC(*GetOwner(), obj);
+			return CollisionPC(GetOwner(), obj);
 		}
 		break;
 	case CollideType::CIRCLE:
-		if (obj.GetComponent<Physics2D>()->GetCollideType() == CollideType::POLYGON)
+		if (obj->GetComponent<Physics2D>()->GetCollideType() == CollideType::POLYGON)
 		{
-			return CollisionPC(obj, *GetOwner());
+			return CollisionPC(obj, GetOwner());
 		}
-		else if (obj.GetComponent<Physics2D>()->GetCollideType() == CollideType::CIRCLE)
+		else if (obj->GetComponent<Physics2D>()->GetCollideType() == CollideType::CIRCLE)
 		{
-			return CollisionCC(*GetOwner(), obj);
+			return CollisionCC(GetOwner(), obj);
 		}
 		break;
 	default:
@@ -155,13 +155,10 @@ bool Physics2D::CheckCollision(Object& obj)
 	return false;
 }
 
-bool Physics2D::CollisionPP(Object& obj, Object& obj2)
+bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 {
-	if (obj.GetComponent<Physics2D>()->GetCollidePolygon().empty() == false && obj2.GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
+	if (obj->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false && obj2->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
 	{
-		Physics2D* a = obj.GetComponent<Physics2D>();
-		Physics2D* b = obj2.GetComponent<Physics2D>();
-
 		std::vector<glm::vec2> rotatedPoints1;
 		std::vector<glm::vec2> rotatedPoints2;
 		float depth = INFINITY;
@@ -173,15 +170,15 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 		float max2 = -INFINITY;
 
 		// 첫 번째 다각형 회전
-		for (const glm::vec2& point : collidePolygon)
+		for (const glm::vec2 point : collidePolygon)
 		{
-			rotatedPoints1.push_back(RotatePoint(obj.GetPosition(), point, DegreesToRadians(obj.GetRotate())));
+			rotatedPoints1.push_back(RotatePoint(obj->GetPosition(), point, DegreesToRadians(obj->GetRotate())));
 		}
 
 		// 두 번째 다각형 회전
-		for (const glm::vec2& point : b->GetCollidePolygon())
+		for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
-			rotatedPoints2.push_back(RotatePoint(obj2.GetPosition(), point, DegreesToRadians(obj2.GetRotate())));
+			rotatedPoints2.push_back(RotatePoint(obj2->GetPosition(), point, DegreesToRadians(obj2->GetRotate())));
 		}
 
 		for (size_t i = 0; i < rotatedPoints1.size(); ++i)
@@ -192,8 +189,6 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				a = nullptr;
-				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -211,8 +206,6 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				a = nullptr;
-				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -228,108 +221,96 @@ bool Physics2D::CollisionPP(Object& obj, Object& obj2)
 			normal = -normal;
 		}
 
-		if (a->GetIsGhostCollision() == false &&
-			b->GetIsGhostCollision() == false)
+		if (obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
+			obj2->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
 		{
-			if (a->GetBodyType() == BodyType::RIGID &&
-				b->GetBodyType() == BodyType::RIGID)
+			if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
+				obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
 			{
-				obj.SetXPosition(obj.GetPosition().x + (-normal * depth / 2.f).x);
-				obj.SetYPosition(obj.GetPosition().y + (-normal * depth / 2.f).y);
+				obj->SetXPosition(obj->GetPosition().x + (-normal * depth / 2.f).x);
+				obj->SetYPosition(obj->GetPosition().y + (-normal * depth / 2.f).y);
 
-				obj2.SetXPosition(obj2.GetPosition().x + (normal * depth / 2.f).x);
-				obj2.SetYPosition(obj2.GetPosition().y + (normal * depth / 2.f).y);
+				obj2->SetXPosition(obj2->GetPosition().x + (normal * depth / 2.f).x);
+				obj2->SetYPosition(obj2->GetPosition().y + (normal * depth / 2.f).y);
 			}
-			else if (a->GetBodyType() == BodyType::RIGID &&
-				b->GetBodyType() == BodyType::BLOCK)
+			else if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
+				obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::BLOCK)
 			{
-				obj.SetXPosition(obj.GetPosition().x + (-normal * depth / 2.f).x);
-				obj.SetYPosition(obj.GetPosition().y + (-normal * depth / 2.f).y);
+				obj->SetXPosition(obj->GetPosition().x + (-normal * depth / 2.f).x);
+				obj->SetYPosition(obj->GetPosition().y + (-normal * depth / 2.f).y);
 			}
-			else if (a->GetBodyType() == BodyType::BLOCK &&
-				b->GetBodyType() == BodyType::RIGID)
+			else if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::BLOCK &&
+				obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
 			{
-				obj2.SetXPosition(obj2.GetPosition().x + (normal * depth / 2.f).x);
-				obj2.SetYPosition(obj2.GetPosition().y + (normal * depth / 2.f).y);
+				obj2->SetXPosition(obj2->GetPosition().x + (normal * depth / 2.f).x);
+				obj2->SetYPosition(obj2->GetPosition().y + (normal * depth / 2.f).y);
 			}
-			CalculateLinearVelocity(*a, *b, normal, &depth);
+			CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), normal, &depth);
 		}
-		a = nullptr;
-		b = nullptr;
 		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;
 }
 
-bool Physics2D::CollisionCC(Object& obj, Object& obj2)
+bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 {
 	// 두 원의 중심 사이의 거리 계산
-	float distanceX = obj.GetPosition().x - obj2.GetPosition().x;
-	float distanceY = obj.GetPosition().y - obj2.GetPosition().y;
+	float distanceX = obj->GetPosition().x - obj2->GetPosition().x;
+	float distanceY = obj->GetPosition().y - obj2->GetPosition().y;
 	float distance = std::sqrt(distanceX * distanceX + distanceY * distanceY);
 
 	float depth = INFINITY;
 	glm::vec2 normal = { 0.f, 0.f };
 
-	Physics2D* a = obj.GetComponent<Physics2D>();
-	Physics2D* b = obj2.GetComponent<Physics2D>();
-
 	// 두 원의 반지름의 합과 거리 비교
-	if (distance <= a->GetCircleCollideRadius() + b->GetCircleCollideRadius())
+	if (distance <= obj->GetComponent<Physics2D>()->GetCircleCollideRadius() + obj2->GetComponent<Physics2D>()->GetCircleCollideRadius())
 	{
 		// 두 원의 중심 사이의 단위 벡터 계산
 		float unitX = distanceX / distance;
 		float unitY = distanceY / distance;
 
 		// 겹친 양 계산
-		float overlap = (a->GetCircleCollideRadius() + b->GetCircleCollideRadius() - distance) / 2.0f;
+		float overlap = (obj->GetComponent<Physics2D>()->GetCircleCollideRadius() + obj2->GetComponent<Physics2D>()->GetCircleCollideRadius() - distance) / 2.0f;
 
-		normal = normalize(obj2.GetPosition() - obj.GetPosition());
+		normal = normalize(obj2->GetPosition() - obj->GetPosition());
 		depth = overlap - distance;
 
 		// 각 원의 위치 조정
-		if (a->GetIsGhostCollision() == false &&
-			b->GetIsGhostCollision() == false)
+		if (obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
+			obj2->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
 		{
-			if (a->GetBodyType() == BodyType::RIGID &&
-				b->GetBodyType() == BodyType::RIGID)
+			if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
+				obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
 			{
-				obj.SetXPosition(obj.GetPosition().x + (overlap * unitX));
-				obj.SetYPosition(obj.GetPosition().y + (overlap * unitY));
+				obj->SetXPosition(obj->GetPosition().x + (overlap * unitX));
+				obj->SetYPosition(obj->GetPosition().y + (overlap * unitY));
 
-				obj2.SetXPosition(obj2.GetPosition().x - (overlap * unitX));
-				obj2.SetYPosition(obj2.GetPosition().y - (overlap * unitY));
+				obj2->SetXPosition(obj2->GetPosition().x - (overlap * unitX));
+				obj2->SetYPosition(obj2->GetPosition().y - (overlap * unitY));
 			}
-			else if (a->GetBodyType() == BodyType::RIGID &&
-				b->GetBodyType() == BodyType::BLOCK)
+			else if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
+				obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::BLOCK)
 			{
-				obj.SetXPosition(obj.GetPosition().x + (overlap * unitX));
-				obj.SetYPosition(obj.GetPosition().y + (overlap * unitY));
+				obj->SetXPosition(obj->GetPosition().x + (overlap * unitX));
+				obj->SetYPosition(obj->GetPosition().y + (overlap * unitY));
 			}
-			else if (a->GetBodyType() == BodyType::BLOCK &&
-				b->GetBodyType() == BodyType::RIGID)
+			else if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::BLOCK &&
+				obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
 			{
-				obj2.SetXPosition(obj2.GetPosition().x - (overlap * unitX));
-				obj2.SetYPosition(obj2.GetPosition().y - (overlap * unitY));
+				obj2->SetXPosition(obj2->GetPosition().x - (overlap * unitX));
+				obj2->SetYPosition(obj2->GetPosition().y - (overlap * unitY));
 			}
-			CalculateLinearVelocity(*a, *b, -normal, &depth);
+			CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), -normal, &depth);
 		}
-		a = nullptr;
-		b = nullptr;
 		return true; // 충돌 발생
 	}
-	a = nullptr;
-	b = nullptr;
 	return false; // 충돌 없음
 }
 
-bool Physics2D::CollisionPC(Object& poly, Object& cir)
+bool Physics2D::CollisionPC(Object* poly, Object* cir)
 {
-	Physics2D* p = poly.GetComponent<Physics2D>();
-	Physics2D* c = cir.GetComponent<Physics2D>();
-
-	glm::vec2 circleCenter = cir.GetPosition();
-	float circleRadius = c->GetCircleCollideRadius();
+	glm::vec2 circleCenter = cir->GetPosition();
+	float circleRadius = cir->GetComponent<Physics2D>()->GetCircleCollideRadius();
 	std::vector<glm::vec2> rotatedPoints;
 
 	glm::vec2 normal = { 0.f,0.f };
@@ -341,9 +322,9 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 	float max2 = -INFINITY;
 
 
-	for (const glm::vec2& point : collidePolygon)
+	for (const glm::vec2 point : collidePolygon)
 	{
-		rotatedPoints.push_back(RotatePoint(poly.GetPosition(), point, DegreesToRadians(poly.GetRotate())));
+		rotatedPoints.push_back(RotatePoint(poly->GetPosition(), point, DegreesToRadians(poly->GetRotate())));
 	}
 
 	for (size_t i = 0; i < rotatedPoints.size(); ++i)
@@ -354,8 +335,6 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
-			p = nullptr;
-			c = nullptr;
 			return false; // 충돌이 없음
 		}
 		if (axisDepth < depth)
@@ -372,8 +351,6 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
-			p = nullptr;
-			c = nullptr;
 			return false; // 충돌이 없음
 		}
 		if (axisDepth < depth)
@@ -390,44 +367,39 @@ bool Physics2D::CollisionPC(Object& poly, Object& cir)
 	}
 
 
-	if (p->GetIsGhostCollision() == false &&
-		c->GetIsGhostCollision() == false)
+	if (poly->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
+		cir->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
 	{
-		if (p->GetBodyType() == BodyType::RIGID &&
-			c->GetBodyType() == BodyType::RIGID)
+		if (poly->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
+			cir->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
 		{
-			poly.SetXPosition(poly.GetPosition().x + (normal * depth / 2.f).x);
-			poly.SetYPosition(poly.GetPosition().y + (normal * depth / 2.f).y);
+			poly->SetXPosition(poly->GetPosition().x + (normal * depth / 2.f).x);
+			poly->SetYPosition(poly->GetPosition().y + (normal * depth / 2.f).y);
 
-			cir.SetXPosition(cir.GetPosition().x + (-normal * depth / 2.f).x);
-			cir.SetYPosition(cir.GetPosition().y + (-normal * depth / 2.f).y);
+			cir->SetXPosition(cir->GetPosition().x + (-normal * depth / 2.f).x);
+			cir->SetYPosition(cir->GetPosition().y + (-normal * depth / 2.f).y);
 		}
-		else if (p->GetBodyType() == BodyType::RIGID &&
-			c->GetBodyType() == BodyType::BLOCK)
+		else if (poly->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
+			cir->GetComponent<Physics2D>()->GetBodyType() == BodyType::BLOCK)
 		{
-			poly.SetXPosition(poly.GetPosition().x + (normal * depth / 2.f).x);
-			poly.SetYPosition(poly.GetPosition().y + (normal * depth / 2.f).y);
+			poly->SetXPosition(poly->GetPosition().x + (normal * depth / 2.f).x);
+			poly->SetYPosition(poly->GetPosition().y + (normal * depth / 2.f).y);
 		}
-		else if (p->GetBodyType() == BodyType::BLOCK &&
-			c->GetBodyType() == BodyType::RIGID)
+		else if (poly->GetComponent<Physics2D>()->GetBodyType() == BodyType::BLOCK &&
+			cir->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
 		{
-			cir.SetXPosition(cir.GetPosition().x + (-normal * depth / 2.f).x);
-			cir.SetYPosition(cir.GetPosition().y + (-normal * depth / 2.f).y);
+			cir->SetXPosition(cir->GetPosition().x + (-normal * depth / 2.f).x);
+			cir->SetYPosition(cir->GetPosition().y + (-normal * depth / 2.f).y);
 		}
-		CalculateLinearVelocity(*p, *c, normal, &depth);
+		CalculateLinearVelocity(*poly->GetComponent<Physics2D>(), *cir->GetComponent<Physics2D>(), normal, &depth);
 	}
-	p = nullptr;
-	c = nullptr;
 	return true;
 }
 
-bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
+bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 {
-	if (obj.GetComponent<Physics2D>()->GetCollidePolygon().empty() == false && obj2.GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
+	if (obj->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false && obj2->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
 	{
-		Physics2D* a = obj.GetComponent<Physics2D>();
-		Physics2D* b = obj2.GetComponent<Physics2D>();
-
 		std::vector<glm::vec2> rotatedPoints1;
 		std::vector<glm::vec2> rotatedPoints2;
 		float depth = INFINITY;
@@ -439,15 +411,15 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 		float max2 = -INFINITY;
 
 		// 첫 번째 다각형 회전
-		for (const glm::vec2& point : a->GetCollidePolygon())
+		for (const glm::vec2 point : obj->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
-			rotatedPoints1.push_back(RotatePoint(obj.GetPosition(), point, DegreesToRadians(obj.GetRotate())));
+			rotatedPoints1.push_back(RotatePoint(obj->GetPosition(), point, DegreesToRadians(obj->GetRotate())));
 		}
 
 		// 두 번째 다각형 회전
-		for (const glm::vec2& point : b->GetCollidePolygon())
+		for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
-			rotatedPoints2.push_back(RotatePoint(obj2.GetPosition(), point, DegreesToRadians(obj2.GetRotate())));
+			rotatedPoints2.push_back(RotatePoint(obj2->GetPosition(), point, DegreesToRadians(obj2->GetRotate())));
 		}
 
 		for (size_t i = 0; i < rotatedPoints1.size(); ++i)
@@ -458,8 +430,6 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				a = nullptr;
-				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -477,8 +447,6 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				a = nullptr;
-				b = nullptr;
 				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
@@ -494,8 +462,6 @@ bool Physics2D::CollisionPPWithoutPhysics(Object& obj, Object& obj2)
 			normal = -normal;
 		}
 
-		a = nullptr;
-		b = nullptr;
 		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;
@@ -622,28 +588,28 @@ float Physics2D::DegreesToRadians(float degrees)
 	return degrees * 3.14f / 180.f;
 }
 
-glm::vec2 Physics2D::RotatePoint(const glm::vec2& point, const glm::vec2& size, float angle)
+glm::vec2 Physics2D::RotatePoint(const glm::vec2 point, const glm::vec2 size, float angle)
 {
 	float x = point.x + (size.x * cos(angle) - size.y * sin(angle));
 	float y = point.y + (size.x * sin(angle) + size.y * cos(angle));
 	return glm::vec2(x, y);
 }
 
-bool Physics2D::IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& points1, const std::vector<glm::vec2>& points2, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_)
+bool Physics2D::IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> points1, const std::vector<glm::vec2> points2, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_)
 {
 	float min1 = INFINITY;
 	float min2 = INFINITY;
 	float max1 = -INFINITY;
 	float max2 = -INFINITY;
 
-	for (const glm::vec2& point : points1)
+	for (const glm::vec2 point : points1)
 	{
 		float projection = (point.x * axis.x) + (point.y * axis.y);
 		min1 = std::min(min1, projection);
 		max1 = std::max(max1, projection);
 	}
 
-	for (const glm::vec2& point : points2)
+	for (const glm::vec2 point : points2)
 	{
 		float projection = (point.x * axis.x) + (point.y * axis.y);
 		min2 = std::min(min2, projection);
@@ -658,14 +624,14 @@ bool Physics2D::IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::v
 	return !(max1 >= min2 && max2 >= min1);
 }
 
-bool Physics2D::IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& pointsPoly, const glm::vec2& pointCir, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_)
+bool Physics2D::IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> pointsPoly, const glm::vec2 pointCir, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_)
 {
 	float min1 = INFINITY;
 	float min2 = INFINITY;
 	float max1 = -INFINITY;
 	float max2 = -INFINITY;
 
-	for (const glm::vec2& point : pointsPoly)
+	for (const glm::vec2 point : pointsPoly)
 	{
 		float projection = (point.x * axis.x) + (point.y * axis.y);
 		min1 = std::min(min1, projection);

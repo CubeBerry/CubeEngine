@@ -16,8 +16,8 @@ Object::Object(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType obj
 	objectName = name;
 }
 
-Object::Object(const Object& rhs) : position(rhs.position), speed(rhs.speed), size(rhs.size), objectType(rhs.objectType), objectName(rhs.objectName), spriteName(rhs.spriteName),
-angle(rhs.angle), componentList(rhs.componentList)
+Object::Object(const Object& rhs) : position(rhs.position), speed(rhs.speed), size(rhs.size), 
+objectType(rhs.objectType), objectName(rhs.objectName), angle(rhs.angle), componentList(rhs.componentList)
 {
 	for (auto& c : componentList)
 	{
@@ -31,7 +31,11 @@ void Object::Init()
 
 void Object::Update(float dt)
 {
-	for (auto comp : componentList)
+	//for (auto comp : componentList)
+	//{
+	//	comp->Update(dt);
+	//}
+	for (auto& comp : componentList) 
 	{
 		comp->Update(dt);
 	}
@@ -59,11 +63,6 @@ void Object::SetRotate(float value)
 			angle = value;
 		}
 	}
-}
-
-void Object::SetSpriteName(std::string name)
-{
-	spriteName = name;
 }
 
 void Object::DestroyAllComponents()

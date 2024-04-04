@@ -72,15 +72,15 @@ public:
 	BodyType GetBodyType() { return bodyType; };
 	CollideType GetCollideType() { return collideType; };
 	float GetCircleCollideRadius() { return circle.radius; }
-	std::vector<glm::vec2>& GetCollidePolygon() { return collidePolygon; }
+	std::vector<glm::vec2> GetCollidePolygon() { return collidePolygon; }
 	float GetRestitution() { return restitution; }
 	bool GetIsGhostCollision() { return isGhostCollision; }
 
-	bool CheckCollision(Object& obj);
-	bool CollisionPP(Object& obj, Object& obj2);
-	bool CollisionCC(Object& obj, Object& obj2);
-	bool CollisionPC(Object& poly, Object& cir);
-	bool CollisionPPWithoutPhysics(Object& obj, Object& obj2);
+	bool CheckCollision(Object* obj);
+	bool CollisionPP(Object* obj, Object* obj2);
+	bool CollisionCC(Object* obj, Object* obj2);
+	bool CollisionPC(Object* poly, Object* cir);
+	bool CollisionPPWithoutPhysics(Object* obj, Object* obj2);
 
 	void AddCollideCircle(float r);
 	void AddCollidePolygon(glm::vec2 position);
@@ -92,9 +92,9 @@ private:
 	float calculatePolygonRadius(const std::vector<glm::vec2>& vertices);
 
 	float DegreesToRadians(float degrees);
-	glm::vec2 RotatePoint(const glm::vec2& point, const glm::vec2& size, float angle);
-	bool IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& points1, const std::vector<glm::vec2>& points2, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
-	bool IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& pointsPoly, const glm::vec2& pointCir, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
+	glm::vec2 RotatePoint(const glm::vec2 point, const glm::vec2 size, float angle);
+	bool IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> points1, const std::vector<glm::vec2> points2, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
+	bool IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> pointsPoly, const glm::vec2 pointCir, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
 	
 	void CalculateLinearVelocity(Physics2D& body, Physics2D& body2, glm::vec2 normal, float* axisDepth);
 

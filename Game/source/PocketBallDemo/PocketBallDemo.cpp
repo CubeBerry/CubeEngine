@@ -178,7 +178,11 @@ void PocketBallDemo::Restart()
 
 void PocketBallDemo::End()
 {
-	pocketBallSystem->End();
+	if(pocketBallSystem != nullptr)
+	{
+		pocketBallSystem->End();
+	}
+
 	delete pocketBallSystem;
 	pocketBallSystem = nullptr;
 

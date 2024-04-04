@@ -19,7 +19,7 @@ void CollideObjects()
 			if (target.second != nullptr && object.second != nullptr && target.second != object.second
 				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
 			{
-				if (target.second->GetComponent<Physics2D>()->CheckCollision(*object.second) == true)
+				if (target.second->GetComponent<Physics2D>()->CheckCollision(object.second.get()) == true)
 				{
 					//std::cout << "Collide " << target.first << " with " << object.first << std::endl;
 				}

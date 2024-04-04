@@ -20,16 +20,16 @@ public:
     void End();
 
     template <typename T, typename... Args>
-    T& AddObject(Args... args) // add object into map
+    void AddObject(Args... args)
     {
-        auto object = std::unique_ptr<T>(std::make_unique<T>(std::forward<Args>(args)...));
-        T& objectRef = *object.get();
-        static_cast<Object&>(objectRef).SetId(lastObjectID);
+        //auto object = std::unique_ptr<T>(std::make_unique<T>(std::forward<Args>(args)...));
+        ////T& objectRef = *object.get();
+        //static_cast<Object&>(*object.get()).SetId(lastObjectID);
 
-        objectMap[lastObjectID] = std::move(object);
+        objectMap[lastObjectID] = std::unique_ptr<T>(std::make_unique<T>(std::forward<Args>(args)...));;
         objectMap[lastObjectID].get()->SetId(lastObjectID);
         ++lastObjectID;
-        return objectRef;
+        //return static_cast<T&>(*objectMap[lastObjectID - 1].get());
     }
 
     void  Draw(float dt);

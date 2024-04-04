@@ -8,7 +8,7 @@
 void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
-	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.erase(id); });
+	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
 	objectsToBeDeleted.clear();
 }
 
@@ -42,7 +42,7 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 {
 	for (auto& obj : objectMap)
 	{
-		if (obj.second->GetName() == name)
+		if (obj.second.get()->GetName() == name)
 		{
 			return obj.second.get();
 		}

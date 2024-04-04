@@ -8,6 +8,16 @@
 
 SpriteManager::~SpriteManager()
 {
+	//if (sprites.empty() != true)
+	//{
+	//	auto iterator = sprites.begin();
+	//	for (auto it = iterator + 1; it != sprites.end(); it++)
+	//	{
+	//		Engine::Instance().GetVKRenderManager().DeleteWithIndex();
+	//		sprites.erase(iterator);
+	//		std::cout << sprites.size() << std::endl;
+	//	}
+	//}
 }
 
 void SpriteManager::Update(float /*dt*/)
