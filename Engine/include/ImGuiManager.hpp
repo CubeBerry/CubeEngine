@@ -19,8 +19,6 @@ class ImGuiManager
 {
 public:
 	ImGuiManager(
-		VKInit* init_,
-		SDL_Window* window_,
 		VkCommandPool* cpool_,
 		std::array<VkCommandBuffer, 2>* cbuffers_,
 		VkDescriptorPool* dpool_,
@@ -38,9 +36,6 @@ public:
 
 	std::array<VkCommandBuffer, 2>* GetCommandBuffers() { return &vkCommandBuffers; };
 private:
-	VKInit* vkInit;
-	SDL_Window* window;
-
 	VkCommandPool vkCommandPool{ VK_NULL_HANDLE };
 	std::array<VkCommandBuffer, 2> vkCommandBuffers{ VK_NULL_HANDLE };
 	VkDescriptorPool vkDescriptorPool;

@@ -93,7 +93,7 @@ void VKRenderManager::Initialize()
 	//vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
 #ifdef _DEBUG
-	imguiManager = new ImGuiManager(&Engine::Instance().GetVKInit(), Engine::Instance().GetWindow().GetWindow(), &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
+	imguiManager = new ImGuiManager(&vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
 #endif
 
 	for (int i = 0; i < 500; ++i)
