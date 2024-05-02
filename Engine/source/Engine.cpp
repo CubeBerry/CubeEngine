@@ -6,10 +6,9 @@
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
-	std::cout << "Select API number: ";
-	std::cout << std::endl;
 	std::cout << "0. OpenGL    1. Vulkan";
 	std::cout << std::endl << std::endl;
+	std::cout << "Select API number: ";
 	int number{ 0 };
 	std::cin >> number;
 	std::cout << std::endl;
