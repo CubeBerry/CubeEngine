@@ -9,6 +9,11 @@
 #include "glm/vec2.hpp"
 #include <memory>
 
+enum class GraphicsMode
+{
+	GL, VK,
+};
+
 enum class WindowMode
 {
 	NORMAL,
@@ -21,7 +26,8 @@ class Window
 public:
 	Window() = default;
 	~Window() = default;
-	void Init(const char* title, int width, int height, bool fullscreen, WindowMode mode);
+	void Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode);
+	void InitWindowGL(WindowMode wMode, const char* title, int flags);
 
 	SDL_Window* GetWindow() { return window.get(); };
 	bool GetMinimized() { return isMinimized; };
@@ -37,6 +43,7 @@ private:
 		}
 	};
 	std::unique_ptr<SDL_Window, SDLWindowDestroyer> window;
+	SDL_GLContext context;
 
 	glm::vec2 wSize = { 0,0 };
 	bool isMinimized{ false };

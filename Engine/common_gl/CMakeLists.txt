@@ -19,5 +19,8 @@ add_library(common_gl STATIC ${SOURCES} ${INCLUDES})
 # target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan)
 
 # find_package(Vulkan REQUIRED)
+target_include_directories(${PROJECT_NAME} PUBLIC ${LIB_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${LIB_DIR}/glew)
 target_link_libraries(${PROJECT_NAME} ${LIB_DIR}/glew/glew32.lib)
+# For MSVC
+target_link_libraries(${PROJECT_NAME} opengl32)

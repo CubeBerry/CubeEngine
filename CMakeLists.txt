@@ -76,6 +76,9 @@ set(GL_DIR "./Engine/common_gl")
 add_subdirectory("${GL_DIR}")
 target_link_libraries(${PROJECT_NAME} common_gl)
 target_include_directories(${PROJECT_NAME} PUBLIC ${GL_INC_DIR})
+file(COPY ./Engine/common_gl/libs/glew/glew32.dll
+DESTINATION ${CMAKE_BINARY_DIR}
+)
 
 # SDL2
 #set(SDL_DIR "./Engine/libs/SDL2")

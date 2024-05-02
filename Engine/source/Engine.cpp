@@ -6,9 +6,20 @@
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
+	std::cout << "Select API number: ";
+	std::cout << std::endl;
+	std::cout << "0. OpenGL    1. Vulkan";
+	std::cout << std::endl << std::endl;
+	int number{ 0 };
+	std::cin >> number;
+	std::cout << std::endl;
+
 	//Init Window -> Init VKInit -> Init SwapChain -> Init VKRenderManager
 	//window = new Window();
-	window.Init(title, windowWidth, windowHeight, fullScreen, mode);
+	if (number == 0)
+		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);
+	else
+		window.Init(GraphicsMode::VK, title, windowWidth, windowHeight, fullScreen, mode);
 	timer.Init();
 
 	//vkInit = new VKInit();
