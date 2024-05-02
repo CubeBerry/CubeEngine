@@ -8,6 +8,8 @@ project(Project)
 
 set(VK_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk/include")
 include_directories(${VK_INC_DIR})
+set(GL_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_gl/include")
+include_directories(${GL_INC_DIR})
 
 # ImGui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
@@ -59,8 +61,8 @@ set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES} ${IMGUI_SOURCES})
 
-source_group("Engine"            FILES ${ENGINE_SRC})
-source_group("Game"            FILES ${GAME_SRC})
+source_group("Engine"           FILES ${ENGINE_SRC})
+source_group("Game"             FILES ${GAME_SRC})
 source_group("ImGui"            FILES ${IMGUI_SOURCES})
 
 # common_vk
@@ -68,6 +70,12 @@ set(VK_DIR "./Engine/common_vk")
 add_subdirectory("${VK_DIR}")
 target_link_libraries(${PROJECT_NAME} common_vk)
 target_include_directories(${PROJECT_NAME} PUBLIC ${VK_INC_DIR})
+
+# common_gl
+set(GL_DIR "./Engine/common_gl")
+add_subdirectory("${GL_DIR}")
+target_link_libraries(${PROJECT_NAME} common_gl)
+target_include_directories(${PROJECT_NAME} PUBLIC ${GL_INC_DIR})
 
 # SDL2
 #set(SDL_DIR "./Engine/libs/SDL2")
