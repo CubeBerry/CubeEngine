@@ -18,6 +18,12 @@
 
 #undef main
 
+//Call _CrtDumpMemoryLeaks after main has returned and before program terminates.
+struct AtExit
+{
+    ~AtExit() { _CrtDumpMemoryLeaks(); }
+} doAtExit;
+
 int main(void)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -39,5 +45,5 @@ int main(void)
     engine.End();
 
     //_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-    _CrtDumpMemoryLeaks();
+    //_CrtDumpMemoryLeaks();
 }
