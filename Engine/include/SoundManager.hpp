@@ -4,14 +4,13 @@
 #pragma once
 #ifndef BG_SOUNDMANAGER_H
 #define BG_SOUNDMANAGER_H
-const int MAX_SOUND_TRACK = 36;
 
 #include <string>
 #include <iostream>
 #include <map>
 #include <vector>
 
-#include "fmod.h"
+#include "fmod.hpp"
 #include "glm/glm.hpp"
 
 struct PlaybackTime
@@ -20,12 +19,17 @@ struct PlaybackTime
 	int seconds = 0;
 };
 
-struct Music
+struct Sound
 {
-	FMOD_SOUND* music = nullptr;
-	FMOD_CHANNEL* channel = nullptr;
+	FMOD::Sound* sound = nullptr;
 	std::wstring nameL;
 	std::string name;
+};
+
+struct Channel
+{
+	FMOD::Channel* channel = nullptr;
+	float soundVolume = 0.5f;
 };
 
 class SoundManager {
@@ -33,78 +37,64 @@ public:
 	SoundManager() = default;
 	~SoundManager();
 
-	void Initialize();
+	void Initialize(int maxChannel);
+	void Update();
 	void Shutdown();
 	
-	void ClearMusicList();
+	void ClearSounds();
 
-	void ErrorCheck(FMOD_RESULT result_);
+	void LoadFile(std::string filepath, std::string name, bool loop = false);
+	void LoadFile(std::wstring filepath, std::wstring name, bool loop = false);
 
-	void LoadSoundFile(std::string filepath, std::string name, bool loop = false);
-	void LoadMusicFile(std::wstring filepath, std::wstring name, bool loop = true);
-
-	void PlaySound(std::string name, bool loop = false);
-	void PlaySoundInArea2D(std::string name, glm::vec2 pos = { 0.f,0.f }, float maxDis = 1.f, bool loop = false);
-	void UpdateSoundVolumeInArea2D(std::string name, glm::vec2 pos = { 0.f,0.f }, float maxDis = 1.f);
-	void PlaySoundIn3D(std::string name, glm::vec3 pos = { 0.f,0.f,0.f }, float minDis = 0.f, float maxDis = 1.f); //wip
-	void StopSound(std::string name);
-	void PauseSound(std::string name, FMOD_BOOL state); // need to modify with isplaying(with channel)
-
-	void PlayMusic(int index, bool loop = true);
-	void PlayMusicInArea2D(int index, glm::vec2 pos = { 0.f,0.f }, float maxDis = 1.f, bool loop = true);
-	void UpdateMusicVolumeInArea2D(int index, glm::vec2 pos = { 0.f,0.f }, float maxDis = 1.f);
-	void PlayMusicIn3D(int index, glm::vec3 pos = { 0.f,0.f,0.f }, float minDis = 0.f, float maxDis = 1.f); //wip
-	void StopMusic(int index);
-	void PauseMusic(int index);
-	bool IsPlaying(int index);
-	bool IsPaused(int index);
-	void MoveMusicPlaybackPosition(int index, float pos);
-	float GetMusicPlaybackPosition(int index);
-	PlaybackTime GetMusicPlaybackTime(int index, float pos);
-
-	void SoundVolumeUp();
-	void SoundVolumeDown();
-
-	void MusicVolumeUp();
-	void MusicVolumeDown();
-
-	float GetSoundVolume() { return soundVolume; }
-	float GetMusicVolume() { return musicVolume; }
-
-	void SetSoundVolume(float amount); // need to modify with isplaying(with channel)
-	void SetMusicVolume(float amount);
-
+	void Play(std::string name, int channelIndex, bool loop = false);
+	void Play(int index, int channelIndex, bool loop = false);
+	
+	void PlaySoundInArea2D(std::string name, int channelIndex, glm::vec2 pos = { 0.f,0.f }, float maxDis = 1.f, bool loop = false);
+	void UpdateSoundVolumeInArea2D(int channelIndex, glm::vec2 pos = { 0.f,0.f }, float maxDis = 1.f);
+	void PlaySoundIn3D(std::string name, int channelIndex, glm::vec3 pos = { 0.f,0.f,0.f }, float minDis = 0.f, float maxDis = 1.f, bool loop = false); //wip
 	void SetListenerPosition(glm::vec3 pos);
 
+	void Stop(int channelIndex);
+	void Pause(int channelIndex, FMOD_BOOL state);
+	void Pause(int channelIndex);
+
+	bool IsPlaying(int channelIndex);
+	bool IsPaused(int channelIndex);
+
+	void MoveSoundPlaybackPosition(int channelIndex, int currentSoundIndex, float pos);
+	float GetSoundPlaybackPosition(int channelIndex, int currentSoundIndex);
+	PlaybackTime GetSoundPlaybackTime(int channelIndex, int currentSoundIndex, float pos);
+
+	void VolumeUp(int channelIndex);
+	void VolumeDown(int channelIndex);
+	void SetVolume(int channelIndex, float volume);
+	float GetChannelVolume(int channelIndex) { return channels.at(channelIndex).soundVolume; }
+
 	void LoadSoundFilesFromFolder(const std::string& folderPath);
-	void LoadMusicFilesFromFolder(const std::wstring& folderPath);
+	void LoadSoundFilesFromFolder(const std::wstring& folderPath);
 
-	std::vector<Music>& GetMusicList() { return Musics; }
-	int GetAmontOfMusics() { return musicMaxIndex; }
-
+	std::vector<Sound>& GetSoundList() { return sounds; }
+	int GetAmontOfSounds() { return soundMaxIndex; }
 #ifdef _DEBUG
-	void MusicPlayerForImGui();
+	void MusicPlayerForImGui(int channelIndex);
 #endif
 private:
+	void ErrorCheck(FMOD_RESULT result_);
+	int FindSoundIndexWithName(std::string name);
 
-	std::map<std::string, FMOD_SOUND*> Sounds;
-	std::map<std::string, FMOD_CHANNEL*> Channels;
+	std::vector<Sound> sounds;
+	std::vector<Channel> channels;
 
-	std::vector<Music> Musics;
-	int musicMaxIndex = 0;
+	int soundMaxIndex = 0;
 
 	FMOD_VECTOR listenerPosition = { 0.f,0.f,0.f };
 
-	FMOD_SYSTEM* system = nullptr;
-	FMOD_RESULT result = FMOD_OK;
-
-	float soundVolume = 0.5f;
-	float musicVolume = 0.5f;
+	FMOD::System* system;
+	FMOD_RESULT result;
 
 #ifdef _DEBUG
 	int currentIndex = 0;
 	bool isAdjusting = false;
 #endif
 };
-
 #endif

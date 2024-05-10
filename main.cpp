@@ -34,12 +34,12 @@ int main(void)
     engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
     engine.SetFPS(FrameRate::FPS_60);
 
-    engine.GetSoundManager().LoadMusicFilesFromFolder(L"..\\Game\\assets\\Musics");
-    engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
+    engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
+    //engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::PLATFORMDEMO);
+    engine.GetGameStateManager().LevelInit(GameLevel::POCKETBALL);
 
     engine.Update();
     engine.End();

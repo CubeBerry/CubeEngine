@@ -166,7 +166,7 @@ void PocketBallDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::ShowDemoWindow();
 	Engine::GetGameStateManager().StateChanger();
-	Engine::GetSoundManager().MusicPlayerForImGui();
+	Engine::GetSoundManager().MusicPlayerForImGui(0);
 }
 #endif
 

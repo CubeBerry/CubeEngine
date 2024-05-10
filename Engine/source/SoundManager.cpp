@@ -33,306 +33,309 @@ SoundManager::~SoundManager()
 	Shutdown();
 }
 
-void SoundManager::Initialize()
+void SoundManager::Initialize(int maxChannel)
 {
-	if (system == nullptr)
+	result = FMOD::System_Create(&system);
+	ErrorCheck(result);
+
+	result = system->init(maxChannel, FMOD_INIT_NORMAL, 0);
+	ErrorCheck(result);
+
+	for (int i = 0; i <= maxChannel; i++)
 	{
-		result = FMOD_System_Create(&system);
-		ErrorCheck(result);
-		result = FMOD_System_Init(system, MAX_SOUND_TRACK, FMOD_INIT_NORMAL, NULL);
-		ErrorCheck(result);
+		Channel channel;
+		channels.push_back(std::move(channel));
+		channels.back().channel->setVolume(channels.back().soundVolume);
 	}
+}
+
+void SoundManager::Update()
+{
+	result = system->update();
+	ErrorCheck(result);
 }
 
 void SoundManager::Shutdown()
 {
-	for (auto sound : Sounds)
-	{
-		result = FMOD_Sound_Release(sound.second);
-		ErrorCheck(result);
-	}
-	Channels.clear();
+	ClearSounds();
 
-	ClearMusicList();
+	channels.clear();
 
-	result = FMOD_System_Release(system);
-	ErrorCheck(result);
+	system->release();
+	system->close();
 }
 
-void SoundManager::ClearMusicList()
+void SoundManager::ClearSounds()
 {
-	for (auto sound : Musics)
+	for (auto sound : sounds)
 	{
-		result = FMOD_Sound_Release(sound.music);
+		result = sound.sound->release();
 		ErrorCheck(result);
 	}
-	Musics.clear();
+
+	for (auto channel : channels)
+	{
+		channel.channel->stop();
+	}
+
+	sounds.clear();
+	soundMaxIndex = 0;
 }
 
 void SoundManager::ErrorCheck(FMOD_RESULT result_)
 {
-	if (result_ != FMOD_OK)
+	if (result_ != FMOD_OK && result_ != FMOD_ERR_INVALID_HANDLE)
 	{
 		exit(-1);
 	}
 }
 
-void SoundManager::LoadSoundFile(std::string filepath, std::string name, bool loop)
+void SoundManager::LoadFile(std::string filepath, std::string name, bool loop)
 {
+	Sound sound;
+	sounds.push_back(std::move(sound));
 	if (loop == true)
 	{
-		result = FMOD_System_CreateSound(system, filepath.c_str(), FMOD_LOOP_NORMAL | FMOD_2D | FMOD_3D, nullptr, &Sounds[name]);
+		result = system->createSound(filepath.c_str(), FMOD_LOOP_NORMAL | FMOD_2D | FMOD_3D, nullptr, &sounds[soundMaxIndex].sound);
 		ErrorCheck(result);
 	}
 	else
 	{
-		result = FMOD_System_CreateSound(system, filepath.c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &Sounds[name]);
+		result = system->createSound(filepath.c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &sounds[soundMaxIndex].sound);
 		ErrorCheck(result);
 	}
-	FMOD_CHANNEL* channel = NULL;
-	Channels[name] = std::move(channel);
+	sounds[soundMaxIndex].name = name;
+	++soundMaxIndex;
 }
 
-void SoundManager::LoadMusicFile(std::wstring filepath, std::wstring name, bool loop)
+void SoundManager::LoadFile(std::wstring filepath, std::wstring name, bool loop)
 {
-	Musics.push_back(Music());
+	Sound sound;
+	sounds.push_back(std::move(sound));
 	std::string path = ConvertWideStringToUTF8(filepath);
 	if (loop == true)
 	{
-		result = FMOD_System_CreateSound(system, path.c_str(), FMOD_LOOP_NORMAL | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
+		result = system->createSound(path.c_str(), FMOD_LOOP_NORMAL | FMOD_2D | FMOD_3D, nullptr, &sounds[soundMaxIndex].sound);
 		ErrorCheck(result);
 	}
 	else
 	{
-		result = FMOD_System_CreateSound(system, path.c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &Musics[musicMaxIndex].music);
+		result = system->createSound(path.c_str(), FMOD_DEFAULT | FMOD_2D | FMOD_3D, nullptr, &sounds[soundMaxIndex].sound);
 		ErrorCheck(result);
 	}
-	FMOD_CHANNEL* channel = NULL;
-	Musics[musicMaxIndex].channel = std::move(channel);
-	Musics[musicMaxIndex].name = ConvertWideStringToUTF8(name);
-	Musics[musicMaxIndex].nameL = name;
-	++musicMaxIndex;
+	sounds[soundMaxIndex].name = ConvertWideStringToUTF8(name);
+	sounds[soundMaxIndex].nameL = name;
+	++soundMaxIndex;
 }
 
-void SoundManager::PlaySound(std::string name, bool loop)
+void SoundManager::Play(std::string name, int channelIndex, bool loop)
 {
-	FMOD_System_Update(system);
-	if (Sounds[name] != nullptr)
+	int index = FindSoundIndexWithName(name);
+	Play(index, channelIndex, loop);
+}
+
+void SoundManager::Play(int index, int channelIndex, bool loop)
+{
+	result = system->update();
+	ErrorCheck(result);
+
+	if (sounds[index].sound != nullptr)
 	{
-		result = FMOD_System_PlaySound(system, Sounds[name], nullptr, false, &Channels[name]);
+		result = system->playSound(sounds[index].sound, nullptr, false, &channels[channelIndex].channel);
+		ErrorCheck(result);
+
+		result = channels[channelIndex].channel->setVolume(channels[channelIndex].soundVolume);
+		ErrorCheck(result);
 
 		FMOD_MODE mode = loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF;
-		FMOD_Sound_SetMode(Sounds[name], mode);
-
+		result = sounds[index].sound->setMode(mode);
 		ErrorCheck(result);
-	}
-	if (Channels[name] != nullptr)
-	{
-		result = FMOD_Channel_SetVolume(Channels[name], soundVolume);
 
-		ErrorCheck(result);
 	}
 }
 
-void SoundManager::PlaySoundInArea2D(std::string name, glm::vec2 pos, float maxDis, bool loop)
+void SoundManager::Stop(int channelIndex)
 {
-	FMOD_System_Update(system);
-	if (Sounds[name] != nullptr)
+	if (channels[channelIndex].channel != nullptr)
 	{
-		result = FMOD_System_PlaySound(system, Sounds[name], nullptr, false, &Channels[name]);
-
-		FMOD_MODE mode = loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF;
-		FMOD_Sound_SetMode(Sounds[name], mode);
-
-		ErrorCheck(result);
-	}
-	UpdateSoundVolumeInArea2D(name, pos, maxDis);
-}
-
-void SoundManager::UpdateSoundVolumeInArea2D(std::string name, glm::vec2 pos, float maxDis)
-{
-	if (Channels[name] != nullptr)
-	{
-		float distance = static_cast<float>(std::sqrt(std::pow(pos.x - listenerPosition.x, 2) + std::pow(pos.y - listenerPosition.y, 2)));
-		float volume = 1.0f - std::min(distance / maxDis, 1.0f);
-
-		result = FMOD_Channel_SetVolume(Channels[name], musicVolume * volume);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::PlaySoundIn3D(std::string name, glm::vec3 pos, float minDis, float maxDis)
-{
-	FMOD_VECTOR position = { pos.x, pos.y, pos.z };
-	FMOD_VECTOR velocity = { 0.f, 0.f, 0.f };
-
-	FMOD_System_Update(system);
-	if (Sounds[name] != nullptr)
-	{
-		result = FMOD_System_PlaySound(system, Sounds[name], nullptr, false, &Channels[name]);
-		result = FMOD_Sound_Set3DMinMaxDistance(Sounds[name], minDis, maxDis);
-		ErrorCheck(result);
-	}
-	if (Channels[name] != nullptr)
-	{
-		result = FMOD_Channel_SetVolume(Channels[name], soundVolume);
-		result = FMOD_Channel_Set3DAttributes(Channels[name], &position, &velocity);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::StopSound(std::string name)
-{
-	if (Channels[name] != nullptr)
-	{
-		result = FMOD_Channel_Stop(Channels[name]);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::PauseSound(std::string name, FMOD_BOOL state)
-{
-	if (Channels[name] != nullptr)
-	{
-		result = FMOD_Channel_SetPaused(Channels[name], state);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::PlayMusic(int index, bool loop)
-{
-	FMOD_System_Update(system);
-	if (Musics[index].music != nullptr)
-	{
-		result = FMOD_System_PlaySound(system, Musics[index].music, nullptr, false, &Musics[index].channel);
-
-		FMOD_MODE mode = loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF;
-		FMOD_Sound_SetMode(Musics[index].music, mode);
-
-		ErrorCheck(result);
-	}
-	if (Musics[index].channel != nullptr)
-	{
-		result = FMOD_Channel_SetVolume(Musics[index].channel, musicVolume);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::PlayMusicInArea2D(int index, glm::vec2 pos, float maxDis, bool loop)
-{
-	FMOD_System_Update(system);
-	if (Musics[index].music != nullptr)
-	{
-		result = FMOD_System_PlaySound(system, Musics[index].music, nullptr, false, &Musics[index].channel);
-
-		FMOD_MODE mode = loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF;
-		FMOD_Sound_SetMode(Musics[index].music, mode);
-
-		ErrorCheck(result);
-	}
-	UpdateMusicVolumeInArea2D(index, pos, maxDis);
-}
-
-void SoundManager::UpdateMusicVolumeInArea2D(int index, glm::vec2 pos, float maxDis)
-{
-	if (Musics[index].channel != nullptr)
-	{
-		float distance = static_cast<float>(std::sqrt(std::pow(pos.x - listenerPosition.x, 2) + std::pow(pos.y - listenerPosition.y, 2)));
-		float volume = 1.0f - std::min(distance / maxDis, 1.0f);
-
-		result = FMOD_Channel_SetVolume(Musics[index].channel, musicVolume * volume);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::PlayMusicIn3D(int index, glm::vec3 pos, float minDis, float maxDis)
-{
-	FMOD_VECTOR position = { pos.x, pos.y, pos.z };
-	FMOD_VECTOR velocity = { 0.f, 0.f, 0.f };
-
-	FMOD_System_Update(system);
-	if (Musics[index].music != nullptr)
-	{
-		result = FMOD_System_PlaySound(system, Musics[index].music, nullptr, false, &Musics[index].channel);
-		result = FMOD_Sound_Set3DMinMaxDistance(Musics[index].music, minDis, maxDis);
-		ErrorCheck(result);
-	}
-	if (Musics[index].channel != nullptr)
-	{
-		result = FMOD_Channel_SetVolume(Musics[index].channel, musicVolume);
-		result = FMOD_Channel_Set3DAttributes(Musics[index].channel, &position, &velocity);
-		ErrorCheck(result);
-	}
-}
-
-void SoundManager::StopMusic(int index)
-{
-	FMOD_BOOL isplay;
-	if (Musics[index].channel != nullptr)
-	{
-		FMOD_Channel_IsPlaying(Musics[index].channel, &isplay);
-		if (isplay == static_cast<FMOD_BOOL>(true))
+		if (IsPlaying(channelIndex) == true)
 		{
-			result = FMOD_Channel_Stop(Musics[index].channel);
+			result = channels[channelIndex].channel->stop();
 			ErrorCheck(result);
 		}
 	}
 }
 
-void SoundManager::PauseMusic(int index)
+void SoundManager::Pause(int channelIndex, FMOD_BOOL state)
 {
-	if (Musics[index].channel != nullptr)
+	if (channels[channelIndex].channel != nullptr)
 	{
-		if (IsPlaying(index) == true)
+		if (IsPlaying(channelIndex) == true)
 		{
-			if (IsPaused(index) == false)
+			result = channels[channelIndex].channel->setPaused(state);
+			ErrorCheck(result);
+		}
+	}
+}
+
+void SoundManager::Pause(int channelIndex)
+{
+	if (channels[channelIndex].channel != nullptr)
+	{
+		if (IsPlaying(channelIndex) == true)
+		{
+			if (IsPaused(channelIndex) == false)
 			{
-				result = FMOD_Channel_SetPaused(Musics[index].channel, true);
+				result = channels[channelIndex].channel->setPaused(true);
+				ErrorCheck(result);
 			}
 			else
 			{
-				result = FMOD_Channel_SetPaused(Musics[index].channel, false);
+				result = channels[channelIndex].channel->setPaused(false);
+				ErrorCheck(result);
 			}
 		}
+	}
+}
+
+bool SoundManager::IsPlaying(int channelIndex)
+{
+	if (channels[channelIndex].channel != nullptr)
+	{
+		bool isplay = false;
+		result = channels[channelIndex].channel->isPlaying(&isplay);
+		ErrorCheck(result);
+		return isplay;
+	}
+	return false;
+}
+
+bool SoundManager::IsPaused(int channelIndex)
+{
+	if (channels[channelIndex].channel != nullptr)
+	{
+		bool ispaused = false;
+		result = channels[channelIndex].channel->getPaused(&ispaused);
+		ErrorCheck(result);
+		return ispaused;
+	}
+	return false;
+}
+
+void SoundManager::VolumeUp(int channelIndex)
+{
+	SetVolume(channelIndex, channels[channelIndex].soundVolume + 0.05f);
+}
+
+void SoundManager::VolumeDown(int channelIndex)
+{
+	SetVolume(channelIndex, channels[channelIndex].soundVolume - 0.05f);
+}
+
+void SoundManager::SetVolume(int channelIndex, float volume)
+{
+	if (channels[channelIndex].channel != nullptr)
+	{
+		result = channels[channelIndex].channel->setVolume(volume);
+		ErrorCheck(result);
+
+		channels[channelIndex].soundVolume = volume;
+	}
+}
+
+int SoundManager::FindSoundIndexWithName(std::string name)
+{
+	auto it = std::find_if(sounds.begin(), sounds.end(), [&](const Sound& sound) {
+		return sound.name == name; });
+
+	if (static_cast<Sound>(*it).sound != nullptr)
+	{
+		return static_cast<int>(std::distance(sounds.begin(), it));
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+void SoundManager::PlaySoundInArea2D(std::string name, int channelIndex, glm::vec2 pos, float maxDis, bool loop)
+{
+	result = system->update();
+	ErrorCheck(result);
+
+	Play(name, channelIndex, loop);
+	UpdateSoundVolumeInArea2D(channelIndex, pos, maxDis);
+}
+
+void SoundManager::UpdateSoundVolumeInArea2D(int channelIndex, glm::vec2 pos, float maxDis)
+{
+	if (channels[channelIndex].channel != nullptr)
+	{
+		float distance = static_cast<float>(std::sqrt(std::pow(pos.x - listenerPosition.x, 2) + std::pow(pos.y - listenerPosition.y, 2)));
+		float volume = 1.0f - std::min(distance / maxDis, 1.0f);
+
+		SetVolume(channelIndex, channels[channelIndex].soundVolume * volume);
+	}
+}
+
+void SoundManager::PlaySoundIn3D(std::string name, int channelIndex, glm::vec3 pos, float minDis, float maxDis, bool loop)
+{
+	FMOD_VECTOR position = { pos.x, pos.y, pos.z };
+	FMOD_VECTOR velocity = { 0.f, 0.f, 0.f };
+
+	result = system->update();
+	ErrorCheck(result);
+	int index = FindSoundIndexWithName(name);
+	if (sounds[index].sound != nullptr)
+	{
+		result = system->playSound(sounds[index].sound, NULL, false, &channels[channelIndex].channel);
+		ErrorCheck(result);
+
+		FMOD_MODE mode = loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF;
+		result = sounds[index].sound->setMode(mode);
+		ErrorCheck(result);
+
+		result = sounds[index].sound->set3DMinMaxDistance(minDis, maxDis);
+		ErrorCheck(result);
+	}
+	if (channels[channelIndex].channel != nullptr)
+	{
+		result = channels[channelIndex].channel->setVolume(channels[channelIndex].soundVolume);
+		ErrorCheck(result);
+
+		result = channels[channelIndex].channel->set3DAttributes(&position, &velocity);
 		ErrorCheck(result);
 	}
 }
 
-bool SoundManager::IsPlaying(int index)
+void SoundManager::MoveSoundPlaybackPosition(int channelIndex, int currentSoundIndex, float pos)
 {
-	FMOD_BOOL isplay = false;
-	FMOD_Channel_IsPlaying(Musics[index].channel, &isplay);
-	return isplay;
-}
-
-bool SoundManager::IsPaused(int index)
-{
-	FMOD_BOOL ispaused;
-	FMOD_Channel_GetPaused(Musics[index].channel, &ispaused);
-	return ispaused;
-}
-
-void SoundManager::MoveMusicPlaybackPosition(int index, float pos)
-{
-	if (Musics[index].channel != nullptr)
+	if (channels[channelIndex].channel != nullptr)
 	{
 		unsigned int totalLength = 0;
-		result = FMOD_Sound_GetLength(Musics[index].music, &totalLength, FMOD_TIMEUNIT_MS);
+		result = sounds[currentSoundIndex].sound->getLength(&totalLength, FMOD_TIMEUNIT_MS);
+		ErrorCheck(result);
 
 		unsigned int newPosition = static_cast<unsigned int>(pos * totalLength);
-		result = FMOD_Channel_SetPosition(Musics[index].channel, newPosition, FMOD_TIMEUNIT_MS);
+		result = channels[channelIndex].channel->setPosition(newPosition, FMOD_TIMEUNIT_MS);
 	}
 }
 
-float SoundManager::GetMusicPlaybackPosition(int index)
+float SoundManager::GetSoundPlaybackPosition(int channelIndex, int currentSoundIndex)
 {
-	if (Musics[index].channel != nullptr)
+	if (channels[channelIndex].channel != nullptr)
 	{
 		unsigned int currentTime = 0;
 		unsigned int totalLength = 0;
 
-		result = FMOD_Channel_GetPosition(Musics[index].channel, &currentTime, FMOD_TIMEUNIT_MS);
-		result = FMOD_Sound_GetLength(Musics[index].music, &totalLength, FMOD_TIMEUNIT_MS);
+		if (IsPlaying(channelIndex) == true)
+		{
+			result = channels[channelIndex].channel->getPosition(&currentTime, FMOD_TIMEUNIT_MS);
+			ErrorCheck(result);
+		}
+
+		result = sounds[currentSoundIndex].sound->getLength(&totalLength, FMOD_TIMEUNIT_MS);
+		ErrorCheck(result);
 
 		if (totalLength > 0)
 		{
@@ -346,13 +349,14 @@ float SoundManager::GetMusicPlaybackPosition(int index)
 	return 0.0f;
 }
 
-PlaybackTime SoundManager::GetMusicPlaybackTime(int index, float pos)
+PlaybackTime SoundManager::GetSoundPlaybackTime(int channelIndex, int currentSoundIndex, float pos)
 {
 	PlaybackTime temp;
-	if (Musics[index].channel != nullptr)
+	if (channels[channelIndex].channel != nullptr)
 	{
 		unsigned int totalLength = 0;
-		result = FMOD_Sound_GetLength(Musics[index].music, &totalLength, FMOD_TIMEUNIT_MS);
+		result = sounds[currentSoundIndex].sound->getLength(&totalLength, FMOD_TIMEUNIT_MS);
+		ErrorCheck(result);
 
 		temp.minutes = static_cast<int>(static_cast<float>(pos * totalLength) / 1000.0f / 60);
 		temp.seconds = static_cast<int>(static_cast<float>(pos * totalLength) / 1000.0f) % 60;
@@ -360,61 +364,15 @@ PlaybackTime SoundManager::GetMusicPlaybackTime(int index, float pos)
 	return temp;
 }
 
-void SoundManager::SoundVolumeUp()
-{
-	SetSoundVolume(soundVolume + 0.05f);
-}
-
-void SoundManager::SoundVolumeDown()
-{
-	SetSoundVolume(soundVolume - 0.05f);
-}
-
-void SoundManager::MusicVolumeUp()
-{
-	SetMusicVolume(musicVolume + 0.05f);
-}
-
-void SoundManager::MusicVolumeDown()
-{
-	SetMusicVolume(musicVolume - 0.05f);
-}
-
-void SoundManager::SetSoundVolume(float amount)
-{
-	soundVolume = std::min(amount, 1.f);
-	for (auto channel : Channels)
-	{
-		if (channel.second != nullptr)
-		{
-			result = FMOD_Channel_SetVolume(channel.second, soundVolume);
-			ErrorCheck(result);
-		}
-	}
-}
-
-void SoundManager::SetMusicVolume(float amount)
-{
-	musicVolume = std::min(amount, 1.f);
-	int index = 0;
-	for (auto channel : Musics)
-	{
-		if (channel.channel != nullptr && IsPlaying(index) == true)
-		{
-			result = FMOD_Channel_SetVolume(channel.channel, musicVolume);
-			ErrorCheck(result);
-		}
-		++index;
-	}
-}
-
 void SoundManager::SetListenerPosition(glm::vec3 pos)
 {
 	listenerPosition = { pos.x, pos.y, pos.z };
 	FMOD_VECTOR listenerVelocity = { 0, 0, 0 };
 
-	FMOD_System_Set3DListenerAttributes(system, 0, &listenerPosition, &listenerVelocity, 0, 0);
+	result = system->set3DListenerAttributes(0, &listenerPosition, &listenerVelocity, 0, 0);
+	ErrorCheck(result);
 }
+
 
 void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 {
@@ -443,7 +401,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 #ifdef _DEBUG
 				std::cout << "Load Sound Complete : " << fileName << std::endl;
 #endif
-				LoadSoundFile(filePath, fileName);
+				LoadFile(filePath, fileName);
 			}
 
 		} while (FindNextFile(hFind, &findData));
@@ -452,7 +410,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 	}
 }
 
-void SoundManager::LoadMusicFilesFromFolder(const std::wstring& folderPath)
+void SoundManager::LoadSoundFilesFromFolder(const std::wstring& folderPath)
 {
 	WIN32_FIND_DATAW  findData;
 	HANDLE hFind;
@@ -470,7 +428,7 @@ void SoundManager::LoadMusicFilesFromFolder(const std::wstring& folderPath)
 			std::wstring fileName = findData.cFileName;
 			std::wstring filePath = folderPath + L"\\" + fileName;
 
-			std::wstring extension = filePath.substr(filePath.find_last_of('.') + 1); 
+			std::wstring extension = filePath.substr(filePath.find_last_of('.') + 1);
 			std::transform(extension.begin(), extension.end(), extension.begin(),
 				[](wchar_t c) { return std::tolower(c, std::locale()); });
 
@@ -478,7 +436,7 @@ void SoundManager::LoadMusicFilesFromFolder(const std::wstring& folderPath)
 			if (extension == L"mp3" || extension == L"ogg")
 			{
 				std::cout << "Load Music Complete : " << ConvertWideStringToUTF8(fileName).c_str() << std::endl;
-				LoadMusicFile(filePath, fileName);
+				LoadFile(filePath, fileName);
 			}
 
 		} while (FindNextFileW(hFind, &findData));
@@ -488,38 +446,46 @@ void SoundManager::LoadMusicFilesFromFolder(const std::wstring& folderPath)
 }
 
 #ifdef _DEBUG
-void SoundManager::MusicPlayerForImGui()
+void SoundManager::MusicPlayerForImGui(int channelIndex)
 {
-	if (musicMaxIndex > 0)
+	if (soundMaxIndex > 0)
 	{
 		ImGui::Begin("MusicPlayer");
 		ImGui::Text("Now Playing:");
 		ImGui::SameLine();
-		ImGui::Text(GetMusicList().at(currentIndex).name.c_str());
+		ImGui::Text(GetSoundList().at(currentIndex).name.c_str());
 
 		//Button
 		if (ImGui::Button("Prev")) //키 입력 함수
 		{
-			StopMusic(currentIndex);
+			Stop(channelIndex);
 			--currentIndex;
 			if (currentIndex < 0)
 			{
-				currentIndex = GetAmontOfMusics() - 1;
+				currentIndex = GetAmontOfSounds() - 1;
 			}
-			PlayMusic(currentIndex);
-		}
-		if (IsPaused(currentIndex) == true)
+			Play(currentIndex, channelIndex);
+		} 
+		if (IsPlaying(channelIndex) != true)
 		{
 			ImGui::SameLine();
 			if (ImGui::Button("Play"))
 			{
-				if (IsPlaying(currentIndex) != true)
+				Play(currentIndex, channelIndex);
+			}
+		}
+		else if (IsPaused(channelIndex) == true)
+		{
+			ImGui::SameLine();
+			if (ImGui::Button("Play"))
+			{
+				if (IsPlaying(channelIndex) != true)
 				{
-					PlayMusic(currentIndex);
+					Play(currentIndex, channelIndex);
 				}
 				else
 				{
-					PauseMusic(currentIndex);
+					Pause(channelIndex);
 				}
 			}
 		}
@@ -528,48 +494,48 @@ void SoundManager::MusicPlayerForImGui()
 			ImGui::SameLine();
 			if (ImGui::Button("Pause"))
 			{
-				PauseMusic(currentIndex);
+				Pause(channelIndex);
 			}
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Stop"))
 		{
-			StopMusic(currentIndex);
+			Stop(channelIndex);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Next"))
 		{
-			StopMusic(currentIndex);
+			Stop(channelIndex);
 			++currentIndex;
-			if (currentIndex > GetAmontOfMusics() - 1)
+			if (currentIndex > GetAmontOfSounds() - 1)
 			{
 				currentIndex = 0;
 			}
-			PlayMusic(currentIndex);
+			Play(currentIndex, channelIndex);
 		}
 		//Button
-		
+
 		//music playback
-		float currentPlaybackPosition = GetMusicPlaybackPosition(currentIndex);
-		PlaybackTime pTime = GetMusicPlaybackTime(currentIndex, currentPlaybackPosition);
+		float currentPlaybackPosition = GetSoundPlaybackPosition(channelIndex, currentIndex);
+		PlaybackTime pTime = GetSoundPlaybackTime(channelIndex, currentIndex, currentPlaybackPosition);
 		ImGui::PushItemWidth(256);
 		if (ImGui::SliderFloat(" ", &currentPlaybackPosition, 0.0f, 1.0f, ""))
 		{
 			if (isAdjusting == false)
 			{
-				if (IsPaused(currentIndex) == false)
+				if (IsPaused(channelIndex) == false)
 				{
-					PauseMusic(currentIndex);
+					Pause(channelIndex);
 				}
 				isAdjusting = true;
 			}
-			MoveMusicPlaybackPosition(currentIndex, currentPlaybackPosition);
+			MoveSoundPlaybackPosition(channelIndex, currentIndex, currentPlaybackPosition);
 		}
 		else
 		{
 			if (isAdjusting == true)
 			{
-				PauseMusic(currentIndex);
+				Pause(channelIndex);
 				isAdjusting = false;
 			}
 		}
@@ -579,11 +545,11 @@ void SoundManager::MusicPlayerForImGui()
 		//music playback
 
 		//volume
-		float volume = GetMusicVolume() * 100.0f;
+		float volume = channels.at(channelIndex).soundVolume * 100.0f;
 		ImGui::PushItemWidth(128);
 		if (ImGui::SliderFloat("MusicVolume", &volume, 0.0f, 100.0f, "%.2f"))
 		{
-			SetMusicVolume(volume / 100.f);
+			SetVolume(channelIndex, volume / 100.f);
 		}
 		ImGui::PopItemWidth();
 		//volume
@@ -592,14 +558,14 @@ void SoundManager::MusicPlayerForImGui()
 		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
 		ImGui::BeginChild("Scolling");
 		int index = 0;
-		for (auto& music : GetMusicList())
+		for (auto& music : GetSoundList())
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, (currentIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
 			if (ImGui::Selectable(music.name.c_str(), index))
 			{
-				StopMusic(currentIndex);
+				Stop(channelIndex);
 				currentIndex = index;
-				PlayMusic(currentIndex);
+				Play(currentIndex, channelIndex);
 			}
 			ImGui::PopStyleColor();
 			index++;
