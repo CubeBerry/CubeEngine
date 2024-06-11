@@ -8,6 +8,7 @@
 class GLIndexBuffer
 {
 public:
+    GLIndexBuffer() = default;
     GLIndexBuffer(std::vector<uint16_t>* indices);
     ~GLIndexBuffer();
 

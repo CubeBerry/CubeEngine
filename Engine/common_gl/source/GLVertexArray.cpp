@@ -1,3 +1,6 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: GLVertexArray.cpp
 #include "GLVertexArray.hpp"
 
 GLVertexArray::GLVertexArray()

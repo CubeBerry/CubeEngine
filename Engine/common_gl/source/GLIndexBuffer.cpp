@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: GLIndexBuffer.hpp
+//File: GLIndexBuffer.cpp
 #include "GLIndexBuffer.hpp"
 
 GLIndexBuffer::GLIndexBuffer(std::vector<uint16_t>* indices) : count(indices->size())

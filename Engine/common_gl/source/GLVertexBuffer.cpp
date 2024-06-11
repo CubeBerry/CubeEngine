@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: GLVertexArray.cpp
+//File: GLVertexBuffer.cpp
 #include "GLVertexBuffer.hpp"
 
 GLVertexBuffer::GLVertexBuffer(GLsizei size) : size(size)
