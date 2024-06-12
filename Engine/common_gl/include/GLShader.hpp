@@ -23,6 +23,8 @@ public:
     void Use(bool bind = true) const noexcept;
 
     void LoadShader(const std::initializer_list<std::pair<GLShader::Type, std::filesystem::path>>& paths);
+
+    GLuint GetProgramHandle() { return programHandle; };
 private:
     GLuint programHandle{ 0 };
 };

@@ -3,9 +3,8 @@
 //File: GLRenderManager.hpp
 #include "GLShader.hpp"
 #include "GLVertexArray.hpp"
-#include "GLVertexBuffer.hpp"
 #include "GLTexture.hpp"
-#include "GLIndexBuffer.hpp"
+#include "GLUniformBuffer.hpp"
 #include "glm/vec4.hpp"
 #include "Vertex.hpp"
 
@@ -40,9 +39,9 @@ private:
 	GLIndexBuffer* texIndex{ nullptr };
 
 	std::vector<VertexUniform> vertexVector;
-	//VKUniformBuffer<VertexUniform>* uVertex{ nullptr };
+	GLUniformBuffer* uVertex{ nullptr };
 	std::vector<FragmentUniform> fragVector;
-	//VKUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+	GLUniformBuffer* uFragment{ nullptr };
 
 	unsigned int quadCount{ 0 };
 };

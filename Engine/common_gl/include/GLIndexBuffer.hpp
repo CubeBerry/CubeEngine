@@ -2,7 +2,6 @@
 //Project: CubeEngine
 //File: GLIndexBuffer.hpp
 #include "glew/glew.h"
-#include "GLVertexBuffer.hpp"
 #include <vector>
 
 class GLIndexBuffer

@@ -17,13 +17,11 @@ void GLRenderManager::BeginRender()
 	shader.Use();
 	for (auto& tex : textures)
 	{
-		tex->UseForSlot(0);
+		tex->UseForSlot(1);
 	}
 
-	//shader[1].SendUniform("uTex2d", 0);
-	//shader[1].SendUniform("uTexelPos", texelPos.x / image.GetWidth(), texelPos.y / image.GetHeight());
-	//shader[1].SendUniform("uFrameSize", frameSize.x / image.GetWidth(), frameSize.y / image.GetHeight());
-	//shader[1].SendUniform("uModelToNDC", to_span(model_to_ndc));
+	uVertex->SendUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	uFragment->SendUniform(shader.GetProgramHandle(), 0, "fUniformMatrix", fragVector);
 
 	vertexArray.Use(true);
 	GLDrawIndexed(vertexArray);
@@ -54,7 +52,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (texVertex != nullptr)
 		delete texVertex;
-	texVertex = new GLVertexBuffer(sizeof(Vertex) * texVertices.size());
+	texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
 	texVertex->SetData(texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
@@ -70,14 +68,27 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 
 	quadCount++;
 
+	//Attributes
 	GLAttributeLayout position_layout;
 	position_layout.component_type = GLAttributeLayout::Float;
-	position_layout.component_dimension = GLAttributeLayout::_2;
+	position_layout.component_dimension = GLAttributeLayout::_4;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
-	position_layout.stride = sizeof(vec2);
+	position_layout.stride = sizeof(glm::vec4);
 	position_layout.offset = 0;
-	position_layout.relative_offset = 0;
+	position_layout.relative_offset = offsetof(Vertex, position);
+
+	GLAttributeLayout index_layout;
+	position_layout.component_type = GLAttributeLayout::Int;
+	position_layout.component_dimension = GLAttributeLayout::_1;
+	position_layout.normalized = false;
+	position_layout.vertex_layout_location = 1;
+	position_layout.stride = sizeof(int);
+	position_layout.offset = 0;
+	position_layout.relative_offset = offsetof(Vertex, index);
+
+	vertexArray.AddVertexBuffer(std::move(*texVertex), { position_layout, index_layout });
+	vertexArray.SetIndexBuffer(std::move(*texIndex));
 
 	//if (uVertex != nullptr)
 	//	delete uVertex;

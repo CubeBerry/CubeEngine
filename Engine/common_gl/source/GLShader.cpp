@@ -100,6 +100,6 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
     }
     catch (std::exception& e)
     {
-
+        e;
     }
 }
