@@ -6,6 +6,7 @@
 GLIndexBuffer::GLIndexBuffer(std::vector<uint16_t>* indices) : count(indices->size())
 {
 	glCreateBuffers(1, &indexHandle);
+	//Maybe should fix size
 	glNamedBufferStorage(indexHandle, sizeof(indices), indices->data(), GL_DYNAMIC_STORAGE_BIT);
 }
 

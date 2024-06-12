@@ -15,7 +15,7 @@ public:
 	~VKTexture();
 
 	void LoadTexture(const std::filesystem::path& path_, std::string name_);
-	void SetTextureID(int id) { texID = id; }
+	void SetTextureID(int id) { texID = id; };
 
 	VkSampler* GetSampler() { return &vkTextureSampler; };
 	VkImageView* GetImageView() { return &vkTextureImageView; };

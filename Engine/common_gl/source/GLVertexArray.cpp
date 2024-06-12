@@ -45,13 +45,3 @@ void GLVertexArray::Use(bool bind)
 		glBindVertexArray(0);
 	}
 }
-
-void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
-{
-	glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_SHORT, 0);
-}
-
-void GLDrawVertices(const GLVertexArray& vertex_array) noexcept
-{
-	glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount());
-}
