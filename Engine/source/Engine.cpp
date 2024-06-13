@@ -29,6 +29,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	//cameraManager = new CameraManager;
 	vkInit.Initialize();
 	vkRenderManager.Initialize(/*window.GetWindow()*/);
+	//glRenderManager.Initialize();
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 
 	//soundManager = new SoundManager;

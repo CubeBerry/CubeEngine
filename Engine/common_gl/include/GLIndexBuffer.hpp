@@ -1,6 +1,7 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: GLIndexBuffer.hpp
+#pragma once
 #include "glew/glew.h"
 #include <vector>
 

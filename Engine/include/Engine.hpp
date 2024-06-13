@@ -7,6 +7,7 @@
 #include "GameStateManager.hpp"
 #include "VKInit.hpp"
 #include "VKRenderManager.hpp"
+#include "GLRenderManager.hpp"
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"
 #include "CameraManager.hpp"
@@ -24,6 +25,7 @@ public:
 	static Window& GetWindow() { return Instance().window; }
 	static VKInit& GetVKInit() { return Instance().vkInit; }
 	static VKRenderManager& GetVKRenderManager() { return Instance().vkRenderManager; }
+	//static GLRenderManager& GetGLRenderManager() { return Instance().glRenderManager; }
 	static GameStateManager& GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager& GetInputManager() { return Instance().inputManager; }
 	static ObjectManager& GetObjectManager() { return Instance().objectManager; }
@@ -49,6 +51,7 @@ private:
 	Window window;
 	VKInit vkInit;
 	VKRenderManager vkRenderManager;
+	//GLRenderManager glRenderManager;
 	GameStateManager gameStateManger;
 	InputManager inputManager;
 	ObjectManager objectManager;

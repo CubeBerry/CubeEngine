@@ -80,7 +80,8 @@ void GameStateManager::Update(float dt)
 			if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
 			{
 #ifdef _DEBUG
-				DrawWithImGui(dt);
+				//DrawWithImGui(dt);
+				Draw();
 #else
 				Draw();
 #endif
@@ -125,6 +126,10 @@ void GameStateManager::Draw()
 		renderManager->EndRender();
 	}
 	//}
+
+	//GLRenderManager* renderManager = &Engine::Instance().GetGLRenderManager();
+	//renderManager->BeginRender();
+	//renderManager->EndRender();
 }
 
 void GameStateManager::LevelEnd()

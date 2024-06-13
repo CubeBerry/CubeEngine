@@ -3,6 +3,7 @@
 //File: GLUniformBuffer.hpp
 #include "GLUniformBuffer.hpp"
 
-GLUniformBuffer::~GLUniformBuffer()
+template <typename Material>
+GLUniformBuffer<Material>::~GLUniformBuffer()
 {
 }

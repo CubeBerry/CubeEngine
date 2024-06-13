@@ -1,6 +1,7 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: GLVertexBuffer.hpp
+#pragma once
 #include "glew/glew.h"
 
 class GLVertexBuffer

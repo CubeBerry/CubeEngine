@@ -14,17 +14,20 @@ void GLRenderManager::Initialize()
 
 void GLRenderManager::BeginRender()
 {
-	shader.Use();
-	for (auto& tex : textures)
-	{
-		tex->UseForSlot(1);
-	}
+	glClearColor(1, 0, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	uVertex->SendUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	uFragment->SendUniform(shader.GetProgramHandle(), 0, "fUniformMatrix", fragVector);
+	//shader.Use();
+	//for (auto& tex : textures)
+	//{
+	//	tex->UseForSlot(1);
+	//}
 
-	vertexArray.Use(true);
-	GLDrawIndexed(vertexArray);
+	//uVertex->SendUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	//uFragment->SendUniform(shader.GetProgramHandle(), 0, "fUniformMatrix", fragVector);
+
+	//vertexArray.Use(true);
+	//GLDrawIndexed(vertexArray);
 }
 
 void GLRenderManager::EndRender()

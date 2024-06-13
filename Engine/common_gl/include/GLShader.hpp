@@ -1,6 +1,7 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: GLShader.hpp
+#pragma once
 #include "glew/glew.h"
 #include <filesystem>
 

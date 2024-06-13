@@ -1,6 +1,7 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: GLRenderManager.hpp
+#pragma once
 #include "GLShader.hpp"
 #include "GLVertexArray.hpp"
 #include "GLTexture.hpp"
@@ -39,9 +40,9 @@ private:
 	GLIndexBuffer* texIndex{ nullptr };
 
 	std::vector<VertexUniform> vertexVector;
-	GLUniformBuffer* uVertex{ nullptr };
+	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };
 	std::vector<FragmentUniform> fragVector;
-	GLUniformBuffer* uFragment{ nullptr };
+	GLUniformBuffer<FragmentUniform>* uFragment{ nullptr };
 
 	unsigned int quadCount{ 0 };
 };
