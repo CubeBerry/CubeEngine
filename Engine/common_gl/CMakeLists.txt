@@ -15,12 +15,6 @@ add_library(common_gl STATIC ${GL_SOURCES} ${GL_INCLUDES})
 target_include_directories(common_gl PUBLIC ${GL_INC_DIR})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libs)
 target_include_directories(common_gl PUBLIC ${INC_DIR})
 target_include_directories(common_gl PUBLIC ${LIB_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libs)
-target_include_directories(common_gl PUBLIC ${VK_COMMON_LIB_DIR})
-
-target_link_libraries(common_gl PUBLIC ${LIB_DIR}/glew/glew32.dll)
-# target_link_libraries(common_gl PRIVATE ${LIB_DIR}/glew/glew32.lib)
-# For MSVC
-target_link_libraries(common_gl PUBLIC opengl32)

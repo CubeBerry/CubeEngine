@@ -8,18 +8,18 @@ project(Project LANGUAGES CXX C)
 
 # common_vk
 set(VK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk")
-add_subdirectory("${VK_DIR}")
-include_directories(${VK_DIR}/include)
+add_subdirectory(${VK_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
 
 # common_gl
 set(GL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_gl")
-add_subdirectory("${GL_DIR}")
-include_directories(${GL_DIR}/include)
+add_subdirectory(${GL_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
 
 # ImGui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
 set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
-include_directories(${IMGUI_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR})
 
 # common libs (FMOD, ImGUI, stb)
 set(COMMON_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs")
@@ -27,18 +27,18 @@ set(COMMON_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs")
 # FMOD
 set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
 set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
-include_directories(${FMOD_INC_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
-include_directories(${ENGINE_INC_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 
 # Game
 set(GAME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/source")
 set(GAME_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
 set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
-include_directories(${GAME_INC_DIR} ${ASSET_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 
 file(GLOB ENGINE_SRC
     "${ENGINE_INC_DIR}/*.hpp"
@@ -73,6 +73,19 @@ source_group("Game"             FILES ${GAME_SRC})
 source_group("ImGui"            FILES ${IMGUI_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/vulkan-1.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/SDL2.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.dll)
+# target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_DIR}/glew/glew32.lib)
+# For MSVC
+target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 
 file(COPY ./Engine/common_gl/libs/glew/glew32.dll
 DESTINATION ${CMAKE_BINARY_DIR}
