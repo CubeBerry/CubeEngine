@@ -13,7 +13,7 @@ class VKInit
 public:
 	VKInit() = default;
 	~VKInit();
-	void Initialize();
+	void Initialize(SDL_Window* window);
 
 	//void ValidationCheck();
 	void InitInstance();
@@ -21,7 +21,7 @@ public:
 	void SetQueueFamilyIndex();
 	void InitDevice();
 	void InitQueue();
-	void InitSurface();
+	void InitSurface(SDL_Window* window);
 	VkSurfaceFormatKHR SetSurfaceFormat();
 
 #ifdef _DEBUG

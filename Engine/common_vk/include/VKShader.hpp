@@ -9,7 +9,7 @@
 class VKShader
 {
 public:
-	VKShader();
+	VKShader(VkDevice* device_);
 	~VKShader();
 	void LoadShader(const std::filesystem::path& vertexPath,
 		const std::filesystem::path& fragmentPath);

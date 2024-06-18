@@ -3,14 +3,11 @@
 //File: VKSwapChain.cpp
 #include "VKSwapChain.hpp"
 #include "VKInit.hpp"
-#include "Engine.hpp"
 
 #include <iostream>
 
-VKSwapChain::VKSwapChain(VkCommandPool* pool_) : vkCommandPool(pool_)
+VKSwapChain::VKSwapChain(VKInit* init_, VkCommandPool* pool_) : vkInit(init_), vkCommandPool(pool_)
 {
-	vkInit = &Engine::Instance().GetVKInit();
-
 	InitSwapChain();
 	InitSwapChainImage();
 	InitFence();

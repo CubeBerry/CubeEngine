@@ -43,6 +43,10 @@ set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 file(GLOB ENGINE_SRC
     "${ENGINE_INC_DIR}/*.hpp"
     "${ENGINE_SRC_DIR}/*.cpp"
+    "${ENGINE_INC_DIR}/BasicComponents/*.hpp"
+    "${ENGINE_SRC_DIR}/BasicComponents/*.cpp"
+    "${ENGINE_INC_DIR}/Particle/*.hpp"
+    "${ENGINE_SRC_DIR}/Particle/*.cpp"
 )
 file(GLOB GAME_SRC
     "${GAME_INC_DIR}/*.hpp"
@@ -75,8 +79,8 @@ source_group("ImGui"            FILES ${IMGUI_SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/vulkan-1.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/SDL2.lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.dll)
-# target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_DIR}/glew/glew32.lib)
+# target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.dll)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
@@ -86,6 +90,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR})
 
 file(COPY ./Engine/common_gl/libs/glew/glew32.dll
 DESTINATION ${CMAKE_BINARY_DIR}

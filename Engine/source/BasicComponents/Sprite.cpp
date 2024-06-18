@@ -67,12 +67,12 @@ void Sprite::AddQuad(glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void Sprite::AddQuadLine(glm::vec4 color_)
-{
-	Engine::Instance().GetVKRenderManager().LoadLineQuad(color_);
-	materialId = static_cast<int>(Engine::Instance().GetVKRenderManager().GetVertexVector()->size() - 1);
-	AddSpriteToManager();
-}
+//void Sprite::AddQuadLine(glm::vec4 color_)
+//{
+//	Engine::Instance().GetVKRenderManager().LoadLineQuad(color_);
+//	materialId = static_cast<int>(Engine::Instance().GetVKRenderManager().GetVertexVector()->size() - 1);
+//	AddSpriteToManager();
+//}
 
 void Sprite::AddMeshWithTexture(std::string name_, glm::vec4 color_)
 {

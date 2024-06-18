@@ -12,9 +12,8 @@ FILE(GLOB VK_INCLUDES "${VK_INC_DIR}/*.hpp")
 
 add_library(common_vk STATIC ${VK_SOURCES} ${VK_INCLUDES})
 
-target_include_directories(common_vk PUBLIC ${VK_INC_DIR})
+target_include_directories(common_vk PRIVATE ${VK_INC_DIR})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libs)
-target_include_directories(common_vk PUBLIC ${INC_DIR})
+target_include_directories(common_vk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
+target_include_directories(common_vk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/imgui)
 target_include_directories(common_vk PUBLIC ${LIB_DIR}/VulkanSDK/1.3.268.0/Include)

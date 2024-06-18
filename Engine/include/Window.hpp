@@ -30,7 +30,7 @@ public:
 	void InitWindowGL(WindowMode wMode, const char* title, int flags);
 
 	SDL_Window* GetWindow() { return window.get(); };
-	bool GetMinimized() { return isMinimized; };
+	//bool GetMinimized() { return isMinimized; };
 
 	glm::vec2 GetWindowSize() { return wSize; }
 private:
@@ -46,5 +46,5 @@ private:
 	SDL_GLContext context;
 
 	glm::vec2 wSize = { 0,0 };
-	bool isMinimized{ false };
+	//bool isMinimized{ false };
 };

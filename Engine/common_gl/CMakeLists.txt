@@ -12,9 +12,8 @@ FILE(GLOB GL_INCLUDES "${GL_INC_DIR}/*.hpp")
 
 add_library(common_gl STATIC ${GL_SOURCES} ${GL_INCLUDES})
 
-target_include_directories(common_gl PUBLIC ${GL_INC_DIR})
+target_include_directories(common_gl PRIVATE ${GL_INC_DIR})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libs)
-target_include_directories(common_gl PUBLIC ${INC_DIR})
+target_include_directories(common_gl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
+target_include_directories(common_gl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/imgui)
 target_include_directories(common_gl PUBLIC ${LIB_DIR})

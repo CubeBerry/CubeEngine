@@ -5,7 +5,7 @@
 #include "VKInit.hpp"
 #include <iostream>
 
-VKVertexBuffer::VKVertexBuffer(VKInit* init_, std::vector<Vertex>* vertices_) : vkInit(init_)
+VKVertexBuffer::VKVertexBuffer(VKInit* init_, std::vector<VKVertex>* vertices_) : vkInit(init_)
 {
 	InitVertexBuffer(vertices_);
 }
@@ -40,12 +40,12 @@ uint32_t VKVertexBuffer::FindMemoryTypeIndex(const VkMemoryRequirements requirem
 	return UINT32_MAX;
 }
 
-void VKVertexBuffer::InitVertexBuffer(std::vector<Vertex>* vertices_)
+void VKVertexBuffer::InitVertexBuffer(std::vector<VKVertex>* vertices_)
 {
 	//Create Vertex Buffer Info
 	VkBufferCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	createInfo.size = sizeof(Vertex) * vertices_->size();
+	createInfo.size = sizeof(VKVertex) * vertices_->size();
 	createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 	//Create Vertex Buffer
@@ -158,7 +158,7 @@ void VKVertexBuffer::InitVertexBuffer(std::vector<Vertex>* vertices_)
 	try
 	{
 		VkResult result{ VK_SUCCESS };
-		result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, sizeof(Vertex) * vertices_->size(), 0, &contents);
+		result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, sizeof(VKVertex) * vertices_->size(), 0, &contents);
 		if (result != VK_SUCCESS)
 		{
 			switch (result)
@@ -189,7 +189,7 @@ void VKVertexBuffer::InitVertexBuffer(std::vector<Vertex>* vertices_)
 
 	//Copy Vertex Info to Memory
 	//&(*vertices_)[0] == vertices_->data()
-	memcpy(contents, vertices_->data(), sizeof(Vertex)* vertices_->size());
+	memcpy(contents, vertices_->data(), sizeof(VKVertex)* vertices_->size());
 
 	//End Accessing Memory from CPU
 	vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);

@@ -5,7 +5,6 @@
 #include "Timer.hpp"
 #include "Window.hpp"
 #include "GameStateManager.hpp"
-#include "VKInit.hpp"
 #include "VKRenderManager.hpp"
 #include "GLRenderManager.hpp"
 #include "InputManager.hpp"
@@ -15,6 +14,8 @@
 #include "SpriteManager.hpp"
 #include "Particle/ParticleManager.hpp"
 
+class VKRenderManager;
+
 class Engine
 {
 public:
@@ -23,7 +24,6 @@ public:
 
 	static Engine& Instance() { static Engine instance; return instance; }
 	static Window& GetWindow() { return Instance().window; }
-	static VKInit& GetVKInit() { return Instance().vkInit; }
 	static VKRenderManager& GetVKRenderManager() { return Instance().vkRenderManager; }
 	//static GLRenderManager& GetGLRenderManager() { return Instance().glRenderManager; }
 	static GameStateManager& GetGameStateManager() { return Instance().gameStateManger; }
@@ -49,7 +49,6 @@ private:
 	std::string windowTitleWithFrameCount;
 
 	Window window;
-	VKInit vkInit;
 	VKRenderManager vkRenderManager;
 	//GLRenderManager glRenderManager;
 	GameStateManager gameStateManger;

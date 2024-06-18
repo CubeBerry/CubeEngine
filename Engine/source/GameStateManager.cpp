@@ -80,8 +80,7 @@ void GameStateManager::Update(float dt)
 			if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
 			{
 #ifdef _DEBUG
-				//DrawWithImGui(dt);
-				Draw();
+				DrawWithImGui(dt);
 #else
 				Draw();
 #endif

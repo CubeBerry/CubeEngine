@@ -2,7 +2,6 @@
 //Project: CubeEngine
 //File: ComponentTypes.hpp
 #pragma once
-
 #include <string>
 
 enum class ComponentTypes

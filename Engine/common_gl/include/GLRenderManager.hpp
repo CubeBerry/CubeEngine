@@ -7,7 +7,7 @@
 #include "GLTexture.hpp"
 #include "GLUniformBuffer.hpp"
 #include "glm/vec4.hpp"
-#include "Vertex.hpp"
+#include "GLMaterial.hpp"
 
 class GLRenderManager
 {
@@ -15,6 +15,16 @@ public:
 	GLRenderManager() = default;
 	~GLRenderManager();
 	void Initialize();
+
+	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
+	{
+		glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_SHORT, 0);
+	}
+
+	void GLDrawVertices(const GLVertexArray& vertex_array) noexcept
+	{
+		glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount());
+	}
 
 	void BeginRender();
 	void EndRender();
@@ -34,25 +44,15 @@ private:
 	GLVertexArray vertexArray;
 	std::vector<GLTexture*> textures;
 	
-	std::vector<Vertex> texVertices;
+	std::vector<GLVertex> texVertices;
 	GLVertexBuffer* texVertex{ nullptr };
 	std::vector<uint16_t> texIndices;
 	GLIndexBuffer* texIndex{ nullptr };
 
-	std::vector<VertexUniform> vertexVector;
-	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };
-	std::vector<FragmentUniform> fragVector;
-	GLUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+	std::vector<GLVertexUniform> vertexVector;
+	GLUniformBuffer<GLVertexUniform>* uVertex{ nullptr };
+	std::vector<GLFragmentUniform> fragVector;
+	GLUniformBuffer<GLFragmentUniform>* uFragment{ nullptr };
 
 	unsigned int quadCount{ 0 };
 };
-
-void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
-{
-	glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_SHORT, 0);
-}
-
-void GLDrawVertices(const GLVertexArray& vertex_array) noexcept
-{
-	glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount());
-}

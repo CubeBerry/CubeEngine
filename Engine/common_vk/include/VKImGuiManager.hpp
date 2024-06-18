@@ -15,18 +15,20 @@ class VKSwapChain;
 class VKDescriptor;
 class Window;
 
-class ImGuiManager
+class VKImGuiManager
 {
 public:
-	ImGuiManager(
+	VKImGuiManager(
+		VKInit* init_,
+		SDL_Window* window_,
 		VkCommandPool* cpool_,
 		std::array<VkCommandBuffer, 2>* cbuffers_,
 		VkDescriptorPool* dpool_,
 		VkRenderPass* pass_
 		);
-	~ImGuiManager();
+	~VKImGuiManager();
 
-	void Initialize();
+	void Initialize(VKInit* init_, SDL_Window* window_);
 	void FeedEvent(const SDL_Event& event_);
 	void Begin();
 	void End(uint32_t index_);

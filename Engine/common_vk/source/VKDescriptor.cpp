@@ -4,13 +4,10 @@
 //File: VKDescriptor.cpp
 #include "VKDescriptor.hpp"
 #include "VKInit.hpp"
-#include "Engine.hpp"
 #include <iostream>
 
-VKDescriptor::VKDescriptor()
+VKDescriptor::VKDescriptor(VKInit* init) : vkInit(init)
 {
-	vkInit = &Engine::Instance().GetVKInit();
-
 	InitDescriptorSetLayouts();
 	InitDescriptorPool();
 	InitDescriptorSets();

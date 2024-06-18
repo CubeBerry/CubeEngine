@@ -1,4 +1,4 @@
-﻿//Author: JEYOON YU
+//Author: JEYOON YU
 //Project: CubeEngine
 //File: Vertex.hpp
 #pragma once
@@ -9,7 +9,7 @@
 #include <glm/vec4.hpp>
 #include <glm/matrix.hpp>
 
-struct alignas(16) Vertex
+struct alignas(16) GLVertex
 {
 	glm::vec4 position;
 	//alignas(16) glm::vec4 color;
@@ -17,7 +17,7 @@ struct alignas(16) Vertex
 	int index;
 };
 
-struct alignas(16) VertexUniform
+struct alignas(16) GLVertexUniform
 {
 	glm::mat4 model;
 	glm::mat4 view;
@@ -29,7 +29,7 @@ struct alignas(16) VertexUniform
 	float isTexel;
 };
 
-struct alignas(16) FragmentUniform
+struct alignas(16) GLFragmentUniform
 {
 	int texIndex;
 };
