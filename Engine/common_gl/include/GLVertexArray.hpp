@@ -44,8 +44,9 @@ struct GLAttributeLayout
 class GLVertexArray
 {
 public:
-	GLVertexArray();
+	GLVertexArray() = default;
 	~GLVertexArray();
+    void Initialize();
 
 	void AddVertexBuffer(GLVertexBuffer&& buffer, std::initializer_list<GLAttributeLayout> layout);
     void SetIndexBuffer(GLIndexBuffer&& buffer);

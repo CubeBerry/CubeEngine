@@ -9,7 +9,8 @@ GLRenderManager::~GLRenderManager()
 
 void GLRenderManager::Initialize()
 {
-	shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment.frag" } });
+	vertexArray.Initialize();
+	//shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment.frag" } });
 }
 
 void GLRenderManager::BeginRender()
@@ -32,8 +33,8 @@ void GLRenderManager::BeginRender()
 
 void GLRenderManager::EndRender()
 {
-	vertexArray.Use(false);
-	shader.Use(false);
+	//vertexArray.Use(false);
+	//shader.Use(false);
 }
 
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)

@@ -25,7 +25,7 @@ public:
 	static Engine& Instance() { static Engine instance; return instance; }
 	static Window& GetWindow() { return Instance().window; }
 	static VKRenderManager& GetVKRenderManager() { return Instance().vkRenderManager; }
-	//static GLRenderManager& GetGLRenderManager() { return Instance().glRenderManager; }
+	static GLRenderManager& GetGLRenderManager() { return Instance().glRenderManager; }
 	static GameStateManager& GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager& GetInputManager() { return Instance().inputManager; }
 	static ObjectManager& GetObjectManager() { return Instance().objectManager; }
@@ -48,9 +48,11 @@ private:
 	int frameCount = 0;
 	std::string windowTitleWithFrameCount;
 
+	GraphicsMode gMode;
+
 	Window window;
 	VKRenderManager vkRenderManager;
-	//GLRenderManager glRenderManager;
+	GLRenderManager glRenderManager;
 	GameStateManager gameStateManger;
 	InputManager inputManager;
 	ObjectManager objectManager;

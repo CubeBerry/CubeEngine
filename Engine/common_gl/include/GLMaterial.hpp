@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: Vertex.hpp
+//File: GLMaterial.hpp
 #pragma once
 #pragma warning( disable : 4324 )
 

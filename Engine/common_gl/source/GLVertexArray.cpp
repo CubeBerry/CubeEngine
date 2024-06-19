@@ -3,14 +3,14 @@
 //File: GLVertexArray.cpp
 #include "GLVertexArray.hpp"
 
-GLVertexArray::GLVertexArray()
-{
-	glCreateVertexArrays(1, &vaoHandle);
-}
-
 GLVertexArray::~GLVertexArray()
 {
 	glDeleteVertexArrays(1, &vaoHandle);
+}
+
+void GLVertexArray::Initialize()
+{
+	glCreateVertexArrays(1, &vaoHandle);
 }
 
 void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, std::initializer_list<GLAttributeLayout> layout)

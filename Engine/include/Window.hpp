@@ -28,6 +28,7 @@ public:
 	~Window() = default;
 	void Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode);
 	void InitWindowGL(WindowMode wMode, const char* title, int flags);
+	void UpdateWindowGL();
 
 	SDL_Window* GetWindow() { return window.get(); };
 	//bool GetMinimized() { return isMinimized; };
