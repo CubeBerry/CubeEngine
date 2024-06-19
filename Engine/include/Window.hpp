@@ -31,6 +31,7 @@ public:
 	void UpdateWindowGL();
 
 	SDL_Window* GetWindow() { return window.get(); };
+	SDL_GLContext GetContext() { return context; };
 	//bool GetMinimized() { return isMinimized; };
 
 	glm::vec2 GetWindowSize() { return wSize; }

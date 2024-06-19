@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: ImGuiManager.cpp
+//File: VKImGuiManager.cpp
 #include "VKImGuiManager.hpp"
 
 #include <iostream>
@@ -29,7 +29,8 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	(void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 	ImGui_ImplSDL2_InitForVulkan(window_);
 
@@ -47,78 +48,80 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_)
 	initInfo.Allocator = nullptr;
 	initInfo.CheckVkResultFn = nullptr;
 
-	ImGui_ImplVulkan_Init(&initInfo, renderPass);
+	ImGui_ImplVulkan_Init(&initInfo);
+	//ImGui_ImplVulkan_Init(&initInfo, renderPass);
 
-	//Create command buffer begin info
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	////Create command buffer begin info
+	//VkCommandBufferBeginInfo beginInfo{};
+	//beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	//beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	//Begin command buffer
-	{
-		VkCommandBuffer commandBuffer{};
-		//Create command buffer info
-		VkCommandBufferAllocateInfo allocateInfo{};
-		allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocateInfo.commandPool = vkCommandPool;
-		allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocateInfo.commandBufferCount = 1;
+	////Begin command buffer
+	//{
+	//	VkCommandBuffer commandBuffer{};
+	//	//Create command buffer info
+	//	VkCommandBufferAllocateInfo allocateInfo{};
+	//	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	//	allocateInfo.commandPool = vkCommandPool;
+	//	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	//	allocateInfo.commandBufferCount = 1;
 
-		//Create command buffer
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateCommandBuffers(*init_->GetDevice(), &allocateInfo, &commandBuffer);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
-					break;
-				default:
-					break;
-				}
-				std::cout << std::endl;
+	//	//Create command buffer
+	//	try
+	//	{
+	//		VkResult result{ VK_SUCCESS };
+	//		result = vkAllocateCommandBuffers(*init_->GetDevice(), &allocateInfo, &commandBuffer);
+	//		if (result != VK_SUCCESS)
+	//		{
+	//			switch (result)
+	//			{
+	//			case VK_ERROR_OUT_OF_HOST_MEMORY:
+	//				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+	//				break;
+	//			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+	//				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+	//				break;
+	//			default:
+	//				break;
+	//			}
+	//			std::cout << std::endl;
 
-				throw std::runtime_error{ "Command Buffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << std::endl;
-			VKImGuiManager::~VKImGuiManager();
-			std::exit(EXIT_FAILURE);
-		}
+	//			throw std::runtime_error{ "Command Buffer Creation Failed" };
+	//		}
+	//	}
+	//	catch (std::exception& e)
+	//	{
+	//		std::cerr << e.what() << std::endl;
+	//		VKImGuiManager::~VKImGuiManager();
+	//		std::exit(EXIT_FAILURE);
+	//	}
 
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
-		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-		//End Command Buffer
-		vkEndCommandBuffer(commandBuffer);
+	//	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	//	ImGui_ImplVulkan_CreateFontsTexture();
+	//	//ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+	//	//End Command Buffer
+	//	vkEndCommandBuffer(commandBuffer);
 
-		//Create Submit Info
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
+	//	//Create Submit Info
+	//	VkSubmitInfo submitInfo{};
+	//	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	//	submitInfo.commandBufferCount = 1;
+	//	submitInfo.pCommandBuffers = &commandBuffer;
 
-		//Submit Queue to Command Buffer
-		vkQueueSubmit(*init_->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	//	//Submit Queue to Command Buffer
+	//	vkQueueSubmit(*init_->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 
-		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*init_->GetDevice());
+	//	//Wait until all submitted command buffers are handled
+	//	vkDeviceWaitIdle(*init_->GetDevice());
 
-		ImGui_ImplVulkan_DestroyFontUploadObjects();
-	}
+	//	//ImGui_ImplVulkan_DestroyFontUploadObjects();
+	//}
 }
 
-void VKImGuiManager::FeedEvent(const SDL_Event& event_)
-{
-	ImGui_ImplSDL2_ProcessEvent(&event_);
-}
+//void VKImGuiManager::FeedEvent(const SDL_Event& event_)
+//{
+//	ImGui_ImplSDL2_ProcessEvent(&event_);
+//}
 
 void VKImGuiManager::Begin()
 {

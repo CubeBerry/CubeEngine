@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: ImGuiManager.hpp
+//File: VKImGuiManager.hpp
 #pragma once
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -13,7 +13,6 @@
 class VKInit;
 class VKSwapChain;
 class VKDescriptor;
-class Window;
 
 class VKImGuiManager
 {
@@ -29,7 +28,7 @@ public:
 	~VKImGuiManager();
 
 	void Initialize(VKInit* init_, SDL_Window* window_);
-	void FeedEvent(const SDL_Event& event_);
+	//void FeedEvent(const SDL_Event& event_);
 	void Begin();
 	void End(uint32_t index_);
 	void Shutdown();

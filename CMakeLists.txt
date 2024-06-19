@@ -86,11 +86,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
-target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2)
 
 file(COPY ./Engine/common_gl/libs/glew/glew32.dll
 DESTINATION ${CMAKE_BINARY_DIR}

@@ -7,10 +7,14 @@ GLRenderManager::~GLRenderManager()
 {
 }
 
-void GLRenderManager::Initialize()
+void GLRenderManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 {
 	vertexArray.Initialize();
 	//shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment.frag" } });
+
+#ifdef _DEBUG
+	imguiManager = new GLImGuiManager(window_, context_);
+#endif
 }
 
 void GLRenderManager::BeginRender()
@@ -29,10 +33,18 @@ void GLRenderManager::BeginRender()
 
 	//vertexArray.Use(true);
 	//GLDrawIndexed(vertexArray);
+
+#ifdef _DEBUG
+	imguiManager->Begin();
+#endif
 }
 
 void GLRenderManager::EndRender()
 {
+#ifdef _DEBUG
+	imguiManager->End();
+#endif
+
 	//vertexArray.Use(false);
 	//shader.Use(false);
 }

@@ -57,6 +57,10 @@ private:
 	VkRenderPass vkRenderPass{ VK_NULL_HANDLE };
 	std::vector<VkFramebuffer> vkFrameBuffers;
 
+#ifdef _DEBUG
+	VKImGuiManager* imguiManager;
+#endif
+
 	VKShader* vkTextureShader;
 	VKShader* vkLineShader;
 	VKPipeLine* vkTexurePipeline;
@@ -88,10 +92,6 @@ public:
 private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
-
-#ifdef _DEBUG
-	VKImGuiManager* imguiManager;
-#endif
 
 	std::vector<VKVertex> texVertices;
 	VKVertexBuffer* texVertex{ nullptr };

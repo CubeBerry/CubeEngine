@@ -28,7 +28,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	timer.Init();
 
 	//vkRenderManager.Initialize(window.GetWindow());
-	glRenderManager.Initialize();
+	glRenderManager.Initialize(window.GetWindow(), window.GetContext());
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 
 	//soundManager = new SoundManager;
@@ -50,6 +50,7 @@ void Engine::Update()
 			SDL_PollEvent(&event);
 #ifdef _DEBUG
 			//vkRenderManager.GetImGuiManager()->FeedEvent(event);
+			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
 			switch (event.type)
 			{

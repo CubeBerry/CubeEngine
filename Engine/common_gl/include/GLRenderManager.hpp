@@ -8,13 +8,14 @@
 #include "GLUniformBuffer.hpp"
 #include "glm/vec4.hpp"
 #include "GLMaterial.hpp"
+#include "GLImGuiManager.hpp"
 
 class GLRenderManager
 {
 public:
 	GLRenderManager() = default;
 	~GLRenderManager();
-	void Initialize();
+	void Initialize(SDL_Window* window_, SDL_GLContext context_);
 
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
 	{
@@ -29,7 +30,11 @@ public:
 	void BeginRender();
 	void EndRender();
 private:
+	GLVertexArray vertexArray;
 	GLShader shader;
+#ifdef _DEBUG
+	GLImGuiManager* imguiManager;
+#endif
 
 	//--------------------Texture Render--------------------//
 public:
@@ -41,7 +46,6 @@ public:
 
 	void DeleteWithIndex();
 private:
-	GLVertexArray vertexArray;
 	std::vector<GLTexture*> textures;
 	
 	std::vector<GLVertex> texVertices;
