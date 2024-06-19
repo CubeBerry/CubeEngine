@@ -42,6 +42,7 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_)
 	initInfo.QueueFamily = *init_->GetQueueFamilyIndex();
 	initInfo.PipelineCache = VK_NULL_HANDLE;
 	initInfo.DescriptorPool = vkDescriptorPool;
+	initInfo.RenderPass = renderPass;
 	initInfo.MinImageCount = 2;
 	initInfo.ImageCount = 2;
 	initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
