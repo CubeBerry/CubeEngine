@@ -12,7 +12,7 @@ class VKInit;
 class VKDescriptor
 {
 public:
-	VKDescriptor();
+	VKDescriptor(VKInit* init);
 	~VKDescriptor();
 
 	void InitDescriptorSetLayouts();

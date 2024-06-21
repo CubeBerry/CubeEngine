@@ -4,48 +4,59 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(Project)
+project(Project LANGUAGES CXX C)
 
-set(VK_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk/include")
-include_directories(${VK_INC_DIR})
-set(GL_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_gl/include")
-include_directories(${GL_INC_DIR})
+# common_vk
+set(VK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk")
+add_subdirectory(${VK_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
+
+# common_gl
+set(GL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_gl")
+add_subdirectory(${GL_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
 
 # ImGui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
 set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
-include_directories(${IMGUI_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR})
+
+# common libs (FMOD, ImGUI, stb)
+set(COMMON_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs")
 
 # FMOD
 set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
 set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
-include_directories(${FMOD_INC_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
-include_directories(${ENGINE_INC_DIR})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 
 # Game
 set(GAME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/source")
 set(GAME_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
-include_directories(${GAME_INC_DIR})
+set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+# target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 
-add_subdirectory(Engine)
-add_subdirectory(Game)
-
-FILE(GLOB_RECURSE SOURCES "${ENGINE_SRC_DIR}/*.cpp" "${GAME_SRC_DIR}/*.cpp")
-FILE(GLOB_RECURSE INCLUDES "${ENGINE_INC_DIR}/*.hpp" "${GAME_INC_DIR}/*.hpp")
-
-file(GLOB_RECURSE ENGINE_SRC
-    "./Engine/include/*.hpp"
-    "./Engine/source/*.cpp"
+file(GLOB ENGINE_SRC
+    "${ENGINE_INC_DIR}/*.hpp"
+    "${ENGINE_SRC_DIR}/*.cpp"
+    "${ENGINE_INC_DIR}/BasicComponents/*.hpp"
+    "${ENGINE_SRC_DIR}/BasicComponents/*.cpp"
+    "${ENGINE_INC_DIR}/Particle/*.hpp"
+    "${ENGINE_SRC_DIR}/Particle/*.cpp"
 )
-file(GLOB_RECURSE GAME_SRC
-    "./Game/include/*.hpp"
-    "./Game/source/*.cpp"
+file(GLOB GAME_SRC
+    "${GAME_INC_DIR}/*.hpp"
+    "${GAME_SRC_DIR}/*.cpp"
+    "${GAME_INC_DIR}/PlatformDemo/*.hpp"
+    "${GAME_SRC_DIR}/PlatformDemo/*.cpp"
+    "${GAME_INC_DIR}/PocketBallDemo/*.hpp"
+    "${GAME_SRC_DIR}/PocketBallDemo/*.cpp"
 )
-FILE(GLOB_RECURSE IMGUI_SOURCES
+FILE(GLOB IMGUI_SOURCES
     "${IMGUI_DIR}/*.h"
     "${IMGUI_DIR}/*.cpp"
     "${IMGUI_BACKEND_DIR}/*.h"
@@ -59,23 +70,28 @@ else()
 endif()
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
-add_executable(${PROJECT_NAME} main.cpp ${SOURCES} ${INCLUDES} ${IMGUI_SOURCES})
+add_executable(${PROJECT_NAME} main.cpp ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SOURCES})
 
 source_group("Engine"           FILES ${ENGINE_SRC})
 source_group("Game"             FILES ${GAME_SRC})
 source_group("ImGui"            FILES ${IMGUI_SOURCES})
 
-# common_vk
-set(VK_DIR "./Engine/common_vk")
-add_subdirectory("${VK_DIR}")
-target_link_libraries(${PROJECT_NAME} common_vk)
-target_include_directories(${PROJECT_NAME} PUBLIC ${VK_INC_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/vulkan-1.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/SDL2.lib)
+# target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.dll)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
+# For MSVC
+target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
-# common_gl
-set(GL_DIR "./Engine/common_gl")
-add_subdirectory("${GL_DIR}")
-target_link_libraries(${PROJECT_NAME} common_gl)
-target_include_directories(${PROJECT_NAME} PUBLIC ${GL_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2)
+
 file(COPY ./Engine/common_gl/libs/glew/glew32.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
@@ -97,4 +113,4 @@ DESTINATION ${CMAKE_BINARY_DIR}
 file(COPY ./Engine/libs/fmod/lib/fmod.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
-target_link_libraries(${PROJECT_NAME} ${FMOD_LIB_DIR}/fmod_vc.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)

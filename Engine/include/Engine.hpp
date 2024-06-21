@@ -5,14 +5,16 @@
 #include "Timer.hpp"
 #include "Window.hpp"
 #include "GameStateManager.hpp"
-#include "VKInit.hpp"
 #include "VKRenderManager.hpp"
+#include "GLRenderManager.hpp"
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
 #include "Particle/ParticleManager.hpp"
+
+class VKRenderManager;
 
 class Engine
 {
@@ -22,8 +24,8 @@ public:
 
 	static Engine& Instance() { static Engine instance; return instance; }
 	static Window& GetWindow() { return Instance().window; }
-	static VKInit& GetVKInit() { return Instance().vkInit; }
 	static VKRenderManager& GetVKRenderManager() { return Instance().vkRenderManager; }
+	static GLRenderManager& GetGLRenderManager() { return Instance().glRenderManager; }
 	static GameStateManager& GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager& GetInputManager() { return Instance().inputManager; }
 	static ObjectManager& GetObjectManager() { return Instance().objectManager; }
@@ -46,9 +48,11 @@ private:
 	int frameCount = 0;
 	std::string windowTitleWithFrameCount;
 
+	GraphicsMode gMode;
+
 	Window window;
-	VKInit vkInit;
 	VKRenderManager vkRenderManager;
+	GLRenderManager glRenderManager;
 	GameStateManager gameStateManger;
 	InputManager inputManager;
 	ObjectManager objectManager;

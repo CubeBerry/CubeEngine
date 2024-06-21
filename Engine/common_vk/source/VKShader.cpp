@@ -2,11 +2,10 @@
 //Project: CubeEngine
 //File: VKShader.cpp
 #include "VKShader.hpp"
-#include "Engine.hpp"
 
 #include <fstream>
 
-VKShader::VKShader() : device(Engine::Instance().GetVKInit().GetDevice())
+VKShader::VKShader(VkDevice* device_) : device(device_)
 {
 }
 

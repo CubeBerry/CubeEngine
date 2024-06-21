@@ -9,7 +9,6 @@
 #include <SDL2/SDL_syswm.h>
 #include <string>
 #include <sstream>
-#include "Engine.hpp"
 
 VKInit::~VKInit()
 {
@@ -21,14 +20,14 @@ VKInit::~VKInit()
 	vkDestroyInstance(vkInstance, nullptr);
 }
 
-void VKInit::Initialize()
+void VKInit::Initialize(SDL_Window* window)
 {
 	InitInstance();
 	SetPhysicalDevice();
 	SetQueueFamilyIndex();
 	InitDevice();
 	InitQueue();
-	InitSurface();
+	InitSurface(window);
 
 	SetSurfaceFormat();
 }
@@ -214,7 +213,7 @@ void VKInit::InitQueue()
 	vkGetDeviceQueue(vkDevice, queueFamilyIndex, 0, &vkQueue);
 }
 
-void VKInit::InitSurface()
+void VKInit::InitSurface(SDL_Window* window)
 {
 	try
 	{
@@ -233,7 +232,7 @@ void VKInit::InitSurface()
 		//}
 
 		//Create sruface using SDL_Vulkan_CreateSurface function
-		if (SDL_Vulkan_CreateSurface(Engine::Instance().GetWindow().GetWindow(), vkInstance, &vkSurface) == SDL_FALSE)
+		if (SDL_Vulkan_CreateSurface(window, vkInstance, &vkSurface) == SDL_FALSE)
 		{
 			throw std::runtime_error{ "vkSurface Creation Failed" };
 		}

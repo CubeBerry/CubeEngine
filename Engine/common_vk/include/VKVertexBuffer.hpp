@@ -3,17 +3,17 @@
 //File: VKVertexBuffer.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include "Vertex.hpp"
+#include "VKMaterial.hpp"
 
 class VKInit;
 
 class VKVertexBuffer
 {
 public:
-	VKVertexBuffer(VKInit* init_, std::vector<Vertex>* vertices_);
+	VKVertexBuffer(VKInit* init_, std::vector<VKVertex>* vertices_);
 	~VKVertexBuffer();
 
-	void InitVertexBuffer(std::vector<Vertex>* vertices_);
+	void InitVertexBuffer(std::vector<VKVertex>* vertices_);
 	VkBuffer* GetVertexBuffer() { return &vkVertexBuffer; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);

@@ -124,3 +124,8 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
+void Window::UpdateWindowGL()
+{
+	SDL_GL_SwapWindow(window.get());
+}

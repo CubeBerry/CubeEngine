@@ -2,13 +2,12 @@
 //Project: CubeEngine
 //File: VKPipeLine.cpp
 #include "VKPipeLine.hpp"
-#include "Vertex.hpp"
-#include "Engine.hpp"
+#include "VKMaterial.hpp"
 
 #include <iostream>
 #include <array>
 
-VKPipeLine::VKPipeLine(std::vector<VkDescriptorSetLayout>* layout_) : device(Engine::Instance().GetVKInit().GetDevice()), vkDescriptorSetLayout(layout_)
+VKPipeLine::VKPipeLine(VkDevice* device_, std::vector<VkDescriptorSetLayout>* layout_) : device(device_), vkDescriptorSetLayout(layout_)
 {
 }
 
@@ -49,7 +48,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//Create Vertex Input Binding
 	VkVertexInputBindingDescription vertexInputBinding{};
 	vertexInputBinding.binding = 0;
-	vertexInputBinding.stride = sizeof(Vertex);
+	vertexInputBinding.stride = sizeof(VKVertex);
 	vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	//Create Vertex Input Attribute
@@ -61,7 +60,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		vertexInputAttribute.location = 0;
 		vertexInputAttribute.binding = 0;
 		vertexInputAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(Vertex, position);
+		vertexInputAttribute.offset = offsetof(VKVertex, position);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
@@ -94,7 +93,7 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 		vertexInputAttribute.location = 1;
 		vertexInputAttribute.binding = 0;
 		vertexInputAttribute.format = VK_FORMAT_R32_SINT;
-		vertexInputAttribute.offset = offsetof(Vertex, index);
+		vertexInputAttribute.offset = offsetof(VKVertex, index);
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}

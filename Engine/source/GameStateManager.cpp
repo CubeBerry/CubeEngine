@@ -116,16 +116,37 @@ void GameStateManager::Update(float dt)
 
 void GameStateManager::Draw()
 {
-	VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();
-	//if (renderManager->GetMatrices()->size() > 0)
+	//VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();
+	//renderManager->BeginRender();
+	//if (!renderManager->GetIsRecreated())
 	//{
-	renderManager->BeginRender();
-	if (!renderManager->GetIsRecreated())
-	{
-		renderManager->EndRender();
-	}
+	//	renderManager->EndRender();
 	//}
+
+	//GL Draw
+	GLRenderManager* renderManager = &Engine::Instance().GetGLRenderManager();
+	renderManager->BeginRender();
+	renderManager->EndRender();
 }
+
+#ifdef _DEBUG
+void GameStateManager::DrawWithImGui(float dt)
+{
+	//VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();
+	//renderManager->BeginRender();
+	//if (!renderManager->GetIsRecreated())
+	//{
+	//	levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+	//	renderManager->EndRender();
+	//}
+
+	//GL Draw
+	GLRenderManager* renderManager = &Engine::Instance().GetGLRenderManager();
+	renderManager->BeginRender();
+	levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+	renderManager->EndRender();
+}
+#endif
 
 void GameStateManager::LevelEnd()
 {
@@ -165,18 +186,6 @@ void GameStateManager::StateChanger()
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
-	}
-}
-
-void GameStateManager::DrawWithImGui(float dt)
-{
-	VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();
-
-	renderManager->BeginRender();
-	if (!renderManager->GetIsRecreated())
-	{
-		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
-		renderManager->EndRender();
 	}
 }
 

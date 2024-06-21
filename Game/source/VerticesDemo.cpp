@@ -171,9 +171,9 @@ void VerticesDemo::Update(float dt)
 #ifdef _DEBUG
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	ImGui::ShowDemoWindow();
-	Engine::GetSoundManager().MusicPlayerForImGui();
-	Engine::GetGameStateManager().StateChanger();
+	//ImGui::ShowDemoWindow();
+	//Engine::GetSoundManager().MusicPlayerForImGui();
+	//Engine::GetGameStateManager().StateChanger();
 }
 #endif
 

@@ -4,31 +4,34 @@
 #include "Engine.hpp"
 
 #include "VerticesDemo.hpp"
+#include "OpenGLDemo.hpp"
 #include "PocketBallDemo/PocketBallDemo.hpp"
 #include "PlatformDemo/PlatformDemo.hpp"
 
+#if _DEBUG
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#if _DEBUG
 #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
 #define malloc(s) _malloc_dbg(s,_NORMAL_BLOCK,__FILE__,__LINE__)
-#endif
-
-#undef main
 
 //Call _CrtDumpMemoryLeaks after main has returned and before program terminates.
 struct AtExit
 {
     ~AtExit() { _CrtDumpMemoryLeaks(); }
 } doAtExit;
+#endif
+
+#undef main
 
 int main(void)
 {
+#if _DEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     //_CrtSetBreakAlloc(158);
     //_crtBreakAlloc = 157;
+#endif
 
     Engine& engine = Engine::Instance();
     engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
@@ -37,9 +40,10 @@ int main(void)
     engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
     //engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
+    engine.GetGameStateManager().AddLevel(new OpenGLDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::POCKETBALL);
+    engine.GetGameStateManager().LevelInit(GameLevel::OPENGLDEMO);
 
     engine.Update();
     engine.End();
