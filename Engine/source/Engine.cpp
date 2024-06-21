@@ -19,7 +19,11 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	{
 		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);
 		renderManager = new GLRenderManager;
-		dynamic_cast<GLRenderManager*>(renderManager)->Initialize(window.GetWindow(), window.GetContext());
+		dynamic_cast<GLRenderManager*>(renderManager)->Initialize(
+#ifdef _DEBUG
+			window.GetWindow(), window.GetContext()
+#endif
+		);
 		//renderManager->Initialize(window.GetWindow(), window.GetContext());
 	}
 	else

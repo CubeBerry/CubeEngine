@@ -7,7 +7,11 @@ GLRenderManager::~GLRenderManager()
 {
 }
 
-void GLRenderManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
+void GLRenderManager::Initialize(
+#ifdef _DEBUG
+	SDL_Window* window_, SDL_GLContext context_
+#endif
+)
 {
 	vertexArray.Initialize();
 	//shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment.frag" } });

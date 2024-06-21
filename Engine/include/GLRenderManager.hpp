@@ -15,7 +15,11 @@ class GLRenderManager : public RenderManager
 public:
 	GLRenderManager() { gMode = GraphicsMode::GL; };
 	~GLRenderManager();
-	void Initialize(SDL_Window* window_, SDL_GLContext context_);
+	void Initialize(
+#ifdef _DEBUG
+		SDL_Window* window_, SDL_GLContext context_
+#endif
+	);
 
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
 	{
