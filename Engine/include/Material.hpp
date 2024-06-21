@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: GLMaterial.hpp
+//File: Material.hpp
 #pragma once
 #pragma warning( disable : 4324 )
 
@@ -9,7 +9,7 @@
 #include <glm/vec4.hpp>
 #include <glm/matrix.hpp>
 
-struct alignas(16) GLVertex
+struct alignas(16) Vertex
 {
 	glm::vec4 position;
 	//alignas(16) glm::vec4 color;
@@ -17,7 +17,7 @@ struct alignas(16) GLVertex
 	int index;
 };
 
-struct alignas(16) GLVertexUniform
+struct alignas(16) VertexUniform
 {
 	glm::mat4 model;
 	glm::mat4 view;
@@ -29,7 +29,7 @@ struct alignas(16) GLVertexUniform
 	float isTexel;
 };
 
-struct alignas(16) GLFragmentUniform
+struct alignas(16) FragmentUniform
 {
 	int texIndex;
 };

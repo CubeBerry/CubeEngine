@@ -30,9 +30,9 @@ void CollideObjects()
 
 void VerticesDemo::Init()
 {
-	Engine::Instance().GetVKRenderManager().LoadTexture("../Game/assets/texture_sample2.jpg", "1");
-	Engine::Instance().GetVKRenderManager().LoadTexture("../Game/assets/texture_sample.png", "2");
-	Engine::Instance().GetVKRenderManager().LoadTexture("../Game/assets/texture_sample3.jpg", "3");
+	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1");
+	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample.png", "2");
+	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg", "3");
 
 	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1280.f,720.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager().GetLastObject()->AddComponent<Sprite>();

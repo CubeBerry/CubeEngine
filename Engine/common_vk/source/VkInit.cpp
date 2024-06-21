@@ -185,7 +185,7 @@ void VKInit::InitDevice()
 			"VK_KHR_swapchain",
 			"VK_EXT_robustness2",
 			//For vkCmdSetPrimitiveTopology
-			"VK_EXT_extended_dynamic_state3",
+			//"VK_EXT_extended_dynamic_state3",
 		};
 
 		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensionNames.size());

@@ -62,13 +62,13 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(GLVertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(GLVertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(GLVertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(GLVertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (texVertex != nullptr)
 		delete texVertex;
-	texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(GLVertex) * texVertices.size()));
+	texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
 	texVertex->SetData(texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
@@ -92,7 +92,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.vertex_layout_location = 0;
 	position_layout.stride = sizeof(glm::vec4);
 	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(GLVertex, position);
+	position_layout.relative_offset = offsetof(Vertex, position);
 
 	GLAttributeLayout index_layout;
 	position_layout.component_type = GLAttributeLayout::Int;
@@ -101,7 +101,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.vertex_layout_location = 1;
 	position_layout.stride = sizeof(int);
 	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(GLVertex, index);
+	position_layout.relative_offset = offsetof(Vertex, index);
 
 	vertexArray.AddVertexBuffer(std::move(*texVertex), { position_layout, index_layout });
 	vertexArray.SetIndexBuffer(std::move(*texIndex));
@@ -114,7 +114,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	//	delete uFragment;
 	//uFragment = new VKUniformBuffer<FragmentUniform>(&Engine::Instance().GetVKInit(), quadCount);
 
-	GLVertexUniform mat;
+	VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
@@ -123,7 +123,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	vertexVector.back().isTex = isTex_;
 	vertexVector.back().isTexel = isTexel_;
 
-	GLFragmentUniform tIndex;
+	FragmentUniform tIndex;
 	tIndex.texIndex = 0;
 	fragVector.push_back(tIndex);
 }
@@ -168,4 +168,16 @@ void GLRenderManager::DeleteWithIndex()
 	//{
 	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
 	//}
+}
+
+GLTexture* GLRenderManager::GetTexture(std::string name)
+{
+	for (auto& tex : textures)
+	{
+		if (tex->GetName() == name)
+		{
+			return tex;
+		}
+	}
+	return nullptr;
 }
