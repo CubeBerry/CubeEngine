@@ -14,15 +14,15 @@
 
 void PocketBallDemo::Init()
 {
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/White.png", "White");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/1.png", "1");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/2.png", "2");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/3.png", "3");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/4.png", "4");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/5.png", "5");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/6.png", "6");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/Table.png", "Table");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PocketBall/Arrow.png", "Arrow");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/1.png", "1");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/2.png", "2");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/3.png", "3");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/4.png", "4");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/5.png", "5");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/6.png", "6");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/Table.png", "Table");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/Arrow.png", "Arrow");
 
 	ballAmount = 7;
 	pocketBallSystem = new PocketBallSystem();

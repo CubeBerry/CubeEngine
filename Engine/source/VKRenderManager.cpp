@@ -45,8 +45,6 @@ VKRenderManager::~VKRenderManager()
 	size_t texSize{ textures.size() };
 	for (size_t i = texSize; i < imageInfos.size(); ++i)
 		vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
-	//for(auto& i : imageInfos)
-	//	vkDestroySampler(*vkInit->GetDevice(), i.sampler, nullptr);
 
 	textures.erase(textures.begin(), textures.end());
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
@@ -57,7 +55,6 @@ VKRenderManager::~VKRenderManager()
 
 	//Destroy Pipeline
 	delete vkTexurePipeline;
-	//delete vkLinePipeline;
 
 	//Destroy Descriptor
 	delete vkDescriptor;
@@ -89,8 +86,18 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkLineShader->LoadShader("../Engine/shader/lineVertex.vert", "../Engine/shader/lineFragment.frag");
 	std::cout << std::endl;
 
+	VKAttributeLayout position_layout;
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	position_layout.offset = offsetof(Vertex, position);
+
+	VKAttributeLayout index_layout;
+	index_layout.vertex_layout_location = 1;
+	index_layout.format = VK_FORMAT_R32_SINT;
+	index_layout.offset = offsetof(Vertex, index);
+
 	vkTexurePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::FILL);
+	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(Vertex), {position_layout, index_layout}, POLYGON_MODE::FILL);
 	//vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	//vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
@@ -366,13 +373,13 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(VKVertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(VKVertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(VKVertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(VKVertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (texVertex != nullptr)
 		delete texVertex;
-	texVertex = new VKVertexBuffer(vkInit, &texVertices);
+	texVertex = new VKVertexBuffer<Vertex>(vkInit, &texVertices);
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
@@ -389,13 +396,13 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 
 	if (uVertex != nullptr)
 		delete uVertex;
-	uVertex = new VKUniformBuffer<VKVertexUniform>(vkInit, quadCount);
+	uVertex = new VKUniformBuffer<VertexUniform>(vkInit, quadCount);
 
 	if (uFragment != nullptr)
 		delete uFragment;
-	uFragment = new VKUniformBuffer<VKFragmentUniform>(vkInit, quadCount);
+	uFragment = new VKUniformBuffer<FragmentUniform>(vkInit, quadCount);
 
-	VKVertexUniform mat;
+	VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
@@ -404,7 +411,7 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	vertexVector.back().isTex = isTex_;
 	vertexVector.back().isTexel = isTexel_;
 
-	VKFragmentUniform tIndex;
+	FragmentUniform tIndex;
 	tIndex.texIndex = 0;
 	fragVector.push_back(tIndex);
 }
@@ -454,7 +461,7 @@ void VKRenderManager::DeleteWithIndex()
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 	texVertices.erase(end(texVertices) - 4, end(texVertices));
-	vkCmdUpdateBuffer(commandBuffer, *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(VKVertex), texVertices.data());
+	vkCmdUpdateBuffer(commandBuffer, *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
 
 	texIndices.erase(end(texIndices) - 6, end(texIndices));
 	vkCmdUpdateBuffer(commandBuffer, *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
@@ -462,13 +469,13 @@ void VKRenderManager::DeleteWithIndex()
 	vertexVector.erase(end(vertexVector) - 1);
 	for (auto u : *uVertex->GetUniformBuffers())
 	{
-		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VKVertexUniform), vertexVector.data());
+		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VertexUniform), vertexVector.data());
 	}
 
 	fragVector.erase(end(fragVector) - 1);
 	for (auto u : *uFragment->GetUniformBuffers())
 	{
-		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VKFragmentUniform), fragVector.data());
+		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
 	}
 
 	//End Command Buffer
@@ -547,7 +554,7 @@ void VKRenderManager::BeginRender()
 			VkDescriptorBufferInfo bufferInfo;
 			bufferInfo.buffer = (*(uVertex->GetUniformBuffers()))[frameIndex];
 			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(VKVertexUniform) * quadCount;
+			bufferInfo.range = sizeof(VertexUniform) * quadCount;
 			//bufferInfos.push_back(bufferInfo);
 			//}
 
@@ -574,7 +581,7 @@ void VKRenderManager::BeginRender()
 			VkDescriptorBufferInfo bufferInfo;
 			bufferInfo.buffer = (*(uFragment->GetUniformBuffers()))[frameIndex];
 			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(VKFragmentUniform) * quadCount;
+			bufferInfo.range = sizeof(FragmentUniform) * quadCount;
 
 			VkWriteDescriptorSet descriptorWrite[2] = {};
 			descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -694,7 +701,7 @@ void VKRenderManager::BeginRender()
 		//Bind Texture DescriptorSet
 		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 		//Change Primitive Topology
-		vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		//Draw
 		vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(texIndices.size()), 1, 0, 0, 0);
 	}
@@ -727,83 +734,86 @@ void VKRenderManager::BeginRender()
 
 void VKRenderManager::EndRender()
 {
+	if (!isRecreated)
+	{
 #ifdef _DEBUG
-	imguiManager->End(frameIndex);
+		imguiManager->End(frameIndex);
 #endif
 
-	//--------------------End Draw--------------------//
+		//--------------------End Draw--------------------//
 
-	//End renderpass
-	vkCmdEndRenderPass(*currentCommandBuffer);
+		//End renderpass
+		vkCmdEndRenderPass(*currentCommandBuffer);
 
-	//Change image layout to PRESENT_SRC_KHR
-	{
-		VkImageMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		barrier.dstAccessMask = 0;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-		barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-		barrier.image = swapchainImage;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.layerCount = 1;
+		//Change image layout to PRESENT_SRC_KHR
+		{
+			VkImageMemoryBarrier barrier{};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.dstAccessMask = 0;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+			barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+			barrier.image = swapchainImage;
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.layerCount = 1;
 
-		//Record pipeline barrier for chainging image layout
-		vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+			//Record pipeline barrier for chainging image layout
+			vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
+
+		//End command buffer
+		vkEndCommandBuffer(*currentCommandBuffer);
+
+		//Create submit info
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		//Wait until swapchain image is ready after calculating pixel's result
+		//Define pipeline stage that semaphore must be signaled
+		constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
+		submitInfo.pWaitDstStageMask = &waitDstStageMask;
+
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = currentCommandBuffer;
+		//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
+
+		//Define semaphore that informs when command buffer is processed
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
+
+		//Submit queue to command buffer
+		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
+
+		//Wait until all submitted command buffers are handled
+		vkDeviceWaitIdle(*vkInit->GetDevice());
+
+		//Create present info
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+		//Define semaphore that waits to ensure command buffer to be processed
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
+
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
+		presentInfo.pImageIndices = &swapchainIndex;
+
+		//Render image on screen
+		VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
+		if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
+		{
+			RecreateSwapChain();
+			return;
+		}
+		//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		//	throw std::runtime_error("Failed Acquring SwapChain Image");
+
+		frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
 	}
-
-	//End command buffer
-	vkEndCommandBuffer(*currentCommandBuffer);
-
-	//Create submit info
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	//Wait until swapchain image is ready after calculating pixel's result
-	//Define pipeline stage that semaphore must be signaled
-	constexpr VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &vkSemaphores[IMAGE_AVAILABLE_INDEX];
-	submitInfo.pWaitDstStageMask = &waitDstStageMask;
-
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = currentCommandBuffer;
-	//submitInfo.pCommandBuffers = &(*imguiManager->GetCommandBuffers())[frameIndex];
-
-	//Define semaphore that informs when command buffer is processed
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
-
-	//Submit queue to command buffer
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
-
-	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
-
-	//Create present info
-	VkPresentInfoKHR presentInfo{};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-	//Define semaphore that waits to ensure command buffer to be processed
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
-
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = vkSwapChain->GetSwapChain();
-	presentInfo.pImageIndices = &swapchainIndex;
-
-	//Render image on screen
-	VkResult result2 = vkQueuePresentKHR(*vkInit->GetQueue(), &presentInfo);
-	if (result2 == VK_ERROR_OUT_OF_DATE_KHR || result2 == VK_SUBOPTIMAL_KHR)
-	{
-		RecreateSwapChain();
-		return;
-	}
-	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-	//	throw std::runtime_error("Failed Acquring SwapChain Image");
-
-	frameIndex = ++frameIndex % *vkSwapChain->GetBufferCount();
 }

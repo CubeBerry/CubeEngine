@@ -17,18 +17,24 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	//window = new Window();
 	if (number == 0)
 	{
-		gMode = GraphicsMode::GL;
-		window.Init(gMode, title, windowWidth, windowHeight, fullScreen, mode);
+		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);
+		renderManager = new GLRenderManager;
+		dynamic_cast<GLRenderManager*>(renderManager)->Initialize(
+#ifdef _DEBUG
+			window.GetWindow(), window.GetContext()
+#endif
+		);
+		//renderManager->Initialize(window.GetWindow(), window.GetContext());
 	}
 	else
 	{
-		gMode = GraphicsMode::VK;
-		window.Init(gMode, title, windowWidth, windowHeight, fullScreen, mode);
+		window.Init(GraphicsMode::VK, title, windowWidth, windowHeight, fullScreen, mode);
+		renderManager = new VKRenderManager;
+		dynamic_cast<VKRenderManager*>(renderManager)->Initialize(window.GetWindow());
+		//renderManager->Initialize(window.GetWindow());
 	}
 	timer.Init();
 
-	//vkRenderManager.Initialize(window.GetWindow());
-	glRenderManager.Initialize(window.GetWindow(), window.GetContext());
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 
 	//soundManager = new SoundManager;
@@ -49,7 +55,7 @@ void Engine::Update()
 		{
 			SDL_PollEvent(&event);
 #ifdef _DEBUG
-			//vkRenderManager.GetImGuiManager()->FeedEvent(event);
+			//ImGui
 			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
 			switch (event.type)
@@ -83,7 +89,7 @@ void Engine::Update()
 
 			inputManager.InputPollEvent(event);
 			gameStateManger.Update(deltaTime);
-			if (gMode == GraphicsMode::GL)
+			if (renderManager->GetGraphicsMode() == GraphicsMode::GL)
 				window.UpdateWindowGL();
 		}
 	}

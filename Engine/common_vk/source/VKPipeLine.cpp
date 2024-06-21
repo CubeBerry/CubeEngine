@@ -2,7 +2,6 @@
 //Project: CubeEngine
 //File: VKPipeLine.cpp
 #include "VKPipeLine.hpp"
-#include "VKMaterial.hpp"
 
 #include <iostream>
 #include <array>
@@ -20,7 +19,14 @@ VKPipeLine::~VKPipeLine()
 	device = nullptr;
 }
 
-void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* fragmentModule, VkExtent2D* swapchainImageExtent, VkRenderPass* renderPass, POLYGON_MODE mode_)
+void VKPipeLine::InitPipeLine(
+	VkShaderModule* vertexModule,
+	VkShaderModule* fragmentModule,
+	VkExtent2D* swapchainImageExtent,
+	VkRenderPass* renderPass,
+	uint32_t stride,
+	std::initializer_list<VKAttributeLayout> layout,
+	POLYGON_MODE mode_)
 {
 	//Create Pipeline Shader Stage Info
 	std::array<VkPipelineShaderStageCreateInfo, 2> stageCreateInfos;
@@ -48,74 +54,40 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//Create Vertex Input Binding
 	VkVertexInputBindingDescription vertexInputBinding{};
 	vertexInputBinding.binding = 0;
-	vertexInputBinding.stride = sizeof(VKVertex);
+	vertexInputBinding.stride = stride;
 	vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	//Create Vertex Input Attribute
 	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes{};
-
+	for (const VKAttributeLayout& attribute : layout)
 	{
-		//Define Vertex Input Attribute about Position
 		VkVertexInputAttributeDescription vertexInputAttribute{};
-		vertexInputAttribute.location = 0;
+		vertexInputAttribute.location = attribute.vertex_layout_location;
 		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		vertexInputAttribute.offset = offsetof(VKVertex, position);
+		vertexInputAttribute.format = attribute.format;
+		vertexInputAttribute.offset = attribute.offset;
 
 		vertexInputAttributes.push_back(vertexInputAttribute);
 	}
 
 	//{
-	//	//Define Vertex Input Attribute about Color
+	//	//Define Vertex Input Attribute about Position
+	//	VkVertexInputAttributeDescription vertexInputAttribute{};
+	//	vertexInputAttribute.location = 0;
+	//	vertexInputAttribute.binding = 0;
+	//	vertexInputAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	//	vertexInputAttribute.offset = offsetof(VKVertex, position);
+
+	//	vertexInputAttributes.push_back(vertexInputAttribute);
+	//}
+
+	//{
+	//	//Define Vertex Input Attribute about Quad Index
 	//	VkVertexInputAttributeDescription vertexInputAttribute{};
 	//	vertexInputAttribute.location = 1;
 	//	vertexInputAttribute.binding = 0;
-	//	vertexInputAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	//	vertexInputAttribute.offset = offsetof(Vertex, color);
-
-	//	vertexInputAttributes.push_back(vertexInputAttribute);
-	//}
-
-	//{
-	//	//Define Vertex Input Attribute about Texture
-	//	VkVertexInputAttributeDescription vertexInputAttribute{};
-	//	vertexInputAttribute.location = 2;
-	//	vertexInputAttribute.binding = 0;
-	//	vertexInputAttribute.format = VK_FORMAT_R32G32_SFLOAT;
-	//	vertexInputAttribute.offset = offsetof(Vertex, uv);
-
-	//	vertexInputAttributes.push_back(vertexInputAttribute);
-	//}
-
-	{
-		//Define Vertex Input Attribute about Quad Index
-		VkVertexInputAttributeDescription vertexInputAttribute{};
-		vertexInputAttribute.location = 1;
-		vertexInputAttribute.binding = 0;
-		vertexInputAttribute.format = VK_FORMAT_R32_SINT;
-		vertexInputAttribute.offset = offsetof(VKVertex, index);
-
-		vertexInputAttributes.push_back(vertexInputAttribute);
-	}
-
-	//{
-	//	//Define Vertex Input Attribute about Enable Texture
-	//	VkVertexInputAttributeDescription vertexInputAttribute{};
-	//	vertexInputAttribute.location = 3;
-	//	vertexInputAttribute.binding = 0;
-	//	vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
-	//	vertexInputAttribute.offset = offsetof(Vertex, isTex);
-
-	//	vertexInputAttributes.push_back(vertexInputAttribute);
-	//}
-
-	//{
-	//	//Define Vertex Input Attribute about Enable Texel
-	//	VkVertexInputAttributeDescription vertexInputAttribute{};
-	//	vertexInputAttribute.location = 4;
-	//	vertexInputAttribute.binding = 0;
-	//	vertexInputAttribute.format = VK_FORMAT_R32_SFLOAT;
-	//	vertexInputAttribute.offset = offsetof(Vertex, isTexel);
+	//	vertexInputAttribute.format = VK_FORMAT_R32_SINT;
+	//	vertexInputAttribute.offset = offsetof(VKVertex, index);
 
 	//	vertexInputAttributes.push_back(vertexInputAttribute);
 	//}
@@ -204,10 +176,11 @@ void VKPipeLine::InitPipeLine(VkShaderModule* vertexModule, VkShaderModule* frag
 	//Create Dynamic State Info
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 	dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicStateInfo.dynamicStateCount = 4;
+	dynamicStateInfo.dynamicStateCount = 3;
 	VkDynamicState dynamicStates[] = {
 		VK_DYNAMIC_STATE_LINE_WIDTH,
-		VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
+		//For vkCmdSetPrimitiveTopology
+		//VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_SCISSOR
 	};

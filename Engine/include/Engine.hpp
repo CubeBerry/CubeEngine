@@ -4,17 +4,15 @@
 #pragma once
 #include "Timer.hpp"
 #include "Window.hpp"
-#include "GameStateManager.hpp"
-#include "VKRenderManager.hpp"
 #include "GLRenderManager.hpp"
+#include "VKRenderManager.hpp"
+#include "GameStateManager.hpp"
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
 #include "Particle/ParticleManager.hpp"
-
-class VKRenderManager;
 
 class Engine
 {
@@ -24,8 +22,7 @@ public:
 
 	static Engine& Instance() { static Engine instance; return instance; }
 	static Window& GetWindow() { return Instance().window; }
-	static VKRenderManager& GetVKRenderManager() { return Instance().vkRenderManager; }
-	static GLRenderManager& GetGLRenderManager() { return Instance().glRenderManager; }
+	static RenderManager* GetRenderManager() { return Instance().renderManager; }
 	static GameStateManager& GetGameStateManager() { return Instance().gameStateManger; }
 	static InputManager& GetInputManager() { return Instance().inputManager; }
 	static ObjectManager& GetObjectManager() { return Instance().objectManager; }
@@ -48,11 +45,8 @@ private:
 	int frameCount = 0;
 	std::string windowTitleWithFrameCount;
 
-	GraphicsMode gMode;
-
 	Window window;
-	VKRenderManager vkRenderManager;
-	GLRenderManager glRenderManager;
+	RenderManager* renderManager;
 	GameStateManager gameStateManger;
 	InputManager inputManager;
 	ObjectManager objectManager;

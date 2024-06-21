@@ -21,12 +21,12 @@ void PlatformDemo::Init()
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();
 
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PlatformDemo/train_editor.png", "train_editor");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PlatformDemo/building1.png", "building1");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PlatformDemo/building2.png", "building2");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PlatformDemo/building3.png", "building3");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PlatformDemo/rail.png", "rail");
-	Engine::GetVKRenderManager().LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/train_editor.png", "train_editor");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building1.png", "building1");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building2.png", "building2");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/building3.png", "building3");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/rail.png", "rail");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
 
 	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
 	Engine::GetObjectManager().AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player", platformDemoSystem);

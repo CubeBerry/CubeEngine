@@ -2,20 +2,24 @@
 //Project: CubeEngine
 //File: GLRenderManager.hpp
 #pragma once
+#include "RenderManager.hpp"
 #include "GLShader.hpp"
 #include "GLVertexArray.hpp"
 #include "GLTexture.hpp"
 #include "GLUniformBuffer.hpp"
-#include "glm/vec4.hpp"
-#include "GLMaterial.hpp"
 #include "GLImGuiManager.hpp"
+#include "Material.hpp"
 
-class GLRenderManager
+class GLRenderManager : public RenderManager
 {
 public:
-	GLRenderManager() = default;
+	GLRenderManager() { gMode = GraphicsMode::GL; };
 	~GLRenderManager();
-	void Initialize(SDL_Window* window_, SDL_GLContext context_);
+	void Initialize(
+#ifdef _DEBUG
+		SDL_Window* window_, SDL_GLContext context_
+#endif
+	);
 
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
 	{
@@ -27,8 +31,8 @@ public:
 		glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount());
 	}
 
-	void BeginRender();
-	void EndRender();
+	void BeginRender() override;
+	void EndRender() override;
 private:
 	GLVertexArray vertexArray;
 	GLShader shader;
@@ -38,25 +42,21 @@ private:
 
 	//--------------------Texture Render--------------------//
 public:
-	void LoadTexture(const std::filesystem::path& path_, std::string name_);
-	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_);
+	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
+	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
 	//void LoadLineQuad(glm::vec4 color_);
 	//void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 	//void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
 
-	void DeleteWithIndex();
+	void DeleteWithIndex() override;
+
+	GLTexture* GetTexture(std::string name);
 private:
 	std::vector<GLTexture*> textures;
 	
-	std::vector<GLVertex> texVertices;
 	GLVertexBuffer* texVertex{ nullptr };
-	std::vector<uint16_t> texIndices;
 	GLIndexBuffer* texIndex{ nullptr };
 
-	std::vector<GLVertexUniform> vertexVector;
-	GLUniformBuffer<GLVertexUniform>* uVertex{ nullptr };
-	std::vector<GLFragmentUniform> fragVector;
-	GLUniformBuffer<GLFragmentUniform>* uFragment{ nullptr };
-
-	unsigned int quadCount{ 0 };
+	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };
+	GLUniformBuffer<FragmentUniform>* uFragment{ nullptr };
 };

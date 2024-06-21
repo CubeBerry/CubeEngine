@@ -6,12 +6,14 @@
 #include <SDL2/SDL_vulkan.h>
 #include <array>
 
+#include "RenderManager.hpp"
 #include "VKDescriptor.hpp"
 #include "VKTexture.hpp"
 #include "VKVertexBuffer.hpp"
 #include "VKIndexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
+#include "Material.hpp"
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
@@ -24,22 +26,16 @@ class VKPipeLine;
 template<typename Material>
 class VKUniformBuffer;
 
-class VKRenderManager
+class VKRenderManager : public RenderManager
 {
 public:
-	VKRenderManager() = default;
+	VKRenderManager() { gMode = GraphicsMode::VK; };
 	~VKRenderManager();
 	void Initialize(SDL_Window* window_);
 
-	void BeginRender();
-	void EndRender();
+	void BeginRender() override;
+	void EndRender() override;
 	//void EndRender(Window* window_);
-
-	//VKInit* GetVkInit() { return &vkInit; }
-	bool GetIsRecreated() { return isRecreated; };
-#ifdef _DEBUG
-	VKImGuiManager* GetImGuiManager() { return imguiManager; };
-#endif
 private:
 	void InitCommandPool();
 	void InitCommandBuffer();
@@ -80,28 +76,21 @@ private:
 
 	//--------------------Texture Render--------------------//
 public:
-	void LoadTexture(const std::filesystem::path& path_, std::string name_);
-	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_);
+	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
+	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
 
-	void DeleteWithIndex();
+	void DeleteWithIndex() override;
 
-	std::vector<VKVertexUniform>* GetVertexVector() { return &vertexVector; };
-	std::vector<VKFragmentUniform>* GetFragmentVector() { return &fragVector; };
-	std::vector<VKTexture*>* GetTextures() { return &textures; };
+	//std::vector<VKTexture*>* GetTextures() { return &textures; };
+	/*VKTexture* GetTexture(std::string name);*/
 	VKTexture* GetTexture(std::string name);
 private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
-	std::vector<VKVertex> texVertices;
-	VKVertexBuffer* texVertex{ nullptr };
-	std::vector<uint16_t> texIndices;
+	VKVertexBuffer<Vertex>* texVertex{ nullptr };
 	VKIndexBuffer* texIndex { nullptr };
 
-	std::vector<VKVertexUniform> vertexVector;
-	VKUniformBuffer<VKVertexUniform>* uVertex{ nullptr };
-	std::vector<VKFragmentUniform> fragVector;
-	VKUniformBuffer<VKFragmentUniform>* uFragment{ nullptr };
-
-	unsigned int quadCount{ 0 };
+	VKUniformBuffer<VertexUniform>* uVertex{ nullptr };
+	VKUniformBuffer<FragmentUniform>* uFragment{ nullptr };
 };
