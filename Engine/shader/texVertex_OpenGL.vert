@@ -52,6 +52,5 @@ void main()
     o_col = matrix[index].color;
     outIndex = index;
 
-    //gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
-    gl_Position = matrix[index].model * i_pos;
+    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
 }
