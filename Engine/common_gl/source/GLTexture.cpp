@@ -36,6 +36,8 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	//Set Wrapping
 	glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	name = name_;
 }
 
 void GLTexture::UseForSlot(unsigned int unit) const noexcept

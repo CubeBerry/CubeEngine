@@ -3,7 +3,7 @@
 //File: GLShader.hpp
 #include "GLShader.hpp"
 #include <fstream>
-
+#include<iostream>
 GLShader::~GLShader()
 {
     if (programHandle > 0)
@@ -58,6 +58,11 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
             glGetShaderiv(shaders[count], GL_COMPILE_STATUS, &isCompiled);
             if (isCompiled == GL_FALSE)
             {
+                GLint maxLength = 0;
+                std::vector<GLchar> infoLog(maxLength);
+
+                glGetShaderInfoLog(shaders[count], maxLength, &maxLength, &infoLog[0]);
+                std::cerr << "COMPILE FAILED\n" << infoLog.data() << std::endl;
                 //GLint log_length = 0;
                 //glCheck(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length));
                 //error_log.resize(static_cast<std::string::size_type>(log_length) + 1);
@@ -82,20 +87,25 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
         }
 
         glLinkProgram(programHandle);
-        for (auto& shader : shaders)
-        {
-            glDeleteShader(shader);
-        }
+
         GLint isLinked{ 0 };
         glGetProgramiv(programHandle, GL_LINK_STATUS, &isLinked);
         if (isLinked == GL_FALSE)
         {
+            char infoLog[512];
+            glGetProgramInfoLog(programHandle, 512, NULL, infoLog);
+            std::cerr << "LINK FAILED\n" << infoLog << std::endl;
             //GLint log_length = 0;
             //glCheck(glGetProgramiv(program_handle, GL_INFO_LOG_LENGTH, &log_length));
             //std::string error;
             //error.resize(static_cast<unsigned>(log_length) + 1);
             //glCheck(glGetProgramInfoLog(program_handle, log_length, nullptr, error.data()));
             //throw std::runtime_error(error);
+        }
+
+        for (auto& shader : shaders)
+        {
+            glDeleteShader(shader);
         }
     }
     catch (std::exception& e)

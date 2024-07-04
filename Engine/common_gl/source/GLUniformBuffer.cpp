@@ -6,4 +6,5 @@
 template <typename Material>
 GLUniformBuffer<Material>::~GLUniformBuffer()
 {
+	glDeleteBuffers(1, &uniformHandle);
 }

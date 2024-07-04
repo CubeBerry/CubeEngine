@@ -14,8 +14,13 @@ void GLRenderManager::Initialize(
 )
 {
 	vertexArray.Initialize();
-	//shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment.frag" } });
+	shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
+	uVertex = new GLUniformBuffer<VertexUniform>();
+	uFragment = new GLUniformBuffer<FragmentUniform>();
+
+	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -37,7 +42,24 @@ void GLRenderManager::BeginRender()
 
 	//vertexArray.Use(true);
 	//GLDrawIndexed(vertexArray);
+	shader.Use();
+	vertexArray.Use(true);
 
+	if (uVertex != nullptr)
+	{
+		uVertex->UpdateUniform(vertexVector);
+	}
+	if (uFragment != nullptr)
+	{
+		uFragment->UpdateUniform(fragVector);
+	}
+
+	for (auto& tex : textures)
+	{
+		tex->UseForSlot(1);
+	}
+
+	GLDrawIndexed(vertexArray);
 #ifdef _DEBUG
 	imguiManager->Begin();
 #endif
@@ -49,8 +71,8 @@ void GLRenderManager::EndRender()
 	imguiManager->End();
 #endif
 
-	//vertexArray.Use(false);
-	//shader.Use(false);
+	vertexArray.Use(false);
+	shader.Use(false);
 }
 
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)

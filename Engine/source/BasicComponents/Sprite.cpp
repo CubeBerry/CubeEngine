@@ -251,7 +251,7 @@ void Sprite::UpdateAnimation(float dt)
 
 void Sprite::ChangeTexture(std::string name)
 {
-	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+ 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	switch (renderManager->GetGraphicsMode())
 	{
 	case GraphicsMode::GL:
