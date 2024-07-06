@@ -16,7 +16,7 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	//STBI_rgb_alpha == 4
 	unsigned char* data = stbi_load(path_.string().c_str(), &width, &height, &color, STBI_rgb_alpha);
 	
-	DeleteTexture();
+	//DeleteTexture();
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &textureHandle);
 	// Create immutable storage of widthxheight RGBA8 GPU memory with only one texture level

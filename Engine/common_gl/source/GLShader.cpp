@@ -3,7 +3,8 @@
 //File: GLShader.hpp
 #include "GLShader.hpp"
 #include <fstream>
-#include<iostream>
+#include <iostream>
+
 GLShader::~GLShader()
 {
     if (programHandle > 0)
@@ -59,11 +60,12 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
             if (isCompiled == GL_FALSE)
             {
                 GLint maxLength = 0;
+                glGetShaderiv(shaders[count], GL_INFO_LOG_LENGTH, &maxLength);
                 std::vector<GLchar> infoLog(maxLength);
 
-                glGetShaderInfoLog(shaders[count], maxLength, &maxLength, &infoLog[0]);
+                glGetShaderInfoLog(shaders[count], maxLength, nullptr, infoLog.data());
                 std::cerr << "COMPILE FAILED\n" << infoLog.data() << std::endl;
-                //GLint log_length = 0;
+            	//GLint log_length = 0;
                 //glCheck(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length));
                 //error_log.resize(static_cast<std::string::size_type>(log_length) + 1);
                 //glCheck(glGetShaderInfoLog(shader, log_length, nullptr, error_log.data()));
