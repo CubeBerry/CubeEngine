@@ -8,7 +8,7 @@
 GLVertexBuffer::GLVertexBuffer(GLsizei size) : size(size)
 {
 	glCheck(glCreateBuffers(1, &vboHandle));
-	glCheck(glNamedBufferStorage(vboHandle, 1, nullptr, GL_DYNAMIC_STORAGE_BIT));
+	glCheck(glNamedBufferStorage(vboHandle, size, nullptr, GL_DYNAMIC_STORAGE_BIT));
 }
 
 GLVertexBuffer::~GLVertexBuffer()

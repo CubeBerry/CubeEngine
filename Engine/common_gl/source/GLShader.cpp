@@ -18,7 +18,15 @@ GLShader::~GLShader()
 
 void GLShader::Use(bool bind) const noexcept
 {
-    glCheck(glUseProgram(bind ? programHandle : 0));
+    //glCheck(glUseProgram(bind ? programHandle : 0));
+    if (bind == true)
+    {
+        glCheck(glUseProgram(programHandle));
+    }
+    else if (bind == false)
+    {
+        glCheck(glUseProgram(0));
+    }
 }
 
 void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, std::filesystem::path>>& paths)
@@ -91,6 +99,10 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
         }
 
         glCheck(glLinkProgram(programHandle));
+        for (auto& shader : shaders)
+        {
+            glCheck(glDeleteShader(shader));
+        }
 
         GLint isLinked{ 0 };
         glCheck(glGetProgramiv(programHandle, GL_LINK_STATUS, &isLinked));
@@ -106,11 +118,6 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
             //glCheck(glGetProgramInfoLog(program_handle, log_length, nullptr, error.data()));
             //throw std::runtime_error(error);
         }
-
-        //for (auto& shader : shaders)
-        //{
-        //    glDeleteShader(shader);
-        //}
     }
     catch (std::exception& e)
     {

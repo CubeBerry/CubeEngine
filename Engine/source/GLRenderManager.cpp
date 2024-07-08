@@ -14,7 +14,7 @@ void GLRenderManager::Initialize(
 )
 {
 	vertexArray.Initialize();
-	shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
+	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
 	uVertex = new GLUniformBuffer<VertexUniform>();
 	uFragment = new GLUniformBuffer<FragmentUniform>();
@@ -118,7 +118,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.component_dimension = GLAttributeLayout::_4;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
-	position_layout.stride = sizeof(glm::vec4);
+	position_layout.stride = sizeof(Vertex);
 	position_layout.offset = 0;
 	position_layout.relative_offset = offsetof(Vertex, position);
 
@@ -127,7 +127,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.component_dimension = GLAttributeLayout::_1;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 1;
-	position_layout.stride = sizeof(int);
+	position_layout.stride = sizeof(Vertex);
 	position_layout.offset = 0;
 	position_layout.relative_offset = offsetof(Vertex, index);
 
