@@ -1,5 +1,4 @@
 #version 460
-#extension GL_KHR_vulkan_glsl : enable //layout Set
 precision mediump float;
 
 #define MAX_MATRICES 20
@@ -24,7 +23,7 @@ struct vMatrix
     float isTexel;
 };
 
-layout(set = 0, binding = 0) uniform vUniformMatrix
+layout(binding = 0) uniform vUniformMatrix
 {
     vMatrix matrix[MAX_MATRICES];
 };

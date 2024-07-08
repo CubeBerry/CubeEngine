@@ -13,7 +13,7 @@ public:
     ~GLTexture();
 
     void LoadTexture(const std::filesystem::path& path_, std::string name_);
-    void UseForSlot(unsigned int texture_unit) const noexcept;
+    void UseForSlot(/*unsigned int texture_unit*/) const noexcept;
     void SetTextureID(int id) { texID = id; };
     void DeleteTexture();
 

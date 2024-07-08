@@ -28,8 +28,8 @@ void GLRenderManager::Initialize(
 
 void GLRenderManager::BeginRender()
 {
-	glClearColor(1, 0, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glCheck(glClearColor(1, 0, 1, 1));
+	glCheck(glClear(GL_COLOR_BUFFER_BIT));
 
 	//shader.Use();
 	//for (auto& tex : textures)
@@ -42,8 +42,12 @@ void GLRenderManager::BeginRender()
 
 	//vertexArray.Use(true);
 	//GLDrawIndexed(vertexArray);
-	shader.Use();
-	vertexArray.Use(true);
+	shader.Use(true);
+
+	for (auto& tex : textures)
+	{
+		tex->UseForSlot();
+	}
 
 	if (uVertex != nullptr)
 	{
@@ -54,12 +58,10 @@ void GLRenderManager::BeginRender()
 		uFragment->UpdateUniform(fragVector);
 	}
 
-	for (auto& tex : textures)
-	{
-		tex->UseForSlot(1);
-	}
+	vertexArray.Use(true);
 
 	GLDrawIndexed(vertexArray);
+
 #ifdef _DEBUG
 	imguiManager->Begin();
 #endif

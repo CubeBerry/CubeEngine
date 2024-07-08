@@ -3,20 +3,22 @@
 //File: GLVertexBuffer.cpp
 #include "GLVertexBuffer.hpp"
 
+#include "glCheck.hpp"
+
 GLVertexBuffer::GLVertexBuffer(GLsizei size) : size(size)
 {
-	glCreateBuffers(1, &vboHandle);
-	glNamedBufferStorage(vboHandle, 1, nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCheck(glCreateBuffers(1, &vboHandle));
+	glCheck(glNamedBufferStorage(vboHandle, 1, nullptr, GL_DYNAMIC_STORAGE_BIT));
 }
 
 GLVertexBuffer::~GLVertexBuffer()
 {
-	glDeleteBuffers(1, &vboHandle);
+	glCheck(glDeleteBuffers(1, &vboHandle));
 }
 
 void GLVertexBuffer::SetData(const void* data)
 {
-	glNamedBufferSubData(vboHandle, 0, size, data);
+	glCheck(glNamedBufferSubData(vboHandle, 0, size, data));
 }
 
 //void GLVertexBuffer::Use()

@@ -1,5 +1,4 @@
 #version 460
-#extension GL_KHR_vulkan_glsl : enable //layout Set
 precision mediump float;
 
 #define MAX_TEXTURES 20
@@ -16,16 +15,18 @@ struct fMatrix
     int texIndex;
 };
 
-layout(set = 1, binding = 0) uniform fUniformMatrix
+layout(binding = 1) uniform fUniformMatrix
 {
     fMatrix f_matrix[MAX_TEXTURES];
 };
 
-layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
+uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    fragmentColor = mix(i_col, i_col * texture(tex[f_matrix[inIndex].texIndex], i_uv).rgba, inIsTex);
+    //fragmentColor = mix(i_col, i_col * texture(tex[f_matrix[inIndex].texIndex], i_uv).rgba, inIsTex);
+
+    fragmentColor = vec4(1.0, 0.0, 0.0, 1.0);
 
     // if(inIsTex == 1.0)
     // {
