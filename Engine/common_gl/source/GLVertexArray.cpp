@@ -15,16 +15,18 @@ void GLVertexArray::Initialize()
 	glCheck(glCreateVertexArrays(1, &vaoHandle));
 }
 
-void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, std::initializer_list<GLAttributeLayout> layout)
+void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::initializer_list<GLAttributeLayout> layout)
 {
 	GLuint vboHandle = buffer.GetHandle();
+
+	//bind a buffer to a vertex buffer bind point
+	glCheck(glVertexArrayVertexBuffer(vaoHandle, 0, vboHandle, 0, static_cast<GLsizei>(size)));
+
 	for (const GLAttributeLayout& attribute : layout)
 	{
 		glCheck(glEnableVertexArrayAttrib(vaoHandle, attribute.vertex_layout_location));
-		//bind a buffer to a vertex buffer bind point
-		glCheck(glVertexArrayVertexBuffer(vaoHandle, attribute.vertex_layout_location, vboHandle, attribute.offset, attribute.stride));
 		glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
-		glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, attribute.vertex_layout_location));
+		glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, 0));
 	}
 	buffers.push_back(std::move(buffer));
 }
