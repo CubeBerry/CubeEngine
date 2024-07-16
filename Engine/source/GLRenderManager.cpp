@@ -33,10 +33,10 @@ void GLRenderManager::BeginRender()
 
 	shader.Use(true);
 
-	//for (auto& tex : textures)
-	//{
-	//	tex->UseForSlot();
-	//}
+	for (auto& tex : textures)
+	{
+		tex->UseForSlot();
+	}
 
 	//if (uVertex != nullptr)
 	//{
@@ -79,10 +79,10 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 0.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 0.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 0.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 0.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 	if (texVertex != nullptr)
 		delete texVertex;
 	texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
@@ -112,15 +112,15 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.relative_offset = offsetof(Vertex, position);
 
 	GLAttributeLayout index_layout;
-	position_layout.component_type = GLAttributeLayout::Int;
-	position_layout.component_dimension = GLAttributeLayout::_1;
-	position_layout.normalized = false;
-	position_layout.vertex_layout_location = 1;
-	position_layout.stride = sizeof(Vertex);
-	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(Vertex, index);
+	index_layout.component_type = GLAttributeLayout::Int;
+	index_layout.component_dimension = GLAttributeLayout::_1;
+	index_layout.normalized = false;
+	index_layout.vertex_layout_location = 1;
+	index_layout.stride = sizeof(Vertex);
+	index_layout.offset = 0;
+	index_layout.relative_offset = offsetof(Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*texVertex), sizeof(Vertex), {position_layout, index_layout});
+	vertexArray.AddVertexBuffer(std::move(*texVertex), texVertices.data(), sizeof(Vertex), {position_layout, index_layout});
 	vertexArray.SetIndexBuffer(std::move(*texIndex));
 
 	//if (uVertex != nullptr)

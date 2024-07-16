@@ -15,19 +15,35 @@ void GLVertexArray::Initialize()
 	glCheck(glCreateVertexArrays(1, &vaoHandle));
 }
 
-void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::initializer_list<GLAttributeLayout> layout)
+void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, const void* data, size_t size, std::initializer_list<GLAttributeLayout> layout)
 {
+	glCheck(glBindVertexArray(vaoHandle));
+
 	GLuint vboHandle = buffer.GetHandle();
+	glCheck(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
+	glBufferData(GL_ARRAY_BUFFER, size * 8, data, GL_STATIC_DRAW);
+
+	for (int index = 0; index < layout.size(); ++index)
+	{
+		const GLAttributeLayout* attribute = layout.begin() + index;
+
+		glCheck(glEnableVertexArrayAttrib(vaoHandle, index));
+		glCheck(glVertexAttribPointer(index, attribute->component_dimension, attribute->component_type, attribute->normalized, size, reinterpret_cast<const void*>(attribute->relative_offset)));
+	}
+
+	glCheck(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	glCheck(glBindVertexArray(0));
 
 	//bind a buffer to a vertex buffer bind point
-	glCheck(glVertexArrayVertexBuffer(vaoHandle, 0, vboHandle, 0, static_cast<GLsizei>(size)));
+	//glCheck(glVertexArrayVertexBuffer(vaoHandle, 0, vboHandle, 0, static_cast<GLsizei>(size)));
 
-	for (const GLAttributeLayout& attribute : layout)
-	{
-		glCheck(glEnableVertexArrayAttrib(vaoHandle, attribute.vertex_layout_location));
-		glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
-		glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, 0));
-	}
+	//for (const GLAttributeLayout& attribute : layout)
+	//{
+	//	glCheck(glEnableVertexArrayAttrib(vaoHandle, attribute.vertex_layout_location));
+	//	glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
+	//	glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, 0));
+	//}
+
 	buffers.push_back(std::move(buffer));
 }
 
