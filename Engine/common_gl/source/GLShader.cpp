@@ -40,14 +40,12 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
         {
             if (!std::filesystem::exists(path.second))
             {
-                //error_log = "Cannot find " + path.string() + "\n";
-                //return false;
+                throw std::runtime_error{ "Shader Path Does Not Exist" };
             }
             std::ifstream ifs(path.second, std::ios::in);
             if (!ifs)
             {
-                //error_log = "Cannot open " + path.string() + "\n";
-                //return false;
+                throw std::runtime_error{ "Unable To Create ifstream" };
             }
             std::string glsl_text;
             glsl_text.reserve(std::filesystem::file_size(path.second));
@@ -58,7 +56,7 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
                 shaders[count] = glCheck(glCreateShader(path.first));
                 if (shaders[count] == 0)
                 {
-                    //error_log = "Unable to create shader\n";
+                    throw std::runtime_error{ "Shader Creation Failed" };
                 }
             }
             const GLchar* source[]{ glsl_text.data() };
@@ -75,12 +73,10 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
 
                 glCheck(glGetShaderInfoLog(shaders[count], maxLength, nullptr, infoLog.data()));
                 std::cerr << "COMPILE FAILED\n" << infoLog.data() << std::endl;
-            	//GLint log_length = 0;
-                //glCheck(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length));
-                //error_log.resize(static_cast<std::string::size_type>(log_length) + 1);
-                //glCheck(glGetShaderInfoLog(shader, log_length, nullptr, error_log.data()));
+
                 glCheck(glDeleteShader(shaders[count]));
-                //shader = 0;
+
+                throw std::runtime_error{ "Shader Compile Failed" };
             }
 
             count++;
@@ -90,7 +86,7 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
         programHandle = glCheck(glCreateProgram());
         if (programHandle == 0)
         {
-            //throw std::runtime_error("Unable to create program\n");
+            throw std::runtime_error{ "Shader Program Create Failed" };
         }
 
         for (const auto shader : shaders)
@@ -111,16 +107,14 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
             char infoLog[512];
             glCheck(glGetProgramInfoLog(programHandle, 512, NULL, infoLog));
             std::cerr << "LINK FAILED\n" << infoLog << std::endl;
-            //GLint log_length = 0;
-            //glCheck(glGetProgramiv(program_handle, GL_INFO_LOG_LENGTH, &log_length));
-            //std::string error;
-            //error.resize(static_cast<unsigned>(log_length) + 1);
-            //glCheck(glGetProgramInfoLog(program_handle, log_length, nullptr, error.data()));
-            //throw std::runtime_error(error);
+
+            throw std::runtime_error{ "Shader Link Failed" };
         }
     }
     catch (std::exception& e)
     {
-        e;
+        std::cerr << e.what() << std::endl;
+        GLShader::~GLShader();
+        std::exit(EXIT_FAILURE);
     }
 }

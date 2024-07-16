@@ -16,11 +16,11 @@ void GLRenderManager::Initialize(
 	vertexArray.Initialize();
 	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
-	uVertex = new GLUniformBuffer<VertexUniform>();
-	uFragment = new GLUniformBuffer<FragmentUniform>();
+	//uVertex = new GLUniformBuffer<VertexUniform>();
+	//uFragment = new GLUniformBuffer<FragmentUniform>();
 
-	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	//uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	//uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
