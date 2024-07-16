@@ -16,11 +16,11 @@ void GLRenderManager::Initialize(
 	vertexArray.Initialize();
 	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
-	//uVertex = new GLUniformBuffer<VertexUniform>();
-	//uFragment = new GLUniformBuffer<FragmentUniform>();
+	uVertex = new GLUniformBuffer<VertexUniform>();
+	uFragment = new GLUniformBuffer<FragmentUniform>();
 
-	//uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	//uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -38,14 +38,14 @@ void GLRenderManager::BeginRender()
 		tex->UseForSlot();
 	}
 
-	//if (uVertex != nullptr)
-	//{
-	//	uVertex->UpdateUniform(vertexVector);
-	//}
-	//if (uFragment != nullptr)
-	//{
-	//	uFragment->UpdateUniform(fragVector);
-	//}
+	if (uVertex != nullptr)
+	{
+		uVertex->UpdateUniform(vertexVector);
+	}
+	if (uFragment != nullptr)
+	{
+		uFragment->UpdateUniform(fragVector);
+	}
 
 	vertexArray.Use(true);
 
@@ -120,7 +120,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	index_layout.offset = 0;
 	index_layout.relative_offset = offsetof(Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*texVertex), texVertices.data(), sizeof(Vertex), {position_layout, index_layout});
+	vertexArray.AddVertexBuffer(std::move(*texVertex), sizeof(Vertex), {position_layout, index_layout});
 	vertexArray.SetIndexBuffer(std::move(*texIndex));
 
 	//if (uVertex != nullptr)

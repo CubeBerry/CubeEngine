@@ -15,13 +15,12 @@ void GLVertexArray::Initialize()
 	glCheck(glCreateVertexArrays(1, &vaoHandle));
 }
 
-void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, const void* data, size_t size, std::initializer_list<GLAttributeLayout> layout)
+void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::initializer_list<GLAttributeLayout> layout)
 {
 	glCheck(glBindVertexArray(vaoHandle));
 
 	GLuint vboHandle = buffer.GetHandle();
 	glCheck(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
-	glBufferData(GL_ARRAY_BUFFER, size * 8, data, GL_STATIC_DRAW);
 
 	for (int index = 0; index < layout.size(); ++index)
 	{

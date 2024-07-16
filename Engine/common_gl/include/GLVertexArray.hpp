@@ -48,7 +48,7 @@ public:
 	~GLVertexArray();
     void Initialize();
 
-	void AddVertexBuffer(GLVertexBuffer&& buffer, const void* data, size_t size, std::initializer_list<GLAttributeLayout> layout);
+	void AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::initializer_list<GLAttributeLayout> layout);
     void SetIndexBuffer(GLIndexBuffer&& buffer);
     void Use(bool bind);
 

@@ -16,7 +16,7 @@ struct fMatrix
     int texIndex;
 };
 
-layout(binding = 0) uniform fUniformMatrix
+layout(binding = 1) uniform fUniformMatrix
 {
     fMatrix f_matrix[MAX_TEXTURES];
 };
