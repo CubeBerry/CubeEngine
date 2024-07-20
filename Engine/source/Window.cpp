@@ -125,7 +125,11 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void Window::UpdateWindowGL()
+void Window::UpdateWindowGL(SDL_Event& event)
 {
+	if ((event.type == SDL_WINDOWEVENT) && (event.window.event == SDL_WINDOWEVENT_RESIZED || event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+	{
+		glViewport(0, 0, event.window.data1, event.window.data2);
+	}
 	SDL_GL_SwapWindow(window.get());
 }
