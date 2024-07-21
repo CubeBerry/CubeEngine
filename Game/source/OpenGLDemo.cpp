@@ -33,6 +33,8 @@ void OpenGLDemo::ImGuiDraw(float /*dt*/)
 
 void OpenGLDemo::Restart()
 {
+	End();
+	Init();
 }
 
 void OpenGLDemo::End()

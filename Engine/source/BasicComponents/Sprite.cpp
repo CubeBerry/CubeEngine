@@ -47,15 +47,17 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 	{
 	case GraphicsMode::GL:
 		pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(-angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	case GraphicsMode::VK:
 		pos = glm::vec3(pos_.x * 2, -pos_.y * 2, pos_.z);
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
-	modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-		glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-		glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-
 	Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).model = modelMatrix;
 }
 
