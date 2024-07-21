@@ -5,10 +5,12 @@
 
 #include "glCheck.hpp"
 
-GLVertexBuffer::GLVertexBuffer(GLsizei size) : size(size)
+GLVertexBuffer::GLVertexBuffer()
 {
 	glCheck(glCreateBuffers(1, &vboHandle));
-	glCheck(glNamedBufferStorage(vboHandle, size, nullptr, GL_DYNAMIC_STORAGE_BIT));
+	//glNamedBufferStorage == immutable, glNamedBufferData == mutable
+	//glCheck(glNamedBufferStorage(vboHandle, size, nullptr, GL_DYNAMIC_STORAGE_BIT));
+	//glCheck(glNamedBufferData(vboHandle, size, nullptr, GL_DYNAMIC_DRAW));
 }
 
 GLVertexBuffer::~GLVertexBuffer()
@@ -16,9 +18,11 @@ GLVertexBuffer::~GLVertexBuffer()
 	glCheck(glDeleteBuffers(1, &vboHandle));
 }
 
-void GLVertexBuffer::SetData(const void* data)
+void GLVertexBuffer::SetData(GLsizei size, const void* data)
 {
-	glCheck(glNamedBufferSubData(vboHandle, 0, size, data));
+	//Sub == When the size is fixed
+	//glCheck(glNamedBufferSubData(vboHandle, 0, size, data));
+	glCheck(glNamedBufferData(vboHandle, size, data, GL_DYNAMIC_DRAW));
 }
 
 //void GLVertexBuffer::Use()

@@ -12,8 +12,7 @@ public:
     GLTexture() = default;
     ~GLTexture();
 
-    void LoadTexture(const std::filesystem::path& path_, std::string name_);
-    void UseForSlot(/*unsigned int texture_unit*/) const noexcept;
+    void LoadTexture(const std::filesystem::path& path_, std::string name_, int id);
     void SetTextureID(int id) { texID = id; };
     void DeleteTexture();
 
@@ -21,6 +20,8 @@ public:
     std::string GetName() const { return name; };
     int GetTextrueId() { return texID; }
 private:
+    void UseForSlot(unsigned int texture_unit) const noexcept;
+
     GLuint textureHandle{ 0 };
     int width, height;
     int texID;

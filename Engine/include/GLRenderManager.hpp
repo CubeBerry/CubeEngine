@@ -54,8 +54,9 @@ public:
 	GLTexture* GetTexture(std::string name);
 private:
 	std::vector<GLTexture*> textures;
+	std::vector<int> samplers;
 	
-	GLVertexBuffer* texVertex{ nullptr };
+	GLVertexBuffer* texVertex;
 	GLIndexBuffer* texIndex{ nullptr };
 
 	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };

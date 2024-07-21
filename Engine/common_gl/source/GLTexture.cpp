@@ -11,7 +11,7 @@ GLTexture::~GLTexture()
 	DeleteTexture();
 }
 
-void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name_)
+void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name_, int id)
 {
 	stbi_set_flip_vertically_on_load(true);
 	int color;
@@ -39,14 +39,17 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
+	SetTextureID(id);
+	UseForSlot(texID);
+
 	name = name_;
 }
 
-void GLTexture::UseForSlot() const noexcept
+void GLTexture::UseForSlot(unsigned int unit) const noexcept
 {
 	// == Shader layout binding
 	// invoke glBindTextureUnit to associate the texture unit with this texture
-	glCheck(glBindTextureUnit(texID, textureHandle));
+	glCheck(glBindTextureUnit(unit, textureHandle));
 }
 
 void GLTexture::DeleteTexture()

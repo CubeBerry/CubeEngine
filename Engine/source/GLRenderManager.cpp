@@ -17,11 +17,13 @@ void GLRenderManager::Initialize(
 	vertexArray.Initialize();
 	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
-	uVertex = new GLUniformBuffer<VertexUniform>();
-	uFragment = new GLUniformBuffer<FragmentUniform>();
+	texVertex = new GLVertexBuffer;
 
-	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	//uVertex = new GLUniformBuffer<VertexUniform>();
+	//uFragment = new GLUniformBuffer<FragmentUniform>();
+
+	//uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	//uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -34,19 +36,18 @@ void GLRenderManager::BeginRender()
 
 	shader.Use(true);
 
-	for (auto& tex : textures)
-	{
-		tex->UseForSlot();
-	}
+	//For Texture Array
+	auto texLocation = glCheck(glGetUniformLocation(shader.GetProgramHandle(), "tex"));
+	glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 
-	if (uVertex != nullptr)
-	{
-		uVertex->UpdateUniform(vertexVector);
-	}
-	if (uFragment != nullptr)
-	{
-		uFragment->UpdateUniform(fragVector);
-	}
+	//if (uVertex != nullptr)
+	//{
+	//	uVertex->UpdateUniform(vertexVector);
+	//}
+	//if (uFragment != nullptr)
+	//{
+	//	uFragment->UpdateUniform(fragVector);
+	//}
 
 	vertexArray.Use(true);
 
@@ -70,24 +71,41 @@ void GLRenderManager::EndRender()
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)
 {
 	GLTexture* texture = new GLTexture;
-	texture->LoadTexture(path_, name_);
+	texture->LoadTexture(path_, name_, static_cast<int>(textures.size()));
 
 	textures.push_back(texture);
+	samplers.push_back(texture->GetTextrueId());
 
-	int texId = static_cast<int>(textures.size() - 1);
-	textures.at(texId)->SetTextureID(texId);
+	//int texId = static_cast<int>(textures.size() - 1);
 }
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
-	if (texVertex != nullptr)
-		delete texVertex;
-	texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
-	texVertex->SetData(texVertices.data());
+	if (texVertices.empty())
+	{
+		texVertices.push_back(Vertex(glm::vec4(-0.7f, 0.4f, 1.f, 1.f), quadCount));
+		texVertices.push_back(Vertex(glm::vec4(-0.3f, 0.4f, 1.f, 1.f), quadCount));
+		texVertices.push_back(Vertex(glm::vec4(-0.3f, -0.4f, 1.f, 1.f), quadCount));
+		texVertices.push_back(Vertex(glm::vec4(-0.7f, -0.4f, 1.f, 1.f), quadCount));
+
+	}
+	else
+	{
+		texVertices.push_back(Vertex(glm::vec4(0.3f, 0.4f, 1.f, 1.f), quadCount));
+		texVertices.push_back(Vertex(glm::vec4(0.7f, 0.4f, 1.f, 1.f), quadCount));
+		texVertices.push_back(Vertex(glm::vec4(0.7f, -0.4f, 1.f, 1.f), quadCount));
+		texVertices.push_back(Vertex(glm::vec4(0.3f, -0.4f, 1.f, 1.f), quadCount));
+	}
+
+	//texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	//texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	//texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	//texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+
+	//if (texVertex != nullptr)
+	//	delete texVertex;
+	//texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
+	texVertex->SetData(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()), texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
