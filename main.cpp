@@ -43,7 +43,7 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new OpenGLDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::OPENGLDEMO);
+    engine.GetGameStateManager().LevelInit(GameLevel::POCKETBALL);
 
     engine.Update();
     engine.End();

@@ -4,11 +4,10 @@
 //File: GLUniformBuffer.hpp
 #pragma once
 #include "glew/glew.h"
-#include <vector>
-#include <iostream>
-
 #include "glCheck.hpp"
-#include "../include/Material.hpp"
+
+#include <vector>
+
 template <typename Material>
 class GLUniformBuffer
 {

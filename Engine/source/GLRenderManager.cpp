@@ -17,13 +17,11 @@ void GLRenderManager::Initialize(
 	vertexArray.Initialize();
 	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
-	texVertex = new GLVertexBuffer;
+	uVertex = new GLUniformBuffer<VertexUniform>();
+	uFragment = new GLUniformBuffer<FragmentUniform>();
 
-	//uVertex = new GLUniformBuffer<VertexUniform>();
-	//uFragment = new GLUniformBuffer<FragmentUniform>();
-
-	//uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	//uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -40,14 +38,14 @@ void GLRenderManager::BeginRender()
 	auto texLocation = glCheck(glGetUniformLocation(shader.GetProgramHandle(), "tex"));
 	glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 
-	//if (uVertex != nullptr)
-	//{
-	//	uVertex->UpdateUniform(vertexVector);
-	//}
-	//if (uFragment != nullptr)
-	//{
-	//	uFragment->UpdateUniform(fragVector);
-	//}
+	if (uVertex != nullptr)
+	{
+		uVertex->UpdateUniform(vertexVector);
+	}
+	if (uFragment != nullptr)
+	{
+		uFragment->UpdateUniform(fragVector);
+	}
 
 	vertexArray.Use(true);
 
@@ -81,30 +79,14 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	if (texVertices.empty())
-	{
-		texVertices.push_back(Vertex(glm::vec4(-0.7f, 0.4f, 1.f, 1.f), quadCount));
-		texVertices.push_back(Vertex(glm::vec4(-0.3f, 0.4f, 1.f, 1.f), quadCount));
-		texVertices.push_back(Vertex(glm::vec4(-0.3f, -0.4f, 1.f, 1.f), quadCount));
-		texVertices.push_back(Vertex(glm::vec4(-0.7f, -0.4f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 
-	}
-	else
-	{
-		texVertices.push_back(Vertex(glm::vec4(0.3f, 0.4f, 1.f, 1.f), quadCount));
-		texVertices.push_back(Vertex(glm::vec4(0.7f, 0.4f, 1.f, 1.f), quadCount));
-		texVertices.push_back(Vertex(glm::vec4(0.7f, -0.4f, 1.f, 1.f), quadCount));
-		texVertices.push_back(Vertex(glm::vec4(0.3f, -0.4f, 1.f, 1.f), quadCount));
-	}
-
-	//texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	//texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	//texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	//texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
-
-	//if (texVertex != nullptr)
-	//	delete texVertex;
-	//texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
+	if (quadCount > 0)
+		delete texVertex;
+	texVertex = new GLVertexBuffer;
 	texVertex->SetData(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()), texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };

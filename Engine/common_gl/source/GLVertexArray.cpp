@@ -39,7 +39,17 @@ void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::i
 	for (const GLAttributeLayout& attribute : layout)
 	{
 		glCheck(glEnableVertexArrayAttrib(vaoHandle, attribute.vertex_layout_location));
-		glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
+		switch (attribute.component_type)
+		{
+		case GL_FLOAT:
+			//For Float
+			glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
+			break;
+		case GL_INT:
+			//For Int
+			glCheck(glVertexArrayAttribIFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.relative_offset));
+			break;
+		}
 		glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, 0));
 	}
 
