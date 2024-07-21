@@ -27,9 +27,9 @@ void GLRenderManager::Initialize(
 #endif
 }
 
-void GLRenderManager::BeginRender()
+void GLRenderManager::BeginRender(glm::vec4 bgColor)
 {
-	glCheck(glClearColor(1, 0, 1, 1));
+	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT));
 
 	shader.Use(true);
@@ -161,12 +161,12 @@ void GLRenderManager::DeleteWithIndex()
 		texIndex = nullptr;
 
 		vertexVector.erase(end(vertexVector) - 1);
-		//delete uVertex;
-		//uVertex = nullptr;
+		delete uVertex;
+		uVertex = nullptr;
 
 		fragVector.erase(end(fragVector) - 1);
-		//delete uFragment;
-		//uFragment = nullptr;
+		delete uFragment;
+		uFragment = nullptr;
 
 		return;
 	}

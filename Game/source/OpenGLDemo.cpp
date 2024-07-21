@@ -37,4 +37,7 @@ void OpenGLDemo::Restart()
 
 void OpenGLDemo::End()
 {
+	Engine::GetCameraManager().Reset();
+	Engine::GetParticleManager().Clear();
+	Engine::GetObjectManager().DestroyAllObjects();
 }

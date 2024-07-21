@@ -511,7 +511,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::BeginRender()
+void VKRenderManager::BeginRender(glm::vec4 bgColor)
 {
 	isRecreated = false;
 	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
@@ -650,10 +650,10 @@ void VKRenderManager::BeginRender()
 
 	//Set clear color
 	VkClearValue clearValue{};
-	clearValue.color.float32[0] = 0.0f;	//R
-	clearValue.color.float32[1] = 0.0f;	//G
-	clearValue.color.float32[2] = 0.7f;	//B
-	clearValue.color.float32[3] = 1.0f;	//A
+	clearValue.color.float32[0] = bgColor.r;	//R
+	clearValue.color.float32[1] = bgColor.g;	//G
+	clearValue.color.float32[2] = bgColor.b;	//B
+	clearValue.color.float32[3] = bgColor.a;	//A
 
 	//Create renderpass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};

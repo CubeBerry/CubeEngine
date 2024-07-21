@@ -22,7 +22,7 @@ public:
 #endif
 	);
 
-	void BeginRender() override;
+	void BeginRender(glm::vec4 bgColor) override;
 	void EndRender() override;
 private:
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
@@ -56,7 +56,7 @@ private:
 	std::vector<GLTexture*> textures;
 	std::vector<int> samplers;
 	
-	GLVertexBuffer* texVertex;
+	GLVertexBuffer* texVertex{ nullptr };
 	GLIndexBuffer* texIndex{ nullptr };
 
 	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };

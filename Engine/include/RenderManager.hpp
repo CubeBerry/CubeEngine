@@ -3,7 +3,6 @@
 //File: RenderManager.hpp
 #pragma once
 #include <filesystem>
-#include <glm/vec4.hpp>
 #include "Material.hpp"
 #include "Window.hpp"
 
@@ -28,7 +27,7 @@ class RenderManager
 public:
 	//using Texture = typename TextureType<mode>::Type;
 
-	virtual void BeginRender() = 0;
+	virtual void BeginRender(glm::vec4 bgColor) = 0;
 	virtual void EndRender() = 0;
 
 	//--------------------Texture Render--------------------//

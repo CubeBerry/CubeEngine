@@ -25,6 +25,12 @@ private:
 };
 
 template <typename Material>
+GLUniformBuffer<Material>::~GLUniformBuffer()
+{
+    glCheck(glDeleteBuffers(1, &uniformHandle));
+}
+
+template <typename Material>
 void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, const char* name, std::vector<Material>& vector)
 {
     //GLuint uniformBlockIndex = glGetUniformBlockIndex(program, name);

@@ -13,6 +13,7 @@ GLIndexBuffer::GLIndexBuffer(std::vector<uint16_t>* indices) : count(static_cast
 
 GLIndexBuffer::~GLIndexBuffer()
 {
+	glCheck(glDeleteBuffers(1, &indexHandle));
 }
 
 //void GLVertexBuffer::Use()
