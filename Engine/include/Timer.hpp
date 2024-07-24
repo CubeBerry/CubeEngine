@@ -3,7 +3,6 @@
 //File: Timer.hpp
 #pragma once
 #include <chrono>
-#include <iostream>
 
 //1 / 120 = 0.008333
 //1 / 60 = 0.016667

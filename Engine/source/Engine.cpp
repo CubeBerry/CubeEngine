@@ -90,7 +90,7 @@ void Engine::Update()
 			inputManager.InputPollEvent(event);
 			gameStateManger.Update(deltaTime);
 			if (renderManager->GetGraphicsMode() == GraphicsMode::GL)
-				window.UpdateWindowGL();
+				window.UpdateWindowGL(event);
 		}
 	}
 }

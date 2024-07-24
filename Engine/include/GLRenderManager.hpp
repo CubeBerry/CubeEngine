@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: GLRenderManager.hpp
 #pragma once
+#include "glCheck.hpp"
 #include "RenderManager.hpp"
 #include "GLShader.hpp"
 #include "GLVertexArray.hpp"
@@ -21,19 +22,19 @@ public:
 #endif
 	);
 
+	void BeginRender(glm::vec4 bgColor) override;
+	void EndRender() override;
+private:
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
 	{
-		glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_SHORT, 0);
+		glCheck(glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_SHORT, 0));
 	}
 
 	void GLDrawVertices(const GLVertexArray& vertex_array) noexcept
 	{
-		glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount());
+		glCheck(glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount()));
 	}
 
-	void BeginRender() override;
-	void EndRender() override;
-private:
 	GLVertexArray vertexArray;
 	GLShader shader;
 #ifdef _DEBUG
@@ -53,6 +54,7 @@ public:
 	GLTexture* GetTexture(std::string name);
 private:
 	std::vector<GLTexture*> textures;
+	std::vector<int> samplers;
 	
 	GLVertexBuffer* texVertex{ nullptr };
 	GLIndexBuffer* texIndex{ nullptr };

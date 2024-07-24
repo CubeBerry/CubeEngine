@@ -7,14 +7,13 @@
 class GLVertexBuffer
 {
 public:
-	GLVertexBuffer(GLsizei size);
+	GLVertexBuffer();
 	~GLVertexBuffer();
 
-	void SetData(const void* data);
+	void SetData(GLsizei size, const void* data);
 	//void Use();
 
 	GLuint GetHandle() { return vboHandle; };
 private:
 	GLuint vboHandle{ 0 };
-	GLsizei size{ 0 };
 };

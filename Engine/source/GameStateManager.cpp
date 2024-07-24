@@ -117,7 +117,7 @@ void GameStateManager::Update(float dt)
 void GameStateManager::Draw()
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->BeginRender();
+	renderManager->BeginRender({ 0.0f, 0.0f, 0.7f, 1.0f });
 	renderManager->EndRender();
 
 	//VK Draw
@@ -135,7 +135,7 @@ void GameStateManager::Draw()
 void GameStateManager::DrawWithImGui(float dt)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->BeginRender();
+	renderManager->BeginRender({ 0.0f, 0.0f, 0.7f, 1.0f });
 	levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
 	renderManager->EndRender();
 

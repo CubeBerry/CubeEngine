@@ -1,21 +1,33 @@
 //Author: JEYOON YU
+//Second Author: DOYEONG LEE
 //Project: CubeEngine
 //File: GLShader.hpp
 #include "GLShader.hpp"
 #include <fstream>
+#include <iostream>
+
+#include "glCheck.hpp"
 
 GLShader::~GLShader()
 {
     if (programHandle > 0)
     {
-        glDeleteProgram(programHandle);
+        glCheck(glDeleteProgram(programHandle));
         programHandle = 0;
     }
 }
 
 void GLShader::Use(bool bind) const noexcept
 {
-    glUseProgram(bind ? programHandle : 0);
+    //glCheck(glUseProgram(bind ? programHandle : 0));
+    if (bind == true)
+    {
+        glCheck(glUseProgram(programHandle));
+    }
+    else if (bind == false)
+    {
+        glCheck(glUseProgram(0));
+    }
 }
 
 void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, std::filesystem::path>>& paths)
@@ -29,14 +41,12 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
         {
             if (!std::filesystem::exists(path.second))
             {
-                //error_log = "Cannot find " + path.string() + "\n";
-                //return false;
+                throw std::runtime_error{ "Shader Path Does Not Exist" };
             }
             std::ifstream ifs(path.second, std::ios::in);
             if (!ifs)
             {
-                //error_log = "Cannot open " + path.string() + "\n";
-                //return false;
+                throw std::runtime_error{ "Unable To Create ifstream" };
             }
             std::string glsl_text;
             glsl_text.reserve(std::filesystem::file_size(path.second));
@@ -44,62 +54,68 @@ void GLShader::LoadShader(const std::initializer_list<std::pair<GLShader::Type, 
 
             if (shaders[count] <= 0)
             {
-                shaders[count] = glCreateShader(path.first);
+                shaders[count] = glCheck(glCreateShader(path.first));
                 if (shaders[count] == 0)
                 {
-                    //error_log = "Unable to create shader\n";
+                    throw std::runtime_error{ "Shader Creation Failed" };
                 }
             }
             const GLchar* source[]{ glsl_text.data() };
-            glShaderSource(shaders[count], 1, source, nullptr);
-            glCompileShader(shaders[count]);
+            glCheck(glShaderSource(shaders[count], 1, source, nullptr));
+            glCheck(glCompileShader(shaders[count]));
 
             GLint isCompiled{ 0 };
-            glGetShaderiv(shaders[count], GL_COMPILE_STATUS, &isCompiled);
+            glCheck(glGetShaderiv(shaders[count], GL_COMPILE_STATUS, &isCompiled));
             if (isCompiled == GL_FALSE)
             {
-                //GLint log_length = 0;
-                //glCheck(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length));
-                //error_log.resize(static_cast<std::string::size_type>(log_length) + 1);
-                //glCheck(glGetShaderInfoLog(shader, log_length, nullptr, error_log.data()));
-                glDeleteShader(shaders[count]);
-                //shader = 0;
+                GLint maxLength = 0;
+                glCheck(glGetShaderiv(shaders[count], GL_INFO_LOG_LENGTH, &maxLength));
+                std::vector<GLchar> infoLog(maxLength);
+
+                glCheck(glGetShaderInfoLog(shaders[count], maxLength, nullptr, infoLog.data()));
+                std::cerr << "COMPILE FAILED\n" << infoLog.data() << std::endl;
+
+                glCheck(glDeleteShader(shaders[count]));
+
+                throw std::runtime_error{ "Shader Compile Failed" };
             }
 
             count++;
         }
 
         //Link Program
-        programHandle = glCreateProgram();
+        programHandle = glCheck(glCreateProgram());
         if (programHandle == 0)
         {
-            //throw std::runtime_error("Unable to create program\n");
+            throw std::runtime_error{ "Shader Program Create Failed" };
         }
 
         for (const auto shader : shaders)
         {
-            glAttachShader(programHandle, shader);
+            glCheck(glAttachShader(programHandle, shader));
         }
 
-        glLinkProgram(programHandle);
+        glCheck(glLinkProgram(programHandle));
         for (auto& shader : shaders)
         {
-            glDeleteShader(shader);
+            glCheck(glDeleteShader(shader));
         }
+
         GLint isLinked{ 0 };
-        glGetProgramiv(programHandle, GL_LINK_STATUS, &isLinked);
+        glCheck(glGetProgramiv(programHandle, GL_LINK_STATUS, &isLinked));
         if (isLinked == GL_FALSE)
         {
-            //GLint log_length = 0;
-            //glCheck(glGetProgramiv(program_handle, GL_INFO_LOG_LENGTH, &log_length));
-            //std::string error;
-            //error.resize(static_cast<unsigned>(log_length) + 1);
-            //glCheck(glGetProgramInfoLog(program_handle, log_length, nullptr, error.data()));
-            //throw std::runtime_error(error);
+            char infoLog[512];
+            glCheck(glGetProgramInfoLog(programHandle, 512, NULL, infoLog));
+            std::cerr << "LINK FAILED\n" << infoLog << std::endl;
+
+            throw std::runtime_error{ "Shader Link Failed" };
         }
     }
     catch (std::exception& e)
     {
-        e;
+        std::cerr << e.what() << std::endl;
+        GLShader::~GLShader();
+        std::exit(EXIT_FAILURE);
     }
 }

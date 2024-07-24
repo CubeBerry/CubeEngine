@@ -1,7 +1,8 @@
 //Author: JEYOON YU
+//Second Author: DOYEONG LEE
 //Project: CubeEngine
 //File: GLRenderManager.cpp
-#include "GLRenderManager.hpp"
+#include "Engine.hpp"
 
 GLRenderManager::~GLRenderManager()
 {
@@ -14,29 +15,44 @@ void GLRenderManager::Initialize(
 )
 {
 	vertexArray.Initialize();
-	//shader.LoadShader({ {GLShader::VERTEX, "../Engine/shader/texVertex.vert"}, { GLShader::FRAGMENT, "../Engine/shader/texFragment.frag" } });
+	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
 
+	uVertex = new GLUniformBuffer<VertexUniform>();
+	uFragment = new GLUniformBuffer<FragmentUniform>();
+
+	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
 }
 
-void GLRenderManager::BeginRender()
+void GLRenderManager::BeginRender(glm::vec4 bgColor)
 {
-	glClearColor(1, 0, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
+	glCheck(glClear(GL_COLOR_BUFFER_BIT));
 
-	//shader.Use();
-	//for (auto& tex : textures)
-	//{
-	//	tex->UseForSlot(1);
-	//}
+	shader.Use(true);
 
-	//uVertex->SendUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	//uFragment->SendUniform(shader.GetProgramHandle(), 0, "fUniformMatrix", fragVector);
+	//For Texture Array
+	auto texLocation = glCheck(glGetUniformLocation(shader.GetProgramHandle(), "tex"));
+	glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 
-	//vertexArray.Use(true);
-	//GLDrawIndexed(vertexArray);
+	if (uVertex != nullptr)
+	{
+		uVertex->UpdateUniform(vertexVector);
+	}
+	if (uFragment != nullptr)
+	{
+		uFragment->UpdateUniform(fragVector);
+	}
+
+	vertexArray.Use(true);
+
+	GLDrawIndexed(vertexArray);
+
+	vertexArray.Use(false);
+	shader.Use(false);
 
 #ifdef _DEBUG
 	imguiManager->Begin();
@@ -49,19 +65,18 @@ void GLRenderManager::EndRender()
 	imguiManager->End();
 #endif
 
-	//vertexArray.Use(false);
-	//shader.Use(false);
+	SDL_GL_SwapWindow(Engine::Instance().GetWindow().GetWindow());
 }
 
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)
 {
 	GLTexture* texture = new GLTexture;
-	texture->LoadTexture(path_, name_);
+	texture->LoadTexture(path_, name_, static_cast<int>(textures.size()));
 
 	textures.push_back(texture);
+	samplers.push_back(texture->GetTextrueId());
 
-	int texId = static_cast<int>(textures.size() - 1);
-	textures.at(texId)->SetTextureID(texId);
+	//int texId = static_cast<int>(textures.size() - 1);
 }
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
@@ -70,10 +85,11 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
 	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
 	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
-	if (texVertex != nullptr)
+
+	if (quadCount > 0)
 		delete texVertex;
-	texVertex = new GLVertexBuffer(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()));
-	texVertex->SetData(texVertices.data());
+	texVertex = new GLVertexBuffer;
+	texVertex->SetData(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()), texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
@@ -94,29 +110,32 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.component_dimension = GLAttributeLayout::_4;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
-	position_layout.stride = sizeof(glm::vec4);
+	position_layout.stride = sizeof(Vertex);
 	position_layout.offset = 0;
 	position_layout.relative_offset = offsetof(Vertex, position);
 
 	GLAttributeLayout index_layout;
-	position_layout.component_type = GLAttributeLayout::Int;
-	position_layout.component_dimension = GLAttributeLayout::_1;
-	position_layout.normalized = false;
-	position_layout.vertex_layout_location = 1;
-	position_layout.stride = sizeof(int);
-	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(Vertex, index);
+	index_layout.component_type = GLAttributeLayout::Int;
+	index_layout.component_dimension = GLAttributeLayout::_1;
+	index_layout.normalized = false;
+	index_layout.vertex_layout_location = 1;
+	index_layout.stride = sizeof(Vertex);
+	index_layout.offset = 0;
+	index_layout.relative_offset = offsetof(Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*texVertex), { position_layout, index_layout });
+	vertexArray.AddVertexBuffer(std::move(*texVertex), sizeof(Vertex), {position_layout, index_layout});
 	vertexArray.SetIndexBuffer(std::move(*texIndex));
 
-	//if (uVertex != nullptr)
-	//	delete uVertex;
-	//uVertex = new VKUniformBuffer<VertexUniform>(&Engine::Instance().GetVKInit(), quadCount);
+	if (uVertex != nullptr)
+		delete uVertex;
+	uVertex = new GLUniformBuffer<VertexUniform>();
+	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
 
-	//if (uFragment != nullptr)
-	//	delete uFragment;
-	//uFragment = new VKUniformBuffer<FragmentUniform>(&Engine::Instance().GetVKInit(), quadCount);
+	if (uFragment != nullptr)
+		delete uFragment;
+	uFragment = new GLUniformBuffer<FragmentUniform>();
+	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+
 
 	VertexUniform mat;
 	mat.model = glm::mat4(1.f);
@@ -147,12 +166,18 @@ void GLRenderManager::DeleteWithIndex()
 		texIndex = nullptr;
 
 		vertexVector.erase(end(vertexVector) - 1);
-		//delete uVertex;
-		//uVertex = nullptr;
+		delete uVertex;
+		uVertex = nullptr;
 
 		fragVector.erase(end(fragVector) - 1);
-		//delete uFragment;
-		//uFragment = nullptr;
+		delete uFragment;
+		uFragment = nullptr;
+
+		//Destroy Texture
+		for (auto t : textures)
+			delete t;
+		textures.erase(textures.begin(), textures.end());
+		samplers.erase(samplers.begin(), samplers.end());
 
 		return;
 	}

@@ -438,6 +438,34 @@ void VKRenderManager::DeleteWithIndex()
 		delete uFragment;
 		uFragment = nullptr;
 
+		//Destroy Texture
+		for (auto t : textures)
+			delete t;
+
+		//Destroy Batch ImageInfo
+		size_t texSize{ textures.size() };
+		for (size_t i = texSize; i < imageInfos.size(); ++i)
+			vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
+
+		textures.erase(textures.begin(), textures.end());
+		imageInfos.erase(imageInfos.begin(), imageInfos.end());
+
+		for (int i = 0; i < 500; ++i)
+		{
+			VkSamplerCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+			VkSampler immutableSampler;
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
+
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.sampler = immutableSampler;
+			imageInfo.imageView = VK_NULL_HANDLE;
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageInfos.push_back(imageInfo);
+		}
+
 		return;
 	}
 
@@ -511,7 +539,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::BeginRender()
+void VKRenderManager::BeginRender(glm::vec4 bgColor)
 {
 	isRecreated = false;
 	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
@@ -650,10 +678,10 @@ void VKRenderManager::BeginRender()
 
 	//Set clear color
 	VkClearValue clearValue{};
-	clearValue.color.float32[0] = 0.0f;	//R
-	clearValue.color.float32[1] = 0.0f;	//G
-	clearValue.color.float32[2] = 0.7f;	//B
-	clearValue.color.float32[3] = 1.0f;	//A
+	clearValue.color.float32[0] = bgColor.r;	//R
+	clearValue.color.float32[1] = bgColor.g;	//G
+	clearValue.color.float32[2] = bgColor.b;	//B
+	clearValue.color.float32[3] = bgColor.a;	//A
 
 	//Create renderpass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};

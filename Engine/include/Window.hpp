@@ -28,7 +28,7 @@ public:
 	~Window() = default;
 	void Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode);
 	void InitWindowGL(WindowMode wMode, const char* title, int flags);
-	void UpdateWindowGL();
+	void UpdateWindowGL(SDL_Event& event);
 
 	SDL_Window* GetWindow() { return window.get(); };
 	SDL_GLContext GetContext() { return context; };

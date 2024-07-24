@@ -33,7 +33,7 @@ public:
 	~VKRenderManager();
 	void Initialize(SDL_Window* window_);
 
-	void BeginRender() override;
+	void BeginRender(glm::vec4 bgColor) override;
 	void EndRender() override;
 	//void EndRender(Window* window_);
 private:
