@@ -1,10 +1,10 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: main.cpp
 #include "Engine.hpp"
 
 #include "VerticesDemo.hpp"
-#include "OpenGLDemo.hpp"
 #include "PocketBallDemo/PocketBallDemo.hpp"
 #include "PlatformDemo/PlatformDemo.hpp"
 
@@ -40,10 +40,9 @@ int main(void)
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
     //engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
-    engine.GetGameStateManager().AddLevel(new OpenGLDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::OPENGLDEMO);
+    engine.GetGameStateManager().LevelInit(GameLevel::POCKETBALL);
 
     engine.Update();
     engine.End();
