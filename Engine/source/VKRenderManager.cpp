@@ -438,6 +438,34 @@ void VKRenderManager::DeleteWithIndex()
 		delete uFragment;
 		uFragment = nullptr;
 
+		//Destroy Texture
+		for (auto t : textures)
+			delete t;
+
+		//Destroy Batch ImageInfo
+		size_t texSize{ textures.size() };
+		for (size_t i = texSize; i < imageInfos.size(); ++i)
+			vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
+
+		textures.erase(textures.begin(), textures.end());
+		imageInfos.erase(imageInfos.begin(), imageInfos.end());
+
+		for (int i = 0; i < 500; ++i)
+		{
+			VkSamplerCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+			VkSampler immutableSampler;
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
+
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.sampler = immutableSampler;
+			imageInfo.imageView = VK_NULL_HANDLE;
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageInfos.push_back(imageInfo);
+		}
+
 		return;
 	}
 

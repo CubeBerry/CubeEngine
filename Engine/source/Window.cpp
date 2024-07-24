@@ -131,5 +131,5 @@ void Window::UpdateWindowGL(SDL_Event& event)
 	{
 		glViewport(0, 0, event.window.data1, event.window.data2);
 	}
-	SDL_GL_SwapWindow(window.get());
+	//SDL_GL_SwapWindow(window.get());
 }

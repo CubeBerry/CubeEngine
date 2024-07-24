@@ -2,7 +2,7 @@
 //Second Author: DOYEONG LEE
 //Project: CubeEngine
 //File: GLRenderManager.cpp
-#include "GLRenderManager.hpp"
+#include "Engine.hpp"
 
 GLRenderManager::~GLRenderManager()
 {
@@ -64,6 +64,8 @@ void GLRenderManager::EndRender()
 #ifdef _DEBUG
 	imguiManager->End();
 #endif
+
+	SDL_GL_SwapWindow(Engine::Instance().GetWindow().GetWindow());
 }
 
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)
@@ -124,13 +126,16 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	vertexArray.AddVertexBuffer(std::move(*texVertex), sizeof(Vertex), {position_layout, index_layout});
 	vertexArray.SetIndexBuffer(std::move(*texIndex));
 
-	//if (uVertex != nullptr)
-	//	delete uVertex;
-	//uVertex = new VKUniformBuffer<VertexUniform>(&Engine::Instance().GetVKInit(), quadCount);
+	if (uVertex != nullptr)
+		delete uVertex;
+	uVertex = new GLUniformBuffer<VertexUniform>();
+	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
 
-	//if (uFragment != nullptr)
-	//	delete uFragment;
-	//uFragment = new VKUniformBuffer<FragmentUniform>(&Engine::Instance().GetVKInit(), quadCount);
+	if (uFragment != nullptr)
+		delete uFragment;
+	uFragment = new GLUniformBuffer<FragmentUniform>();
+	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+
 
 	VertexUniform mat;
 	mat.model = glm::mat4(1.f);
@@ -167,6 +172,12 @@ void GLRenderManager::DeleteWithIndex()
 		fragVector.erase(end(fragVector) - 1);
 		delete uFragment;
 		uFragment = nullptr;
+
+		//Destroy Texture
+		for (auto t : textures)
+			delete t;
+		textures.erase(textures.begin(), textures.end());
+		samplers.erase(samplers.begin(), samplers.end());
 
 		return;
 	}
