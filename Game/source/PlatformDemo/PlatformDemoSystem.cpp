@@ -119,11 +119,11 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 		{
 			if (isEditorMod == false)
 			{
-				Engine::GetObjectManager().AddObject<PPlayer>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Player", ObjectType::PLAYER);
+				Engine::GetObjectManager().AddObject<PPlayer>(glm::vec3{ posX, posY, 1.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Player", ObjectType::PLAYER);
 			}
 			else
 			{
-				PPlayer* temp = new PPlayer(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Player", ObjectType::PLAYER);
+				PPlayer* temp = new PPlayer(glm::vec3{ posX, posY, 1.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Player", ObjectType::PLAYER);
 				objects.push_back(std::move(temp));
 			}
 		}
@@ -133,11 +133,11 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			inStream >> eType;
 			if (isEditorMod == false)
 			{
-				Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Enemy", static_cast<EnemyType>(eType));
+				Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ posX, posY, 1.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Enemy", static_cast<EnemyType>(eType));
 			}
 			else
 			{
-				PEnemy* temp = new PEnemy(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Enemy", static_cast<EnemyType>(eType));
+				PEnemy* temp = new PEnemy(glm::vec3{ posX, posY, 1.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Enemy", static_cast<EnemyType>(eType));
 				objects.push_back(std::move(temp));
 			}
 		}
@@ -145,7 +145,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 		{
 			if (isEditorMod == false)
 			{
-				Engine::GetObjectManager().AddObject<Object>(glm::vec3{ posX, posY, 0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
+				Engine::GetObjectManager().AddObject<Object>(glm::vec3{ posX, posY, 0.1f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
 				Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 				Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });
 
@@ -156,7 +156,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			}
 			else
 			{
-				Object* temp = new Object(glm::vec3{ posX, posY,0.f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
+				Object* temp = new Object(glm::vec3{ posX, posY, 0.1f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
 				temp->AddComponent<Sprite>();
 				temp->GetComponent<Sprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
