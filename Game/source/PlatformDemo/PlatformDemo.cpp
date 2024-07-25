@@ -18,6 +18,8 @@
 
 void PlatformDemo::Init()
 {
+	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();
 
@@ -37,15 +39,15 @@ void PlatformDemo::Init()
 
 void PlatformDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_1))
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
 	{
 		Engine::GetGameStateManager().ChangeLevel(GameLevel::POCKETBALL);
 	}
-	else if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_2))
+	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_2))
 	{
 		Engine::GetGameStateManager().ChangeLevel(GameLevel::PLATFORMDEMO);
 	}
-	else if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::R))
+	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}

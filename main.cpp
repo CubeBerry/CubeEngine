@@ -40,9 +40,10 @@ int main(void)
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
     //engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
+    engine.GetGameStateManager().AddLevel(new VerticesDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::POCKETBALL);
+    engine.GetGameStateManager().LevelInit(GameLevel::VERTICES);
 
     engine.Update();
     engine.End();

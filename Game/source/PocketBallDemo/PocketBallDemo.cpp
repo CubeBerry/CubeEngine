@@ -14,6 +14,8 @@
 
 void PocketBallDemo::Init()
 {
+	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White");
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/1.png", "1");
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/2.png", "2");
@@ -150,11 +152,11 @@ void PocketBallDemo::Init()
 
 void PocketBallDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_1))
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
 	{
 		Engine::GetGameStateManager().ChangeLevel(GameLevel::POCKETBALL);
 	}
-	else if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_2))
+	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_2))
 	{
 		Engine::GetGameStateManager().ChangeLevel(GameLevel::PLATFORMDEMO);
 	}

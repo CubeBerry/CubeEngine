@@ -34,9 +34,8 @@ void CameraManager::TargetAt(glm::vec3 targetLocation)
 
 void CameraManager::Reset()
 {
-	camera.ResetUp({0.f,1.f,0.1f});
-	camera.SetCenter({0.f,0.f,0.f});
-	camera.SetZoom(1.f);
+	camera.Reset({0.f,1.f,0.1f}); 
+	SetCameraSensitivity(1.f);
 }
 
 bool CameraManager::IsInCamera(Object* object)

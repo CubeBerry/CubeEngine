@@ -4,176 +4,37 @@
 //File: VerticesDemo.cpp
 #include "VerticesDemo.hpp"
 #include "Engine.hpp"
-#include <glm/gtc/matrix_transform.hpp>
-#include "BasicComponents/Sprite.hpp"
-#include "BasicComponents/Physics2D.hpp"
 
 #include <iostream>
 
-void CollideObjects()
-{
-	for (auto& target : Engine::GetObjectManager().GetObjectMap())
-	{
-		for (auto& object : Engine::GetObjectManager().GetObjectMap())
-		{
-			if (target.second != nullptr && object.second != nullptr && target.second != object.second
-				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
-			{
-				if (target.second->GetComponent<Physics2D>()->CheckCollision(object.second.get()) == true)
-				{
-					//std::cout << "Collide " << target.first << " with " << object.first << std::endl;
-				}
-			}
-		}
-	}
-}
-
 void VerticesDemo::Init()
 {
-	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1");
-	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample.png", "2");
-	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample3.jpg", "3");
+	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::ThreeDimension, 45.f);
+	Engine::Instance().GetCameraManager().SetCameraSensitivity(10.f);
 
-	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1280.f,720.f,0.f }, "0", ObjectType::NONE);
+	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1");
+	Engine::Instance().GetRenderManager()->LoadTexture("../Game/assets/texture_sample.jpg", "2");
+
+	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,4.f,-9.f }, glm::vec3{ 16.f,9.f,0.f }, "0", ObjectType::NONE);
 	Engine::Instance().GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("1");
 
-	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 512.f,512.f,0.f }, "1", ObjectType::NONE);
+	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,-2.f }, glm::vec3{ 0.2f,0.2f,0.f }, "1", ObjectType::NONE);
 	Engine::Instance().GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("2");
-
-	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 640.f,360.f,0.f }, glm::vec3{ 256.f, 128.f,0.f }, "2", ObjectType::NONE);
-	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuadLine({ 1.f,0.f,1.f,1.f });
-
-	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 70.f, 120.f,0.f }, "Ani", ObjectType::NONE);
-	Engine::Instance().GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/player.spt", "4");
-
-	//Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "A", ObjectType::NONE);
-
-	//Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-	//Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
-
-	/*Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({32.f,16.f});
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ 0.f,32.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ -32.f,16.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ -16.f,-32.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygon({ 16.f,-32.f });
-	Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
-
-	for (int i = 0; i < 20; i++)
-	{
-		int fric = (rand() % (2 + 1)) + 1;
-		int type1 = rand() % (1 - 0 + 1) - 0;
-		int mass = (rand() % (8 + 1)) + 1;
-		float x = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
-		float y = (float)(rand() % (8 - (-10) + 1) - 8) * 32.f;
-		Engine::Instance().GetObjectManager()->AddObject<Object>(glm::vec3{ x,y,0.f }, glm::vec3{ 32.f, 32.f,0.f }, std::to_string((i + 2)), ObjectType::NONE);
-
-		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Sprite>();
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Sprite>()->AddSpriteToManager();
-
-		Engine::Instance().GetObjectManager()->GetLastObject()->AddComponent<Physics2D>();
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetMass(static_cast<float>(mass));
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetFriction(1.f);
-		Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetBodyType(static_cast<BodyType>(0));
-
-		if (type1 == 0)
-		{
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ 16.f, 16.f });
-		}
-		else
-		{
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->AddCollideCircle(16.f);
-		}
-		switch (fric)
-		{
-		case 1:
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetFriction(1.f);
-			break;
-		case 2:
-			Engine::Instance().GetObjectManager()->GetLastObject()->GetComponent<Physics2D>()->SetFriction(0.9f);
-			break;
-		}
-	}*/
+	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/player.spt", "Player");
+	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->PlayAnimation(1);
 }
 
 void VerticesDemo::Update(float dt)
 {
-	if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::NUMBER_1))
-		Engine::Instance().GetObjectManager().FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture("1");
-	else if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::NUMBER_2))
-		Engine::Instance().GetObjectManager().FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture("2");
-	else if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::NUMBER_3))
-		Engine::Instance().GetObjectManager().FindObjectWithId(1)->GetComponent<Sprite>()->ChangeTexture("3");
-
-	
-	if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
-	{
-		Engine::Instance().GetCameraManager().SetRotate(Engine::Instance().GetCameraManager().GetRotate2D() - 10.f);
-	}
-	else if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
-	{
-		Engine::Instance().GetCameraManager().SetRotate(Engine::Instance().GetCameraManager().GetRotate2D() + 10.f);
-	}
-	if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::Z))
-	{
-		Engine::Instance().GetCameraManager().SetZoom(Engine::Instance().GetCameraManager().GetZoom() - 5.f * dt);
-	}
-	else if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::X))
-	{
-		Engine::Instance().GetCameraManager().SetZoom(Engine::Instance().GetCameraManager().GetZoom() + 5.f * dt);
-	}
-
-	//ParticleTest
-	if (Engine::Instance().GetInputManager().IsMouseButtonPressedOnce(MOUSEBUTTON::LEFT))
-	{
-		int fade = (rand() % (2 + 1)) + 1;
-		int time = (rand() % (3 + 1)) + 1;
-		int amount = (rand() % (8 + 4)) + 4;
-		int colorR = (rand() % (10 + 0)) + 0;
-		int colorG = (rand() % (10 + 0)) + 0;
-		int colorB = (rand() % (10 + 0)) + 0;
-		int colorA = (rand() % (10 + 5)) + 5;
-		float x = Engine::Instance().GetInputManager().GetMousePosition().x;
-		float y = Engine::Instance().GetInputManager().GetMousePosition().y;
-		float speedX = (float)(rand() % (15 - (-30) + 1) - 15);
-		float speedY = (float)(rand() % (15 - (-30) + 1) - 15);
-
-		if (fade == 1)
-		{
-			Engine::Instance().GetParticleManager().AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
-				{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) });
-		}
-		else
-		{
-			Engine::Instance().GetParticleManager().AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
-				{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) }, ParticleType::REC, "", true);
-		}
-	}
-	else if (Engine::Instance().GetInputManager().IsMouseButtonPressedOnce(MOUSEBUTTON::RIGHT))
-	{
-		End();
-	}
-
-	if (Engine::Instance().GetInputManager().IsKeyPressed(KEYBOARDKEYS::SPACE))
-	{
-		Engine::Instance().GetObjectManager().FindObjectWithName("Ani")->GetComponent<Sprite>()->PlayAnimation(0);
-	}
-
-	CollideObjects();
+	Input(dt);
 }
 
 #ifdef _DEBUG
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	//ImGui::ShowDemoWindow();
-	//Engine::GetSoundManager().MusicPlayerForImGui();
-	//Engine::GetGameStateManager().StateChanger();
+	ImGui::ShowDemoWindow();
+	Engine::GetGameStateManager().StateChanger();
 }
 #endif
 
@@ -187,4 +48,68 @@ void VerticesDemo::End()
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
+}
+
+void VerticesDemo::Input(float dt)
+{
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::W))
+	{
+		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::FOWARD, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
+	{
+		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::BACKWARD, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
+	{
+		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::LEFT, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::D))
+	{
+		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::RIGHT, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::SPACE))
+	{
+		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::UP, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LSHIFT))
+	{
+		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::DOWN, 5.f * dt);
+	}
+	//if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
+	//{
+	//	if (SDL_GetRelativeMouseMode() == SDL_FALSE)
+	//	{
+	//		Engine::Instance().GetInputManager().SetRelativeMouseMode(true);
+	//	}
+	//	else
+	//	{
+	//		Engine::Instance().GetInputManager().SetRelativeMouseMode(false);
+	//	}
+	//}
+	if (Engine::GetInputManager().GetMouseWheelMotion().y != 0.f)
+	{
+		Engine::GetCameraManager().SetZoom(Engine::GetCameraManager().GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
+	}
+	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+	{
+		Engine::GetCameraManager().UpdaetCameraDirectrion(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
+	}
+
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN))
+	{
+		Engine::Instance().GetObjectManager().GetLastObject()->SetZPosition(Engine::Instance().GetObjectManager().GetLastObject()->GetPosition().z + 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP))
+	{
+		Engine::Instance().GetObjectManager().GetLastObject()->SetZPosition(Engine::Instance().GetObjectManager().GetLastObject()->GetPosition().z - 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT))
+	{
+		Engine::Instance().GetObjectManager().GetLastObject()->SetXPosition(Engine::Instance().GetObjectManager().GetLastObject()->GetPosition().x - 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT))
+	{
+		Engine::Instance().GetObjectManager().GetLastObject()->SetXPosition(Engine::Instance().GetObjectManager().GetLastObject()->GetPosition().x + 5.f * dt);
+	}
 }

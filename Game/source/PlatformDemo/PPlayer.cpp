@@ -123,13 +123,13 @@ void PPlayer::Control(float /*dt*/)
 		SetStateOn(PlayerStates::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(20.f);
 	}
-	if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::X)
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::X)
 		&& IsStateOn(PlayerStates::FALLING) == false && IsStateOn(PlayerStates::JUMPING) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
 		GetComponent<Physics2D>()->SetVelocityY(40.f);
 	}
-	if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::Z))
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Z))
 	{
 		if (canAttack == true)
 		{

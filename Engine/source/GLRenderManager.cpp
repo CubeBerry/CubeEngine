@@ -29,8 +29,10 @@ void GLRenderManager::Initialize(
 
 void GLRenderManager::BeginRender(glm::vec4 bgColor)
 {
+	glCheck(glEnable(GL_DEPTH_TEST));
+	glCheck(glDepthFunc(GL_LESS));
 	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
-	glCheck(glClear(GL_COLOR_BUFFER_BIT));
+	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 	shader.Use(true);
 

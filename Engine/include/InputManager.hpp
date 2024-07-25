@@ -163,13 +163,16 @@ public:
 	void InputPollEvent(SDL_Event& event);
 
 	bool IsKeyPressed(KEYBOARDKEYS keycode);
-	bool IsKeyPressedOnce(KEYBOARDKEYS keycode);
+	bool IsKeyPressOnce(KEYBOARDKEYS keycode);
 
 	bool IsMouseButtonPressed(MOUSEBUTTON button);
-	bool IsMouseButtonPressedOnce(MOUSEBUTTON button);
+	bool IsMouseButtonPressOnce(MOUSEBUTTON button);
+
 	glm::vec2 GetMousePosition();
+	glm::vec2 GetMouseWheelMotion();
 
-
+	void SetRelativeMouseMode(bool state);
+	glm::vec2 GetRelativeMouseState();
 protected:
 	void KeyDown(KEYBOARDKEYS keycode)
 	{
@@ -200,10 +203,19 @@ protected:
 	{
 		mouseButtonStates[button] = state;
 	}
+	void MouseWheel(const SDL_Event& event) 
+	{
+		mouseWheelMotion.x = static_cast<float>(event.wheel.x);
+		mouseWheelMotion.y = static_cast<float>(event.wheel.y);
+	}
 private:
 	std::unordered_map<KEYBOARDKEYS, bool> keyStates;
 	std::unordered_map<KEYBOARDKEYS, bool> keyStatePrev;
 
 	std::unordered_map<MOUSEBUTTON, bool> mouseButtonStates;
 	std::unordered_map<MOUSEBUTTON, bool> mouseButtonStatePrev;
+
+	glm::vec2 mouseWheelMotion = glm::vec2(0.0f, 0.0f);
+	int mouseRelX = 0;
+	int mouseRelY = 0;
 };
