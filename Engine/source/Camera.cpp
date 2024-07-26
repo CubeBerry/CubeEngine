@@ -33,11 +33,11 @@ void Camera::Update()
 		}
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-		front = glm::normalize(direction);
+		back = glm::normalize(direction);
 		right = glm::normalize(glm::cross(direction, worldUp));
-		up = glm::normalize(glm::cross(right, front));
+		up = glm::normalize(glm::cross(right, back));
 
-		view = glm::lookAt(cameraPosition, cameraPosition + front, up);
+		view = glm::lookAt(cameraPosition, cameraPosition + back, up);
 		projection = glm::perspective(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 		break;
 	default:
@@ -62,13 +62,13 @@ void Camera::MoveCameraPos(CameraMoveDir dir, float speed)
 	case CameraMoveDir::FOWARD:
 		if (cameraType == CameraType::ThreeDimension)
 		{
-			cameraPosition += front * speed;
+			cameraPosition += back * speed;
 		}
 		break;
 	case CameraMoveDir::BACKWARD:
 		if (cameraType == CameraType::ThreeDimension)
 		{
-			cameraPosition -= front * speed;
+			cameraPosition -= back * speed;
 		}
 		break;
 	case CameraMoveDir::UP:
@@ -145,7 +145,7 @@ void Camera::Reset(glm::vec3 startUpPosition)
 {
 	up = startUpPosition;
 	right = { startUpPosition.y, -startUpPosition.x, startUpPosition.z };
-	front = glm::vec3(0.0f, 0.0f, -1.0f);
+	back = glm::vec3(0.0f, 0.0f, -1.0f);
 	SetCenter({ 0.f,0.f,0.f });
 	SetZoom(1.f);
 	pitch = -90.f;
