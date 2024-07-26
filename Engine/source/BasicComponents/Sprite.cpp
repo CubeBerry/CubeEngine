@@ -62,14 +62,32 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 }
 
 void Sprite::UpdateView()
-{
-	Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
+{ 
+	switch (spriteDrawType)
+	{
+	case SpriteDrawType::SPRITE:
+		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
+		break;
+	case SpriteDrawType::UI:
+		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).view = glm::mat4(1.0f);
+		break;
+	}
 }
 
 void Sprite::UpdateProjection()
 {
-	Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
+	switch (spriteDrawType)
+	{
+	case SpriteDrawType::SPRITE:
+		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
+		break;
+	case SpriteDrawType::UI:
+		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
+		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		break;
+	}
 }
+
 
 void Sprite::AddQuad(glm::vec4 color_)
 {

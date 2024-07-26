@@ -11,6 +11,12 @@
 #include <string>
 #include <vector>
 
+enum class SpriteDrawType
+{
+	SPRITE,
+	UI
+};
+
 struct Vertex;
 
 class Sprite : public Component
@@ -51,6 +57,9 @@ public:
 	void SetMaterialId(int index) { materialId = index; }
 	void AddSpriteToManager();
 	void SetColor(glm::vec4 color);
+
+	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
+	SpriteDrawType GetSpriteDrawType() { return spriteDrawType; }
 private:
 	//Animation
 	glm::vec2 GetFrameTexel(int frameNum) const;
@@ -61,6 +70,7 @@ private:
 
 	int currAnim;
 	std::vector<Animation*> animations;
+	SpriteDrawType spriteDrawType = SpriteDrawType::SPRITE;
 
 	int materialId = 0;
 };

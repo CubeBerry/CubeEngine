@@ -47,7 +47,16 @@ void Camera::Update()
 
 void Camera::SetCenter(glm::vec3 centerPosition) noexcept
 {
-	cameraTarget = centerPosition;
+	switch (cameraType)
+	{
+	case CameraType::TwoDimension:
+		cameraPosition = centerPosition;
+		cameraTarget = centerPosition;
+		break;
+	case CameraType::ThreeDimension:
+		cameraTarget = centerPosition;
+		break;
+	}
 }
 
 void Camera::SetCameraPosition(glm::vec3 cameraPosition_) noexcept
@@ -127,7 +136,7 @@ void Camera::UpdaetCameraDirectrion(glm::vec2 dir)
 	Update();
 }
 
-void Camera::Rotate(float angle) noexcept
+void Camera::Rotate2D(float angle) noexcept
 {
 	switch (cameraType)
 	{

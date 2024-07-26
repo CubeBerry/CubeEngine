@@ -13,6 +13,7 @@ void PocketBallSystem::Init()
 
 	powerMeter = new Sprite();
 	powerMeter->AddQuad({ 1.f,0.f,0.f,1.f });
+	powerMeter->SetSpriteDrawType(SpriteDrawType::UI);
 }
 
 void PocketBallSystem::Update(float dt)

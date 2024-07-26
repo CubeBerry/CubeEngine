@@ -9,7 +9,7 @@ void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float 
 	camera.SetCameraType(type);
 	camera.SetViewSize(static_cast<int>(viewSize.x), static_cast<int>(viewSize.y));
 	camera.SetZoom(zoom);
-	camera.Rotate(angle);
+	camera.Rotate2D(angle);
 
 	switch (type)
 	{
