@@ -67,7 +67,7 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;
 		createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		//Use Optimal Tiling to make GPU effectively processs image
+		//Use Optimal Tiling to make GPU effectively process image
 		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		//Usage for copying and shader
 		createInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
