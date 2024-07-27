@@ -18,6 +18,8 @@
 
 void PlatformDemo::Init()
 {
+	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();
 
@@ -29,23 +31,23 @@ void PlatformDemo::Init()
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/TrainSide.png", "trainSide");
 
 	platformDemoSystem->LoadLevelData("../Game/assets/PlatformDemo/Stage.txt");
-	Engine::GetObjectManager().AddObject<PPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player", platformDemoSystem);
-	Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ -64.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
-	Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ 640.f,0.f,0.f }, glm::vec3{ 320.f, 320.f,0.f }, "Enemy", EnemyType::AIRSHIP);
+	Engine::GetObjectManager().AddObject<PPlayer>(glm::vec3{ 0.f,0.f,1.f }, glm::vec3{ 64.f, 96.f,0.f }, "Player", platformDemoSystem);
+	Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ -64.f,196.f,1.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
+	Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ 640.f,0.f,1.f }, glm::vec3{ 320.f, 320.f,0.f }, "Enemy", EnemyType::AIRSHIP);
 	platformDemoSystem->InitHealthBar();
 }
 
 void PlatformDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_1))
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
 	{
 		Engine::GetGameStateManager().ChangeLevel(GameLevel::POCKETBALL);
 	}
-	else if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::NUMBER_2))
+	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_2))
 	{
 		Engine::GetGameStateManager().ChangeLevel(GameLevel::PLATFORMDEMO);
 	}
-	else if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::R))
+	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}

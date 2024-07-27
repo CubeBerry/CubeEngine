@@ -75,6 +75,173 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
+	//Depth Buffering
+	VkFormat depthFormat = FindDepthFormat();
+
+	{
+		//Define an image to create
+		VkImageCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		createInfo.imageType = VK_IMAGE_TYPE_2D;
+		createInfo.format = depthFormat;
+		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
+		createInfo.mipLevels = 1;
+		createInfo.arrayLayers = 1;
+		createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		//Use Optimal Tiling to make GPU effectively process image
+		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		//Usage for copying and shader
+		createInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		//createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		//Create image
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &depthImage);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Image Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKRenderManager::~VKRenderManager();
+			std::exit(EXIT_FAILURE);
+		}
+
+		//Declare a variable which will take memory requirements
+		VkMemoryRequirements requirements{};
+		//Get Memory Requirements for Image
+		vkGetImageMemoryRequirements(*vkInit->GetDevice(), depthImage, &requirements);
+
+		//Create Memory Allocation Info
+		VkMemoryAllocateInfo allocateInfo{};
+		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocateInfo.allocationSize = requirements.size;
+		//Select memory type which has fast access from GPU
+		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		//Allocate Memory
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &depthImageMemory);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_TOO_MANY_OBJECTS:
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Texture Memory Allocation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKRenderManager::~VKRenderManager();
+			std::exit(EXIT_FAILURE);
+		}
+
+		//Bind Image and Memory
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkBindImageMemory(*vkInit->GetDevice(), depthImage, depthImageMemory, 0);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Memory Bind Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKRenderManager::~VKRenderManager();
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	//To access image from graphics pipeline, Image View is needed
+	//Create ImageView Info
+	VkImageViewCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	createInfo.image = depthImage;
+	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	createInfo.format = depthFormat;
+	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	createInfo.subresourceRange.levelCount = 1;
+	createInfo.subresourceRange.layerCount = 1;
+
+	//Create ImageView
+	try
+	{
+		VkResult result{ VK_SUCCESS };
+		result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &depthImageView);
+		if (result != VK_SUCCESS)
+		{
+			switch (result)
+			{
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				break;
+			default:
+				break;
+			}
+			std::cout << std::endl;
+
+			throw std::runtime_error{ "Image View Creation Failed" };
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		VKRenderManager::~VKRenderManager();
+		std::exit(EXIT_FAILURE);
+	}
+
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
@@ -107,12 +274,12 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	for (int i = 0; i < 500; ++i)
 	{
-		VkSamplerCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 
 		VkSampler immutableSampler;
 		VkResult result{ VK_SUCCESS };
-		result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
+		result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.sampler = immutableSampler;
@@ -220,19 +387,45 @@ void VKRenderManager::InitRenderPass()
 	colorAttachmentReference.attachment = 0;
 	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	VkAttachmentDescription depthDescription{};
+	depthDescription.format = FindDepthFormat();
+	depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	//Define which attachment should subpass refernece of renderpass
+	VkAttachmentReference depthAttachmentReference{};
+	//attachment == Index of VkAttachmentDescription array
+	depthAttachmentReference.attachment = 1;
+	depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 	//Create Subpass Description
 	VkSubpassDescription subpassDescription{};
 	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpassDescription.colorAttachmentCount = 1;
 	subpassDescription.pColorAttachments = &colorAttachmentReference;
+	subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
+
+	//VkSubpassDependency dependency{};
+	//dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	//dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	//dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	//Create Renderpass Info
+	std::array<VkAttachmentDescription, 2> attachments = { attachmentDescription, depthDescription };
+
 	VkRenderPassCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	createInfo.attachmentCount = 1;
-	createInfo.pAttachments = &attachmentDescription;
+	createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	createInfo.pAttachments = attachments.data();
 	createInfo.subpassCount = 1;
 	createInfo.pSubpasses = &subpassDescription;
+	//createInfo.dependencyCount = 1;
+	//createInfo.pDependencies = &dependency;
 
 	//Create Renderpass
 	try
@@ -267,51 +460,57 @@ void VKRenderManager::InitRenderPass()
 
 void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_)
 {
-	//Create framebuffer info
-	VkFramebufferCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	createInfo.renderPass = vkRenderPass;
-	createInfo.attachmentCount = 1;
-	createInfo.width = swapchainImageExtent_->width;
-	createInfo.height = swapchainImageExtent_->height;
-	createInfo.layers = 1;
-
 	//Allocate memory for framebuffers
 	vkFrameBuffers.resize(swapchainImageViews_->size());
 
-	try
+	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		for (auto i = 0; i != swapchainImageViews_->size(); ++i)
+		std::array<VkImageView, 2> attachments = { (*swapchainImageViews_)[i], depthImageView};
+
+		//Create framebuffer info
+		VkFramebufferCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		createInfo.renderPass = vkRenderPass;
+		createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		createInfo.pAttachments = attachments.data();
+		createInfo.width = swapchainImageExtent_->width;
+		createInfo.height = swapchainImageExtent_->height;
+		createInfo.layers = 1;
+
+		try
 		{
-			createInfo.pAttachments = &(*swapchainImageViews_)[i];
+			//for (auto i = 0; i != swapchainImageViews_->size(); ++i)
+			//{
+				//createInfo.pAttachments = &(*swapchainImageViews_)[i];
 
-			//Create framebuffer
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateFramebuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkFrameBuffers[i]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
+				//Create framebuffer
+				VkResult result{ VK_SUCCESS };
+				result = vkCreateFramebuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkFrameBuffers[i]);
+				if (result != VK_SUCCESS)
 				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
-					break;
-				default:
-					break;
-				}
-				std::cout << std::endl;
+					switch (result)
+					{
+					case VK_ERROR_OUT_OF_HOST_MEMORY:
+						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+						break;
+					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+						break;
+					default:
+						break;
+					}
+					std::cout << std::endl;
 
-				throw std::runtime_error{ "Framebuffer Creation Failed" };
-			}
+					throw std::runtime_error{ "Framebuffer Creation Failed" };
+				}
+			//}
 		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << std::endl;
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKRenderManager::~VKRenderManager();
+			std::exit(EXIT_FAILURE);
+		}
 	}
 }
 
@@ -677,11 +876,16 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	}
 
 	//Set clear color
-	VkClearValue clearValue{};
-	clearValue.color.float32[0] = bgColor.r;	//R
-	clearValue.color.float32[1] = bgColor.g;	//G
-	clearValue.color.float32[2] = bgColor.b;	//B
-	clearValue.color.float32[3] = bgColor.a;	//A
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, bgColor.a} };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
+	//VkClearValue clearValue{};
+	//clearValue.color.float32[0] = bgColor.r;	//R
+	//clearValue.color.float32[1] = bgColor.g;	//G
+	//clearValue.color.float32[2] = bgColor.b;	//B
+	//clearValue.color.float32[3] = bgColor.a;	//A
+	//clearValue.depthStencil = { 1.0f, 0 };
 
 	//Create renderpass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};
@@ -689,8 +893,8 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	renderpassBeginInfo.renderPass = vkRenderPass;
 	renderpassBeginInfo.framebuffer = vkFrameBuffers[swapchainIndex];
 	renderpassBeginInfo.renderArea.extent = *vkSwapChain->GetSwapChainImageExtent();
-	renderpassBeginInfo.clearValueCount = 1;
-	renderpassBeginInfo.pClearValues = &clearValue;
+	renderpassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderpassBeginInfo.pClearValues = clearValues.data();
 
 	//Begin renderpass
 	vkCmdBeginRenderPass(*currentCommandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);

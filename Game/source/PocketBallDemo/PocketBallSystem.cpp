@@ -13,6 +13,7 @@ void PocketBallSystem::Init()
 
 	powerMeter = new Sprite();
 	powerMeter->AddQuad({ 1.f,0.f,0.f,1.f });
+	powerMeter->SetSpriteDrawType(SpriteDrawType::UI);
 }
 
 void PocketBallSystem::Update(float dt)
@@ -41,7 +42,7 @@ void PocketBallSystem::Update(float dt)
 			}
 		}
 	}
-	cursor->UpdateModel({ cursorPosition.x, cursorPosition.y, 0.f }, { 32.f,32.f,0.f }, -shotAngle * 60.f);
+	cursor->UpdateModel({ cursorPosition.x, cursorPosition.y, 1.f }, { 32.f,32.f,0.f }, -shotAngle * 60.f);
 	cursor->UpdateProjection();
 	cursor->UpdateView();
 
@@ -134,7 +135,7 @@ void PocketBallSystem::Control(float dt)
 			angle += 1.5f * dt;
 			cursorPosition = { playerPosition.x + ((distanceMax.x) * cos(angle)) - ((distanceMax.y) * sin(angle)) * dt, playerPosition.y + ((distanceMax.x) * sin(angle)) + ((distanceMax.y) * cos(angle)) * dt };
 		}
-		if (Engine::GetInputManager().IsKeyPressedOnce(KEYBOARDKEYS::SPACE))
+		if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::SPACE))
 		{
 			Engine::GetObjectManager().FindObjectWithName("White")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle), power * -sin(shotAngle) });
 			isShot = true;

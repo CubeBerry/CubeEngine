@@ -6,6 +6,7 @@
 
 void InputManager::InputPollEvent(SDL_Event& event)
 {
+	mouseWheelMotion = { 0.f,0.f };
 	switch (event.type)
 	{
 	case SDL_KEYDOWN:
@@ -20,8 +21,20 @@ void InputManager::InputPollEvent(SDL_Event& event)
 	case SDL_MOUSEBUTTONUP:
 		MouseButtonUp(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
 		break;
+	case SDL_MOUSEWHEEL:
+		MouseWheel(event);
+		break;
+	case SDL_MOUSEMOTION:
+		mouseRelX = event.motion.xrel;
+		mouseRelY = event.motion.yrel;
+		break;
 	default:
 		break;
+	}
+	if (event.type == SDL_MOUSEMOTION)
+	{
+		mouseRelX = event.motion.xrel;
+		mouseRelY = event.motion.yrel;
 	}
 }
 
@@ -36,7 +49,7 @@ bool InputManager::IsKeyPressed(KEYBOARDKEYS keycode)
 	return false;
 }
 
-bool InputManager::IsKeyPressedOnce(KEYBOARDKEYS keycode)
+bool InputManager::IsKeyPressOnce(KEYBOARDKEYS keycode)
 {
 	auto it = keyStates.find(keycode);
 	if (it != keyStates.end())
@@ -59,7 +72,7 @@ bool InputManager::IsMouseButtonPressed(MOUSEBUTTON button)
 	return false;
 }
 
-bool InputManager::IsMouseButtonPressedOnce(MOUSEBUTTON button)
+bool InputManager::IsMouseButtonPressOnce(MOUSEBUTTON button)
 {
 	auto it = mouseButtonStates.find(button);
 	if (it != mouseButtonStates.end())
@@ -84,4 +97,31 @@ glm::vec2 InputManager::GetMousePosition()
 
 	pos = { windowViewSize.x / 2.f * (pos.x / (static_cast<float>(w) / 2.f) - 1) / zoom, windowViewSize.y / 2.f * (pos.y / (static_cast<float>(h) / 2.f) - 1) / zoom };
 	return pos;
+}
+
+glm::vec2 InputManager::GetMouseWheelMotion()
+{
+	return mouseWheelMotion;
+}
+
+void InputManager::SetRelativeMouseMode(bool state)
+{
+	if (state == true)
+	{
+		SDL_SetRelativeMouseMode(SDL_TRUE);
+	}
+	else
+	{
+		SDL_SetRelativeMouseMode(SDL_FALSE);
+	}
+	mouseRelX = 0;
+	mouseRelY = 0;
+}
+
+glm::vec2 InputManager::GetRelativeMouseState()
+{
+	glm::vec2 temp{ mouseRelX, mouseRelY };
+	mouseRelX = 0;
+	mouseRelY = 0;
+	return temp;
 }

@@ -151,6 +151,15 @@ void VKPipeLine::InitPipeLine(
 	//Create Depth Stencil State Info
 	VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo{};
 	depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencilCreateInfo.depthTestEnable = VK_TRUE;
+	depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
+	depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
+	depthStencilCreateInfo.minDepthBounds = 0.0f;
+	depthStencilCreateInfo.maxDepthBounds = 1.0f;
+	depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
+	depthStencilCreateInfo.front = {};
+	depthStencilCreateInfo.back = {};
 
 	//Create Color Blend Attachment
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};

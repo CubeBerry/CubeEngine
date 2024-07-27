@@ -9,7 +9,7 @@ void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float 
 	camera.SetCameraType(type);
 	camera.SetViewSize(static_cast<int>(viewSize.x), static_cast<int>(viewSize.y));
 	camera.SetZoom(zoom);
-	camera.Rotate(angle);
+	camera.Rotate2D(angle);
 
 	switch (type)
 	{
@@ -34,9 +34,8 @@ void CameraManager::TargetAt(glm::vec3 targetLocation)
 
 void CameraManager::Reset()
 {
-	camera.ResetUp({0.f,1.f,0.1f});
-	camera.SetCenter({0.f,0.f,0.f});
-	camera.SetZoom(1.f);
+	camera.Reset({0.f,1.f,0.1f}); 
+	SetCameraSensitivity(1.f);
 }
 
 bool CameraManager::IsInCamera(Object* object)

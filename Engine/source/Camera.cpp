@@ -10,24 +10,35 @@
 
 void Camera::Update()
 {
-	//glm::vec3 frontT;
-	//frontT.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	//frontT.y = sin(glm::radians(pitch));
-	//frontT.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-	//front = glm::normalize(frontT) * glm::rotateZ(glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(rotate2D))
+	glm::vec2 wSize = Engine::Instance().GetWindow().GetWindowSize();
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:
-		glm::vec2 wSize = Engine::Instance().GetWindow().GetWindowSize();
-		view =  glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x * 2.f, -cameraPosition.y * 2.f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f));
+		view = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x * 2.f, -cameraPosition.y * 2.f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f));
 		projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 		break;
 	case CameraType::ThreeDimension:
-		view = glm::lookAt(cameraPosition, cameraTarget + front, upVector);
-		projection = glm::perspective(glm::radians(zoom), aspectRatio, nearClip, farClip);
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		switch (Engine::GetRenderManager()->GetGraphicsMode())
+		{
+		case GraphicsMode::GL:
+			direction.y = sin(glm::radians(-pitch));
+			break;
+		case GraphicsMode::VK:
+			direction.y = sin(glm::radians(pitch));
+			break;
+		}
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+		back = glm::normalize(direction);
+		right = glm::normalize(glm::cross(direction, worldUp));
+		up = glm::normalize(glm::cross(right, back));
+
+		view = glm::lookAt(cameraPosition, cameraPosition + back, up);
+		projection = glm::perspective(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 		break;
 	default:
 		break;
@@ -36,41 +47,96 @@ void Camera::Update()
 
 void Camera::SetCenter(glm::vec3 centerPosition) noexcept
 {
-	this->cameraTarget = centerPosition;
-	this->cameraPosition = centerPosition;
-}
-
-void Camera::MoveUp(float distance) noexcept
-{
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:
-		cameraPosition += normalize(upVector) * distance;
+		cameraPosition = centerPosition;
+		cameraTarget = centerPosition;
 		break;
 	case CameraType::ThreeDimension:
-		cameraPosition += front * distance;
-		break;
-	default:
+		cameraTarget = centerPosition;
 		break;
 	}
 }
 
-void Camera::MoveRight(float distance) noexcept
+void Camera::SetCameraPosition(glm::vec3 cameraPosition_) noexcept
 {
-	switch (cameraType)
+	cameraPosition = cameraPosition_;
+}
+
+void Camera::MoveCameraPos(CameraMoveDir dir, float speed)
+{
+	switch (dir)
 	{
-	case CameraType::TwoDimension:
-		cameraPosition += normalize(rightVector) * distance;
+	case CameraMoveDir::FOWARD:
+		if (cameraType == CameraType::ThreeDimension)
+		{
+			cameraPosition += back * speed;
+		}
 		break;
-	case CameraType::ThreeDimension:
-		cameraPosition += normalize(glm::cross(front, upVector)) * distance;
+	case CameraMoveDir::BACKWARD:
+		if (cameraType == CameraType::ThreeDimension)
+		{
+			cameraPosition -= back * speed;
+		}
 		break;
-	default:
+	case CameraMoveDir::UP:
+		switch (cameraType)
+		{
+		case CameraType::TwoDimension:
+			cameraPosition += normalize(up) * speed;
+			break;
+		case CameraType::ThreeDimension:
+			cameraPosition += up * speed;
+			break;
+		}
+		break;
+	case CameraMoveDir::DOWN:
+		switch (cameraType)
+		{
+		case CameraType::TwoDimension:
+			cameraPosition -= normalize(up) * speed;
+			break;
+		case CameraType::ThreeDimension:
+			cameraPosition -= up * speed;
+			break;
+		}
+		break;
+	case CameraMoveDir::LEFT:
+		switch (cameraType)
+		{
+		case CameraType::TwoDimension:
+			cameraPosition -= normalize(right) * speed;
+			break;
+		case CameraType::ThreeDimension:
+			cameraPosition -= right * speed;
+			break;
+		}
+		break;
+	case CameraMoveDir::RIGHT:
+		switch (cameraType)
+		{
+		case CameraType::TwoDimension:
+			cameraPosition += normalize(right) * speed;
+			break;
+		case CameraType::ThreeDimension:
+			cameraPosition += right * speed;
+			break;
+		}
 		break;
 	}
 }
 
-void Camera::Rotate(float angle) noexcept
+void Camera::UpdaetCameraDirectrion(glm::vec2 dir)
+{
+	yaw += dir.x * cameraSensitivity;
+	pitch += dir.y * cameraSensitivity;
+
+	pitch = glm::clamp(pitch, -89.f, 89.f);
+	Update();
+}
+
+void Camera::Rotate2D(float angle) noexcept
 {
 	switch (cameraType)
 	{
@@ -84,13 +150,15 @@ void Camera::Rotate(float angle) noexcept
 	}
 }
 
-void Camera::ResetUp(glm::vec3 startUpPosition)
+void Camera::Reset(glm::vec3 startUpPosition)
 {
-	this->upVector.x = startUpPosition.x;
-	this->upVector.y = startUpPosition.y;
-	this->upVector.z = startUpPosition.z;
-	rightVector = { startUpPosition.y, -startUpPosition.x, startUpPosition.z };
-	//need to fix it in 3d
+	up = startUpPosition;
+	right = { startUpPosition.y, -startUpPosition.x, startUpPosition.z };
+	back = glm::vec3(0.0f, 0.0f, -1.0f);
+	SetCenter({ 0.f,0.f,0.f });
+	SetZoom(1.f);
+	pitch = -90.f;
+	yaw = 0.f;
 }
 
 void Camera::SetViewSize(int width, int height) noexcept

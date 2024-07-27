@@ -22,4 +22,5 @@ public:
 	void Restart() override;
 	void End() override;
 private:
+	void Input(float dt);
 };
