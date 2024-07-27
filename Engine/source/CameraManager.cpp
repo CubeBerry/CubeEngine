@@ -52,3 +52,50 @@ bool CameraManager::IsInCamera(Object* object)
 	}
 	return false;
 }
+
+void CameraManager::ControlCamera(float dt)
+{
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::W))
+	{
+		MoveCameraPos(CameraMoveDir::FOWARD, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
+	{
+		MoveCameraPos(CameraMoveDir::BACKWARD, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
+	{
+		MoveCameraPos(CameraMoveDir::LEFT, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::D))
+	{
+		MoveCameraPos(CameraMoveDir::RIGHT, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::SPACE))
+	{
+		MoveCameraPos(CameraMoveDir::UP, 5.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LSHIFT))
+	{
+		MoveCameraPos(CameraMoveDir::DOWN, 5.f * dt);
+	}
+	//if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
+	//{
+	//	if (SDL_GetRelativeMouseMode() == SDL_FALSE)
+	//	{
+	//		Engine::Instance().GetInputManager().SetRelativeMouseMode(true);
+	//	}
+	//	else
+	//	{
+	//		Engine::Instance().GetInputManager().SetRelativeMouseMode(false);
+	//	}
+	//}
+	if (Engine::GetInputManager().GetMouseWheelMotion().y != 0.f)
+	{
+		SetZoom(GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
+	}
+	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+	{
+		UpdaetCameraDirectrion(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
+	}
+}
