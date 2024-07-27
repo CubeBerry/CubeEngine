@@ -36,7 +36,6 @@ public:
 
 	//Add Mesh
 	void AddQuad(glm::vec4 color_);
-	void AddQuadLine(glm::vec4 color_);
 	void AddMeshWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
 	void AddMeshWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
 

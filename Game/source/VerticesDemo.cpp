@@ -42,12 +42,6 @@ void VerticesDemo::Init()
 	Engine::Instance().GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("FPS");
 	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetSpriteDrawType(SpriteDrawType::UI);
-
-
-	Engine::Instance().GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-0.f,9.f }, glm::vec3{ 16.f,9.f,0.f }, "4", ObjectType::NONE);
-	Engine::Instance().GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("FPS");
-	Engine::Instance().GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetSpriteDrawType(SpriteDrawType::SPRITE);
 }
 
 void VerticesDemo::Update(float dt)
