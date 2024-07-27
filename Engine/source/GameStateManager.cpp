@@ -60,7 +60,7 @@ void GameStateManager::Update(float dt)
 #endif
 		state = State::UPDATE;
 #ifdef _DEBUG
-		std::cout << "Upadte" << std::endl;
+		std::cout << "Update" << std::endl;
 #endif
 		break;
 	case State::UPDATE:
