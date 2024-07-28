@@ -21,7 +21,7 @@ void Camera::Update()
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
-			projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			projection = glm::orthoRH_NO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 			break;
 		case GraphicsMode::VK:
 			projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
@@ -50,7 +50,7 @@ void Camera::Update()
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
-			projection = glm::perspective(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			projection = glm::perspectiveRH_NO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
 		case GraphicsMode::VK:
 			projection = glm::perspectiveRH_ZO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
