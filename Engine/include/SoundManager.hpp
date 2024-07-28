@@ -9,9 +9,10 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 #include "fmod.hpp"
-#include "glm/glm.hpp"
 
 struct PlaybackTime
 {

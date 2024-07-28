@@ -2,6 +2,8 @@
 //Project: CubeEngine
 //File: PBullet.hpp
 #pragma once
+#include <glm/vec2.hpp>
+
 #include "Object.hpp"
 
 class PBullet : public Object

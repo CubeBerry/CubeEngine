@@ -2,6 +2,8 @@
 //Project: CubeEngine
 //File: PEnemy.hpp
 #pragma once
+#include <glm/vec2.hpp>
+
 #include "Object.hpp"
 
 enum class EnemyType

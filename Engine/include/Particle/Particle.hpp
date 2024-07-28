@@ -3,7 +3,7 @@
 //File: Particle.cpp
 #pragma once
 #include <string>
-#include "glm/glm.hpp"
+#include <glm/vec4.hpp>
 #include "BasicComponents/Physics2D.hpp"
 #include "BasicComponents/Sprite.hpp"
 

@@ -3,6 +3,7 @@
 //File: Physics2D.hpp
 #pragma once
 #include <math.h>
+#include <glm/vec2.hpp>
 
 #include "Component.hpp"
 #include "Object.hpp"

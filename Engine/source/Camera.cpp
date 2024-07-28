@@ -1,4 +1,5 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: Camera.cpp
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,7 +18,15 @@ void Camera::Update()
 		view = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraPosition.x * 2.f, -cameraPosition.y * 2.f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
 			glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f));
-		projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		switch (Engine::GetRenderManager()->GetGraphicsMode())
+		{
+		case GraphicsMode::GL:
+			projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			break;
+		case GraphicsMode::VK:
+			projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			break;
+		}
 		break;
 	case CameraType::ThreeDimension:
 		glm::vec3 direction;
@@ -38,7 +47,15 @@ void Camera::Update()
 		up = glm::normalize(glm::cross(right, back));
 
 		view = glm::lookAt(cameraPosition, cameraPosition + back, up);
-		projection = glm::perspective(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+		switch (Engine::GetRenderManager()->GetGraphicsMode())
+		{
+		case GraphicsMode::GL:
+			projection = glm::perspective(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			break;
+		case GraphicsMode::VK:
+			projection = glm::perspectiveRH_ZO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			break;
+		}
 		break;
 	default:
 		break;

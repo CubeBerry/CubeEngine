@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 enum class SpriteDrawType
 {
