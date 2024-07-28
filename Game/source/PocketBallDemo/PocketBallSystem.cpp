@@ -42,7 +42,7 @@ void PocketBallSystem::Update(float dt)
 			}
 		}
 	}
-	cursor->UpdateModel({ cursorPosition.x, cursorPosition.y, 1.f }, { 32.f,32.f,0.f }, -shotAngle * 60.f);
+	cursor->UpdateModel({ cursorPosition.x, cursorPosition.y, 0.f }, { 32.f,32.f,0.f }, -shotAngle * 60.f);
 	cursor->UpdateProjection();
 	cursor->UpdateView();
 
