@@ -4,7 +4,7 @@
 ![Static Badge](https://img.shields.io/badge/platform-Windows-brightgreen)
 ![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)
 
-CubeEngine is a hobby project rendering engine. It runs on integrated renderer which runs on OpenGL or Vulkan, written in C++.
+CubeEngine is a rendering engine written in C++, developed as a personal hobby project and for portfolio purposes. This engine utilizes an integrated renderer based on both OpenGL and Vulkan. The primary objective of this project is to implement features learned from college courses, particularly those focused on OpenGL graphics. Furthermore, the project aims to adapt and apply these OpenGL-based techniques to Vulkan, thereby gaining proficiency in both graphics APIs.
 
 ## Minimum Requirements
 1. Latest Graphics Driver
@@ -30,7 +30,7 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
 
-## Future Plan
+## Future Plans
 1. Linux Support
 2. Basic 3D Meshes
 3. C++ Code Optimization
