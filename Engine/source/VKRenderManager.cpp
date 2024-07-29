@@ -48,7 +48,12 @@ VKRenderManager::~VKRenderManager()
 
 	textures.erase(textures.begin(), textures.end());
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
-	
+
+	//Destroy Depth Buffering
+	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
+
 	//Destroy Shader
 	delete vkTextureShader;
 	delete vkLineShader;

@@ -97,6 +97,10 @@ void Engine::Update()
 
 void Engine::End()
 {
+	if (renderManager->GetGraphicsMode() == GraphicsMode::GL)
+		delete dynamic_cast<GLRenderManager*>(renderManager);
+	else
+		delete dynamic_cast<VKRenderManager*>(renderManager);
 	//delete gameStateManger;
 	//delete cameraManager;
 	//delete inputManager;

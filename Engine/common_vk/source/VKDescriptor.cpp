@@ -105,6 +105,7 @@ void VKDescriptor::InitDescriptorSetLayouts()
 		createInfo.pBindings = binding;
 		createInfo.pNext = &bindingFlagsInfo;
 		createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+
 		//Create Descriptor Set Layout
 		try
 		{
@@ -165,8 +166,13 @@ void VKDescriptor::InitDescriptorPool()
 	//For uniform buffer and combined image sampler
 	createInfo.maxSets = 1005;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
-	createInfo.pPoolSizes = &poolSize[0];
+	createInfo.pPoolSizes = poolSize.data();
+#ifdef _DEBUG
+	//ImGui requires VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
+	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+#else
 	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+#endif
 
 	//Create DescriptorPool
 	try

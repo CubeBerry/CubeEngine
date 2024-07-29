@@ -101,11 +101,11 @@ private:
 
 	float Length(glm::vec2 a)
 	{
-		return sqrt((a.x) * (a.x) + (a.y) * (a.y));
+		return static_cast<float>(sqrt((a.x) * (a.x) + (a.y) * (a.y)));
 	}
 	float Distance(glm::vec2 a, glm::vec2 b)
 	{
-		return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+		return static_cast<float>(sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)));
 	}
 	
 	Circle circle;
