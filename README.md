@@ -41,3 +41,5 @@ Licensed under the [MIT License](https://github.com/minjae-yu/CubeEngine/blob/ma
 Music by [DavidKBD](https://www.davidkbd.com/) under the [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/).
 
 Music by [Abstraction](https://abstractionmusic.com/) under the [CC0 1.0 Universal License](https://creativecommons.org/publicdomain/zero/1.0/).
+
+Asset by [Pupkin](https://trevor-pupkin.itch.io/tech-dungeon-roguelite)
