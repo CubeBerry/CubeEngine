@@ -6,6 +6,20 @@
 
 GLRenderManager::~GLRenderManager()
 {
+#ifdef _DEBUG
+	//delete ImGui
+	delete imguiManager;
+#endif
+
+	//Destroy Buffers
+	delete texVertex;
+	delete texIndex;
+	delete uVertex;
+	delete uFragment;
+
+	//Destroy Texture
+	for (const auto t : textures)
+		delete t;
 }
 
 void GLRenderManager::Initialize(

@@ -17,7 +17,7 @@ VKRenderManager::~VKRenderManager()
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 
 #ifdef _DEBUG
-	//delete imGUI
+	//delete ImGui
 	delete imguiManager;
 #endif
 
@@ -38,7 +38,7 @@ VKRenderManager::~VKRenderManager()
 	delete uFragment;
 
 	//Destroy Texture
-	for (auto t : textures)
+	for (const auto t : textures)
 		delete t;
 
 	//Destroy Batch ImageInfo

@@ -43,6 +43,8 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	UseForSlot(texID);
 
 	name = name_;
+
+	stbi_image_free(data);
 }
 
 void GLTexture::UseForSlot(unsigned int unit) const noexcept
