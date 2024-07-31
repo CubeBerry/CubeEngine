@@ -3,6 +3,7 @@
 //Project: CubeEngine
 //File: GLRenderManager.cpp
 #include "Engine.hpp"
+#include <glm/gtx/transform.hpp>
 
 GLRenderManager::~GLRenderManager()
 {
@@ -30,12 +31,17 @@ void GLRenderManager::Initialize(
 {
 	vertexArray.Initialize();
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
+	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL3D.frag" } });
 
 	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
 	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
-
 	vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms2D);
 	fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms2D);
+
+	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
+	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
+	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D);
+	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -48,19 +54,28 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-	gl2DShader.Use(true);
+	gl3DShader.Use(true);
 
 	//For Texture Array
-	auto texLocation = glCheck(glGetUniformLocation(gl2DShader.GetProgramHandle(), "tex"));
-	glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
+	//auto texLocation = glCheck(glGetUniformLocation(gl2DShader.GetProgramHandle(), "tex"));
+	//glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 
-	if (vertexUniform2D != nullptr)
+	//if (vertexUniform2D != nullptr)
+	//{
+	//	vertexUniform2D->UpdateUniform(vertexUniforms2D);
+	//}
+	//if (fragmentUniform2D != nullptr)
+	//{
+	//	fragmentUniform2D->UpdateUniform(fragUniforms2D);
+	//}
+
+	if (vertexUniform3D != nullptr)
 	{
-		vertexUniform2D->UpdateUniform(vertexUniforms2D);
+		vertexUniform3D->UpdateUniform(vertexUniforms3D);
 	}
-	if (fragmentUniform2D != nullptr)
+	if (fragmentUniform3D != nullptr)
 	{
-		fragmentUniform2D->UpdateUniform(fragUniforms2D);
+		fragmentUniform3D->UpdateUniform(fragUniforms3D);
 	}
 
 	vertexArray.Use(true);
@@ -68,7 +83,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	GLDrawIndexed(vertexArray);
 
 	vertexArray.Use(false);
-	gl2DShader.Use(false);
+	gl3DShader.Use(false);
 
 #ifdef _DEBUG
 	imguiManager->Begin();
@@ -227,7 +242,259 @@ GLTexture* GLRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void GLRenderManager::LoadMesh(MeshType type)
+void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices)
 {
-	type;
+	std::vector<ThreeDimension::Vertex> vertices;
+	switch (type)
+	{
+	case MeshType::PLANE:
+	{
+		//Verties
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			float row = static_cast<float>(stack) / stacks;
+
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				float col = static_cast<float>(slice) / slices;
+
+				vertices.push_back(ThreeDimension::Vertex(
+					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec2(col, row),
+					quadCount
+				));
+			}
+		}
+
+		//Indices
+		int i0 = 0, i1 = 0, i2 = 0;
+		for (int i = 0; i < stacks; ++i)
+		{
+			for (int j = 0; j < slices; ++j)
+			{
+				/*  You need to compute the indices for the first triangle here */
+				i0 = i * (slices + 1) + j;
+				i1 = i0 + 1;
+				i2 = i1 + slices + 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(vertices[i0].position, vertices[i2].position, vertices[i1].position))
+				{
+					/*  Add the indices for the first triangle */
+					indices.push_back(static_cast<uint16_t>(i0));
+					indices.push_back(static_cast<uint16_t>(i2));
+					indices.push_back(static_cast<uint16_t>(i1));
+				}
+
+				/*  You need to compute the indices for the second triangle here */
+				i1 = i2;
+				i2 = i1 - 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(vertices[i0].position, vertices[i2].position, vertices[i1].position))
+				{
+					indices.push_back(static_cast<uint16_t>(i0));
+					indices.push_back(static_cast<uint16_t>(i2));
+					indices.push_back(static_cast<uint16_t>(i1));
+				}
+			}
+		}
+	}
+	break;
+	case MeshType::CUBE:
+	{
+		std::vector<ThreeDimension::Vertex> planeVertices;
+		std::vector<uint16_t> planeIndices;
+		//Vertices
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			float row = static_cast<float>(stack) / stacks;
+
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				float col = static_cast<float>(slice) / slices;
+
+				planeVertices.push_back(ThreeDimension::Vertex(
+					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec2(col, row),
+					quadCount
+				));
+			}
+		}
+
+		//Indices
+		int i0 = 0, i1 = 0, i2 = 0;
+		for (int i = 0; i < stacks; ++i)
+		{
+			for (int j = 0; j < slices; ++j)
+			{
+				/*  You need to compute the indices for the first triangle here */
+				i0 = i * (slices + 1) + j;
+				i1 = i0 + 1;
+				i2 = i1 + slices + 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i2].position, planeVertices[i1].position))
+				{
+					/*  Add the indices for the first triangle */
+					planeIndices.push_back(static_cast<uint16_t>(i0));
+					planeIndices.push_back(static_cast<uint16_t>(i2));
+					planeIndices.push_back(static_cast<uint16_t>(i1));
+				}
+
+				/*  You need to compute the indices for the second triangle here */
+				i1 = i2;
+				i2 = i1 - 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i2].position, planeVertices[i1].position))
+				{
+					planeIndices.push_back(static_cast<uint16_t>(i0));
+					planeIndices.push_back(static_cast<uint16_t>(i2));
+					planeIndices.push_back(static_cast<uint16_t>(i1));
+				}
+			}
+		}
+
+		const glm::vec3 translateArray[] = {
+			glm::vec3(+0.0f, +0.0f, +0.5f), // Z+
+			glm::vec3(+0.0f, +0.0f, -0.5f), // Z-
+			glm::vec3(+0.5f, +0.0f, +0.0f), // X+
+			glm::vec3(-0.5f, +0.0f, +0.0f), // X-
+			glm::vec3(+0.0f, +0.5f, +0.0f), // Y+
+			glm::vec3(+0.0f, -0.5f, +0.0f), // Y-
+		};
+
+		const glm::vec2 rotateArray[] = {
+			glm::vec2(+0.0f, +0.0f),           // Z+
+			glm::vec2(+0.0f, (float)+PI),      // Z-
+			glm::vec2(+0.0f, (float)+HALF_PI), // X+
+			glm::vec2(+0.0f, (float)-HALF_PI), // X-
+			glm::vec2((float)-HALF_PI, +0.0f), // Y+
+			glm::vec2((float)+HALF_PI, +0.0f)  // Y-
+		};
+
+		/*  Transform the plane to 6 positions to form the faces of the cube */
+		for (int i = 0; i < 6; ++i)
+		{
+			const glm::mat4 transformMat = glm::translate(translateArray[i]) *
+				glm::rotate(rotateArray[i][YINDEX], glm::vec3{ 0, 1, 0 }) *
+				glm::rotate(rotateArray[i][XINDEX], glm::vec3{ 1, 0, 0 });
+
+			for (const auto& plane_vertex : planeVertices)
+			{
+				vertices.push_back(ThreeDimension::Vertex(
+					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.position))),
+					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.normal))),
+					plane_vertex.uv,
+					quadCount
+				));
+			}
+
+			//Indices
+			for (const auto index : planeIndices)
+			{
+				indices.push_back(static_cast<uint16_t>(index + static_cast<int>(planeVertices.size()) * i));
+			}
+		}
+	}
+	break;
+	case MeshType::SPHERE:
+	{
+
+	}
+	break;
+	case MeshType::TORUS:
+	{
+
+	}
+	break;
+	case MeshType::CYLINDER:
+	{
+
+	}
+	break;
+	case MeshType::CONE:
+	{
+
+	}
+	break;
+	}
+
+	vertices3D.insert(vertices3D.end(), vertices.begin(), vertices.end());
+
+	if (quadCount > 0)
+		delete vertexBuffer;
+	vertexBuffer = new GLVertexBuffer;
+	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data());
+
+	if (indexBuffer != nullptr)
+		delete indexBuffer;
+	indexBuffer = new GLIndexBuffer(&indices);
+
+	quadCount++;
+
+	//Attributes
+	GLAttributeLayout position_layout;
+	position_layout.component_type = GLAttributeLayout::Float;
+	position_layout.component_dimension = GLAttributeLayout::_4;
+	position_layout.normalized = false;
+	position_layout.vertex_layout_location = 0;
+	position_layout.stride = sizeof(ThreeDimension::Vertex);
+	position_layout.offset = 0;
+	position_layout.relative_offset = offsetof(ThreeDimension::Vertex, position);
+
+	GLAttributeLayout normal_layout;
+	normal_layout.component_type = GLAttributeLayout::Float;
+	normal_layout.component_dimension = GLAttributeLayout::_4;
+	normal_layout.normalized = false;
+	normal_layout.vertex_layout_location = 1;
+	normal_layout.stride = sizeof(ThreeDimension::Vertex);
+	normal_layout.offset = 0;
+	normal_layout.relative_offset = offsetof(ThreeDimension::Vertex, normal);
+
+	GLAttributeLayout uv_layout;
+	uv_layout.component_type = GLAttributeLayout::Float;
+	uv_layout.component_dimension = GLAttributeLayout::_2;
+	uv_layout.normalized = false;
+	uv_layout.vertex_layout_location = 2;
+	uv_layout.stride = sizeof(ThreeDimension::Vertex);
+	uv_layout.offset = 0;
+	uv_layout.relative_offset = offsetof(ThreeDimension::Vertex, uv);
+
+	GLAttributeLayout index_layout;
+	index_layout.component_type = GLAttributeLayout::Int;
+	index_layout.component_dimension = GLAttributeLayout::_1;
+	index_layout.normalized = false;
+	index_layout.vertex_layout_location = 3;
+	index_layout.stride = sizeof(ThreeDimension::Vertex);
+	index_layout.offset = 0;
+	index_layout.relative_offset = offsetof(ThreeDimension::Vertex, index);
+
+	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout });
+	vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+
+	if (vertexUniform3D != nullptr)
+		delete vertexUniform3D;
+	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
+	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D);
+
+	if (fragmentUniform3D != nullptr)
+		delete fragmentUniform3D;
+	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
+	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D);
+
+
+	ThreeDimension::VertexUniform mat;
+	mat.model = glm::mat4(1.f);
+	mat.view = glm::mat4(1.f);
+	mat.projection = glm::mat4(1.f);
+	vertexUniforms3D.push_back(mat);
+	vertexUniforms3D.back().color = color;
+
+	ThreeDimension::FragmentUniform tIndex;
+	tIndex.texIndex = 0;
+	fragUniforms3D.push_back(tIndex);
 }

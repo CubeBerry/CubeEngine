@@ -740,9 +740,12 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::LoadMesh(MeshType type)
+void VKRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices)
 {
 	type;
+	color;
+	stacks;
+	slices;
 }
 
 

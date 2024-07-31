@@ -68,4 +68,3 @@ void VerticesDemo::End()
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
 }
-

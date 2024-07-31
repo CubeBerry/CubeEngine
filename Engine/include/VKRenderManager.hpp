@@ -138,7 +138,7 @@ public:
 	VKTexture* GetTexture(std::string name);
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type) override;
+	void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) override;
 private:
 	//--------------------Common--------------------//
 	VKIndexBuffer* indexBuffer{ nullptr };

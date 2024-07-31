@@ -22,5 +22,5 @@ uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    fragmentColor = i_col;
+    fragmentColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

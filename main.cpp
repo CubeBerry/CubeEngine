@@ -5,6 +5,7 @@
 #include "Engine.hpp"
 
 #include "VerticesDemo.hpp"
+#include "ProceduralMeshes.hpp"
 #include "PocketBallDemo/PocketBallDemo.hpp"
 #include "PlatformDemo/PlatformDemo.hpp"
 
@@ -40,10 +41,11 @@ int main(void)
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
     //engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
+    engine.GetGameStateManager().AddLevel(new ProceduralMeshes);
     engine.GetGameStateManager().AddLevel(new VerticesDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::VERTICES);
+    engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
 
     engine.Update();
     engine.End();

@@ -36,6 +36,7 @@ private:
 
 	GLVertexArray vertexArray;
 	GLShader gl2DShader;
+	GLShader gl3DShader;
 #ifdef _DEBUG
 	GLImGuiManager* imguiManager;
 #endif
@@ -50,7 +51,7 @@ public:
 	GLTexture* GetTexture(std::string name);
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type) override;
+	void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) override;
 private:
 	//--------------------Common--------------------//
 	GLVertexBuffer* vertexBuffer{ nullptr };
@@ -64,4 +65,6 @@ private:
 	GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
 
 	//--------------------3D Render--------------------//
+	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
+	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 };

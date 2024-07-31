@@ -5,7 +5,7 @@ precision mediump float;
 
 layout(location = 0) in vec4 i_pos;
 layout(location = 1) in vec4 i_normal;
-layout(location = 2) in vec4 i_uv;
+layout(location = 2) in vec2 i_uv;
 layout(location = 3) in int index;
 
 layout(location = 0) out vec2 o_uv;
