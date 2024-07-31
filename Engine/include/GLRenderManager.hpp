@@ -36,7 +36,7 @@ private:
 	}
 
 	GLVertexArray vertexArray;
-	GLShader shader;
+	GLShader gl2DShader;
 #ifdef _DEBUG
 	GLImGuiManager* imguiManager;
 #endif
@@ -56,9 +56,9 @@ private:
 	std::vector<GLTexture*> textures;
 	std::vector<int> samplers;
 	
-	GLVertexBuffer* texVertex{ nullptr };
-	GLIndexBuffer* texIndex{ nullptr };
+	GLVertexBuffer* VertexBuffer2D{ nullptr };
+	GLIndexBuffer* IndexBuffer2D{ nullptr };
 
-	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };
-	GLUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+	GLUniformBuffer<VertexUniform>* VertexUniform2D{ nullptr };
+	GLUniformBuffer<FragmentUniform>* FragmentUniform2D{ nullptr };
 };

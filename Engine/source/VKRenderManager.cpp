@@ -32,10 +32,10 @@ VKRenderManager::~VKRenderManager()
 	}
 
 	//Destroy Buffers
-	delete texVertex;
-	delete texIndex;
-	delete uVertex;
-	delete uFragment;
+	delete VertexBuffer2D;
+	delete IndexBuffer2D;
+	delete VertexUniform2D;
+	delete FragmentUniform2D;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -55,11 +55,10 @@ VKRenderManager::~VKRenderManager()
 	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
 
 	//Destroy Shader
-	delete vkTextureShader;
-	delete vkLineShader;
+	delete vk2DShader;
 
 	//Destroy Pipeline
-	delete vkTexurePipeline;
+	delete vk2DPipeline;
 
 	//Destroy Descriptor
 	delete vkDescriptor;
@@ -252,10 +251,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vkDescriptor = new VKDescriptor(vkInit);
 
-	vkTextureShader = new VKShader(vkInit->GetDevice());
-	vkTextureShader->LoadShader("../Engine/shader/texVertex.vert", "../Engine/shader/texFragment.frag");
-	vkLineShader = new VKShader(vkInit->GetDevice());
-	vkLineShader->LoadShader("../Engine/shader/lineVertex.vert", "../Engine/shader/lineFragment.frag");
+	vk2DShader = new VKShader(vkInit->GetDevice());
+	vk2DShader->LoadShader("../Engine/shader/Vulkan2D.vert", "../Engine/shader/Vulkan2D.frag");
 	std::cout << std::endl;
 
 	VKAttributeLayout position_layout;
@@ -268,8 +265,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.format = VK_FORMAT_R32_SINT;
 	index_layout.offset = offsetof(Vertex, index);
 
-	vkTexurePipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkTexurePipeline->InitPipeLine(vkTextureShader->GetVertexModule(), vkTextureShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(Vertex), {position_layout, index_layout}, POLYGON_MODE::FILL);
+	vk2DPipeline = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vk2DPipeline->InitPipeLine(vk2DShader->GetVertexModule(), vk2DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(Vertex), {position_layout, index_layout}, POLYGON_MODE::FILL);
 	//vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
 	//vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
 
@@ -581,9 +578,9 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
 	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
 	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
-	if (texVertex != nullptr)
-		delete texVertex;
-	texVertex = new VKVertexBuffer<Vertex>(vkInit, &texVertices);
+	if (VertexBuffer2D != nullptr)
+		delete VertexBuffer2D;
+	VertexBuffer2D = new VKVertexBuffer<Vertex>(vkInit, &texVertices);
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
@@ -592,19 +589,19 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	if (texIndex != nullptr)
-		delete texIndex;
-	texIndex = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
+	if (IndexBuffer2D != nullptr)
+		delete IndexBuffer2D;
+	IndexBuffer2D = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
 
 	quadCount++;
 
-	if (uVertex != nullptr)
-		delete uVertex;
-	uVertex = new VKUniformBuffer<VertexUniform>(vkInit, quadCount);
+	if (VertexUniform2D != nullptr)
+		delete VertexUniform2D;
+	VertexUniform2D = new VKUniformBuffer<VertexUniform>(vkInit, quadCount);
 
-	if (uFragment != nullptr)
-		delete uFragment;
-	uFragment = new VKUniformBuffer<FragmentUniform>(vkInit, quadCount);
+	if (FragmentUniform2D != nullptr)
+		delete FragmentUniform2D;
+	FragmentUniform2D = new VKUniformBuffer<FragmentUniform>(vkInit, quadCount);
 
 	VertexUniform mat;
 	mat.model = glm::mat4(1.f);
@@ -627,20 +624,20 @@ void VKRenderManager::DeleteWithIndex()
 	if (quadCount == 0)
 	{
 		texVertices.erase(end(texVertices) - 4, end(texVertices));
-		delete texVertex;
-		texVertex = nullptr;
+		delete VertexBuffer2D;
+		VertexBuffer2D = nullptr;
 
 		texIndices.erase(end(texIndices) - 6, end(texIndices));
-		delete texIndex;
-		texIndex = nullptr;
+		delete IndexBuffer2D;
+		IndexBuffer2D = nullptr;
 
 		vertexVector.erase(end(vertexVector) - 1);
-		delete uVertex;
-		uVertex = nullptr;
+		delete VertexUniform2D;
+		VertexUniform2D = nullptr;
 
 		fragVector.erase(end(fragVector) - 1);
-		delete uFragment;
-		uFragment = nullptr;
+		delete FragmentUniform2D;
+		FragmentUniform2D = nullptr;
 
 		//Destroy Texture
 		for (auto t : textures)
@@ -693,19 +690,19 @@ void VKRenderManager::DeleteWithIndex()
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 	texVertices.erase(end(texVertices) - 4, end(texVertices));
-	vkCmdUpdateBuffer(commandBuffer, *texVertex->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
+	vkCmdUpdateBuffer(commandBuffer, *VertexBuffer2D->GetVertexBuffer(), 0, texVertices.size() * sizeof(Vertex), texVertices.data());
 
 	texIndices.erase(end(texIndices) - 6, end(texIndices));
-	vkCmdUpdateBuffer(commandBuffer, *texIndex->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
+	vkCmdUpdateBuffer(commandBuffer, *IndexBuffer2D->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
 
 	vertexVector.erase(end(vertexVector) - 1);
-	for (auto u : *uVertex->GetUniformBuffers())
+	for (auto u : *VertexUniform2D->GetUniformBuffers())
 	{
 		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VertexUniform), vertexVector.data());
 	}
 
 	fragVector.erase(end(fragVector) - 1);
-	for (auto u : *uFragment->GetUniformBuffers())
+	for (auto u : *FragmentUniform2D->GetUniformBuffers())
 	{
 		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
 	}
@@ -775,7 +772,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 
 	//--------------------Descriptor Update--------------------//
 
-	if (uVertex != nullptr)
+	if (VertexUniform2D != nullptr)
 	{
 		currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 		{
@@ -784,7 +781,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			//for (auto& t : textures)
 			//{
 			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(uVertex->GetUniformBuffers()))[frameIndex];
+			bufferInfo.buffer = (*(VertexUniform2D->GetUniformBuffers()))[frameIndex];
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(VertexUniform) * quadCount;
 			//bufferInfos.push_back(bufferInfo);
@@ -803,15 +800,15 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
 			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 		}
-		uVertex->UpdateUniform(vertexVector, frameIndex);
+		VertexUniform2D->UpdateUniform(vertexVector, frameIndex);
 	}
 
-	if (uFragment != nullptr)
+	if (FragmentUniform2D != nullptr)
 	{
 		currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 		{
 			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(uFragment->GetUniformBuffers()))[frameIndex];
+			bufferInfo.buffer = (*(FragmentUniform2D->GetUniformBuffers()))[frameIndex];
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(FragmentUniform) * quadCount;
 
@@ -843,7 +840,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
 			vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 		}
-		uFragment->UpdateUniform(fragVector, frameIndex);
+		FragmentUniform2D->UpdateUniform(fragVector, frameIndex);
 	}
 
 	//--------------------Descriptor Update End--------------------//
@@ -922,21 +919,21 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	if (texVertex != nullptr)
+	if (VertexBuffer2D != nullptr)
 	{
 		//Bind Vertex Buffer
-		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, texVertex->GetVertexBuffer(), &vertexBufferOffset);
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, VertexBuffer2D->GetVertexBuffer(), &vertexBufferOffset);
 		//Bind Index Buffer
-		vkCmdBindIndexBuffer(*currentCommandBuffer, *texIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *IndexBuffer2D->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 		//Bind Pipeline
-		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLine());
+		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vk2DPipeline->GetPipeLine());
 		//Dynamic Viewport & Scissor
 		vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 		//Bind Material DescriptorSet
-		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vk2DPipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
 		//Bind Texture DescriptorSet
-		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkTexurePipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vk2DPipeline->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 		//Change Primitive Topology
 		//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		//Draw

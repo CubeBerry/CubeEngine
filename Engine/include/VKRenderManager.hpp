@@ -114,10 +114,8 @@ private:
 	VKImGuiManager* imguiManager;
 #endif
 
-	VKShader* vkTextureShader;
-	VKShader* vkLineShader;
-	VKPipeLine* vkTexurePipeline;
-	VKPipeLine* vkLinePipeline;
+	VKShader* vk2DShader;
+	VKPipeLine* vk2DPipeline;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
@@ -145,9 +143,9 @@ private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
-	VKVertexBuffer<Vertex>* texVertex{ nullptr };
-	VKIndexBuffer* texIndex { nullptr };
+	VKVertexBuffer<Vertex>* VertexBuffer2D{ nullptr };
+	VKIndexBuffer* IndexBuffer2D { nullptr };
 
-	VKUniformBuffer<VertexUniform>* uVertex{ nullptr };
-	VKUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+	VKUniformBuffer<VertexUniform>* VertexUniform2D{ nullptr };
+	VKUniformBuffer<FragmentUniform>* FragmentUniform2D{ nullptr };
 };

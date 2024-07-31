@@ -38,18 +38,6 @@ public:
 	std::vector<VertexUniform>* GetVertexVector() { return &vertexVector; };
 	std::vector<FragmentUniform>* GetFragmentVector() { return &fragVector; };
 	GraphicsMode GetGraphicsMode() { return gMode; };
-	//virtual void* GetTexture(std::string name) = 0;
-	//Texture* GetTexture(std::string name)
-	//{
-	//	for (auto& tex : textures)
-	//	{
-	//		if (tex->GetName() == name)
-	//		{
-	//			return tex;
-	//		}
-	//	}
-	//	return nullptr;
-	//};
 protected:
 	GraphicsMode gMode{ GraphicsMode::GL };
 

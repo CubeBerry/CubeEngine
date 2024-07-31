@@ -7,15 +7,15 @@
 GLRenderManager::~GLRenderManager()
 {
 #ifdef _DEBUG
-	//delete ImGui
+	//Delete ImGui
 	delete imguiManager;
 #endif
 
 	//Destroy Buffers
-	delete texVertex;
-	delete texIndex;
-	delete uVertex;
-	delete uFragment;
+	delete VertexBuffer2D;
+	delete IndexBuffer2D;
+	delete VertexUniform2D;
+	delete FragmentUniform2D;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -29,13 +29,13 @@ void GLRenderManager::Initialize(
 )
 {
 	vertexArray.Initialize();
-	shader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/texVertex_OpenGL.vert" }, { GLShader::FRAGMENT, "../Engine/shader/texFragment_OpenGL.frag" } });
+	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
 
-	uVertex = new GLUniformBuffer<VertexUniform>();
-	uFragment = new GLUniformBuffer<FragmentUniform>();
+	VertexUniform2D = new GLUniformBuffer<VertexUniform>();
+	FragmentUniform2D = new GLUniformBuffer<FragmentUniform>();
 
-	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	VertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	FragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -48,19 +48,19 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-	shader.Use(true);
+	gl2DShader.Use(true);
 
 	//For Texture Array
-	auto texLocation = glCheck(glGetUniformLocation(shader.GetProgramHandle(), "tex"));
+	auto texLocation = glCheck(glGetUniformLocation(gl2DShader.GetProgramHandle(), "tex"));
 	glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 
-	if (uVertex != nullptr)
+	if (VertexUniform2D != nullptr)
 	{
-		uVertex->UpdateUniform(vertexVector);
+		VertexUniform2D->UpdateUniform(vertexVector);
 	}
-	if (uFragment != nullptr)
+	if (FragmentUniform2D != nullptr)
 	{
-		uFragment->UpdateUniform(fragVector);
+		FragmentUniform2D->UpdateUniform(fragVector);
 	}
 
 	vertexArray.Use(true);
@@ -68,7 +68,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	GLDrawIndexed(vertexArray);
 
 	vertexArray.Use(false);
-	shader.Use(false);
+	gl2DShader.Use(false);
 
 #ifdef _DEBUG
 	imguiManager->Begin();
@@ -103,9 +103,9 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 
 	if (quadCount > 0)
-		delete texVertex;
-	texVertex = new GLVertexBuffer;
-	texVertex->SetData(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()), texVertices.data());
+		delete VertexBuffer2D;
+	VertexBuffer2D = new GLVertexBuffer;
+	VertexBuffer2D->SetData(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()), texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
@@ -114,9 +114,9 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	if (texIndex != nullptr)
-		delete texIndex;
-	texIndex = new GLIndexBuffer(&texIndices);
+	if (IndexBuffer2D != nullptr)
+		delete IndexBuffer2D;
+	IndexBuffer2D = new GLIndexBuffer(&texIndices);
 
 	quadCount++;
 
@@ -139,18 +139,18 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	index_layout.offset = 0;
 	index_layout.relative_offset = offsetof(Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*texVertex), sizeof(Vertex), {position_layout, index_layout});
-	vertexArray.SetIndexBuffer(std::move(*texIndex));
+	vertexArray.AddVertexBuffer(std::move(*VertexBuffer2D), sizeof(Vertex), {position_layout, index_layout});
+	vertexArray.SetIndexBuffer(std::move(*IndexBuffer2D));
 
-	if (uVertex != nullptr)
-		delete uVertex;
-	uVertex = new GLUniformBuffer<VertexUniform>();
-	uVertex->InitUniform(shader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	if (VertexUniform2D != nullptr)
+		delete VertexUniform2D;
+	VertexUniform2D = new GLUniformBuffer<VertexUniform>();
+	VertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
 
-	if (uFragment != nullptr)
-		delete uFragment;
-	uFragment = new GLUniformBuffer<FragmentUniform>();
-	uFragment->InitUniform(shader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	if (FragmentUniform2D != nullptr)
+		delete FragmentUniform2D;
+	FragmentUniform2D = new GLUniformBuffer<FragmentUniform>();
+	FragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 
 
 	VertexUniform mat;
@@ -174,20 +174,20 @@ void GLRenderManager::DeleteWithIndex()
 	if (quadCount == 0)
 	{
 		texVertices.erase(end(texVertices) - 4, end(texVertices));
-		delete texVertex;
-		texVertex = nullptr;
+		delete VertexBuffer2D;
+		VertexBuffer2D = nullptr;
 
 		texIndices.erase(end(texIndices) - 6, end(texIndices));
-		delete texIndex;
-		texIndex = nullptr;
+		delete IndexBuffer2D;
+		IndexBuffer2D = nullptr;
 
 		vertexVector.erase(end(vertexVector) - 1);
-		delete uVertex;
-		uVertex = nullptr;
+		delete VertexUniform2D;
+		VertexUniform2D = nullptr;
 
 		fragVector.erase(end(fragVector) - 1);
-		delete uFragment;
-		uFragment = nullptr;
+		delete FragmentUniform2D;
+		FragmentUniform2D = nullptr;
 
 		//Destroy Texture
 		for (auto t : textures)
