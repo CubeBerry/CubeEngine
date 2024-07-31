@@ -6,27 +6,19 @@
 #include "Material.hpp"
 #include "Window.hpp"
 
-//template <GraphicsMode mode>
-//struct TextureType;
-//
-//template <>
-//struct TextureType<GraphicsMode::GL>
-//{
-//	using Type = GLTexture;
-//};
-//
-//template <>
-//struct TextureType<GraphicsMode::VK>
-//{
-//	using Type = VKTexture;
-//};
-
-//template <GraphicsMode mode>
 class RenderManager
 {
 public:
-	//using Texture = typename TextureType<mode>::Type;
-
+	enum class MeshType
+	{
+		PLANE,
+		CUBE,
+		SPHERE,
+		TORUS,
+		CYLINDER,
+		CONE,
+	};
+public:
 	virtual void BeginRender(glm::vec4 bgColor) = 0;
 	virtual void EndRender() = 0;
 
@@ -35,8 +27,8 @@ public:
 	virtual void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) = 0;
 	virtual void DeleteWithIndex() = 0;
 
-	std::vector<VertexUniform>* GetVertexVector() { return &vertexVector; };
-	std::vector<FragmentUniform>* GetFragmentVector() { return &fragVector; };
+	std::vector<TwoDimension::VertexUniform>* GetVertexVector() { return &vertexVector; };
+	std::vector<TwoDimension::FragmentUniform>* GetFragmentVector() { return &fragVector; };
 	GraphicsMode GetGraphicsMode() { return gMode; };
 protected:
 	GraphicsMode gMode{ GraphicsMode::GL };
@@ -44,8 +36,8 @@ protected:
 	//--------------------Texture Render--------------------//
 	unsigned int quadCount{ 0 };
 
-	std::vector<Vertex> texVertices;
+	std::vector<TwoDimension::Vertex> texVertices;
 	std::vector<uint16_t> texIndices;
-	std::vector<VertexUniform> vertexVector;
-	std::vector<FragmentUniform> fragVector;
+	std::vector<TwoDimension::VertexUniform> vertexVector;
+	std::vector<TwoDimension::FragmentUniform> fragVector;
 };

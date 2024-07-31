@@ -9,7 +9,6 @@
 #include "GLTexture.hpp"
 #include "GLUniformBuffer.hpp"
 #include "GLImGuiManager.hpp"
-#include "Material.hpp"
 
 class GLRenderManager : public RenderManager
 {
@@ -59,6 +58,6 @@ private:
 	GLVertexBuffer* VertexBuffer2D{ nullptr };
 	GLIndexBuffer* IndexBuffer2D{ nullptr };
 
-	GLUniformBuffer<VertexUniform>* VertexUniform2D{ nullptr };
-	GLUniformBuffer<FragmentUniform>* FragmentUniform2D{ nullptr };
+	GLUniformBuffer<TwoDimension::VertexUniform>* VertexUniform2D{ nullptr };
+	GLUniformBuffer<TwoDimension::FragmentUniform>* FragmentUniform2D{ nullptr };
 };

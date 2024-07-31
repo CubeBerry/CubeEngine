@@ -31,8 +31,8 @@ void GLRenderManager::Initialize(
 	vertexArray.Initialize();
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
 
-	VertexUniform2D = new GLUniformBuffer<VertexUniform>();
-	FragmentUniform2D = new GLUniformBuffer<FragmentUniform>();
+	VertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
+	FragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
 
 	VertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
 	FragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
@@ -97,15 +97,15 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	texVertices.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 
 	if (quadCount > 0)
 		delete VertexBuffer2D;
 	VertexBuffer2D = new GLVertexBuffer;
-	VertexBuffer2D->SetData(static_cast<GLsizei>(sizeof(Vertex) * texVertices.size()), texVertices.data());
+	VertexBuffer2D->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * texVertices.size()), texVertices.data());
 
 	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
 	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
@@ -126,34 +126,34 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	position_layout.component_dimension = GLAttributeLayout::_4;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
-	position_layout.stride = sizeof(Vertex);
+	position_layout.stride = sizeof(TwoDimension::Vertex);
 	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(Vertex, position);
+	position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
 	GLAttributeLayout index_layout;
 	index_layout.component_type = GLAttributeLayout::Int;
 	index_layout.component_dimension = GLAttributeLayout::_1;
 	index_layout.normalized = false;
 	index_layout.vertex_layout_location = 1;
-	index_layout.stride = sizeof(Vertex);
+	index_layout.stride = sizeof(TwoDimension::Vertex);
 	index_layout.offset = 0;
-	index_layout.relative_offset = offsetof(Vertex, index);
+	index_layout.relative_offset = offsetof(TwoDimension::Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*VertexBuffer2D), sizeof(Vertex), {position_layout, index_layout});
+	vertexArray.AddVertexBuffer(std::move(*VertexBuffer2D), sizeof(TwoDimension::Vertex), {position_layout, index_layout});
 	vertexArray.SetIndexBuffer(std::move(*IndexBuffer2D));
 
 	if (VertexUniform2D != nullptr)
 		delete VertexUniform2D;
-	VertexUniform2D = new GLUniformBuffer<VertexUniform>();
+	VertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
 	VertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
 
 	if (FragmentUniform2D != nullptr)
 		delete FragmentUniform2D;
-	FragmentUniform2D = new GLUniformBuffer<FragmentUniform>();
+	FragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
 	FragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
 
 
-	VertexUniform mat;
+	TwoDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
@@ -162,7 +162,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	vertexVector.back().isTex = isTex_;
 	vertexVector.back().isTexel = isTexel_;
 
-	FragmentUniform tIndex;
+	TwoDimension::FragmentUniform tIndex;
 	tIndex.texIndex = 0;
 	fragVector.push_back(tIndex);
 }

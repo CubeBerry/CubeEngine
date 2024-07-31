@@ -4,32 +4,58 @@
 #pragma once
 #pragma warning( disable : 4324 )
 
-#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/matrix.hpp>
 
-struct alignas(16) Vertex
+//2D
+namespace TwoDimension
 {
-	glm::vec4 position;
-	//alignas(16) glm::vec4 color;
-	//glm::vec2 uv;
-	int index;
-};
+	struct alignas(16) Vertex
+	{
+		glm::vec4 position;
+		int index;
+	};
 
-struct alignas(16) VertexUniform
-{
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;
-	glm::vec4 color;
-	glm::vec4 frameSize;
-	glm::vec4 texelPos;
-	float isTex;
-	float isTexel;
-};
+	struct alignas(16) VertexUniform
+	{
+		glm::mat4 model;
+		glm::mat4 view;
+		glm::mat4 projection;
+		glm::vec4 color;
+		glm::vec4 frameSize;
+		glm::vec4 texelPos;
+		float isTex;
+		float isTexel;
+	};
 
-struct alignas(16) FragmentUniform
+	struct alignas(16) FragmentUniform
+	{
+		int texIndex;
+	};
+}
+
+//3D
+namespace ThreeDimension
 {
-	int texIndex;
-};
+	struct alignas(16) Vertex
+	{
+		glm::vec4 position;
+		glm::vec4 normal;
+		glm::vec4 uv;
+		int index;
+	};
+
+	struct alignas(16) VertexUniform
+	{
+		glm::mat4 model;
+		glm::mat4 view;
+		glm::mat4 projection;
+		glm::vec4 color;
+	};
+
+	struct alignas(16) FragmentUniform
+	{
+		int texIndex;
+	};
+}

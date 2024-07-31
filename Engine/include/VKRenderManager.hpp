@@ -13,7 +13,6 @@
 #include "VKIndexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
-#include "Material.hpp"
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
@@ -114,8 +113,8 @@ private:
 	VKImGuiManager* imguiManager;
 #endif
 
-	VKShader* vk2DShader;
-	VKPipeLine* vk2DPipeline;
+	VKShader* vkShader2D;
+	VKPipeLine* vkPipeline2D;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
@@ -143,9 +142,9 @@ private:
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
-	VKVertexBuffer<Vertex>* VertexBuffer2D{ nullptr };
-	VKIndexBuffer* IndexBuffer2D { nullptr };
+	VKVertexBuffer<TwoDimension::Vertex>* Vertex2DBuffer{ nullptr };
+	VKIndexBuffer* Index2DBuffer { nullptr };
 
-	VKUniformBuffer<VertexUniform>* VertexUniform2D{ nullptr };
-	VKUniformBuffer<FragmentUniform>* FragmentUniform2D{ nullptr };
+	VKUniformBuffer<TwoDimension::VertexUniform>* Vertex2DUniform{ nullptr };
+	VKUniformBuffer<TwoDimension::FragmentUniform>* Fragment2DUniform{ nullptr };
 };
