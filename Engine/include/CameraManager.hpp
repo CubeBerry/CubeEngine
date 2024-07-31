@@ -41,6 +41,9 @@ public:
 	void UpdaetCameraDirectrion(glm::vec2 dir) { camera.UpdaetCameraDirectrion(dir); } 
 	void SetCameraSensitivity(float amount) noexcept { camera.SetCameraSensitivity(amount); } 
 	float GetCameraSensitivity() noexcept { return camera.GetCameraSensitivity(); } 
+
+	void SetNear(float amount) noexcept { camera.SetNear(amount); }
+	void SetFar(float amount) noexcept { camera.SetFar(amount); }
 private:
 	Camera camera;
 };

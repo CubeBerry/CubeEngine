@@ -174,8 +174,11 @@ void Camera::Reset(glm::vec3 startUpPosition)
 	back = glm::vec3(0.0f, 0.0f, -1.0f);
 	SetCenter({ 0.f,0.f,0.f });
 	SetZoom(1.f);
-	pitch = -90.f;
-	yaw = 0.f;
+	pitch = 00.f;
+	yaw = -90.f;
+	nearClip = 0.1f;
+	farClip = 45.0f;
+	cameraSensitivity = 1.f;
 }
 
 void Camera::SetViewSize(int width, int height) noexcept
