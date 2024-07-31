@@ -32,10 +32,10 @@ VKRenderManager::~VKRenderManager()
 	}
 
 	//Destroy Buffers
-	delete Vertex2DBuffer;
-	delete Index2DBuffer;
-	delete Vertex2DUniform;
-	delete Fragment2DUniform;
+	delete vertex2DBuffer;
+	delete indexBuffer;
+	delete vertex2DUniform;
+	delete fragment2DUniform;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -574,47 +574,47 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
-	if (Vertex2DBuffer != nullptr)
-		delete Vertex2DBuffer;
-	Vertex2DBuffer = new VKVertexBuffer<TwoDimension::Vertex>(vkInit, &texVertices);
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	if (vertex2DBuffer != nullptr)
+		delete vertex2DBuffer;
+	vertex2DBuffer = new VKVertexBuffer<TwoDimension::Vertex>(vkInit, &vertices2D);
 
-	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	if (Index2DBuffer != nullptr)
-		delete Index2DBuffer;
-	Index2DBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &texIndices);
+	uint64_t indexNumber{ vertices2D.size() / 4 - 1 };
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	if (indexBuffer != nullptr)
+		delete indexBuffer;
+	indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
 
 	quadCount++;
 
-	if (Vertex2DUniform != nullptr)
-		delete Vertex2DUniform;
-	Vertex2DUniform = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, quadCount);
+	if (vertex2DUniform != nullptr)
+		delete vertex2DUniform;
+	vertex2DUniform = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, quadCount);
 
-	if (Fragment2DUniform != nullptr)
-		delete Fragment2DUniform;
-	Fragment2DUniform = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, quadCount);
+	if (fragment2DUniform != nullptr)
+		delete fragment2DUniform;
+	fragment2DUniform = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, quadCount);
 
 	TwoDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
-	vertexVector.push_back(mat);
-	vertexVector.back().color = color_;
-	vertexVector.back().isTex = isTex_;
-	vertexVector.back().isTexel = isTexel_;
+	vertexUniforms2D.push_back(mat);
+	vertexUniforms2D.back().color = color_;
+	vertexUniforms2D.back().isTex = isTex_;
+	vertexUniforms2D.back().isTexel = isTexel_;
 
 	TwoDimension::FragmentUniform tIndex;
 	tIndex.texIndex = 0;
-	fragVector.push_back(tIndex);
+	fragUniforms2D.push_back(tIndex);
 }
 
 void VKRenderManager::DeleteWithIndex()
@@ -623,21 +623,21 @@ void VKRenderManager::DeleteWithIndex()
 
 	if (quadCount == 0)
 	{
-		texVertices.erase(end(texVertices) - 4, end(texVertices));
-		delete Vertex2DBuffer;
-		Vertex2DBuffer = nullptr;
+		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+		delete vertex2DBuffer;
+		vertex2DBuffer = nullptr;
 
-		texIndices.erase(end(texIndices) - 6, end(texIndices));
-		delete Index2DBuffer;
-		Index2DBuffer = nullptr;
+		indices.erase(end(indices) - 6, end(indices));
+		delete indexBuffer;
+		indexBuffer = nullptr;
 
-		vertexVector.erase(end(vertexVector) - 1);
-		delete Vertex2DUniform;
-		Vertex2DUniform = nullptr;
+		vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+		delete vertex2DUniform;
+		vertex2DUniform = nullptr;
 
-		fragVector.erase(end(fragVector) - 1);
-		delete Fragment2DUniform;
-		Fragment2DUniform = nullptr;
+		fragUniforms2D.erase(end(fragUniforms2D) - 1);
+		delete fragment2DUniform;
+		fragment2DUniform = nullptr;
 
 		//Destroy Texture
 		for (auto t : textures)
@@ -689,22 +689,22 @@ void VKRenderManager::DeleteWithIndex()
 	//Begin Command Buffer
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-	texVertices.erase(end(texVertices) - 4, end(texVertices));
-	vkCmdUpdateBuffer(commandBuffer, *Vertex2DBuffer->GetVertexBuffer(), 0, texVertices.size() * sizeof(TwoDimension::Vertex), texVertices.data());
+	vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+	vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
 
-	texIndices.erase(end(texIndices) - 6, end(texIndices));
-	vkCmdUpdateBuffer(commandBuffer, *Index2DBuffer->GetIndexBuffer(), 0, texIndices.size() * sizeof(uint16_t), texIndices.data());
+	indices.erase(end(indices) - 6, end(indices));
+	vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
 
-	vertexVector.erase(end(vertexVector) - 1);
-	for (auto u : *Vertex2DUniform->GetUniformBuffers())
+	vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+	for (auto u : *vertex2DUniform->GetUniformBuffers())
 	{
-		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::VertexUniform), vertexVector.data());
+		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::VertexUniform), vertexUniforms2D.data());
 	}
 
-	fragVector.erase(end(fragVector) - 1);
-	for (auto u : *Fragment2DUniform->GetUniformBuffers())
+	fragUniforms2D.erase(end(fragUniforms2D) - 1);
+	for (auto u : *fragment2DUniform->GetUniformBuffers())
 	{
-		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::FragmentUniform), fragVector.data());
+		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::FragmentUniform), fragUniforms2D.data());
 	}
 
 	//End Command Buffer
@@ -740,6 +740,12 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
+void VKRenderManager::LoadMesh(MeshType type)
+{
+	type;
+}
+
+
 void VKRenderManager::BeginRender(glm::vec4 bgColor)
 {
 	isRecreated = false;
@@ -772,7 +778,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 
 	//--------------------Descriptor Update--------------------//
 
-	if (Vertex2DUniform != nullptr)
+	if (vertex2DUniform != nullptr)
 	{
 		currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 		{
@@ -781,7 +787,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			//for (auto& t : textures)
 			//{
 			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(Vertex2DUniform->GetUniformBuffers()))[frameIndex];
+			bufferInfo.buffer = (*(vertex2DUniform->GetUniformBuffers()))[frameIndex];
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(TwoDimension::VertexUniform) * quadCount;
 			//bufferInfos.push_back(bufferInfo);
@@ -800,15 +806,15 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
 			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 		}
-		Vertex2DUniform->UpdateUniform(vertexVector, frameIndex);
+		vertex2DUniform->UpdateUniform(vertexUniforms2D, frameIndex);
 	}
 
-	if (Fragment2DUniform != nullptr)
+	if (fragment2DUniform != nullptr)
 	{
 		currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 		{
 			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(Fragment2DUniform->GetUniformBuffers()))[frameIndex];
+			bufferInfo.buffer = (*(fragment2DUniform->GetUniformBuffers()))[frameIndex];
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(TwoDimension::FragmentUniform) * quadCount;
 
@@ -840,7 +846,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			//DescriptorSet does not have to update every frame since it points same uniform buffer
 			vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 		}
-		Fragment2DUniform->UpdateUniform(fragVector, frameIndex);
+		fragment2DUniform->UpdateUniform(fragUniforms2D, frameIndex);
 	}
 
 	//--------------------Descriptor Update End--------------------//
@@ -919,12 +925,12 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	if (Vertex2DBuffer != nullptr)
+	if (vertex2DBuffer != nullptr)
 	{
 		//Bind Vertex Buffer
-		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, Vertex2DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex2DBuffer->GetVertexBuffer(), &vertexBufferOffset);
 		//Bind Index Buffer
-		vkCmdBindIndexBuffer(*currentCommandBuffer, *Index2DBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 		//Bind Pipeline
 		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
 		//Dynamic Viewport & Scissor
@@ -937,7 +943,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 		//Change Primitive Topology
 		//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		//Draw
-		vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(texIndices.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 	}
 
 	//if (lineVertex != nullptr)

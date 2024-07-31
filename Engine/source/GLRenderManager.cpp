@@ -12,10 +12,10 @@ GLRenderManager::~GLRenderManager()
 #endif
 
 	//Destroy Buffers
-	delete VertexBuffer2D;
-	delete IndexBuffer2D;
-	delete VertexUniform2D;
-	delete FragmentUniform2D;
+	delete vertexBuffer;
+	delete indexBuffer;
+	delete vertexUniform2D;
+	delete fragmentUniform2D;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -31,11 +31,11 @@ void GLRenderManager::Initialize(
 	vertexArray.Initialize();
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
 
-	VertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
-	FragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
+	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
+	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
 
-	VertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
-	FragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms2D);
+	fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms2D);
 #ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
 #endif
@@ -54,13 +54,13 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	auto texLocation = glCheck(glGetUniformLocation(gl2DShader.GetProgramHandle(), "tex"));
 	glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 
-	if (VertexUniform2D != nullptr)
+	if (vertexUniform2D != nullptr)
 	{
-		VertexUniform2D->UpdateUniform(vertexVector);
+		vertexUniform2D->UpdateUniform(vertexUniforms2D);
 	}
-	if (FragmentUniform2D != nullptr)
+	if (fragmentUniform2D != nullptr)
 	{
-		FragmentUniform2D->UpdateUniform(fragVector);
+		fragmentUniform2D->UpdateUniform(fragUniforms2D);
 	}
 
 	vertexArray.Use(true);
@@ -97,26 +97,26 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	texVertices.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
 
 	if (quadCount > 0)
-		delete VertexBuffer2D;
-	VertexBuffer2D = new GLVertexBuffer;
-	VertexBuffer2D->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * texVertices.size()), texVertices.data());
+		delete vertexBuffer;
+	vertexBuffer = new GLVertexBuffer;
+	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices2D.size()), vertices2D.data());
 
-	uint64_t indexNumber{ texVertices.size() / 4 - 1 };
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
-	texIndices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	if (IndexBuffer2D != nullptr)
-		delete IndexBuffer2D;
-	IndexBuffer2D = new GLIndexBuffer(&texIndices);
+	uint64_t indexNumber{ vertices2D.size() / 4 - 1 };
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
+	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	if (indexBuffer != nullptr)
+		delete indexBuffer;
+	indexBuffer = new GLIndexBuffer(&indices);
 
 	quadCount++;
 
@@ -139,32 +139,32 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	index_layout.offset = 0;
 	index_layout.relative_offset = offsetof(TwoDimension::Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*VertexBuffer2D), sizeof(TwoDimension::Vertex), {position_layout, index_layout});
-	vertexArray.SetIndexBuffer(std::move(*IndexBuffer2D));
+	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(TwoDimension::Vertex), {position_layout, index_layout});
+	vertexArray.SetIndexBuffer(std::move(*indexBuffer));
 
-	if (VertexUniform2D != nullptr)
-		delete VertexUniform2D;
-	VertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
-	VertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexVector);
+	if (vertexUniform2D != nullptr)
+		delete vertexUniform2D;
+	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
+	vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms2D);
 
-	if (FragmentUniform2D != nullptr)
-		delete FragmentUniform2D;
-	FragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
-	FragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragVector);
+	if (fragmentUniform2D != nullptr)
+		delete fragmentUniform2D;
+	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
+	fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms2D);
 
 
 	TwoDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
 	mat.projection = glm::mat4(1.f);
-	vertexVector.push_back(mat);
-	vertexVector.back().color = color_;
-	vertexVector.back().isTex = isTex_;
-	vertexVector.back().isTexel = isTexel_;
+	vertexUniforms2D.push_back(mat);
+	vertexUniforms2D.back().color = color_;
+	vertexUniforms2D.back().isTex = isTex_;
+	vertexUniforms2D.back().isTexel = isTexel_;
 
 	TwoDimension::FragmentUniform tIndex;
 	tIndex.texIndex = 0;
-	fragVector.push_back(tIndex);
+	fragUniforms2D.push_back(tIndex);
 }
 
 void GLRenderManager::DeleteWithIndex()
@@ -173,21 +173,21 @@ void GLRenderManager::DeleteWithIndex()
 
 	if (quadCount == 0)
 	{
-		texVertices.erase(end(texVertices) - 4, end(texVertices));
-		delete VertexBuffer2D;
-		VertexBuffer2D = nullptr;
+		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+		delete vertexBuffer;
+		vertexBuffer = nullptr;
 
-		texIndices.erase(end(texIndices) - 6, end(texIndices));
-		delete IndexBuffer2D;
-		IndexBuffer2D = nullptr;
+		indices.erase(end(indices) - 6, end(indices));
+		delete indexBuffer;
+		indexBuffer = nullptr;
 
-		vertexVector.erase(end(vertexVector) - 1);
-		delete VertexUniform2D;
-		VertexUniform2D = nullptr;
+		vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+		delete vertexUniform2D;
+		vertexUniform2D = nullptr;
 
-		fragVector.erase(end(fragVector) - 1);
-		delete FragmentUniform2D;
-		FragmentUniform2D = nullptr;
+		fragUniforms2D.erase(end(fragUniforms2D) - 1);
+		delete fragmentUniform2D;
+		fragmentUniform2D = nullptr;
 
 		//Destroy Texture
 		for (auto t : textures)
@@ -198,17 +198,17 @@ void GLRenderManager::DeleteWithIndex()
 		return;
 	}
 
-	texVertices.erase(end(texVertices) - 4, end(texVertices));
+	vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
 
-	texIndices.erase(end(texIndices) - 6, end(texIndices));
+	indices.erase(end(indices) - 6, end(indices));
 
-	vertexVector.erase(end(vertexVector) - 1);
+	vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
 	//for (auto u : *uVertex->GetUniformBuffers())
 	//{
 	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VertexUniform), vertexVector.data());
 	//}
 
-	fragVector.erase(end(fragVector) - 1);
+	fragUniforms2D.erase(end(fragUniforms2D) - 1);
 	//for (auto u : *uFragment->GetUniformBuffers())
 	//{
 	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
@@ -225,4 +225,9 @@ GLTexture* GLRenderManager::GetTexture(std::string name)
 		}
 	}
 	return nullptr;
+}
+
+void GLRenderManager::LoadMesh(MeshType type)
+{
+	type;
 }

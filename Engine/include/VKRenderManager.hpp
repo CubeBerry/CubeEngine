@@ -127,24 +127,30 @@ private:
 	VkFence* currentFence{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentVertexMaterialDescriptorSet{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
-
-	//--------------------Texture Render--------------------//
 public:
+	//--------------------Common--------------------//
+	void DeleteWithIndex() override;
+
+	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
 	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
 
-	void DeleteWithIndex() override;
-
-	//std::vector<VKTexture*>* GetTextures() { return &textures; };
-	/*VKTexture* GetTexture(std::string name);*/
 	VKTexture* GetTexture(std::string name);
+
+	//--------------------3D Render--------------------//
+	void LoadMesh(MeshType type) override;
 private:
+	//--------------------Common--------------------//
+	VKIndexBuffer* indexBuffer{ nullptr };
+
+	//--------------------2D Render--------------------//
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
-	VKVertexBuffer<TwoDimension::Vertex>* Vertex2DBuffer{ nullptr };
-	VKIndexBuffer* Index2DBuffer { nullptr };
+	VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer{ nullptr };
 
-	VKUniformBuffer<TwoDimension::VertexUniform>* Vertex2DUniform{ nullptr };
-	VKUniformBuffer<TwoDimension::FragmentUniform>* Fragment2DUniform{ nullptr };
+	VKUniformBuffer<TwoDimension::VertexUniform>* vertex2DUniform{ nullptr };
+	VKUniformBuffer<TwoDimension::FragmentUniform>* fragment2DUniform{ nullptr };
+
+	//--------------------3D Render--------------------//
 };

@@ -39,25 +39,29 @@ private:
 #ifdef _DEBUG
 	GLImGuiManager* imguiManager;
 #endif
-
-	//--------------------Texture Render--------------------//
 public:
-	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
-	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
-	//void LoadLineQuad(glm::vec4 color_);
-	//void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-	//void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-
+	//--------------------Common--------------------//
 	void DeleteWithIndex() override;
 
+	//--------------------2D Render--------------------//
+	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
+	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
+
 	GLTexture* GetTexture(std::string name);
+
+	//--------------------3D Render--------------------//
+	void LoadMesh(MeshType type) override;
 private:
+	//--------------------Common--------------------//
+	GLVertexBuffer* vertexBuffer{ nullptr };
+	GLIndexBuffer* indexBuffer{ nullptr };
+
+	//--------------------2D Render--------------------//
 	std::vector<GLTexture*> textures;
 	std::vector<int> samplers;
-	
-	GLVertexBuffer* VertexBuffer2D{ nullptr };
-	GLIndexBuffer* IndexBuffer2D{ nullptr };
 
-	GLUniformBuffer<TwoDimension::VertexUniform>* VertexUniform2D{ nullptr };
-	GLUniformBuffer<TwoDimension::FragmentUniform>* FragmentUniform2D{ nullptr };
+	GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
+	GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
+
+	//--------------------3D Render--------------------//
 };

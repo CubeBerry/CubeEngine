@@ -58,7 +58,7 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
-	Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).model = modelMatrix;
+	Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
 }
 
 void Sprite::UpdateView()
@@ -66,10 +66,10 @@ void Sprite::UpdateView()
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::SPRITE:
-		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
 		break;
 	case SpriteDrawType::UI:
-		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).view = glm::mat4(1.0f);
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).view = glm::mat4(1.0f);
 		break;
 	}
 }
@@ -79,11 +79,11 @@ void Sprite::UpdateProjection()
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::SPRITE:
-		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
 		break;
 	case SpriteDrawType::UI:
 		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
-		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 		break;
 	}
 }
@@ -92,7 +92,7 @@ void Sprite::UpdateProjection()
 void Sprite::AddQuad(glm::vec4 color_)
 {
 	Engine::Instance().GetRenderManager()->LoadQuad(color_, 0.f, 0.f);
-	materialId = static_cast<int>(Engine::Instance().GetRenderManager()->GetVertexVector()->size() - 1);
+	materialId = static_cast<int>(Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->size() - 1);
 	AddSpriteToManager();
 }
 
@@ -107,7 +107,7 @@ void Sprite::AddMeshWithTexture(std::string name_, glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadQuad(color_, 1.f, 0.f);
-	materialId = static_cast<int>(renderManager->GetVertexVector()->size() - 1);
+	materialId = static_cast<int>(renderManager->GetVertexUniforms2D()->size() - 1);
 	ChangeTexture(name_);
 	switch (renderManager->GetGraphicsMode())
 	{
@@ -125,7 +125,7 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadQuad(color_, 1.f, 1.f);
-	materialId = static_cast<int>(renderManager->GetVertexVector()->size() - 1);
+	materialId = static_cast<int>(renderManager->GetVertexUniforms2D()->size() - 1);
 	ChangeTexture(name_);
 	switch (renderManager->GetGraphicsMode())
 	{
@@ -273,8 +273,8 @@ void Sprite::UpdateAnimation(float dt)
 	if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
 	{
 		animations[currAnim]->Update(dt);
-		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
-		Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
 	}
 }
 
@@ -288,12 +288,12 @@ void Sprite::ChangeTexture(std::string name)
 		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
 		if (renderManagerGL->GetTexture(name) != nullptr)
 		{
-			renderManagerGL->GetFragmentVector()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-			renderManagerGL->GetVertexVector()->at(materialId).isTex = true;
+			renderManagerGL->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+			renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = true;
 		}
 		else
 		{
-			renderManagerGL->GetVertexVector()->at(materialId).isTex = false;
+			renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = false;
 		}
 		break;
 	}
@@ -302,12 +302,12 @@ void Sprite::ChangeTexture(std::string name)
 		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
 		if (renderManagerVK->GetTexture(name) != nullptr)
 		{
-			renderManagerVK->GetFragmentVector()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-			renderManagerVK->GetVertexVector()->at(materialId).isTex = true;
+			renderManagerVK->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+			renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = true;
 		}
 		else
 		{
-			renderManagerVK->GetVertexVector()->at(materialId).isTex = false;
+			renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = false;
 		}
 		break;
 	}
@@ -323,7 +323,7 @@ void Sprite::AddSpriteToManager()
 
 void Sprite::SetColor(glm::vec4 color)
 {
-	Engine::Instance().GetRenderManager()->GetVertexVector()->at(materialId).color = color;
+	Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color = color;
 }
 
 glm::vec2 Sprite::GetFrameTexel(int frameNum) const
