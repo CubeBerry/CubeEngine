@@ -58,15 +58,30 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
-	Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+
+	switch (spriteDrawType)
+	{
+	case SpriteDrawType::TwoDimension:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		break;
+	case SpriteDrawType::ThreeDimension:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).model = modelMatrix;
+		break;
+	case SpriteDrawType::UI:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		break;
+	}
 }
 
 void Sprite::UpdateView()
 { 
 	switch (spriteDrawType)
 	{
-	case SpriteDrawType::SPRITE:
+	case SpriteDrawType::TwoDimension:
 		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
+		break;
+	case SpriteDrawType::ThreeDimension:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
 		break;
 	case SpriteDrawType::UI:
 		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).view = glm::mat4(1.0f);
@@ -78,8 +93,11 @@ void Sprite::UpdateProjection()
 {
 	switch (spriteDrawType)
 	{
-	case SpriteDrawType::SPRITE:
+	case SpriteDrawType::TwoDimension:
 		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
+		break;
+	case SpriteDrawType::ThreeDimension:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
 		break;
 	case SpriteDrawType::UI:
 		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
@@ -107,7 +125,7 @@ void Sprite::AddMeshWithTexture(std::string name_, glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadQuad(color_, 1.f, 0.f);
-	materialId = static_cast<int>(renderManager->GetVertexUniforms2D()->size() - 1);
+	materialId = Engine::GetSpriteManager().GetSpritesAmount();
 	ChangeTexture(name_);
 	switch (renderManager->GetGraphicsMode())
 	{
@@ -125,7 +143,7 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadQuad(color_, 1.f, 1.f);
-	materialId = static_cast<int>(renderManager->GetVertexUniforms2D()->size() - 1);
+	materialId = Engine::GetSpriteManager().GetSpritesAmount();
 	ChangeTexture(name_);
 	switch (renderManager->GetGraphicsMode())
 	{
@@ -136,6 +154,15 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 		textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	}
+	AddSpriteToManager();
+}
+
+void Sprite::AddMesh3D(MeshType type, int stacks, int slices, glm::vec4 color)
+{
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	renderManager->LoadMesh(type, color, stacks, slices);
+	materialId = Engine::GetSpriteManager().GetSpritesAmount();
+	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
 }
 

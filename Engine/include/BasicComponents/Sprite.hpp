@@ -15,11 +15,13 @@
 
 enum class SpriteDrawType
 {
-	SPRITE,
+	TwoDimension,
+	ThreeDimension,
 	UI
 };
 
 struct Vertex;
+enum class MeshType;
 
 class Sprite : public Component
 {
@@ -40,6 +42,8 @@ public:
 	void AddQuad(glm::vec4 color_);
 	void AddMeshWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
 	void AddMeshWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
+	void AddMesh3D(MeshType type, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
+
 
 	//Animation
 	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
@@ -71,7 +75,7 @@ private:
 
 	int currAnim;
 	std::vector<Animation*> animations;
-	SpriteDrawType spriteDrawType = SpriteDrawType::SPRITE;
+	SpriteDrawType spriteDrawType = SpriteDrawType::TwoDimension;
 
 	int materialId = 0;
 };

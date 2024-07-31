@@ -18,6 +18,8 @@ public:
 
     void AddSprite(Sprite* sprite_);
     void DeleteSprite(Sprite* sprite_);
+
+    int GetSpritesAmount() { return static_cast<int>(sprites.size()); }
 private:
-    std::vector<Sprite*>  sprites;
+    std::vector<Sprite*> sprites;
 };
