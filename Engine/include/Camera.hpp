@@ -35,7 +35,7 @@ public:
 	constexpr Camera() noexcept = default;
 	~Camera() {};
 	void Update();
-	void Reset(glm::vec3 startUpPosition);
+	void Reset();
 
 	//2D, 3D
 	void    SetCenter(glm::vec3 centerPosition) noexcept; 
