@@ -13,6 +13,12 @@ constexpr int   XINDEX = 0;
 constexpr int   YINDEX = 1;
 constexpr int   ZINDEX = 2;
 
+enum class RenderType
+{
+	TwoDimension,
+	ThreeDimension,
+};
+
 enum class MeshType
 {
 	PLANE,
@@ -29,8 +35,10 @@ public:
 	//--------------------Common--------------------//
 	virtual void BeginRender(glm::vec4 bgColor) = 0;
 	virtual void EndRender() = 0;
-	virtual void DeleteWithIndex() = 0;
+	virtual void DeleteWithIndex(int id) = 0;
+	void SetRenderType(RenderType type) { rMode = type; };
 	GraphicsMode GetGraphicsMode() { return gMode; };
+	RenderType GetRenderType() { return rMode; };
 
 	//--------------------2D Render--------------------//
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_) = 0;
@@ -47,6 +55,7 @@ public:
 protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
+	RenderType rMode = RenderType::TwoDimension;
 	unsigned int quadCount{ 0 };
 	std::vector<uint16_t> indices;
 
@@ -69,4 +78,7 @@ protected:
 	std::vector<ThreeDimension::Vertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;
 	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
+
+	std::vector<unsigned int> verticesPerMesh;
+	std::vector<unsigned int> indicesPerMesh;
 };

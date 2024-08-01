@@ -129,7 +129,7 @@ private:
 	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
 public:
 	//--------------------Common--------------------//
-	void DeleteWithIndex() override;
+	void DeleteWithIndex(int id) override;
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;

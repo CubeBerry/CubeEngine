@@ -54,28 +54,39 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-	gl3DShader.Use(true);
-
-	//For Texture Array
-	//auto texLocation = glCheck(glGetUniformLocation(gl2DShader.GetProgramHandle(), "tex"));
-	//glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
-
-	//if (vertexUniform2D != nullptr)
-	//{
-	//	vertexUniform2D->UpdateUniform(vertexUniforms2D);
-	//}
-	//if (fragmentUniform2D != nullptr)
-	//{
-	//	fragmentUniform2D->UpdateUniform(fragUniforms2D);
-	//}
-
-	if (vertexUniform3D != nullptr)
+	switch (rMode)
 	{
-		vertexUniform3D->UpdateUniform(vertexUniforms3D);
-	}
-	if (fragmentUniform3D != nullptr)
-	{
-		fragmentUniform3D->UpdateUniform(fragUniforms3D);
+	case RenderType::TwoDimension:
+		gl2DShader.Use(true);
+
+		//For Texture Array
+		if (!samplers.empty())
+		{
+			auto texLocation = glCheck(glGetUniformLocation(gl2DShader.GetProgramHandle(), "tex"));
+			glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
+		}
+
+		if (vertexUniform2D != nullptr)
+		{
+			vertexUniform2D->UpdateUniform(vertexUniforms2D);
+		}
+		if (fragmentUniform2D != nullptr)
+		{
+			fragmentUniform2D->UpdateUniform(fragUniforms2D);
+		}
+		break;
+	case RenderType::ThreeDimension:
+		gl3DShader.Use(true);
+
+		if (vertexUniform3D != nullptr)
+		{
+			vertexUniform3D->UpdateUniform(vertexUniforms3D);
+		}
+		if (fragmentUniform3D != nullptr)
+		{
+			fragmentUniform3D->UpdateUniform(fragUniforms3D);
+		}
+		break;
 	}
 
 	vertexArray.Use(true);
@@ -83,7 +94,16 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	GLDrawIndexed(vertexArray);
 
 	vertexArray.Use(false);
-	gl3DShader.Use(false);
+
+	switch (rMode)
+	{
+	case RenderType::TwoDimension:
+		gl2DShader.Use(false);
+		break;
+	case RenderType::ThreeDimension:
+		gl3DShader.Use(false);
+		break;
+	}
 
 #ifdef _DEBUG
 	imguiManager->Begin();
@@ -182,27 +202,69 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	fragUniforms2D.push_back(tIndex);
 }
 
-void GLRenderManager::DeleteWithIndex()
+void GLRenderManager::DeleteWithIndex(int id)
 {
 	quadCount--;
 
 	if (quadCount == 0)
 	{
-		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+		switch(rMode)
+		{
+		case RenderType::TwoDimension:
+			vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+			break;
+		case RenderType::ThreeDimension:
+			vertices3D.erase(end(vertices3D) - *verticesPerMesh.begin(), end(vertices3D));
+			break;
+		}
 		delete vertexBuffer;
 		vertexBuffer = nullptr;
 
-		indices.erase(end(indices) - 6, end(indices));
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			indices.erase(end(indices) - 6, end(indices));
+			break;
+		case RenderType::ThreeDimension:
+			indices.erase(end(indices) - *indicesPerMesh.begin(), end(indices));
+			break;
+		}
 		delete indexBuffer;
 		indexBuffer = nullptr;
 
-		vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
-		delete vertexUniform2D;
-		vertexUniform2D = nullptr;
+		if (rMode == RenderType::ThreeDimension)
+		{
+			verticesPerMesh.erase(verticesPerMesh.begin());
+			indicesPerMesh.erase(indicesPerMesh.begin());
+		}
 
-		fragUniforms2D.erase(end(fragUniforms2D) - 1);
-		delete fragmentUniform2D;
-		fragmentUniform2D = nullptr;
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+			delete vertexUniform2D;
+			vertexUniform2D = nullptr;
+			break;
+		case RenderType::ThreeDimension:
+			vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
+			delete vertexUniform3D;
+			vertexUniform3D = nullptr;
+			break;
+		}
+
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			fragUniforms2D.erase(end(fragUniforms2D) - 1);
+			delete fragmentUniform2D;
+			fragmentUniform2D = nullptr;
+			break;
+		case RenderType::ThreeDimension:
+			fragUniforms3D.erase(end(fragUniforms3D) - 1);
+			delete fragmentUniform3D;
+			fragmentUniform3D = nullptr;
+			break;
+		}
 
 		//Destroy Texture
 		for (auto t : textures)
@@ -213,17 +275,66 @@ void GLRenderManager::DeleteWithIndex()
 		return;
 	}
 
-	vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+	switch (rMode)
+	{
+	case RenderType::TwoDimension:
+		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+		indices.erase(end(indices) - 6, end(indices));
+		//glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices2D.size()), vertices2D.data()));
+		//glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
+		break;
+	case RenderType::ThreeDimension:
+		unsigned int beginCount{ 0 };
+		for (int v = 0; v < id; ++v)
+		{
+			beginCount += verticesPerMesh[v];
+		}
+		vertices3D.erase(begin(vertices3D) + beginCount, begin(vertices3D) + beginCount + verticesPerMesh[id]);
+		beginCount = 0;
+		for (int v = 0; v < id; ++v)
+		{
+			beginCount += indicesPerMesh[v];
+		}
+		indices.erase(begin(indices) + beginCount, begin(indices) + beginCount + indicesPerMesh[id]);
+		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
+		delete indexBuffer;
+		indexBuffer = new GLIndexBuffer(&indices);
+		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+		//glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
+		//glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
+		//vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+		break;
+	}
 
-	indices.erase(end(indices) - 6, end(indices));
+	if (rMode == RenderType::ThreeDimension)
+	{
+		verticesPerMesh.erase(verticesPerMesh.begin() + id);
+		indicesPerMesh.erase(indicesPerMesh.begin() + id);
+	}
 
-	vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+	switch (rMode)
+	{
+	case RenderType::TwoDimension:
+		vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+		break;
+	case RenderType::ThreeDimension:
+		vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
+		break;
+	}
 	//for (auto u : *uVertex->GetUniformBuffers())
 	//{
 	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VertexUniform), vertexVector.data());
 	//}
 
-	fragUniforms2D.erase(end(fragUniforms2D) - 1);
+	switch (rMode)
+	{
+	case RenderType::TwoDimension:
+		fragUniforms2D.erase(end(fragUniforms2D) - 1);
+		break;
+	case RenderType::ThreeDimension:
+		fragUniforms3D.erase(end(fragUniforms3D) - 1);
+		break;
+	}
 	//for (auto u : *uFragment->GetUniformBuffers())
 	//{
 	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
@@ -244,7 +355,13 @@ GLTexture* GLRenderManager::GetTexture(std::string name)
 
 void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices)
 {
-	std::vector<ThreeDimension::Vertex> vertices;
+	std::vector<ThreeDimension::Vertex> tempVertices;
+	std::vector<uint16_t> tempIndices;
+	unsigned int verticesCount{ 0 };
+	for (unsigned int vertex : verticesPerMesh)
+	{
+		verticesCount += vertex;
+	}
 	switch (type)
 	{
 	case MeshType::PLANE:
@@ -258,7 +375,7 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 			{
 				float col = static_cast<float>(slice) / slices;
 
-				vertices.push_back(ThreeDimension::Vertex(
+				tempVertices.push_back(ThreeDimension::Vertex(
 					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
 					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
 					glm::vec2(col, row),
@@ -279,12 +396,12 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 				i2 = i1 + slices + 1;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(vertices[i0].position, vertices[i2].position, vertices[i1].position))
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
 				{
 					/*  Add the indices for the first triangle */
-					indices.push_back(static_cast<uint16_t>(i0));
-					indices.push_back(static_cast<uint16_t>(i2));
-					indices.push_back(static_cast<uint16_t>(i1));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
@@ -292,11 +409,11 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 				i2 = i1 - 1;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(vertices[i0].position, vertices[i2].position, vertices[i1].position))
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
 				{
-					indices.push_back(static_cast<uint16_t>(i0));
-					indices.push_back(static_cast<uint16_t>(i2));
-					indices.push_back(static_cast<uint16_t>(i1));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
 				}
 			}
 		}
@@ -385,7 +502,7 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 
 			for (const auto& plane_vertex : planeVertices)
 			{
-				vertices.push_back(ThreeDimension::Vertex(
+				tempVertices.push_back(ThreeDimension::Vertex(
 					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.position))),
 					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.normal))),
 					plane_vertex.uv,
@@ -396,7 +513,7 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 			//Indices
 			for (const auto index : planeIndices)
 			{
-				indices.push_back(static_cast<uint16_t>(index + static_cast<int>(planeVertices.size()) * i));
+				tempIndices.push_back(static_cast<uint16_t>(verticesCount + (index + static_cast<int>(planeVertices.size()) * i)));
 			}
 		}
 	}
@@ -423,7 +540,10 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 	break;
 	}
 
-	vertices3D.insert(vertices3D.end(), vertices.begin(), vertices.end());
+	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
+	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
+	vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
+	indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
 
 	if (quadCount > 0)
 		delete vertexBuffer;

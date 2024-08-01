@@ -35,7 +35,7 @@ int main(void)
 #endif
 
     Engine& engine = Engine::Instance();
-    engine.Init("Vulkan Demo", 1280, 720, false, WindowMode::NORMAL);
+    engine.Init("CubeEngine", 1280, 720, false, WindowMode::NORMAL);
     engine.SetFPS(FrameRate::FPS_60);
 
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");

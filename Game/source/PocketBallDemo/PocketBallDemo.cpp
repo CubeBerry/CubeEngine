@@ -14,6 +14,7 @@
 
 void PocketBallDemo::Init()
 {
+	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
 	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White");

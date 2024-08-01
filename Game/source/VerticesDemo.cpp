@@ -9,6 +9,7 @@
 
 void VerticesDemo::Init()
 {
+	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 45.f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
 

@@ -617,7 +617,7 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	fragUniforms2D.push_back(tIndex);
 }
 
-void VKRenderManager::DeleteWithIndex()
+void VKRenderManager::DeleteWithIndex(int /*id*/)
 {
 	quadCount--;
 
