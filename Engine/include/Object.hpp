@@ -25,14 +25,18 @@ public:
 	glm::vec3     GetPosition() { return position; }
 	glm::vec3     GetSize() { return size; }
 	glm::vec3     GetSpeed() { return speed; }
+	glm::vec3	GetRotate3D() { return angle; }
 
-	float GetRotate() { return angle; }
+	float GetRotate() { return angle.z; }
 
 	ObjectType GetObjectType() { return objectType; }
 	std::string GetName() { return objectName; }
 	
 	void       SetId(int value) { id = value; }
 	void       SetRotate(float value);
+	void       SetXRotate(float value);
+	void       SetYRotate(float value);
+	void       SetZRotate(float value);
 
 	void       SetXPosition(float newX) { position.x = newX; }
 	void       SetYPosition(float newY) { position.y = newY; }
@@ -117,7 +121,7 @@ protected:
 	glm::vec3 position{ 0.f, 0.f, 0.f };
 	glm::vec3 speed{ 0.f, 0.f, 0.f };
 	glm::vec3 size{ 0.f, 0.f, 0.f };
-	float angle = 0.f;
+	glm::vec3 angle{ 0.f, 0.f, 0.f };
 
 	int        id = 0;
 	ObjectType objectType = ObjectType::NONE;

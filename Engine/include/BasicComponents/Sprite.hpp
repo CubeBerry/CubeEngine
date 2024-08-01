@@ -35,6 +35,7 @@ public:
 
 	//Update Matrices
 	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle);
+	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle);
 	void UpdateView();
 	void UpdateProjection();
 

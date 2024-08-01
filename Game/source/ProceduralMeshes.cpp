@@ -29,6 +29,37 @@ void ProceduralMeshes::Update(float dt)
 {
 	Engine::GetCameraManager().ControlCamera(dt);
 
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::U))
+	{
+		Engine::GetObjectManager().FindObjectWithName("0")->SetXRotate(
+			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().x + 10.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::J))
+	{
+		Engine::GetObjectManager().FindObjectWithName("0")->SetXRotate(
+			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().x - 10.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::I))
+	{
+		Engine::GetObjectManager().FindObjectWithName("0")->SetYRotate(
+			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().y + 10.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::K))
+	{
+		Engine::GetObjectManager().FindObjectWithName("0")->SetYRotate(
+			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().y - 10.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::O))
+	{
+		Engine::GetObjectManager().FindObjectWithName("0")->SetZRotate(
+			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().z + 10.f * dt);
+	}
+	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::L))
+	{
+		Engine::GetObjectManager().FindObjectWithName("0")->SetZRotate(
+			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().z - 10.f * dt);
+	}
+
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
 	{
 		Engine::GetObjectManager().Destroy(Engine::GetObjectManager().FindObjectWithName("1")->GetId());

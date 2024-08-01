@@ -51,16 +51,73 @@ void Object::SetRotate(float value)
 	{
 		if (value > 360.f)
 		{
-			angle = value - 360.f;
+			angle.z = value - 360.f;
 
 		}
 		else if (value < 0.f)
 		{
-			angle = 360.f + value;
+			angle.z = 360.f + value;
 		}
 		else
 		{
-			angle = value;
+			angle.z = value;
+		}
+	}
+}
+
+void Object::SetXRotate(float value)
+{
+	{
+		if (value > 360.f)
+		{
+			angle.x = value - 360.f;
+
+		}
+		else if (value < 0.f)
+		{
+			angle.x = 360.f + value;
+		}
+		else
+		{
+			angle.x = value;
+		}
+	}
+}
+
+void Object::SetYRotate(float value)
+{
+	{
+		if (value > 360.f)
+		{
+			angle.y = value - 360.f;
+
+		}
+		else if (value < 0.f)
+		{
+			angle.y = 360.f + value;
+		}
+		else
+		{
+			angle.y = value;
+		}
+	}
+}
+
+void Object::SetZRotate(float value)
+{
+	{
+		if (value > 360.f)
+		{
+			angle.z = value - 360.f;
+
+		}
+		else if (value < 0.f)
+		{
+			angle.z = 360.f + value;
+		}
+		else
+		{
+			angle.z = value;
 		}
 	}
 }

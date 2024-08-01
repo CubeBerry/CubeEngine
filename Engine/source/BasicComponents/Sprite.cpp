@@ -29,7 +29,7 @@ void Sprite::Update(float dt)
 {
 	UpdateProjection();
 	UpdateView();
-	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate());
+	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate3D());
 
 	UpdateAnimation(dt);
 }
@@ -55,6 +55,44 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 		pos = glm::vec3(pos_.x * 2, -pos_.y * 2, pos_.z);
 		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
+		break;
+	}
+
+	switch (spriteDrawType)
+	{
+	case SpriteDrawType::TwoDimension:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		break;
+	case SpriteDrawType::ThreeDimension:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).model = modelMatrix;
+		break;
+	case SpriteDrawType::UI:
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		break;
+	}
+}
+
+void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
+{
+	glm::mat4 modelMatrix(1.0f);
+	glm::vec3 pos;
+	switch (Engine::GetRenderManager()->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
+		pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
+		break;
+	case GraphicsMode::VK:
+		pos = glm::vec3(pos_.x * 2, -pos_.y * 2, pos_.z);
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(angle.z), glm::vec3(0.0f, 0.0f, 1.0f)) *
 			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
