@@ -305,12 +305,6 @@ void GLRenderManager::DeleteWithIndex(int id)
 		{
 			(*it) = (*it) - static_cast<unsigned short>(verticesPerMesh[id]);
 		}
-		//delete vertexBuffer;
-		//vertexBuffer = new GLVertexBuffer;
-		//vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data());
-		//delete indexBuffer;
-		//indexBuffer = new GLIndexBuffer(&indices);
-		//vertexArray.SetIndexBuffer(std::move(*indexBuffer));
 
 		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
 		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
