@@ -290,16 +290,28 @@ void GLRenderManager::DeleteWithIndex(int id)
 			beginCount += verticesPerMesh[v];
 		}
 		vertices3D.erase(begin(vertices3D) + beginCount, begin(vertices3D) + beginCount + verticesPerMesh[id]);
+		for (auto it = vertices3D.begin() + beginCount; it != vertices3D.end(); ++it)
+		{
+			it->index--;
+		}
+
 		beginCount = 0;
 		for (int v = 0; v < id; ++v)
 		{
 			beginCount += indicesPerMesh[v];
 		}
 		indices.erase(begin(indices) + beginCount, begin(indices) + beginCount + indicesPerMesh[id]);
-		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
+		for (auto it = indices.begin() + beginCount; it != indices.end(); ++it)
+		{
+			(*it) = (*it) - static_cast<unsigned short>(verticesPerMesh[id]);
+		}
+		delete vertexBuffer;
+		vertexBuffer = new GLVertexBuffer;
+		vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data());
 		delete indexBuffer;
 		indexBuffer = new GLIndexBuffer(&indices);
 		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+
 		//glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
 		//glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
 		//vertexArray.SetIndexBuffer(std::move(*indexBuffer));
@@ -605,7 +617,6 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 		delete fragmentUniform3D;
 	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
 	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D);
-
 
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
