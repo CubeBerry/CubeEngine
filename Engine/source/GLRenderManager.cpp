@@ -208,7 +208,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 
 	if (quadCount == 0)
 	{
-		switch(rMode)
+		switch (rMode)
 		{
 		case RenderType::TwoDimension:
 			vertices2D.erase(end(vertices2D) - 4, end(vertices2D));

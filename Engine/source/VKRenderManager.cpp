@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
 VKRenderManager::~VKRenderManager()
 {
@@ -34,8 +35,8 @@ VKRenderManager::~VKRenderManager()
 	//Destroy Buffers
 	delete vertex2DBuffer;
 	delete indexBuffer;
-	delete vertex2DUniform;
-	delete fragment2DUniform;
+	delete vertexUniform2D;
+	delete fragmentUniform2D;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -255,6 +256,11 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkShader2D->LoadShader("../Engine/shader/Vulkan2D.vert", "../Engine/shader/Vulkan2D.frag");
 	std::cout << std::endl;
 
+	vkShader3D = new VKShader(vkInit->GetDevice());
+	vkShader3D->LoadShader("../Engine/shader/Vulkan3D.vert", "../Engine/shader/Vulkan3D.frag");
+	std::cout << std::endl;
+
+	//2D Pipeline
 	VKAttributeLayout position_layout;
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -266,9 +272,29 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(TwoDimension::Vertex, index);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), {position_layout, index_layout}, POLYGON_MODE::FILL);
-	//vkLinePipeline = new VKPipeLine(vkDescriptor->GetDescriptorSetLayout());
-	//vkLinePipeline->InitPipeLine(vkLineShader->GetVertexModule(), vkLineShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, POLYGON_MODE::LINE);
+	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, POLYGON_MODE::FILL);
+
+	//3D Pipeline
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	position_layout.offset = offsetof(ThreeDimension::Vertex, position);
+
+	VKAttributeLayout normal_layout;
+	normal_layout.vertex_layout_location = 1;
+	normal_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	normal_layout.offset = offsetof(ThreeDimension::Vertex, normal);
+
+	VKAttributeLayout uv_layout;
+	uv_layout.vertex_layout_location = 2;
+	uv_layout.format = VK_FORMAT_R32G32_SFLOAT;
+	uv_layout.offset = offsetof(ThreeDimension::Vertex, uv);
+
+	index_layout.vertex_layout_location = 3;
+	index_layout.format = VK_FORMAT_R32_SINT;
+	index_layout.offset = offsetof(ThreeDimension::Vertex, index);
+
+	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::FILL);
 
 #ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
@@ -595,13 +621,13 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 
 	quadCount++;
 
-	if (vertex2DUniform != nullptr)
-		delete vertex2DUniform;
-	vertex2DUniform = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, quadCount);
+	if (vertexUniform2D != nullptr)
+		delete vertexUniform2D;
+	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, quadCount);
 
-	if (fragment2DUniform != nullptr)
-		delete fragment2DUniform;
-	fragment2DUniform = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, quadCount);
+	if (fragmentUniform2D != nullptr)
+		delete fragmentUniform2D;
+	fragmentUniform2D = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, quadCount);
 
 	TwoDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
@@ -617,27 +643,71 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	fragUniforms2D.push_back(tIndex);
 }
 
-void VKRenderManager::DeleteWithIndex(int /*id*/)
+void VKRenderManager::DeleteWithIndex(int id)
 {
 	quadCount--;
 
 	if (quadCount == 0)
 	{
-		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
-		delete vertex2DBuffer;
-		vertex2DBuffer = nullptr;
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+			delete vertex2DBuffer;
+			vertex2DBuffer = nullptr;
+			break;
+		case RenderType::ThreeDimension:
+			vertices3D.erase(end(vertices3D) - *verticesPerMesh.begin(), end(vertices3D));
+			delete vertex3DBuffer;
+			vertex3DBuffer = nullptr;
+			break;
+		}
 
-		indices.erase(end(indices) - 6, end(indices));
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			indices.erase(end(indices) - 6, end(indices));
+			break;
+		case RenderType::ThreeDimension:
+			indices.erase(end(indices) - *indicesPerMesh.begin(), end(indices));
+			break;
+		}
 		delete indexBuffer;
 		indexBuffer = nullptr;
 
-		vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
-		delete vertex2DUniform;
-		vertex2DUniform = nullptr;
+		if (rMode == RenderType::ThreeDimension)
+		{
+			verticesPerMesh.erase(verticesPerMesh.begin());
+			indicesPerMesh.erase(indicesPerMesh.begin());
+		}
 
-		fragUniforms2D.erase(end(fragUniforms2D) - 1);
-		delete fragment2DUniform;
-		fragment2DUniform = nullptr;
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+			delete vertexUniform2D;
+			vertexUniform2D = nullptr;
+			break;
+		case RenderType::ThreeDimension:
+			vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
+			delete vertexUniform3D;
+			vertexUniform3D = nullptr;
+			break;
+		}
+
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			fragUniforms2D.erase(end(fragUniforms2D) - 1);
+			delete fragmentUniform2D;
+			fragmentUniform2D = nullptr;
+			break;
+		case RenderType::ThreeDimension:
+			fragUniforms3D.erase(end(fragUniforms3D) - 1);
+			delete fragmentUniform3D;
+			fragmentUniform3D = nullptr;
+			break;
+		}
 
 		//Destroy Texture
 		for (auto t : textures)
@@ -689,22 +759,88 @@ void VKRenderManager::DeleteWithIndex(int /*id*/)
 	//Begin Command Buffer
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-	vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
-	vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
-
-	indices.erase(end(indices) - 6, end(indices));
-	vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
-
-	vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
-	for (auto u : *vertex2DUniform->GetUniformBuffers())
+	switch (rMode)
 	{
-		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::VertexUniform), vertexUniforms2D.data());
+	case RenderType::TwoDimension:
+		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+		vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
+
+		indices.erase(end(indices) - 6, end(indices));
+		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+		break;
+	case RenderType::ThreeDimension:
+		unsigned int beginCount{ 0 };
+		for (int v = 0; v < id; ++v)
+		{
+			beginCount += verticesPerMesh[v];
+		}
+		vertices3D.erase(begin(vertices3D) + beginCount, begin(vertices3D) + beginCount + verticesPerMesh[id]);
+		for (auto it = vertices3D.begin() + beginCount; it != vertices3D.end(); ++it)
+		{
+			it->index--;
+		}
+
+		beginCount = 0;
+		for (int v = 0; v < id; ++v)
+		{
+			beginCount += indicesPerMesh[v];
+		}
+		indices.erase(begin(indices) + beginCount, begin(indices) + beginCount + indicesPerMesh[id]);
+		for (auto it = indices.begin() + beginCount; it != indices.end(); ++it)
+		{
+			(*it) = (*it) - static_cast<unsigned short>(verticesPerMesh[id]);
+		}
+
+		vkCmdUpdateBuffer(commandBuffer, *vertex3DBuffer->GetVertexBuffer(), 0, vertices3D.size() * sizeof(ThreeDimension::Vertex), vertices3D.data());
+		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+		break;
+	}
+	//vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
+	//vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
+
+	//indices.erase(end(indices) - 6, end(indices));
+	//vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+
+	if (rMode == RenderType::ThreeDimension)
+	{
+		verticesPerMesh.erase(verticesPerMesh.begin() + id);
+		indicesPerMesh.erase(indicesPerMesh.begin() + id);
 	}
 
-	fragUniforms2D.erase(end(fragUniforms2D) - 1);
-	for (auto u : *fragment2DUniform->GetUniformBuffers())
+	switch (rMode)
 	{
-		vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::FragmentUniform), fragUniforms2D.data());
+	case RenderType::TwoDimension:
+		vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
+		for (auto u : *vertexUniform2D->GetUniformBuffers())
+		{
+			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::VertexUniform), vertexUniforms2D.data());
+		}
+		break;
+	case RenderType::ThreeDimension:
+		vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
+		for (auto u : *vertexUniform3D->GetUniformBuffers())
+		{
+			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		}
+		break;
+	}
+
+	switch (rMode)
+	{
+	case RenderType::TwoDimension:
+		fragUniforms2D.erase(end(fragUniforms2D) - 1);
+		for (auto u : *fragmentUniform2D->GetUniformBuffers())
+		{
+			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(TwoDimension::FragmentUniform), fragUniforms2D.data());
+		}
+		break;
+	case RenderType::ThreeDimension:
+		fragUniforms3D.erase(end(fragUniforms3D) - 1);
+		for (auto u : *fragmentUniform3D->GetUniformBuffers())
+		{
+			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
+		}
+		break;
 	}
 
 	//End Command Buffer
@@ -742,10 +878,224 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 
 void VKRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices)
 {
-	type;
-	color;
-	stacks;
-	slices;
+	std::vector<ThreeDimension::Vertex> tempVertices;
+	std::vector<uint16_t> tempIndices;
+	unsigned int verticesCount{ 0 };
+	for (unsigned int vertex : verticesPerMesh)
+	{
+		verticesCount += vertex;
+	}
+	switch (type)
+	{
+	case MeshType::PLANE:
+	{
+		//Verties
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			float row = static_cast<float>(stack) / stacks;
+
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				float col = static_cast<float>(slice) / slices;
+
+				tempVertices.push_back(ThreeDimension::Vertex(
+					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec2(col, row),
+					quadCount
+				));
+			}
+		}
+
+		//Indices
+		int i0 = 0, i1 = 0, i2 = 0;
+		for (int i = 0; i < stacks; ++i)
+		{
+			for (int j = 0; j < slices; ++j)
+			{
+				/*  You need to compute the indices for the first triangle here */
+				i0 = i * (slices + 1) + j;
+				i1 = i0 + 1;
+				i2 = i1 + slices + 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				{
+					/*  Add the indices for the first triangle */
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+				}
+
+				/*  You need to compute the indices for the second triangle here */
+				i1 = i2;
+				i2 = i1 - 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				{
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+				}
+			}
+		}
+	}
+	break;
+	case MeshType::CUBE:
+	{
+		std::vector<ThreeDimension::Vertex> planeVertices;
+		std::vector<uint16_t> planeIndices;
+		//Vertices
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			float row = static_cast<float>(stack) / stacks;
+
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				float col = static_cast<float>(slice) / slices;
+
+				planeVertices.push_back(ThreeDimension::Vertex(
+					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec2(col, row),
+					quadCount
+				));
+			}
+		}
+
+		//Indices
+		int i0 = 0, i1 = 0, i2 = 0;
+		for (int i = 0; i < stacks; ++i)
+		{
+			for (int j = 0; j < slices; ++j)
+			{
+				/*  You need to compute the indices for the first triangle here */
+				i0 = i * (slices + 1) + j;
+				i1 = i0 + 1;
+				i2 = i1 + slices + 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i2].position, planeVertices[i1].position))
+				{
+					/*  Add the indices for the first triangle */
+					planeIndices.push_back(static_cast<uint16_t>(i0));
+					planeIndices.push_back(static_cast<uint16_t>(i2));
+					planeIndices.push_back(static_cast<uint16_t>(i1));
+				}
+
+				/*  You need to compute the indices for the second triangle here */
+				i1 = i2;
+				i2 = i1 - 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i2].position, planeVertices[i1].position))
+				{
+					planeIndices.push_back(static_cast<uint16_t>(i0));
+					planeIndices.push_back(static_cast<uint16_t>(i2));
+					planeIndices.push_back(static_cast<uint16_t>(i1));
+				}
+			}
+		}
+
+		const glm::vec3 translateArray[] = {
+			glm::vec3(+0.0f, +0.0f, +0.5f), // Z+
+			glm::vec3(+0.0f, +0.0f, -0.5f), // Z-
+			glm::vec3(+0.5f, +0.0f, +0.0f), // X+
+			glm::vec3(-0.5f, +0.0f, +0.0f), // X-
+			glm::vec3(+0.0f, +0.5f, +0.0f), // Y+
+			glm::vec3(+0.0f, -0.5f, +0.0f), // Y-
+		};
+
+		const glm::vec2 rotateArray[] = {
+			glm::vec2(+0.0f, +0.0f),           // Z+
+			glm::vec2(+0.0f, (float)+PI),      // Z-
+			glm::vec2(+0.0f, (float)+HALF_PI), // X+
+			glm::vec2(+0.0f, (float)-HALF_PI), // X-
+			glm::vec2((float)-HALF_PI, +0.0f), // Y+
+			glm::vec2((float)+HALF_PI, +0.0f)  // Y-
+		};
+
+		/*  Transform the plane to 6 positions to form the faces of the cube */
+		for (int i = 0; i < 6; ++i)
+		{
+			const glm::mat4 transformMat = glm::translate(translateArray[i]) *
+				glm::rotate(rotateArray[i][YINDEX], glm::vec3{ 0, 1, 0 }) *
+				glm::rotate(rotateArray[i][XINDEX], glm::vec3{ 1, 0, 0 });
+
+			for (const auto& plane_vertex : planeVertices)
+			{
+				tempVertices.push_back(ThreeDimension::Vertex(
+					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.position))),
+					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.normal))),
+					plane_vertex.uv,
+					quadCount
+				));
+			}
+
+			//Indices
+			for (const auto index : planeIndices)
+			{
+				tempIndices.push_back(static_cast<uint16_t>(verticesCount + (index + static_cast<int>(planeVertices.size()) * i)));
+			}
+		}
+	}
+	break;
+	case MeshType::SPHERE:
+	{
+
+	}
+	break;
+	case MeshType::TORUS:
+	{
+
+	}
+	break;
+	case MeshType::CYLINDER:
+	{
+
+	}
+	break;
+	case MeshType::CONE:
+	{
+
+	}
+	break;
+	}
+
+	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
+	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
+	vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
+	indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+
+	if (vertex3DBuffer != nullptr)
+		delete vertex3DBuffer;
+	vertex3DBuffer = new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices3D);
+
+	if (indexBuffer != nullptr)
+		delete indexBuffer;
+	indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+
+	quadCount++;
+
+	if (vertexUniform3D != nullptr)
+		delete vertexUniform3D;
+	vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, quadCount);
+
+	if (fragmentUniform3D != nullptr)
+		delete fragmentUniform3D;
+	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, quadCount);
+
+	ThreeDimension::VertexUniform mat;
+	mat.model = glm::mat4(1.f);
+	mat.view = glm::mat4(1.f);
+	mat.projection = glm::mat4(1.f);
+	vertexUniforms3D.push_back(mat);
+	vertexUniforms3D.back().color = color;
+
+	ThreeDimension::FragmentUniform tIndex;
+	tIndex.texIndex = 0;
+	fragUniforms3D.push_back(tIndex);
 }
 
 
@@ -781,75 +1131,152 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 
 	//--------------------Descriptor Update--------------------//
 
-	if (vertex2DUniform != nullptr)
+	switch(rMode)
 	{
-		currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+	case RenderType::TwoDimension:
+		if (vertexUniform2D != nullptr)
 		{
-			//Create Vertex Material DescriptorBuffer Info
-			//std::vector<VkDescriptorBufferInfo> bufferInfos;
-			//for (auto& t : textures)
-			//{
-			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(vertex2DUniform->GetUniformBuffers()))[frameIndex];
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(TwoDimension::VertexUniform) * quadCount;
-			//bufferInfos.push_back(bufferInfo);
-			//}
-
-			//Define which resource descriptor set will point
-			VkWriteDescriptorSet descriptorWrite{};
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite.pBufferInfo = &bufferInfo;
-
-			//Update DescriptorSet
-			//DescriptorSet does not have to update every frame since it points same uniform buffer
-			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-		}
-		vertex2DUniform->UpdateUniform(vertexUniforms2D, frameIndex);
-	}
-
-	if (fragment2DUniform != nullptr)
-	{
-		currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
-		{
-			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(fragment2DUniform->GetUniformBuffers()))[frameIndex];
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(TwoDimension::FragmentUniform) * quadCount;
-
-			VkWriteDescriptorSet descriptorWrite[2] = {};
-			descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite[0].dstSet = *currentTextureDescriptorSet;
-			descriptorWrite[0].dstBinding = 0;
-			descriptorWrite[0].descriptorCount = 1;
-			descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite[0].pBufferInfo = &bufferInfo;
-
-			//Create Texture DescriptorBuffer Info
-			for (int i = 0; i < textures.size(); ++i)
+			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
-				imageInfos[i].sampler = *textures[i]->GetSampler();
-				imageInfos[i].imageView = *textures[i]->GetImageView();
-				imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				//Create Vertex Material DescriptorBuffer Info
+				//std::vector<VkDescriptorBufferInfo> bufferInfos;
+				//for (auto& t : textures)
+				//{
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*(vertexUniform2D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(TwoDimension::VertexUniform) * quadCount;
+				//bufferInfos.push_back(bufferInfo);
+				//}
+
+				//Define which resource descriptor set will point
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite.pBufferInfo = &bufferInfo;
+
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
-
-			//Define which resource descriptor set will point
-			descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite[1].dstSet = *currentTextureDescriptorSet;
-			descriptorWrite[1].dstBinding = 1;
-			descriptorWrite[1].descriptorCount = 500;
-			descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrite[1].pImageInfo = imageInfos.data();
-
-			//Update DescriptorSet
-			//DescriptorSet does not have to update every frame since it points same uniform buffer
-			vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
+			vertexUniform2D->UpdateUniform(vertexUniforms2D, frameIndex);
 		}
-		fragment2DUniform->UpdateUniform(fragUniforms2D, frameIndex);
+
+		if (fragmentUniform2D != nullptr)
+		{
+			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			{
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*(fragmentUniform2D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(TwoDimension::FragmentUniform) * quadCount;
+
+				VkWriteDescriptorSet descriptorWrite[2] = {};
+				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[0].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[0].dstBinding = 0;
+				descriptorWrite[0].descriptorCount = 1;
+				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[0].pBufferInfo = &bufferInfo;
+
+				//Create Texture DescriptorBuffer Info
+				for (int i = 0; i < textures.size(); ++i)
+				{
+					imageInfos[i].sampler = *textures[i]->GetSampler();
+					imageInfos[i].imageView = *textures[i]->GetImageView();
+					imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				}
+
+				//Define which resource descriptor set will point
+				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[1].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[1].dstBinding = 1;
+				descriptorWrite[1].descriptorCount = 500;
+				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descriptorWrite[1].pImageInfo = imageInfos.data();
+
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
+			}
+			fragmentUniform2D->UpdateUniform(fragUniforms2D, frameIndex);
+		}
+		break;
+	case RenderType::ThreeDimension:
+		if (vertexUniform3D != nullptr)
+		{
+			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			{
+				//Create Vertex Material DescriptorBuffer Info
+				//std::vector<VkDescriptorBufferInfo> bufferInfos;
+				//for (auto& t : textures)
+				//{
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
+				//bufferInfos.push_back(bufferInfo);
+				//}
+
+				//Define which resource descriptor set will point
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite.pBufferInfo = &bufferInfo;
+
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+			vertexUniform3D->UpdateUniform(vertexUniforms3D, frameIndex);
+		}
+
+		if (fragmentUniform3D != nullptr)
+		{
+			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			{
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*(fragmentUniform3D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(ThreeDimension::FragmentUniform) * quadCount;
+
+				VkWriteDescriptorSet descriptorWrite[2] = {};
+				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[0].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[0].dstBinding = 0;
+				descriptorWrite[0].descriptorCount = 1;
+				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[0].pBufferInfo = &bufferInfo;
+
+				//Create Texture DescriptorBuffer Info
+				for (int i = 0; i < textures.size(); ++i)
+				{
+					imageInfos[i].sampler = *textures[i]->GetSampler();
+					imageInfos[i].imageView = *textures[i]->GetImageView();
+					imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				}
+
+				//Define which resource descriptor set will point
+				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[1].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[1].dstBinding = 1;
+				descriptorWrite[1].descriptorCount = 500;
+				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descriptorWrite[1].pImageInfo = imageInfos.data();
+
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
+			}
+			fragmentUniform3D->UpdateUniform(fragUniforms3D, frameIndex);
+		}
+		break;
 	}
 
 	//--------------------Descriptor Update End--------------------//
@@ -928,25 +1355,52 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	if (vertex2DBuffer != nullptr)
+	switch(rMode)
 	{
-		//Bind Vertex Buffer
-		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex2DBuffer->GetVertexBuffer(), &vertexBufferOffset);
-		//Bind Index Buffer
-		vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-		//Bind Pipeline
-		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
-		//Dynamic Viewport & Scissor
-		vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-		//Bind Material DescriptorSet
-		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-		//Bind Texture DescriptorSet
-		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
-		//Change Primitive Topology
-		//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		//Draw
-		vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+	case RenderType::TwoDimension:
+		if (vertex2DBuffer != nullptr)
+		{
+			//Bind Vertex Buffer
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex2DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			//Bind Index Buffer
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+			//Bind Pipeline
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
+			//Dynamic Viewport & Scissor
+			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+			//Bind Material DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+			//Bind Texture DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+			//Change Primitive Topology
+			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			//Draw
+			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		}
+		break;
+	case RenderType::ThreeDimension:
+		if (vertex3DBuffer != nullptr)
+		{
+			//Bind Vertex Buffer
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			//Bind Index Buffer
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+			//Bind Pipeline
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
+			//Dynamic Viewport & Scissor
+			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+			//Bind Material DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+			//Bind Texture DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+			//Change Primitive Topology
+			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			//Draw
+			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		}
+		break;
 	}
 
 	//if (lineVertex != nullptr)

@@ -115,6 +115,8 @@ private:
 
 	VKShader* vkShader2D;
 	VKPipeLine* vkPipeline2D;
+	VKShader* vkShader3D;
+	VKPipeLine* vkPipeline3D;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
@@ -149,8 +151,12 @@ private:
 
 	VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer{ nullptr };
 
-	VKUniformBuffer<TwoDimension::VertexUniform>* vertex2DUniform{ nullptr };
-	VKUniformBuffer<TwoDimension::FragmentUniform>* fragment2DUniform{ nullptr };
+	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
+	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
 
 	//--------------------3D Render--------------------//
+	VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer{ nullptr };
+
+	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
+	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 };
