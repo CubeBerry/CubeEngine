@@ -25,6 +25,7 @@ class Particle
 public:
     Particle() = default;
     Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float angle_, float lifeTime_, ParticleType type = ParticleType::REC, std::string spriteName_ = "", glm::vec4 color_ = {1.f,1.f,1.f,1.f}, ParticleEffect particE = ParticleEffect::NORMAL);
+    Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, glm::vec3 angle_, float lifeTime_, ParticleType type = ParticleType::REC, std::string spriteName_ = "", glm::vec4 color_ = { 1.f,1.f,1.f,1.f }, ParticleEffect particE = ParticleEffect::NORMAL);
     ~Particle();
 
     void Update(float dt);
@@ -38,7 +39,7 @@ private:
     glm::vec3 position = { 0.f, 0.f, 0.f };
     glm::vec3 speed = { 0.f, 0.f, 0.f };
     glm::vec3 size = { 0.f, 0.f, 0.f };
-    float angle = 0.f;
+    glm::vec3 angle = { 0.f, 0.f, 0.f };
 
     float fadeOutAmount = 0.1f;
 

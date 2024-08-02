@@ -9,6 +9,39 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float
 	position = position_;
 	size = size_;
 	speed = speed_;
+	angle.z = angle_;
+	this->lifeTime = lifeTime_;
+
+	particleType = type;
+	spriteName = spriteName_;
+	color = color_;
+	effect = particE;
+
+	switch (particleType)
+	{
+	case ParticleType::ANIMESPRI:
+		sprite = new Sprite();
+		sprite->LoadAnimation(spriteName, spriteName);
+		sprite->SetColor(color);
+		sprite->PlayAnimation(0);
+		break;
+	case ParticleType::SPRI:
+		sprite = new Sprite();
+		sprite->AddMeshWithTexel(spriteName);
+		sprite->SetColor(color);
+		break;
+	case ParticleType::REC:
+		sprite = new Sprite();
+		sprite->AddQuad(color);
+		break;
+	}
+}
+
+Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, glm::vec3 angle_, float lifeTime_, ParticleType type, std::string spriteName_, glm::vec4 color_, ParticleEffect particE)
+{
+	position = position_;
+	size = size_;
+	speed = speed_;
 	angle = angle_;
 	this->lifeTime = lifeTime_;
 
