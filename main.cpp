@@ -8,6 +8,7 @@
 #include "ProceduralMeshes.hpp"
 #include "PocketBallDemo/PocketBallDemo.hpp"
 #include "PlatformDemo/PlatformDemo.hpp"
+#include "BeatEmUpDemo/BeatEmUpDemo.hpp"
 
 #if _DEBUG
 #define _CRTDBG_MAP_ALLOC
@@ -45,7 +46,8 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new VerticesDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
+    engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);
+    engine.GetGameStateManager().LevelInit(GameLevel::BEATEMUPDEMO);
 
     engine.Update();
     engine.End();

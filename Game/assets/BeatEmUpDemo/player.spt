@@ -1,0 +1,30 @@
+../Game/assets/BeatEmUpDemo/player.png
+FrameSize 48 64
+HotSpot 35 4
+Frame 0 0
+Frame 48 0
+Frame 96 0
+Frame 144 0
+Frame 192 0
+Frame 240 0
+Frame 288 0
+Frame 336 0
+Frame 384 0
+Frame 432 0
+Frame 480 0
+Frame 528 0
+Frame 576 0
+Frame 624 0
+Frame 672 0
+Frame 720 0
+Frame 768 0
+Frame 816 0
+Frame 864 0
+Frame 912 0
+Anim ../Game/assets/BeatEmUpDemo/player_idle.anm
+Anim ../Game/assets/BeatEmUpDemo/player_walk.anm
+Anim ../Game/assets/BeatEmUpDemo/player_jump.anm
+Anim ../Game/assets/BeatEmUpDemo/player_attack.anm
+Anim ../Game/assets/BeatEmUpDemo/player_attack2.anm
+Anim ../Game/assets/BeatEmUpDemo/player_attack3.anm
+Anim ../Game/assets/BeatEmUpDemo/player_jump_attack.anm
