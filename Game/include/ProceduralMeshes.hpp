@@ -3,6 +3,7 @@
 //File: ProceduralMeshes.hpp
 #pragma once
 #include "GameState.hpp"
+#include "RenderManager.hpp"
 
 class ProceduralMeshes : public GameState
 {
@@ -17,4 +18,9 @@ public:
 #endif
 	void Restart() override;
 	void End() override;
+private:
+	int stacks{ 2 };
+	int slices{ 2 };
+
+	MeshType currentMesh{ MeshType::PLANE };
 };

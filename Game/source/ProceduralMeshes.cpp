@@ -11,68 +11,36 @@ void ProceduralMeshes::Init()
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 45.f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
+	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
+	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "0", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 1.0 });
-
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,-2.5f }, glm::vec3{ 1.f,1.f,1.f }, "1", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, 2, 2, { 1.0, 0.0, 1.0, 1.0 });
-
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,-5.f }, glm::vec3{ 1.f,1.f,1.f }, "2", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
+	currentMesh = MeshType::PLANE;
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 36, 36, { 1.0, 0.0, 0.0, 1.0 });
 }
 
 void ProceduralMeshes::Update(float dt)
 {
 	Engine::GetCameraManager().ControlCamera(dt);
 
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::U))
-	{
-		Engine::GetObjectManager().FindObjectWithName("0")->SetXRotate(
-			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().x + 10.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::J))
-	{
-		Engine::GetObjectManager().FindObjectWithName("0")->SetXRotate(
-			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().x - 10.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::I))
-	{
-		Engine::GetObjectManager().FindObjectWithName("0")->SetYRotate(
-			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().y + 10.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::K))
-	{
-		Engine::GetObjectManager().FindObjectWithName("0")->SetYRotate(
-			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().y - 10.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::O))
-	{
-		Engine::GetObjectManager().FindObjectWithName("0")->SetZRotate(
-			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().z + 10.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::L))
-	{
-		Engine::GetObjectManager().FindObjectWithName("0")->SetZRotate(
-			Engine::GetObjectManager().FindObjectWithName("0")->GetRotate3D().z - 10.f * dt);
-	}
+	if (Engine::GetObjectManager().GetLastObject() != nullptr)
+		Engine::GetObjectManager().Destroy(Engine::GetObjectManager().GetLastObject()->GetId());
 
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
+	switch (currentMesh)
 	{
-		Engine::GetObjectManager().Destroy(Engine::GetObjectManager().FindObjectWithName("1")->GetId());
-	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_2))
-	{
-		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,-7.f }, glm::vec3{ 1.f,1.f,1.f }, "3", ObjectType::NONE);
+	case MeshType::PLANE:
+		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 0.0, 0.0, 1.0 });
-	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
-	{
-		Engine::GetGameStateManager().SetGameState(State::RESTART);
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, stacks, slices, { 1.0, 0.0, 0.0, 1.0 });
+		break;
+	case MeshType::CUBE:
+		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, stacks, slices, { 1.0, 0.0, 0.0, 1.0 });
+		break;
+	default:
+		break;
 	}
 }
 
@@ -80,6 +48,45 @@ void ProceduralMeshes::Update(float dt)
 void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetGameStateManager().StateChanger();
+
+	ImGui::Begin("Procedural Meshes", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	if (ImGui::BeginMenu("Select Mesh"))
+	{
+		if (ImGui::MenuItem("Plane", "0"))
+		{
+			stacks = 2;
+			slices = 2;
+			currentMesh = MeshType::PLANE;
+		}
+		if (ImGui::MenuItem("Cube", "1"))
+		{
+			stacks = 2;
+			slices = 2;
+			currentMesh = MeshType::CUBE;
+		}
+		ImGui::EndMenu();
+	}
+
+	switch (currentMesh)
+	{
+	case MeshType::PLANE:
+		if (ImGui::SliderInt("stacks", &stacks, 2, 50))
+		{
+		}
+		if (ImGui::SliderInt("slices", &slices, 2, 50))
+		{
+		}
+		break;
+	case MeshType::CUBE:
+		if (ImGui::SliderInt("stacks", &stacks, 2, 10))
+		{
+		}
+		if (ImGui::SliderInt("slices", &slices, 2, 10))
+		{
+		}
+		break;
+	}
+	ImGui::End();
 }
 #endif
 
