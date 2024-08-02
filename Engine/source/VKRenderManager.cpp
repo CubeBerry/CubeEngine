@@ -34,9 +34,12 @@ VKRenderManager::~VKRenderManager()
 
 	//Destroy Buffers
 	delete vertex2DBuffer;
+	delete vertex3DBuffer;
 	delete indexBuffer;
 	delete vertexUniform2D;
 	delete fragmentUniform2D;
+	delete vertexUniform3D;
+	delete fragmentUniform3D;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -57,9 +60,11 @@ VKRenderManager::~VKRenderManager()
 
 	//Destroy Shader
 	delete vkShader2D;
+	delete vkShader3D;
 
 	//Destroy Pipeline
 	delete vkPipeline2D;
+	delete vkPipeline3D;
 
 	//Destroy Descriptor
 	delete vkDescriptor;
@@ -1402,27 +1407,6 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 		}
 		break;
 	}
-
-	//if (lineVertex != nullptr)
-	//{
-	//	//Bind Vertex Buffer
-	//	vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, lineVertex->GetVertexBuffer(), &vertexBufferOffset);
-	//	//Bind Index Buffer
-	//	vkCmdBindIndexBuffer(*currentCommandBuffer, *lineIndex->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-	//	//Bind Pipeline
-	//	vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLine());
-	//	//Dynamic Viewport & Scissor
-	//	vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-	//	vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-	//	//Bind Material DescriptorSet
-	//	vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLinePipeline->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-	//	//Change Line Width
-	//	vkCmdSetLineWidth(*currentCommandBuffer, 5.0f);
-	//	//Change Primitive Topology
-	//	vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-	//	//Draw
-	//	vkCmdDrawIndexed(*currentCommandBuffer, lineIndices.size(), 1, 0, 0, 0);
-	//}
 
 #ifdef _DEBUG
 	imguiManager->Begin();

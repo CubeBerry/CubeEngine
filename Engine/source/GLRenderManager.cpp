@@ -17,6 +17,8 @@ GLRenderManager::~GLRenderManager()
 	delete indexBuffer;
 	delete vertexUniform2D;
 	delete fragmentUniform2D;
+	delete vertexUniform3D;
+	delete fragmentUniform3D;
 
 	//Destroy Texture
 	for (const auto t : textures)
