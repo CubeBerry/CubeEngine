@@ -167,12 +167,13 @@ void Camera::Rotate2D(float angle) noexcept
 	}
 }
 
-void Camera::Reset(glm::vec3 startUpPosition)
+void Camera::Reset()
 {
-	up = startUpPosition;
-	right = { startUpPosition.y, -startUpPosition.x, startUpPosition.z };
-	back = glm::vec3(0.0f, 0.0f, -1.0f);
-	SetCenter({ 0.f,0.f,0.f });
+	up = { 0.0f, 1.0f, 0.0f };
+	right = { 1.0f, 0.0f, 0.0f };
+	back = { 0.0f, 0.0f, -1.0f };
+	cameraPosition = { 0.f,0.f,0.f };
+	cameraTarget = { 0.f,0.f,0.f };
 	SetZoom(1.f);
 	pitch = 00.f;
 	yaw = -90.f;

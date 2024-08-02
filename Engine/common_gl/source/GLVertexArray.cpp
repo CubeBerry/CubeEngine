@@ -52,8 +52,6 @@ void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::i
 		}
 		glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, 0));
 	}
-
-	buffers.push_back(std::move(buffer));
 }
 
 void GLVertexArray::SetIndexBuffer(GLIndexBuffer&& buffer)

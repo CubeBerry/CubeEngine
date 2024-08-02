@@ -9,7 +9,6 @@
 #include "GLTexture.hpp"
 #include "GLUniformBuffer.hpp"
 #include "GLImGuiManager.hpp"
-#include "Material.hpp"
 
 class GLRenderManager : public RenderManager
 {
@@ -36,29 +35,36 @@ private:
 	}
 
 	GLVertexArray vertexArray;
-	GLShader shader;
+	GLShader gl2DShader;
+	GLShader gl3DShader;
 #ifdef _DEBUG
 	GLImGuiManager* imguiManager;
 #endif
-
-	//--------------------Texture Render--------------------//
 public:
+	//--------------------Common--------------------//
+	void DeleteWithIndex(int id) override;
+
+	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
 	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
-	//void LoadLineQuad(glm::vec4 color_);
-	//void LoadVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-	//void LoadLineVertices(std::vector<Vertex> vertices_, std::vector<uint64_t> indices_);
-
-	void DeleteWithIndex() override;
 
 	GLTexture* GetTexture(std::string name);
+
+	//--------------------3D Render--------------------//
+	void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) override;
 private:
+	//--------------------Common--------------------//
+	GLVertexBuffer* vertexBuffer{ nullptr };
+	GLIndexBuffer* indexBuffer{ nullptr };
+
+	//--------------------2D Render--------------------//
 	std::vector<GLTexture*> textures;
 	std::vector<int> samplers;
-	
-	GLVertexBuffer* texVertex{ nullptr };
-	GLIndexBuffer* texIndex{ nullptr };
 
-	GLUniformBuffer<VertexUniform>* uVertex{ nullptr };
-	GLUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+	GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
+	GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
+
+	//--------------------3D Render--------------------//
+	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
+	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 };

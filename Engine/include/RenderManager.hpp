@@ -6,58 +6,79 @@
 #include "Material.hpp"
 #include "Window.hpp"
 
-//template <GraphicsMode mode>
-//struct TextureType;
-//
-//template <>
-//struct TextureType<GraphicsMode::GL>
-//{
-//	using Type = GLTexture;
-//};
-//
-//template <>
-//struct TextureType<GraphicsMode::VK>
-//{
-//	using Type = VKTexture;
-//};
+constexpr float EPSILON = 0.00001f;
+constexpr float PI = 3.14159f;
+constexpr float HALF_PI = 0.5f * PI;
+constexpr int   XINDEX = 0;
+constexpr int   YINDEX = 1;
+constexpr int   ZINDEX = 2;
 
-//template <GraphicsMode mode>
+enum class RenderType
+{
+	TwoDimension,
+	ThreeDimension,
+};
+
+enum class MeshType
+{
+	PLANE,
+	CUBE,
+	SPHERE,
+	TORUS,
+	CYLINDER,
+	CONE,
+};
+
 class RenderManager
 {
 public:
-	//using Texture = typename TextureType<mode>::Type;
-
+	//--------------------Common--------------------//
 	virtual void BeginRender(glm::vec4 bgColor) = 0;
 	virtual void EndRender() = 0;
+	virtual void DeleteWithIndex(int id) = 0;
+	void SetRenderType(RenderType type) { rMode = type; };
+	GraphicsMode GetGraphicsMode() { return gMode; };
+	RenderType GetRenderType() { return rMode; };
 
-	//--------------------Texture Render--------------------//
+	//--------------------2D Render--------------------//
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_) = 0;
 	virtual void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) = 0;
-	virtual void DeleteWithIndex() = 0;
 
-	std::vector<VertexUniform>* GetVertexVector() { return &vertexVector; };
-	std::vector<FragmentUniform>* GetFragmentVector() { return &fragVector; };
-	GraphicsMode GetGraphicsMode() { return gMode; };
-	//virtual void* GetTexture(std::string name) = 0;
-	//Texture* GetTexture(std::string name)
-	//{
-	//	for (auto& tex : textures)
-	//	{
-	//		if (tex->GetName() == name)
-	//		{
-	//			return tex;
-	//		}
-	//	}
-	//	return nullptr;
-	//};
+	std::vector<TwoDimension::VertexUniform>* GetVertexUniforms2D() { return &vertexUniforms2D; };
+	std::vector<TwoDimension::FragmentUniform>* GetFragmentUniforms2D() { return &fragUniforms2D; };
+
+	//--------------------3D Render--------------------//
+	virtual void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) = 0;
+
+	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
+	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
 protected:
+	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
-
-	//--------------------Texture Render--------------------//
+	RenderType rMode = RenderType::TwoDimension;
 	unsigned int quadCount{ 0 };
+	std::vector<uint16_t> indices;
 
-	std::vector<Vertex> texVertices;
-	std::vector<uint16_t> texIndices;
-	std::vector<VertexUniform> vertexVector;
-	std::vector<FragmentUniform> fragVector;
+	//--------------------2D Render--------------------//
+	std::vector<TwoDimension::Vertex> vertices2D;
+	std::vector<TwoDimension::VertexUniform> vertexUniforms2D;
+	std::vector<TwoDimension::FragmentUniform> fragUniforms2D;
+
+	//--------------------3D Render--------------------//
+	bool DegenerateTri(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
+	{
+		return (glm::distance(v0, v1) < EPSILON || glm::distance(v1, v2) < EPSILON || glm::distance(v2, v0) < EPSILON);
+	}
+	float RoundDecimal(float input) { return std::floor(input * 10000.0f + 0.5f) / 10000.0f; }
+	glm::vec4 RoundDecimal(const glm::vec4& input)
+	{
+		return glm::vec4(RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]), 1.0f);
+	}
+
+	std::vector<ThreeDimension::Vertex> vertices3D;
+	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;
+	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
+
+	std::vector<unsigned int> verticesPerMesh;
+	std::vector<unsigned int> indicesPerMesh;
 };

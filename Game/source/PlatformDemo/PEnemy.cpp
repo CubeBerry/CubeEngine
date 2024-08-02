@@ -106,7 +106,7 @@ void PEnemy::SetAngleToTarget(Object* target)
 
 		int angleToTarget = static_cast<int>(atan2(dy, dx) * -60.f);
 
-		angle = static_cast<float>(angleToTarget - (angleToTarget % 5));
+		angle.z = static_cast<float>(angleToTarget - (angleToTarget % 5));
 	}
 }
 

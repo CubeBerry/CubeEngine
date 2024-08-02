@@ -63,7 +63,6 @@ public:
     }
 private:
 	GLuint vaoHandle{ 0 };
-	std::vector<GLVertexBuffer> buffers;
     GLIndexBuffer indexBuffer;
 
     GLsizei numVertices{ 0 };

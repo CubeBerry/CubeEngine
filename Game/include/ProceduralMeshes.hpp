@@ -1,18 +1,14 @@
-//Author: DOYEONG LEE
-//Second Author: JEYOON YU
+//Author: JEYOON YU
 //Project: CubeEngine
-//File: VerticesDemo.hpp
+//File: ProceduralMeshes.hpp
 #pragma once
 #include "GameState.hpp"
-#include "Object.hpp"
 
-#include <vector>
-
-class VerticesDemo : public GameState
+class ProceduralMeshes : public GameState
 {
 public:
-	VerticesDemo() = default;
-	~VerticesDemo() override {}
+	ProceduralMeshes() = default;
+	~ProceduralMeshes() override {}
 
 	void Init() override;
 	void Update(float dt) override;

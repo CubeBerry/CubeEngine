@@ -198,9 +198,12 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 {
 	switch (type)
 	{
-		//case GameLevel::VERTICESDEMO:
-		//	return "VERTICESDEMO";
-		//	break;
+	case GameLevel::PROCEDURALMESHES:
+		return "PROCEDURALMESHES";
+		break;
+	case GameLevel::VERTICES:
+		return "VERTICES";
+		break;
 	case GameLevel::POCKETBALL:
 		return "POCKETBALL";
 		break;

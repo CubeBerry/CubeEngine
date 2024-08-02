@@ -13,7 +13,6 @@
 #include "VKIndexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
-#include "Material.hpp"
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };
@@ -114,10 +113,10 @@ private:
 	VKImGuiManager* imguiManager;
 #endif
 
-	VKShader* vkTextureShader;
-	VKShader* vkLineShader;
-	VKPipeLine* vkTexurePipeline;
-	VKPipeLine* vkLinePipeline;
+	VKShader* vkShader2D;
+	VKPipeLine* vkPipeline2D;
+	VKShader* vkShader3D;
+	VKPipeLine* vkPipeline3D;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;
@@ -130,24 +129,34 @@ private:
 	VkFence* currentFence{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentVertexMaterialDescriptorSet{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
-
-	//--------------------Texture Render--------------------//
 public:
+	//--------------------Common--------------------//
+	void DeleteWithIndex(int id) override;
+
+	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
 	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
 
-	void DeleteWithIndex() override;
-
-	//std::vector<VKTexture*>* GetTextures() { return &textures; };
-	/*VKTexture* GetTexture(std::string name);*/
 	VKTexture* GetTexture(std::string name);
+
+	//--------------------3D Render--------------------//
+	void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) override;
 private:
+	//--------------------Common--------------------//
+	VKIndexBuffer* indexBuffer{ nullptr };
+
+	//--------------------2D Render--------------------//
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
-	VKVertexBuffer<Vertex>* texVertex{ nullptr };
-	VKIndexBuffer* texIndex { nullptr };
+	VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer{ nullptr };
 
-	VKUniformBuffer<VertexUniform>* uVertex{ nullptr };
-	VKUniformBuffer<FragmentUniform>* uFragment{ nullptr };
+	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
+	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
+
+	//--------------------3D Render--------------------//
+	VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer{ nullptr };
+
+	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
+	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 };
