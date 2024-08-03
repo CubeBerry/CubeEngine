@@ -172,7 +172,7 @@ void Camera::Reset()
 	up = { 0.0f, 1.0f, 0.0f };
 	right = { 1.0f, 0.0f, 0.0f };
 	back = { 0.0f, 0.0f, -1.0f };
-	cameraPosition = { 0.f,0.f,0.f };
+	cameraPosition = { 0.f,0.f,1.f };
 	cameraTarget = { 0.f,0.f,0.f };
 	SetZoom(1.f);
 	pitch = 00.f;
