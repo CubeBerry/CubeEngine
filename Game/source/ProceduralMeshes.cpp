@@ -114,6 +114,9 @@ void ProceduralMeshes::Restart()
 
 void ProceduralMeshes::End()
 {
+	isFill = true;
+	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
+
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
