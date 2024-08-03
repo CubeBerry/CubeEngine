@@ -53,6 +53,15 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
+	switch (pMode)
+	{
+	case PolygonType::FILL:
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		break;
+	case PolygonType::LINE:
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		break;
+	}
 	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 

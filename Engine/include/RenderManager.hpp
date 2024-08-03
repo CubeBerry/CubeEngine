@@ -19,6 +19,12 @@ enum class RenderType
 	ThreeDimension,
 };
 
+enum class PolygonType
+{
+	FILL,
+	LINE,
+};
+
 enum class MeshType
 {
 	PLANE,
@@ -37,6 +43,7 @@ public:
 	virtual void EndRender() = 0;
 	virtual void DeleteWithIndex(int id) = 0;
 	void SetRenderType(RenderType type) { rMode = type; };
+	void SetPolygonType(PolygonType type) { pMode = type; };
 	GraphicsMode GetGraphicsMode() { return gMode; };
 	RenderType GetRenderType() { return rMode; };
 
@@ -56,6 +63,7 @@ protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
 	RenderType rMode = RenderType::TwoDimension;
+	PolygonType pMode = PolygonType::FILL;
 	unsigned int quadCount{ 0 };
 	std::vector<uint16_t> indices;
 

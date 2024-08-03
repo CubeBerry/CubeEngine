@@ -32,16 +32,21 @@ void ProceduralMeshes::Update(float dt)
 	case MeshType::PLANE:
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, stacks, slices, { 1.0, 0.0, 0.0, 1.0 });
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, stacks, slices, { color[0], color[1], color[2], color[3] });
 		break;
 	case MeshType::CUBE:
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, stacks, slices, { 1.0, 0.0, 0.0, 1.0 });
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, stacks, slices, { color[0], color[1], color[2], color[3] });
 		break;
 	default:
 		break;
 	}
+
+	if (isFill)
+		Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
+	else
+		Engine::GetRenderManager()->SetPolygonType(PolygonType::LINE);
 }
 
 #ifdef _DEBUG
@@ -70,10 +75,10 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 	switch (currentMesh)
 	{
 	case MeshType::PLANE:
-		if (ImGui::SliderInt("stacks", &stacks, 2, 50))
+		if (ImGui::SliderInt("stacks", &stacks, 2, 30))
 		{
 		}
-		if (ImGui::SliderInt("slices", &slices, 2, 50))
+		if (ImGui::SliderInt("slices", &slices, 2, 30))
 		{
 		}
 		break;
@@ -86,6 +91,18 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		}
 		break;
 	}
+
+	if (ImGui::Button("GL_FILL", ImVec2(100, 0)))
+	{
+		isFill = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("GL_LINE", ImVec2(100, 0)))
+	{
+		isFill = false;
+	}
+
+	ImGui::ColorPicker4("Mesh Color", color);
 	ImGui::End();
 }
 #endif
