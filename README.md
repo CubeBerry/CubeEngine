@@ -24,6 +24,7 @@ All required APIs and Libraries are integrated in Project.
 3. [ImGui](https://github.com/ocornut/imgui) Integrated
 4. SoundManager with ImGui UI
 5. Basic 2D Game Engine Features
+6. 3D Plane, Cube Meshes
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/3b158449-7532-4848-8766-957e6d7c58ba)
@@ -32,7 +33,7 @@ All required APIs and Libraries are integrated in Project.
 
 ## Future Plans
 1. Linux Support
-2. Basic 3D Meshes
+2. Basic 3D Mesh Lighting
 3. C++ Code Optimization
 
 ## License
