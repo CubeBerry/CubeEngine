@@ -11,8 +11,9 @@ enum class BEUObjectStates
 	ATTACK = 4,
 	JUMPING = 8,
 	FALLING = 16,
-	ONGROUND = 32,
+	HIT = 32,
 	KNOCKBACK = 64,
+	LAYING = 128,
 };
 
 class BeatEmUpDemoSystem;
@@ -46,18 +47,22 @@ public:
 	bool IsStateOn(BEUObjectStates state_) { return state & static_cast<const int>(state_); }
 
 	//player
-	void SetIsAttackHit(bool state_) { isAttackHit = state_; }
+	void SetIsAttackHit(bool state_);
 	//player
 private:
 	void Jumping();
+	void KnockBack(float dt);
 
 	bool isInvincible = false;
 	bool canAttack = true;
 
 	float attackDelay = 0.f;
+	float layingDelay = 0.f;
+	float hitDelay = 0.f;
 	float invincibleDelay = 0.f;
 
-	int    state = 1;
+	int state = 1;
+	int combo = 0;
 
 	//player
 	BeatEmUpDemoSystem* beatEmUpDemoSystem = nullptr;
