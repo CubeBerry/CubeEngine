@@ -117,6 +117,7 @@ private:
 	VKPipeLine* vkPipeline2D;
 	VKShader* vkShader3D;
 	VKPipeLine* vkPipeline3D;
+	VKPipeLine* vkPipeline3DLine;
 	VKDescriptor* vkDescriptor;
 
 	uint32_t swapchainIndex;

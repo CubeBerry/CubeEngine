@@ -65,6 +65,7 @@ VKRenderManager::~VKRenderManager()
 	//Destroy Pipeline
 	delete vkPipeline2D;
 	delete vkPipeline3D;
+	delete vkPipeline3DLine;
 
 	//Destroy Descriptor
 	delete vkDescriptor;
@@ -300,6 +301,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::FILL);
+	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::LINE);
 
 #ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
@@ -1387,23 +1390,47 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	case RenderType::ThreeDimension:
 		if (vertex3DBuffer != nullptr)
 		{
-			//Bind Vertex Buffer
-			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
-			//Bind Index Buffer
-			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-			//Bind Pipeline
-			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
-			//Dynamic Viewport & Scissor
-			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-			//Bind Material DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-			//Bind Texture DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
-			//Change Primitive Topology
-			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-			//Draw
-			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			switch (pMode)
+			{
+			case PolygonType::FILL:
+				//Bind Vertex Buffer
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				//Bind Index Buffer
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+				//Bind Pipeline
+				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
+				//Dynamic Viewport & Scissor
+				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+				//Bind Material DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				//Bind Texture DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				//Change Primitive Topology
+				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+				//Draw
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+				break;
+			case PolygonType::LINE:
+				//Bind Vertex Buffer
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				//Bind Index Buffer
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+				//Bind Pipeline
+				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLine());
+				//Dynamic Viewport & Scissor
+				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+				//Bind Material DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				//Bind Texture DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				//Change Primitive Topology
+				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+				//Draw
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+				break;
+			}
 		}
 		break;
 	}
