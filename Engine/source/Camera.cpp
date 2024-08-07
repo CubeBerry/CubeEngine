@@ -55,20 +55,30 @@ void Camera::Update()
 		right = glm::normalize(glm::cross(direction, worldUp));
 		up = glm::normalize(glm::cross(right, back));
 
-		if (isCenterFollow == true)
-		{
-			view = glm::lookAt(cameraPosition, cameraCenter + back, up);
-		}
-		else
-		{
-			view = glm::lookAt(cameraPosition, cameraPosition + back, up);
-		}
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
+
+			if (isCenterFollow == true)
+			{
+				view = glm::lookAt(cameraPosition, cameraCenter + back, up);
+			}
+			else
+			{
+				view = glm::lookAt(cameraPosition, cameraPosition + back, up);
+			}
 			projection = glm::perspectiveRH_NO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
 		case GraphicsMode::VK:
+
+			if (isCenterFollow == true)
+			{
+				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, cameraCenter + back, up);
+			}
+			else
+			{
+				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
+			}
 			projection = glm::perspectiveRH_ZO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
 		}
@@ -88,6 +98,7 @@ void Camera::SetCenter(glm::vec3 pos, bool isCenterFollow_) noexcept
 		break;
 	case CameraType::ThreeDimension:
 		cameraCenter = pos;
+		view = glm::lookAt(cameraPosition, cameraCenter + back, up);
 		break;
 	}
 	isCenterFollow = isCenterFollow_;
