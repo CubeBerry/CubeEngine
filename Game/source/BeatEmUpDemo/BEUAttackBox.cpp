@@ -3,7 +3,8 @@
 //File: BEUAttackBox.cpp
 
 #include "BeatEmUpDemo/BEUAttackBox.hpp"
-#include "BeatEmUpDemo/BEUObject.hpp"
+#include "BeatEmUpDemo/BEUPlayer.hpp"
+#include "BeatEmUpDemo/BEUEnemy.hpp"
 
 #include "BasicComponents/Sprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
@@ -56,7 +57,7 @@ void BEUAttackBox::CollideObject(Object* obj)
 		case ObjectType::ENEMY:
 			if (GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
 			{
-				static_cast<BEUObject*>(parent)->SetIsAttackHit(true);
+				static_cast<BEUEnemy*>(parent)->SetIsAttackHit(true);
 				if (isDeleted == false)
 				{
 					isDeleted = true;
@@ -68,6 +69,20 @@ void BEUAttackBox::CollideObject(Object* obj)
 	}
 	else if (objectType == ObjectType::ENEMYBULLET)
 	{
+		switch (obj->GetObjectType())
+		{
+		case ObjectType::PLAYER:
+			if (GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
+			{
+				static_cast<BEUPlayer*>(parent)->SetIsAttackHit(true);
+				if (isDeleted == false)
+				{
+					isDeleted = true;
+					Engine::GetObjectManager().Destroy(GetId());
+				}
+			}
+			break;
+		}
 	}
 }
 

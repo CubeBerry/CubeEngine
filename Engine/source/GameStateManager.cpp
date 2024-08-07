@@ -210,6 +210,9 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 	case GameLevel::PLATFORMDEMO:
 		return "PLATFORMDEMO";
 		break;
+	case GameLevel::BEATEMUPDEMO:
+		return "BEATEMUPDEMO";
+		break;
 	}
 	return "NONE";
 }

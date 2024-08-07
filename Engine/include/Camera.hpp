@@ -38,12 +38,12 @@ public:
 	void Reset();
 
 	//2D, 3D
-	void    SetCenter(glm::vec3 centerPosition) noexcept; 
+	void    SetCenter(glm::vec3 pos, bool isCenterFollow_ = false) noexcept;
 	void    SetCameraPosition(glm::vec3 cameraPosition_) noexcept; 
 	void    SetViewSize(int width, int height) noexcept;
 	void    SetZoom(float amount) noexcept; 
 
-	glm::vec3 GetCenter() const noexcept { return cameraTarget; } 
+	glm::vec3 GetCenter() const noexcept { return cameraCenter; }
 	glm::vec3 GetCameraPosition() const noexcept { return cameraPosition; } 
 	glm::vec3 GetUp() const noexcept { return up; } 
 	glm::vec3 GetRight() const noexcept { return right; } 
@@ -52,6 +52,10 @@ public:
 	glm::mat4 GetProjectionMatrix() { return projection; }
 	glm::vec2 GetViewSize() { return cameraViewSize; }
 	float	  GetZoom() { return zoom; }
+	float	  GetNear() { return nearClip; }
+	float	  GetFar() { return farClip; }
+	float	  GetPitch() { return pitch; }
+	float	  GetYaw() { return yaw; }
 
 	void MoveCameraPos(CameraMoveDir dir, float speed); 
  
@@ -68,6 +72,8 @@ public:
 	void			SetCameraType(CameraType type) { cameraType = type; }
 	void            SetNear(float amount) noexcept { nearClip = amount; }
 	void            SetFar(float amount) noexcept { farClip = amount; }
+	void            SetPitch(float amount) noexcept { pitch = amount; }
+	void            SetYaw(float amount) noexcept { yaw = amount; }
 	void            SetCameraSensitivity(float amount) noexcept { cameraSensitivity = amount; }
 	void UpdaetCameraDirectrion(glm::vec2 dir);
 
@@ -88,7 +94,7 @@ private:
 	CameraCenterMode cameraCenterMode = RightOriginCenter; 
 
 	//3D
-	glm::vec3 cameraTarget{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 cameraCenter{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 worldUp{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 back{ 0.0f, 0.0f, -1.0f };
 
@@ -98,4 +104,6 @@ private:
 	float pitch = 0.0f;
 	float yaw = -90.0f;
 	float cameraSensitivity = 1.f;
+
+	bool isCenterFollow = false;
 };

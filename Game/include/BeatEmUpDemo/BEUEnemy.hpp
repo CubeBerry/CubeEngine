@@ -1,29 +1,18 @@
 //Author: DOYEONG LEE
 //Project: CubeEngine
-//File: BEUObject.hpp
+//File: BEUEnemy.hpp
 #pragma once
 #include "Object.hpp"
-
-enum class BEUObjectStates
-{
-	DIRECTION = 1, // off : LEFT, on : RIGHT
-	MOVE = 2,
-	ATTACK = 4,
-	JUMPING = 8,
-	FALLING = 16,
-	HIT = 32,
-	KNOCKBACK = 64,
-	LAYING = 128,
-};
+#include "BeatEmUpDemo/BEUObjectState.hpp"
 
 class BeatEmUpDemoSystem;
-class BEUObject : public Object
+class BEUEnemy : public Object
 {
 public:
-	BEUObject() = default;
-	BEUObject(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType objectType);
-	BEUObject(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDemoSystem* sys);
-	~BEUObject() { End(); }
+	BEUEnemy() = default;
+	BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType objectType);
+	BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDemoSystem* sys);
+	~BEUEnemy() { End(); }
 
 	void Init() override;
 	void Update(float dt) override;
@@ -46,15 +35,15 @@ public:
 	}
 	bool IsStateOn(BEUObjectStates state_) { return state & static_cast<const int>(state_); }
 
-	//player
 	void SetIsAttackHit(bool state_);
-	//player
 private:
+	void Moving(float dt);
+	void Attack(float dt);
 	void Jumping();
 	void KnockBack(float dt);
 
 	bool isInvincible = false;
-	bool canAttack = true;
+	bool canAttack = false;
 
 	float attackDelay = 0.f;
 	float layingDelay = 0.f;
@@ -64,9 +53,6 @@ private:
 	int state = 1;
 	int combo = 0;
 
-	//player
 	BeatEmUpDemoSystem* beatEmUpDemoSystem = nullptr;
 	bool isAttackHit = false;
-	void Control (float dt);
-	//player
 };
