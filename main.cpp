@@ -40,7 +40,7 @@ int main(void)
     engine.SetFPS(FrameRate::FPS_60);
 
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
-    //engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
+    engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
     engine.GetGameStateManager().AddLevel(new ProceduralMeshes);
     engine.GetGameStateManager().AddLevel(new VerticesDemo);

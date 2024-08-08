@@ -28,11 +28,11 @@ BEUEnemy::BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDe
 	GetComponent<Sprite>()->SetColor({ 1.f,0.f,0.f,1.f });
 
 	AddComponent<Physics2D>();
-	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
-	GetComponent<Physics2D>()->SetMaxVelocity({ 40.f,3.f });
-	GetComponent<Physics2D>()->SetGravity(10.f);
-	GetComponent<Physics2D>()->SetFriction(0.9f);
-	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 3.f,  size_.y / 2.f });
+	GetComponent<Physics2D>()->SetMinVelocity({ 0.0f, 0.f });
+	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,0.5f });
+	GetComponent<Physics2D>()->SetGravity(2.0f);
+	GetComponent<Physics2D>()->SetFriction(1.f);
+	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 4.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	beatEmUpDemoSystem = sys;
 	SetStateOn(BEUObjectStates::DIRECTION);
@@ -50,6 +50,20 @@ void BEUEnemy::Update(float dt)
 	if (IsStateOn(BEUObjectStates::KNOCKBACK))
 	{
 		KnockBack(dt);
+	}
+	else if (hp <= 0.f)
+	{
+		isInvincible = true;
+		SetStateOn(BEUObjectStates::KNOCKBACK);
+		GetComponent<Physics2D>()->SetVelocityY(0.3f);
+		if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
+		{
+			GetComponent<Physics2D>()->AddForceX(-10.f);
+		}
+		else //Left
+		{
+			GetComponent<Physics2D>()->AddForceX(10.f);
+		}
 	}
 	else
 	{
@@ -104,20 +118,11 @@ void BEUEnemy::Update(float dt)
 			}
 		}
 	}
-
-	if (isInvincible == true)
-	{
-		invincibleDelay += dt;
-		if (invincibleDelay > 0.75f)
-		{
-			isInvincible = false;
-			invincibleDelay = 0.f;
-		}
-	}
 }
 
 void BEUEnemy::End()
 {
+	beatEmUpDemoSystem->DeleteEnemy(this);
 	beatEmUpDemoSystem = nullptr;
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
@@ -134,6 +139,8 @@ void BEUEnemy::CollideObject(Object* obj)
 	case ObjectType::BULLET:
 		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
 		{
+			Hit(static_cast<BEUAttackBox*>(obj)->GetDamage());
+			beatEmUpDemoSystem->ShowEnemyHpBarOn(hp, maxHp);
 			canAttack = false;
 			SetStateOff(BEUObjectStates::ATTACK);
 			if (IsStateOn(BEUObjectStates::DIRECTION) == true && obj->GetPosition().x <= position.x)
@@ -151,51 +158,55 @@ void BEUEnemy::CollideObject(Object* obj)
 			switch (static_cast<BEUAttackBox*>(obj)->GetAttackBoxType())
 			{
 			case AttackBoxType::NORMAL:
-				SetStateOn(BEUObjectStates::HIT);
+				Engine::GetSoundManager().Play("hitNormal.wav", 1);
+				SetStateOn(BEUObjectStates::HIT);;
 				if (IsStateOn(BEUObjectStates::FALLING) == true || IsStateOn(BEUObjectStates::JUMPING) == true)
 				{
+					isInvincible = true;
 					SetStateOn(BEUObjectStates::KNOCKBACK);
-					GetComponent<Physics2D>()->SetVelocityY(1.1f);
+					GetComponent<Physics2D>()->SetVelocityY(0.3f);
 					if (IsStateOn(BEUObjectStates::MOVE) == true)
 					{
 						if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 						{
-							GetComponent<Physics2D>()->AddForceX(-30.f);
+							GetComponent<Physics2D>()->AddForceX(-10.f);
 						}
 						else //Left
 						{
-							GetComponent<Physics2D>()->AddForceX(30.f);
+							GetComponent<Physics2D>()->AddForceX(10.f);
 						}
 					}
 				}
 				//Engine::GetObjectManager().Destroy(obj->GetId());
 				break;
 			case AttackBoxType::FINISH:
+				Engine::GetSoundManager().Play("hitFinish.wav", 1);
+				isInvincible = true;
 				SetStateOn(BEUObjectStates::HIT);
 				SetStateOn(BEUObjectStates::KNOCKBACK);
 				if (IsStateOn(BEUObjectStates::FALLING) == true || IsStateOn(BEUObjectStates::JUMPING) == true)
 				{
-					GetComponent<Physics2D>()->SetVelocityY(1.1f);
+					GetComponent<Physics2D>()->SetVelocityY(0.3f);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 					{
-						GetComponent<Physics2D>()->AddForceX(-30.f);
+						GetComponent<Physics2D>()->AddForceX(-10.f);
 					}
 					else //Left
 					{
-						GetComponent<Physics2D>()->AddForceX(30.f);
+						GetComponent<Physics2D>()->AddForceX(10.f);
 					}
 				}
 				else
 				{
 					Object::SetYPosition(Object::GetPosition().y + 1.f);
-					GetComponent<Physics2D>()->SetVelocityY(1.1f);
+					GetComponent<Physics2D>()->SetVelocityY(0.3f);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 					{
-						GetComponent<Physics2D>()->AddForceX(-30.f);
+						GetComponent<Physics2D>()->AddForceX(-10.f);
 					}
 					else //Left
 					{
-						GetComponent<Physics2D>()->AddForceX(30.f);
+						GetComponent<Physics2D>()->AddForceX(10.f);
 					}
 				}
 				break;
@@ -211,8 +222,16 @@ void BEUEnemy::SetIsAttackHit(bool state_)
 	if (state_ == true)
 	{
 		attackDelay = 0.f;
-		std::cout << combo << std::endl;
 		combo++;
+	}
+}
+
+void BEUEnemy::Hit(float damage)
+{
+	hp -= damage;
+	if (hp <= 0.f)
+	{
+		hp = 0.f;
 	}
 }
 
@@ -231,21 +250,25 @@ void BEUEnemy::Moving(float dt)
 
 			if (IsStateOn(BEUObjectStates::DIRECTION) == false)
 			{
-				if (Object::position.x > playerPos.x && Object::position.x < playerPos.x + 1.5f)
+				if (Object::position.x > playerPos.x && Object::position.x < playerPos.x + 2.0f)
 				{
 					SetXPosition(GetPosition().x + 5.f * dt);
 				}
 				else
+				{
 					SetXPosition(GetPosition().x - 5.f * dt);
+				}
 			}
 			else
 			{
-				if (Object::position.x < playerPos.x && Object::position.x > playerPos.x - 1.5f)
+				if (Object::position.x < playerPos.x && Object::position.x > playerPos.x - 2.0f)
 				{
 					SetXPosition(GetPosition().x - 5.f * dt);
 				}
 				else
+				{
 					SetXPosition(GetPosition().x + 5.f * dt);
+				}
 			}
 
 			if (Object::position.z > playerPos.z)
@@ -320,6 +343,7 @@ void BEUEnemy::Attack(float dt)
 				attackDelay += dt;
 				if (attackDelay > 0.75f)
 				{
+					Engine::GetSoundManager().Play("punch.wav", 0);
 					attackDelay = 0.f;
 					GetComponent<Sprite>()->PlayAnimation(3);
 					canAttack = false;
@@ -337,6 +361,7 @@ void BEUEnemy::Attack(float dt)
 				}
 				break;
 			case 1:
+				Engine::GetSoundManager().Play("punch.wav", 0);
 				GetComponent<Sprite>()->PlayAnimation(3);
 				canAttack = false;
 				SetStateOn(BEUObjectStates::ATTACK);
@@ -352,6 +377,7 @@ void BEUEnemy::Attack(float dt)
 				}
 				break;
 			case 2:
+				Engine::GetSoundManager().Play("punch.wav", 0);
 				GetComponent<Sprite>()->PlayAnimation(5);
 				canAttack = false;
 				SetStateOn(BEUObjectStates::ATTACK);
@@ -408,31 +434,25 @@ void BEUEnemy::Jumping()
 			SetStateOff(BEUObjectStates::FALLING);
 		}
 	}
-	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
-		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
+	else if (GetPosition().y <= 0.f)
 	{
 		if (IsStateOn(BEUObjectStates::FALLING) == true)
 		{
 			SetStateOff(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 			SetYPosition(0.f);
-			if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
-				GetComponent<Physics2D>()->GetVelocity().x > -0.5f)
 			{
-				if (IsStateOn(BEUObjectStates::MOVE) == true)
+				if (canAttack == false)
 				{
-					GetComponent<Sprite>()->PlayAnimation(1);
+					canAttack = true;
+					SetStateOff(BEUObjectStates::ATTACK);
 				}
-				else
-				{
-					GetComponent<Sprite>()->PlayAnimation(0);
-				}
-			}
-			else
-			{
+
 				GetComponent<Sprite>()->PlayAnimation(0);
 			}
 		}
+		GetComponent<Physics2D>()->SetVelocityX(0.f);
+		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 	{
@@ -447,11 +467,6 @@ void BEUEnemy::Jumping()
 			SetStateOff(BEUObjectStates::JUMPING);
 		}
 	}
-
-	if (GetPosition().y <= 0.f)
-	{
-		GetComponent<Physics2D>()->SetVelocityY(0.f);
-	}
 }
 
 void BEUEnemy::KnockBack(float dt)
@@ -465,36 +480,54 @@ void BEUEnemy::KnockBack(float dt)
 			SetStateOff(BEUObjectStates::FALLING);
 		}
 	}
-	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
-		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
+	else if (GetPosition().y <= 0.f)
 	{
 		if (IsStateOn(BEUObjectStates::FALLING) == true)
 		{
+			Engine::GetSoundManager().Play("knockdown.wav", 1);
 			SetStateOff(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 			SetStateOn(BEUObjectStates::LAYING);
 			GetComponent<Sprite>()->PlayAnimation(9);
 
 			SetYPosition(0.f);
-			if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
-				GetComponent<Physics2D>()->GetVelocity().x > -0.5f)
-			{
-
-			}
 		}
 		if (IsStateOn(BEUObjectStates::LAYING) == true)
 		{
 			layingDelay += dt;
+			if (hp <= 0.f)
+			{
+				glm::vec4 color = GetComponent<Sprite>()->GetColor();
+				if (color.w == 1.f)
+				{
+					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 0.f });
+				}
+				else
+				{
+					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 1.f });
+				}
+			}
 			if (layingDelay > 1.25f)
 			{
-				layingDelay = 0.f;
-				hitDelay = 0.f;
-				SetStateOff(BEUObjectStates::HIT);
-				SetStateOff(BEUObjectStates::KNOCKBACK);
-				SetStateOff(BEUObjectStates::LAYING);
-				GetComponent<Sprite>()->PlayAnimation(0);
+				if (hp > 0.f)
+				{
+					layingDelay = 0.f;
+					hitDelay = 0.f;
+					SetStateOff(BEUObjectStates::HIT);
+					SetStateOff(BEUObjectStates::KNOCKBACK);
+					SetStateOff(BEUObjectStates::LAYING);
+					SetStateOff(BEUObjectStates::ATTACK);
+					GetComponent<Sprite>()->PlayAnimation(0);
+					isInvincible = false;
+				}
+				else
+				{
+					Engine::GetObjectManager().Destroy(GetId());
+				}
 			}
 		}
+		GetComponent<Physics2D>()->SetVelocityX(0.f);
+		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 	{
@@ -504,10 +537,5 @@ void BEUEnemy::KnockBack(float dt)
 			SetStateOn(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 		}
-	}
-
-	if (GetPosition().y <= 0.f)
-	{
-		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
 }

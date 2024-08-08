@@ -19,7 +19,7 @@ BEUAttackBox::BEUAttackBox(glm::vec3 offset_, glm::vec3 size_, std::string name,
 	GetComponent<Physics2D>()->SetGhostCollision(true);
 
 	AddComponent<Sprite>();
-	GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.f });
 	parent = parent_;
 	lifeTime = lifeTime_;
 	offset = offset_;
@@ -55,11 +55,22 @@ void BEUAttackBox::CollideObject(Object* obj)
 		switch (obj->GetObjectType())
 		{
 		case ObjectType::ENEMY:
-			if (GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
+			if (static_cast<BEUPlayer*>(obj)->GetInvincibleState() == false
+				&& GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
 			{
-				static_cast<BEUEnemy*>(parent)->SetIsAttackHit(true);
 				if (isDeleted == false)
 				{
+					if (Object::position.x < obj->GetPosition().x)
+					{
+						Engine::GetParticleManager().AddSingleParticle({ Object::position.x + 0.5f, Object::position.y, Object::position.z }, { 1.f,1.f,0.5f },
+							{ 0.f,0.f,0.f }, 0.f, 10.f, { 1.f,1.f,1.f,1.f }, ParticleType::ANIMESPRI, "../Game/assets/BeatEmUpDemo/hitEffect.spt");
+					}
+					else
+					{
+						Engine::GetParticleManager().AddSingleParticle({ Object::position.x - 0.5f, Object::position.y, Object::position.z }, { 1.f,1.f,0.5f },
+							{ 0.f,0.f,0.f }, 0.f, 10.f, { 1.f,1.f,1.f,1.f }, ParticleType::ANIMESPRI, "../Game/assets/BeatEmUpDemo/hitEffect.spt");
+					}
+					static_cast<BEUPlayer*>(parent)->SetIsAttackHit(true);
 					isDeleted = true;
 					Engine::GetObjectManager().Destroy(GetId());
 				}
@@ -72,11 +83,23 @@ void BEUAttackBox::CollideObject(Object* obj)
 		switch (obj->GetObjectType())
 		{
 		case ObjectType::PLAYER:
-			if (GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
+			if (static_cast<BEUEnemy*>(obj)->GetInvincibleState() == false
+				&& GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
 			{
-				static_cast<BEUPlayer*>(parent)->SetIsAttackHit(true);
 				if (isDeleted == false)
 				{
+					if (Object::position.x < obj->GetPosition().x)
+					{
+						Engine::GetParticleManager().AddSingleParticle({ Object::position.x + 0.5f, Object::position.y, Object::position.z }, { 1.f,1.f,0.5f },
+							{ 0.f,0.f,0.f }, 0.f, 10.f, { 1.f,1.f,1.f,1.f }, ParticleType::ANIMESPRI, "../Game/assets/BeatEmUpDemo/hitEffect.spt");
+						static_cast<BEUEnemy*>(parent)->SetIsAttackHit(true);
+					}
+					else
+					{
+						Engine::GetParticleManager().AddSingleParticle({ Object::position.x - 0.5f, Object::position.y, Object::position.z }, { 1.f,1.f,0.5f },
+							{ 0.f,0.f,0.f }, 0.f, 10.f, { 1.f,1.f,1.f,1.f }, ParticleType::ANIMESPRI, "../Game/assets/BeatEmUpDemo/hitEffect.spt");
+					}
+					static_cast<BEUEnemy*>(parent)->SetIsAttackHit(true);
 					isDeleted = true;
 					Engine::GetObjectManager().Destroy(GetId());
 				}
@@ -88,7 +111,7 @@ void BEUAttackBox::CollideObject(Object* obj)
 
 void BEUAttackBox::MakeHitParticle()
 {
-	////rand() % (¸¶Áö¸· °ª - ½ÃÀÛ °ª + 1) + ½ÃÀÛ °ª
+	////rand() % (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ + 1) + ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 	//int amount = rand() % (10 - 5 + 1) + 5;
 	//for (int i = 0; i < amount; i++)
 	//{

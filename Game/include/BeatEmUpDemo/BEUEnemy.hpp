@@ -36,6 +36,14 @@ public:
 	bool IsStateOn(BEUObjectStates state_) { return state & static_cast<const int>(state_); }
 
 	void SetIsAttackHit(bool state_);
+
+	void SetHp(float amount) { hp = amount; }
+	void SetMaxHp(float amount) { maxHp = amount; }
+
+	float GetHp() { return hp; }
+	float GetMaxHp() { return maxHp; }
+
+	void Hit(float damage);
 private:
 	void Moving(float dt);
 	void Attack(float dt);
@@ -55,4 +63,7 @@ private:
 
 	BeatEmUpDemoSystem* beatEmUpDemoSystem = nullptr;
 	bool isAttackHit = false;
+
+	float hp = 10;
+	float maxHp = 10;
 };

@@ -391,6 +391,11 @@ void Sprite::SetColor(glm::vec4 color)
 	Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color = color;
 }
 
+glm::vec4 Sprite::GetColor()
+{
+	return Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color;
+}
+
 glm::vec2 Sprite::GetFrameTexel(int frameNum) const
 {
 	if (frameNum < 0 || frameTexel.size() <= frameNum)

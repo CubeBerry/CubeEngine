@@ -26,14 +26,15 @@ void Physics2D::Init()
 void Physics2D::Update(float dt)
 {
 	acceleration.x = force.x / mass;
-	acceleration.y = force.y / mass;
-
 	velocity.x += acceleration.x * dt;
-	velocity.y += acceleration.y * dt;
-
 	velocity.x *= friction;
-	velocity.y *= friction;
 
+	acceleration.y = force.y / mass;
+	velocity.y += acceleration.y * dt;
+	if (isGravityOn == false)
+	{
+		velocity.y *= friction;
+	}
 	force = { 0.f, 0.f };
 
 	if (std::abs(velocity.x) < velocityMin.x)
@@ -93,14 +94,16 @@ void Physics2D::Update(float dt)
 
 void Physics2D::UpdateForParticle(float dt, glm::vec3& pos)
 {
-	acceleration.x = force.x / mass * dt;
-	acceleration.y = force.y / mass * dt;
-
-	velocity.x += acceleration.x;
-	velocity.y += acceleration.y;
-
+	acceleration.x = force.x / mass;
+	velocity.x += acceleration.x * dt;
 	velocity.x *= friction;
-	velocity.y *= friction;
+
+	acceleration.y = force.y / mass;
+	velocity.y += acceleration.y * dt;
+	if (isGravityOn == false)
+	{
+		velocity.y *= friction;
+	}
 
 	force = { 0.f, 0.f };
 
@@ -171,13 +174,13 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 		float max1 = -INFINITY;
 		float max2 = -INFINITY;
 
-		// Ã¹ ¹øÂ° ´Ù°¢Çü È¸Àü
+		// Ã¹ ï¿½ï¿½Â° ï¿½Ù°ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
 		for (const glm::vec2 point : collidePolygon)
 		{
 			rotatedPoints1.push_back(RotatePoint(obj->GetPosition(), point, DegreesToRadians(obj->GetRotate())));
 		}
 
-		// µÎ ¹øÂ° ´Ù°¢Çü È¸Àü
+		// ï¿½ï¿½ ï¿½ï¿½Â° ï¿½Ù°ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
 		for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
 			rotatedPoints2.push_back(RotatePoint(obj2->GetPosition(), point, DegreesToRadians(obj2->GetRotate())));
@@ -187,11 +190,11 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ¼öÁ÷ÀÎ Ãà
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // Ãæµ¹ÀÌ ¾øÀ½
+				return false; // ï¿½æµ¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			}
 			if (axisDepth < depth)
 			{
@@ -204,11 +207,11 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ¼öÁ÷ÀÎ Ãà
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // Ãæµ¹ÀÌ ¾øÀ½
+				return false; // ï¿½æµ¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			}
 			if (axisDepth < depth)
 			{
@@ -249,14 +252,14 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 			}
 			CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), normal, &depth);
 		}
-		return true; // ¸ðµç Ãà¿¡¼­ °ãÄ§ÀÌ ¾øÀ½
+		return true; // ï¿½ï¿½ï¿½ ï¿½à¿¡ï¿½ï¿½ ï¿½ï¿½Ä§ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	}
 	return false;
 }
 
 bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 {
-	// µÎ ¿øÀÇ Áß½É »çÀÌÀÇ °Å¸® °è»ê
+	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½
 	float distanceX = obj->GetPosition().x - obj2->GetPosition().x;
 	float distanceY = obj->GetPosition().y - obj2->GetPosition().y;
 	float distance = std::sqrt(distanceX * distanceX + distanceY * distanceY);
@@ -264,20 +267,20 @@ bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 	float depth = INFINITY;
 	glm::vec2 normal = { 0.f, 0.f };
 
-	// µÎ ¿øÀÇ ¹ÝÁö¸§ÀÇ ÇÕ°ú °Å¸® ºñ±³
+	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Õ°ï¿½ ï¿½Å¸ï¿½ ï¿½ï¿½
 	if (distance <= obj->GetComponent<Physics2D>()->GetCircleCollideRadius() + obj2->GetComponent<Physics2D>()->GetCircleCollideRadius())
 	{
-		// µÎ ¿øÀÇ Áß½É »çÀÌÀÇ ´ÜÀ§ º¤ÅÍ °è»ê
+		// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 		float unitX = distanceX / distance;
 		float unitY = distanceY / distance;
 
-		// °ãÄ£ ¾ç °è»ê
+		// ï¿½ï¿½Ä£ ï¿½ï¿½ ï¿½ï¿½ï¿½
 		float overlap = (obj->GetComponent<Physics2D>()->GetCircleCollideRadius() + obj2->GetComponent<Physics2D>()->GetCircleCollideRadius() - distance) / 2.0f;
 
 		normal = normalize(obj2->GetPosition() - obj->GetPosition());
 		depth = overlap - distance;
 
-		// °¢ ¿øÀÇ À§Ä¡ Á¶Á¤
+		// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
 		if (obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
 			obj2->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
 		{
@@ -304,9 +307,9 @@ bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 			}
 			CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), -normal, &depth);
 		}
-		return true; // Ãæµ¹ ¹ß»ý
+		return true; // ï¿½æµ¹ ï¿½ß»ï¿½
 	}
-	return false; // Ãæµ¹ ¾øÀ½
+	return false; // ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½
 }
 
 bool Physics2D::CollisionPC(Object* poly, Object* cir)
@@ -333,11 +336,11 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir)
 	{
 		float axisDepth = 0.f;
 		glm::vec2 edge = rotatedPoints[(i + 1) % rotatedPoints.size()] - rotatedPoints[i];
-		glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ¼öÁ÷ÀÎ Ãà
+		glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
-			return false; // Ãæµ¹ÀÌ ¾øÀ½
+			return false; // ï¿½æµ¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		}
 		if (axisDepth < depth)
 		{
@@ -353,7 +356,7 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir)
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
-			return false; // Ãæµ¹ÀÌ ¾øÀ½
+			return false; // ï¿½æµ¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		}
 		if (axisDepth < depth)
 		{
@@ -412,13 +415,13 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 		float max1 = -INFINITY;
 		float max2 = -INFINITY;
 
-		// Ã¹ ¹øÂ° ´Ù°¢Çü È¸Àü
+		// Ã¹ ï¿½ï¿½Â° ï¿½Ù°ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
 		for (const glm::vec2 point : obj->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
 			rotatedPoints1.push_back(RotatePoint(obj->GetPosition(), point, DegreesToRadians(obj->GetRotate())));
 		}
 
-		// µÎ ¹øÂ° ´Ù°¢Çü È¸Àü
+		// ï¿½ï¿½ ï¿½ï¿½Â° ï¿½Ù°ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
 		for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
 			rotatedPoints2.push_back(RotatePoint(obj2->GetPosition(), point, DegreesToRadians(obj2->GetRotate())));
@@ -428,11 +431,11 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ¼öÁ÷ÀÎ Ãà
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // Ãæµ¹ÀÌ ¾øÀ½
+				return false; // ï¿½æµ¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			}
 			if (axisDepth < depth)
 			{
@@ -445,11 +448,11 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ¼öÁ÷ÀÎ Ãà
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // Ãæµ¹ÀÌ ¾øÀ½
+				return false; // ï¿½æµ¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			}
 			if (axisDepth < depth)
 			{
@@ -464,7 +467,7 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 			normal = -normal;
 		}
 
-		return true; // ¸ðµç Ãà¿¡¼­ °ãÄ§ÀÌ ¾øÀ½
+		return true; // ï¿½ï¿½ï¿½ ï¿½à¿¡ï¿½ï¿½ ï¿½ï¿½Ä§ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	}
 	return false;
 }
@@ -564,7 +567,7 @@ glm::vec2 Physics2D::FindClosestPointOnSegment(const glm::vec2& circleCenter, st
 }
 
 float Physics2D::calculatePolygonRadius(const std::vector<glm::vec2>& vertices)
-{   // ´Ù°¢ÇüÀÇ Áß½É °è»ê
+{   // ï¿½Ù°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ ï¿½ï¿½ï¿½
 	float centerX = 0.0f;
 	float centerY = 0.0f;
 	for (const glm::vec2& vertex : vertices) {
@@ -574,7 +577,7 @@ float Physics2D::calculatePolygonRadius(const std::vector<glm::vec2>& vertices)
 	centerX /= vertices.size();
 	centerY /= vertices.size();
 
-	// °¡Àå ¸Õ °Å¸® Ã£±â
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Å¸ï¿½ Ã£ï¿½ï¿½
 	float maxDistance = 0.0f;
 	for (const glm::vec2& vertex : vertices) {
 		float distance = std::sqrt((vertex.x - centerX) * (vertex.x - centerX) + (vertex.y - centerY) * (vertex.y - centerY));

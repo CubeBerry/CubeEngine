@@ -64,7 +64,7 @@ public:
 	void AddForceY(float amount) { force.y = amount; }
 
 	void SetFriction(float f) { friction = f; }
-	void SetGravity(float g) { gravity = g; }
+	void SetGravity(float g, bool isGravityOn_ = true) { gravity = g; isGravityOn = isGravityOn_; }
 	void SetMass(float amount) { mass = amount; }
 	void SetRestitution(float amount) { restitution = amount; }
 	void SetBodyType(BodyType type) { bodyType = type; };
@@ -126,6 +126,7 @@ private:
 	CollideType collideType = CollideType::NONE;
 	BodyType bodyType = BodyType::RIGID;
 	bool isGhostCollision = false;
+	bool isGravityOn = false;
 #ifdef _DEBUG
 	void AddPoint(glm::vec2 pos);
 	std::vector<Point> points;

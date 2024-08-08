@@ -26,11 +26,11 @@ BEUPlayer::BEUPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUp
 	GetComponent<Sprite>()->PlayAnimation(0);
 
 	AddComponent<Physics2D>();
-	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
-	GetComponent<Physics2D>()->SetMaxVelocity({ 40.f,3.f });
-	GetComponent<Physics2D>()->SetGravity(10.f);
-	GetComponent<Physics2D>()->SetFriction(0.9f);
-	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 3.f,  size_.y / 2.f });
+	GetComponent<Physics2D>()->SetMinVelocity({ 0.0f, 0.f });
+	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,0.5f });
+	GetComponent<Physics2D>()->SetGravity(2.0f);
+	GetComponent<Physics2D>()->SetFriction(1.f);
+	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 4.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	beatEmUpDemoSystem = sys;
 }
@@ -46,8 +46,21 @@ void BEUPlayer::Update(float dt)
 	GetComponent<Physics2D>()->Gravity(dt);
 	if (IsStateOn(BEUObjectStates::KNOCKBACK))
 	{
-		std::cout << "! " << std::endl;
 		KnockBack(dt);
+	}
+	else if (beatEmUpDemoSystem->GetHp() <= 0.f)
+	{
+		isInvincible = true;
+		SetStateOn(BEUObjectStates::KNOCKBACK);
+		GetComponent<Physics2D>()->SetVelocityY(0.3f);
+		if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
+		{
+			GetComponent<Physics2D>()->AddForceX(-10.f);
+		}
+		else //Left
+		{
+			GetComponent<Physics2D>()->AddForceX(10.f);
+		}
 	}
 	else
 	{
@@ -83,7 +96,7 @@ void BEUPlayer::Update(float dt)
 	if (isAttackHit == true)
 	{
 		attackDelay += dt;
-		if (attackDelay > 0.4)
+		if (attackDelay > 0.5f)
 		{
 			combo = 0;
 			attackDelay = 0.f;
@@ -99,6 +112,15 @@ void BEUPlayer::Update(float dt)
 			isInvincible = false;
 			invincibleDelay = 0.f;
 		}
+	}
+	glm::vec3 cameraPos = Engine::GetCameraManager().GetCameraPosition();
+	if(position.x < cameraPos.x -11.f)
+	{
+		position.x = -11.f;
+	}
+	else if (position.x > cameraPos.x + 11.f)
+	{
+		position.x = 11.f;
 	}
 }
 
@@ -120,6 +142,7 @@ void BEUPlayer::CollideObject(Object* obj)
 	case ObjectType::ENEMYBULLET:
 		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
 		{
+			beatEmUpDemoSystem->HpDecrease(static_cast<BEUAttackBox*>(obj)->GetDamage());
 			if (IsStateOn(BEUObjectStates::DIRECTION) == true && obj->GetPosition().x <= position.x)
 			{
 				SetStateOff(BEUObjectStates::DIRECTION);
@@ -135,51 +158,55 @@ void BEUPlayer::CollideObject(Object* obj)
 			switch (static_cast<BEUAttackBox*>(obj)->GetAttackBoxType())
 			{
 			case AttackBoxType::NORMAL:
+				Engine::GetSoundManager().Play("hitNormal.wav", 0);
 				SetStateOn(BEUObjectStates::HIT);
 				if (IsStateOn(BEUObjectStates::FALLING) == true || IsStateOn(BEUObjectStates::JUMPING) == true)
 				{
+					isInvincible = true;
 					SetStateOn(BEUObjectStates::KNOCKBACK);
-					GetComponent<Physics2D>()->SetVelocityY(1.1f);
+					GetComponent<Physics2D>()->SetVelocityY(0.3f);
 					if (IsStateOn(BEUObjectStates::MOVE) == true)
 					{
 						if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 						{
-							GetComponent<Physics2D>()->AddForceX(-30.f);
+							GetComponent<Physics2D>()->AddForceX(-10.f);
 						}
 						else //Left
 						{
-							GetComponent<Physics2D>()->AddForceX(30.f);
+							GetComponent<Physics2D>()->AddForceX(10.f);
 						}
 					}
 				}
 				//Engine::GetObjectManager().Destroy(obj->GetId());
 				break;
 			case AttackBoxType::FINISH:
+				Engine::GetSoundManager().Play("hitFinish.wav", 0);
+				isInvincible = true;
 				SetStateOn(BEUObjectStates::HIT);
 				SetStateOn(BEUObjectStates::KNOCKBACK);
 				if (IsStateOn(BEUObjectStates::FALLING) == true || IsStateOn(BEUObjectStates::JUMPING) == true)
 				{
-					GetComponent<Physics2D>()->SetVelocityY(1.1f);
+					GetComponent<Physics2D>()->SetVelocityY(0.75f);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 					{
-						GetComponent<Physics2D>()->AddForceX(-30.f);
+						GetComponent<Physics2D>()->AddForceX(-10.f);
 					}
 					else //Left
 					{
-						GetComponent<Physics2D>()->AddForceX(30.f);
+						GetComponent<Physics2D>()->AddForceX(10.f);
 					}
 				}
 				else
 				{
 					Object::SetYPosition(Object::GetPosition().y + 1.f);
-					GetComponent<Physics2D>()->SetVelocityY(1.1f);
+					GetComponent<Physics2D>()->SetVelocityY(0.3f);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 					{
-						GetComponent<Physics2D>()->AddForceX(-30.f);
+						GetComponent<Physics2D>()->AddForceX(-10.f);
 					}
 					else //Left
 					{
-						GetComponent<Physics2D>()->AddForceX(30.f);
+						GetComponent<Physics2D>()->AddForceX(10.f);
 					}
 				}
 				//Engine::GetObjectManager().Destroy(obj->GetId());
@@ -210,6 +237,10 @@ void BEUPlayer::Control(float dt)
 			GetComponent<Sprite>()->PlayAnimation(1);
 		}
 		SetZPosition(GetPosition().z + 10.f * dt);
+		if (GetPosition().z > 5.f)
+		{
+			SetZPosition(GetPosition().z - 10.f * dt);
+		}
 	}
 	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::UP)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
@@ -229,10 +260,13 @@ void BEUPlayer::Control(float dt)
 			GetComponent<Sprite>()->PlayAnimation(1);
 		}
 		SetZPosition(GetPosition().z - 10.f * dt);
+		if (GetPosition().z < -30.f)
+		{
+			SetZPosition(GetPosition().z + 10.f * dt);
+		}
 	}
 	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::LEFT) && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
-		std::cout << "LeftOFF" << std::endl;
 		SetStateOff(BEUObjectStates::MOVE);
 		SetStateOff(BEUObjectStates::MOVEFOWARD);
 
@@ -260,7 +294,6 @@ void BEUPlayer::Control(float dt)
 	}
 	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::RIGHT) && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
-		std::cout << "RightOFF" << std::endl;
 		SetStateOff(BEUObjectStates::MOVE);
 		SetStateOff(BEUObjectStates::MOVEFOWARD);
 
@@ -286,21 +319,26 @@ void BEUPlayer::Control(float dt)
 		SetStateOn(BEUObjectStates::DIRECTION);
 		SetStateOn(BEUObjectStates::MOVEFOWARD);
 		SetXPosition(GetPosition().x + 10.f * dt);
+		/*
+		if (beatEmUpDemoSystem->GetIsCameraMoveAble() == true && Engine::GetCameraManager().GetCameraPosition().x < position.x)
+		{
+			Engine::GetCameraManager().SetCameraPosition({ position.x , Engine::GetCameraManager().GetCameraPosition().y, Engine::GetCameraManager().GetCameraPosition().z });
+		}*/
 	}
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::X)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
-		GetComponent<Physics2D>()->SetVelocityY(1.5f);
+		GetComponent<Physics2D>()->SetVelocityY(0.75f);
 		if (IsStateOn(BEUObjectStates::MOVEFOWARD) == true)
 		{
 			if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 			{
-				GetComponent<Physics2D>()->AddForceX(30.f);
+				GetComponent<Physics2D>()->AddForceX(10.f);
 			}
 			else //Left
 			{
-				GetComponent<Physics2D>()->AddForceX(-30.f);
+				GetComponent<Physics2D>()->AddForceX(-10.f);
 			}
 		}
 	}
@@ -310,6 +348,7 @@ void BEUPlayer::Control(float dt)
 		{
 			if (IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false)
 			{
+				Engine::GetSoundManager().Play("punch.wav", 0);
 				switch (combo)
 				{
 				case 0:
@@ -381,13 +420,13 @@ void BEUPlayer::Control(float dt)
 				SetStateOn(BEUObjectStates::ATTACK);
 				if (IsStateOn(BEUObjectStates::DIRECTION) == true)
 				{
-					Engine::GetObjectManager().AddObject<BEUAttackBox>(glm::vec3{ 1.f, -1.f , 0.f }
-					, glm::vec3{ 1.5f, 1.f, 0.f }, "AttackBox", this, 0.1f, AttackBoxType::FINISH);
+					Engine::GetObjectManager().AddObject<BEUAttackBox>(glm::vec3{ 1.5f, -1.5f , 0.f }
+					, glm::vec3{ 1.5f, 1.f, 0.f }, "AttackBox", this, 0.5f, AttackBoxType::FINISH);
 				}
 				else
 				{
-					Engine::GetObjectManager().AddObject<BEUAttackBox>(glm::vec3{ -1.f, -1.f , 0.f }
-					, glm::vec3{ 1.5f, 1.f, 0.f }, "AttackBox", this, 0.1f, AttackBoxType::FINISH);
+					Engine::GetObjectManager().AddObject<BEUAttackBox>(glm::vec3{ -1.5f, -1.5f , 0.f }
+					, glm::vec3{ 1.5f, 1.f, 0.f }, "AttackBox", this, 0.5f, AttackBoxType::FINISH);
 				}
 			}
 		}
@@ -400,7 +439,6 @@ void BEUPlayer::SetIsAttackHit(bool state_)
 	if (state_ == true)
 	{
 		attackDelay = 0.f;
-		std::cout << combo << std::endl;
 		combo++;
 	}
 }
@@ -424,16 +462,13 @@ void BEUPlayer::Jumping()
 			SetStateOff(BEUObjectStates::FALLING);
 		}
 	}
-	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
-		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
+	else if (GetPosition().y <= 0.f)
 	{
 		if (IsStateOn(BEUObjectStates::FALLING) == true)
 		{
 			SetStateOff(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 			SetYPosition(0.f);
-			if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
-				GetComponent<Physics2D>()->GetVelocity().x > -0.5f)
 			{
 				if (canAttack == false)
 				{
@@ -443,11 +478,9 @@ void BEUPlayer::Jumping()
 
 				GetComponent<Sprite>()->PlayAnimation(0);
 			}
-			else
-			{
-				GetComponent<Sprite>()->PlayAnimation(0);
-			}
 		}
+		GetComponent<Physics2D>()->SetVelocityX(0.f);
+		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 	{
@@ -462,11 +495,6 @@ void BEUPlayer::Jumping()
 			SetStateOff(BEUObjectStates::JUMPING);
 		}
 	}
-
-	if (GetPosition().y <= 0.f)
-	{
-		GetComponent<Physics2D>()->SetVelocityY(0.f);
-	}
 }
 
 void BEUPlayer::KnockBack(float dt)
@@ -480,36 +508,55 @@ void BEUPlayer::KnockBack(float dt)
 			SetStateOff(BEUObjectStates::FALLING);
 		}
 	}
-	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
-		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
+	else if (GetPosition().y <= 0.f)
 	{
 		if (IsStateOn(BEUObjectStates::FALLING) == true)
 		{
+			Engine::GetSoundManager().Play("knockdown.wav", 1);
 			SetStateOff(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 			SetStateOn(BEUObjectStates::LAYING);
 			GetComponent<Sprite>()->PlayAnimation(9);
 
 			SetYPosition(0.f);
-			if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
-				GetComponent<Physics2D>()->GetVelocity().x > -0.5f)
-			{
-
-			}
 		}
 		if (IsStateOn(BEUObjectStates::LAYING) == true)
 		{
 			layingDelay += dt;
+			if (beatEmUpDemoSystem->GetHp() <= 0.f)
+			{
+				glm::vec4 color = GetComponent<Sprite>()->GetColor();
+				if (color.w == 1.f)
+				{
+					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 0.f });
+				}
+				else
+				{
+					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 1.f });
+				}
+			}
 			if (layingDelay > 1.25f)
 			{
-				layingDelay = 0.f;
-				hitDelay = 0.f;
-				SetStateOff(BEUObjectStates::HIT);
-				SetStateOff(BEUObjectStates::KNOCKBACK);
-				SetStateOff(BEUObjectStates::LAYING);
-				GetComponent<Sprite>()->PlayAnimation(0);
+				if (beatEmUpDemoSystem->GetHp() > 0.f)
+				{
+					layingDelay = 0.f;
+					hitDelay = 0.f;
+					SetStateOff(BEUObjectStates::HIT);
+					SetStateOff(BEUObjectStates::KNOCKBACK);
+					SetStateOff(BEUObjectStates::LAYING);
+					SetStateOff(BEUObjectStates::ATTACK);
+					GetComponent<Sprite>()->PlayAnimation(0);
+					isInvincible = false;
+					canAttack = true;
+				}
+				else
+				{
+					Engine::GetGameStateManager().SetGameState(State::RESTART);
+				}
 			}
 		}
+		GetComponent<Physics2D>()->SetVelocityX(0.f);
+		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
 	else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 	{
@@ -519,10 +566,5 @@ void BEUPlayer::KnockBack(float dt)
 			SetStateOn(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 		}
-	}
-
-	if (GetPosition().y <= 0.f)
-	{
-		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
 }

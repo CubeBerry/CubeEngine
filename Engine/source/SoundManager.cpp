@@ -456,7 +456,7 @@ void SoundManager::MusicPlayerForImGui(int channelIndex)
 		ImGui::Text(GetSoundList().at(currentIndex).name.c_str());
 
 		//Button
-		if (ImGui::Button("Prev")) //Å° ÀÔ·Â ÇÔ¼ö
+		if (ImGui::Button("Prev")) //Å° ï¿½Ô·ï¿½ ï¿½Ô¼ï¿½
 		{
 			Stop(channelIndex);
 			--currentIndex;

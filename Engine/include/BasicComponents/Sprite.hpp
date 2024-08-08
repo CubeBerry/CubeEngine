@@ -63,6 +63,7 @@ public:
 	void SetMaterialId(int index) { materialId = index; }
 	void AddSpriteToManager();
 	void SetColor(glm::vec4 color);
+	glm::vec4 GetColor();
 
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	SpriteDrawType GetSpriteDrawType() { return spriteDrawType; }
