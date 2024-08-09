@@ -25,10 +25,12 @@ layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    if (texture(tex[f_matrix[inIndex].texIndex], i_uv).a < 0.5)
+    vec4 texColor = mix(i_col, texture(tex[f_matrix[inIndex].texIndex], i_uv), inIsTex);
+
+    if (texColor.a < 0.5) {
         discard;
-    vec4 tColor = i_col * texture(tex[f_matrix[inIndex].texIndex], i_uv).rgba;
-    fragmentColor = mix(i_col, tColor, inIsTex);
+    }
+    fragmentColor = i_col * texColor;
 
     // if(inIsTex == 1.0)
     // {
