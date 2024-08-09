@@ -49,3 +49,5 @@ Music by [DavidKBD](https://www.davidkbd.com/) under the [CC BY 4.0 License](htt
 Music by [Abstraction](https://abstractionmusic.com/) under the [CC0 1.0 Universal License](https://creativecommons.org/publicdomain/zero/1.0/).
 
 Asset by [Pupkin](https://trevor-pupkin.itch.io/tech-dungeon-roguelite)
+
+Sound Effect by [効果音ラボ](https://soundeffect-lab.info/)
