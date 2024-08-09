@@ -1,4 +1,4 @@
-//Author: DOYEONG LEE
+﻿//Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Physics2D.cpp
 #include "BasicComponents/Physics2D.hpp"
@@ -174,13 +174,13 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 		float max1 = -INFINITY;
 		float max2 = -INFINITY;
 
-		// ù ��° �ٰ��� ȸ��
+		// 첫 번째 다각형 회전
 		for (const glm::vec2 point : collidePolygon)
 		{
 			rotatedPoints1.push_back(RotatePoint(obj->GetPosition(), point, DegreesToRadians(obj->GetRotate())));
 		}
 
-		// �� ��° �ٰ��� ȸ��
+		// 두 번째 다각형 회전
 		for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
 			rotatedPoints2.push_back(RotatePoint(obj2->GetPosition(), point, DegreesToRadians(obj2->GetRotate())));
@@ -190,11 +190,11 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ������ ��
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // �浹�� ����
+				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
 			{
@@ -207,11 +207,11 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ������ ��
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // �浹�� ����
+				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
 			{
@@ -252,14 +252,14 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
 			}
 			CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), normal, &depth);
 		}
-		return true; // ��� �࿡�� ��ħ�� ����
+		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;
 }
 
 bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 {
-	// �� ���� �߽� ������ �Ÿ� ���
+	// 두 원의 중심 사이의 거리 계산
 	float distanceX = obj->GetPosition().x - obj2->GetPosition().x;
 	float distanceY = obj->GetPosition().y - obj2->GetPosition().y;
 	float distance = std::sqrt(distanceX * distanceX + distanceY * distanceY);
@@ -267,20 +267,20 @@ bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 	float depth = INFINITY;
 	glm::vec2 normal = { 0.f, 0.f };
 
-	// �� ���� �������� �հ� �Ÿ� ��
+	// 두 원의 반지름의 합과 거리 비교
 	if (distance <= obj->GetComponent<Physics2D>()->GetCircleCollideRadius() + obj2->GetComponent<Physics2D>()->GetCircleCollideRadius())
 	{
-		// �� ���� �߽� ������ ���� ���� ���
+		// 두 원의 중심 사이의 단위 벡터 계산
 		float unitX = distanceX / distance;
 		float unitY = distanceY / distance;
 
-		// ��ģ �� ���
+		// 겹친 양 계산
 		float overlap = (obj->GetComponent<Physics2D>()->GetCircleCollideRadius() + obj2->GetComponent<Physics2D>()->GetCircleCollideRadius() - distance) / 2.0f;
 
 		normal = normalize(obj2->GetPosition() - obj->GetPosition());
 		depth = overlap - distance;
 
-		// �� ���� ��ġ ����
+		// 각 원의 위치 조정
 		if (obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
 			obj2->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
 		{
@@ -307,9 +307,9 @@ bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 			}
 			CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), -normal, &depth);
 		}
-		return true; // �浹 �߻�
+		return true; // 충돌 발생
 	}
-	return false; // �浹 ����
+	return false; // 충돌 없음
 }
 
 bool Physics2D::CollisionPC(Object* poly, Object* cir)
@@ -336,11 +336,11 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir)
 	{
 		float axisDepth = 0.f;
 		glm::vec2 edge = rotatedPoints[(i + 1) % rotatedPoints.size()] - rotatedPoints[i];
-		glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ������ ��
+		glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
-			return false; // �浹�� ����
+			return false; // 충돌이 없음
 		}
 		if (axisDepth < depth)
 		{
@@ -356,7 +356,7 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir)
 		axis = normalize(axis);
 		if (IsSeparatingAxis(axis, rotatedPoints, circleCenter, circleRadius, &axisDepth, &min1, &max1, &min2, &max2))
 		{
-			return false; // �浹�� ����
+			return false; // 충돌이 없음
 		}
 		if (axisDepth < depth)
 		{
@@ -415,13 +415,13 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 		float max1 = -INFINITY;
 		float max2 = -INFINITY;
 
-		// ù ��° �ٰ��� ȸ��
+		// 첫 번째 다각형 회전
 		for (const glm::vec2 point : obj->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
 			rotatedPoints1.push_back(RotatePoint(obj->GetPosition(), point, DegreesToRadians(obj->GetRotate())));
 		}
 
-		// �� ��° �ٰ��� ȸ��
+		// 두 번째 다각형 회전
 		for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
 		{
 			rotatedPoints2.push_back(RotatePoint(obj2->GetPosition(), point, DegreesToRadians(obj2->GetRotate())));
@@ -431,11 +431,11 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ������ ��
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // �浹�� ����
+				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
 			{
@@ -448,11 +448,11 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 		{
 			float axisDepth = 0.f;
 			glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
-			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // ������ ��
+			glm::vec2 axis = glm::vec2(-edge.y, edge.x); // 수직인 축
 			axis = normalize(axis);
 			if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
 			{
-				return false; // �浹�� ����
+				return false; // 충돌이 없음
 			}
 			if (axisDepth < depth)
 			{
@@ -467,7 +467,7 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
 			normal = -normal;
 		}
 
-		return true; // ��� �࿡�� ��ħ�� ����
+		return true; // 모든 축에서 겹침이 없음
 	}
 	return false;
 }
@@ -567,7 +567,7 @@ glm::vec2 Physics2D::FindClosestPointOnSegment(const glm::vec2& circleCenter, st
 }
 
 float Physics2D::calculatePolygonRadius(const std::vector<glm::vec2>& vertices)
-{   // �ٰ����� �߽� ���
+{   // 다각형의 중심 계산
 	float centerX = 0.0f;
 	float centerY = 0.0f;
 	for (const glm::vec2& vertex : vertices) {
@@ -577,7 +577,7 @@ float Physics2D::calculatePolygonRadius(const std::vector<glm::vec2>& vertices)
 	centerX /= vertices.size();
 	centerY /= vertices.size();
 
-	// ���� �� �Ÿ� ã��
+	// 가장 먼 거리 찾기
 	float maxDistance = 0.0f;
 	for (const glm::vec2& vertex : vertices) {
 		float distance = std::sqrt((vertex.x - centerX) * (vertex.x - centerX) + (vertex.y - centerY) * (vertex.y - centerY));
