@@ -61,6 +61,18 @@ bool InputManager::IsKeyPressOnce(KEYBOARDKEYS keycode)
 	return false;
 }
 
+bool InputManager::IsKeyReleaseOnce(KEYBOARDKEYS keycode)
+{
+	auto it = keyStates.find(keycode);
+	if (it != keyStates.end())
+	{
+		bool isReleased = !it->second && keyStatePrev[keycode];
+		keyStatePrev[keycode] = it->second;
+		return isReleased;
+	}
+	return false;
+}
+
 bool InputManager::IsMouseButtonPressed(MOUSEBUTTON button)
 {
 	auto it = mouseButtonStates.find(button);

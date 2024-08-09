@@ -27,11 +27,6 @@ void CameraManager::Update()
 	camera.Update();
 }
 
-void CameraManager::TargetAt(glm::vec3 targetLocation)
-{
-	camera.SetCenter(targetLocation);
-}
-
 void CameraManager::Reset()
 {
 	camera.Reset(); 
@@ -51,6 +46,39 @@ bool CameraManager::IsInCamera(Object* object)
 	}
 	return false;
 }
+
+#ifdef _DEBUG
+void CameraManager::CameraControllerImGui()
+{
+	float targetP[3] = {GetCameraPosition().x, GetCameraPosition().y, GetCameraPosition().z};
+	float zoom = GetZoom();
+	float nearClip = GetNear();
+	float farClip = GetFar();
+	float pitch = GetPitch();
+	float yaw = GetYaw();
+	//float cameraSensitivity = GetCameraSensitivity();
+
+	ImGui::Begin("CameraController");
+
+	ImGui::InputFloat3("Position", targetP);
+	SetCameraPosition(glm::vec3{ targetP[0], targetP[1], targetP[2] });
+
+	ImGui::InputFloat("Zoom", &zoom, 0.5f, 1.0f);
+	SetZoom(zoom);
+
+	ImGui::InputFloat("NearClip", &nearClip, 1.0f, 1.0f);
+	SetNear(nearClip);
+	ImGui::InputFloat("FarClip", &farClip, 1.0f, 1.0f);
+	SetFar(farClip);
+
+	ImGui::InputFloat("Pitch", &pitch, 1.0f, 1.0f);
+	SetPitch(pitch);
+	ImGui::InputFloat("Yaw", &yaw, 1.0f, 1.0f);
+	SetYaw(yaw);
+
+	ImGui::End();
+}
+#endif
 
 void CameraManager::ControlCamera(float dt)
 {

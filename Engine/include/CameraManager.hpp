@@ -13,16 +13,14 @@ public:
 	void Reset();
 
 	// 2D, 3D
-	void TargetAt(glm::vec3 targetLocation); 
+	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); }
+	void SetViewSize(int width, int height) noexcept { camera.SetViewSize(width, height); }
+	void SetCenter(glm::vec3 pos, bool isCenterFollow = false) { camera.SetCenter(pos, isCenterFollow); }
+	void SetCameraPosition(glm::vec3 pos) { camera.SetCameraPosition(pos); }
 
-	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); } 
-	void SetViewSize(int width, int height) noexcept { camera.SetViewSize(width, height); } 
-	void SetCenter(glm::vec3 pos) { camera.SetCenter(pos); } 
-	void SetCameraPosition(glm::vec3 pos) { camera.SetCameraPosition(pos); } 
-
-	float GetZoom() noexcept { return camera.GetZoom(); } 
-	glm::vec2 GetViewSize() { return camera.GetViewSize(); } 
-	glm::vec3 GetCenter() { return camera.GetCenter(); } 
+	float GetZoom() noexcept { return camera.GetZoom(); }
+	glm::vec2 GetViewSize() { return camera.GetViewSize(); }
+	glm::vec3 GetCenter() { return camera.GetCenter(); }
 	glm::vec3 GetCameraPosition() { return camera.GetCameraPosition(); } 
 	glm::mat4 GetViewMatrix() { return camera.GetViewMatrix(); } 
 	glm::mat4 GetProjectionMatrix() { return camera.GetProjectionMatrix(); } 
@@ -44,6 +42,17 @@ public:
 
 	void SetNear(float amount) noexcept { camera.SetNear(amount); }
 	void SetFar(float amount) noexcept { camera.SetFar(amount); }
+	void SetPitch(float amount) noexcept { camera.SetPitch(amount); }
+	void SetYaw(float amount) noexcept { camera.SetYaw(amount); }
+
+	float GetNear() noexcept { return camera.GetNear(); }
+	float GetFar() noexcept { return camera.GetFar(); }
+	float GetPitch() noexcept { return camera.GetPitch(); }
+	float GetYaw() noexcept { return camera.GetYaw(); }
+
+#ifdef _DEBUG
+	void CameraControllerImGui();
+#endif
 private:
 	Camera camera;
 };

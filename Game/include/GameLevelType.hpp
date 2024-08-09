@@ -9,5 +9,6 @@ enum class GameLevel
 	VERTICES,
 	POCKETBALL,
 	PLATFORMDEMO,
+	BEATEMUPDEMO,
 	NONE
 };

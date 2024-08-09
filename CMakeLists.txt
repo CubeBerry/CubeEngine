@@ -55,6 +55,8 @@ file(GLOB GAME_SRC
     "${GAME_SRC_DIR}/PlatformDemo/*.cpp"
     "${GAME_INC_DIR}/PocketBallDemo/*.hpp"
     "${GAME_SRC_DIR}/PocketBallDemo/*.cpp"
+    "${GAME_INC_DIR}/BeatEmUpDemo/*.hpp"
+    "${GAME_SRC_DIR}/BeatEmUpDemo/*.cpp"
 )
 FILE(GLOB IMGUI_SOURCES
     "${IMGUI_DIR}/*.h"

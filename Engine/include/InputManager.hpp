@@ -164,6 +164,7 @@ public:
 
 	bool IsKeyPressed(KEYBOARDKEYS keycode);
 	bool IsKeyPressOnce(KEYBOARDKEYS keycode);
+	bool IsKeyReleaseOnce(KEYBOARDKEYS keycode);
 
 	bool IsMouseButtonPressed(MOUSEBUTTON button);
 	bool IsMouseButtonPressOnce(MOUSEBUTTON button);

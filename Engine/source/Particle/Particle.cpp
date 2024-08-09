@@ -104,7 +104,6 @@ void Particle::Update(float dt)
 		sprite->UpdateAnimation(dt);
 		if (sprite->IsAnimationDone() == true)
 		{
-			std::cout << "Done" << std::endl;
 			lifeTime = 0.f;
 		}
 		break;

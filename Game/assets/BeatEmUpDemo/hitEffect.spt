@@ -1,0 +1,7 @@
+../Game/assets/BeatEmUpDemo/hitEffect.png
+FrameSize 16 16
+HotSpot 35 4
+Frame 0 0
+Frame 16 0
+Frame 32 0
+Anim ../Game/assets/BeatEmUpDemo/hitEffect.anm
