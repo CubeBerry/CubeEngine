@@ -55,7 +55,6 @@ void VerticesDemo::Update(float dt)
 #ifdef _DEBUG
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	ImGui::ShowDemoWindow();
 	Engine::GetGameStateManager().StateChanger();
 }
 #endif

@@ -155,7 +155,6 @@ void BeatEmUpDemo::Update(float dt)
 #ifdef _DEBUG
 void BeatEmUpDemo::ImGuiDraw(float /*dt*/)
 {
-	ImGui::ShowDemoWindow();
 	Engine::GetGameStateManager().StateChanger();
 	Engine::GetCameraManager().CameraControllerImGui();
 }
