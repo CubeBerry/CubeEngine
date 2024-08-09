@@ -29,7 +29,7 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, PlatformDemo
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
 	GetComponent<Physics2D>()->SetGravity(40.f);
 	GetComponent<Physics2D>()->SetFriction(0.9f);
-	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,20.f });
+	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,10.f });
 	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 2.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	GetComponent<Sprite>()->PlayAnimation(0);
