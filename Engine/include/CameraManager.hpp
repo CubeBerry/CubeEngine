@@ -44,11 +44,13 @@ public:
 	void SetFar(float amount) noexcept { camera.SetFar(amount); }
 	void SetPitch(float amount) noexcept { camera.SetPitch(amount); }
 	void SetYaw(float amount) noexcept { camera.SetYaw(amount); }
+	void SetBaseFov(float amount) noexcept { camera.SetBaseFov(amount); }
 
 	float GetNear() noexcept { return camera.GetNear(); }
 	float GetFar() noexcept { return camera.GetFar(); }
 	float GetPitch() noexcept { return camera.GetPitch(); }
 	float GetYaw() noexcept { return camera.GetYaw(); }
+	float GetBaseFov() { return camera.GetBaseFov(); }
 
 #ifdef _DEBUG
 	void CameraControllerImGui();

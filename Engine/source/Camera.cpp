@@ -67,7 +67,7 @@ void Camera::Update()
 			{
 				view = glm::lookAt(cameraPosition, cameraPosition + back, up);
 			}
-			projection = glm::perspectiveRH_NO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			projection = glm::perspectiveRH_NO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
 		case GraphicsMode::VK:
 
@@ -79,7 +79,7 @@ void Camera::Update()
 			{
 				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
 			}
-			projection = glm::perspectiveRH_ZO(glm::radians(zoom), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
 		}
 		break;
@@ -205,8 +205,9 @@ void Camera::Reset()
 	SetZoom(1.f);
 	pitch = 00.f;
 	yaw = -90.f;
-	nearClip = 0.1f;
+	nearClip = 1.f;
 	farClip = 45.0f;
+	baseFov = 45.f;
 	cameraSensitivity = 1.f;
 }
 

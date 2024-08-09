@@ -121,7 +121,7 @@ void CameraManager::ControlCamera(float dt)
 	{
 		SetZoom(GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
 	}
-	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::RIGHT))
 	{
 		UpdaetCameraDirectrion(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
 	}

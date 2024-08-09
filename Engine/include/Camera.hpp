@@ -52,10 +52,6 @@ public:
 	glm::mat4 GetProjectionMatrix() { return projection; }
 	glm::vec2 GetViewSize() { return cameraViewSize; }
 	float	  GetZoom() { return zoom; }
-	float	  GetNear() { return nearClip; }
-	float	  GetFar() { return farClip; }
-	float	  GetPitch() { return pitch; }
-	float	  GetYaw() { return yaw; }
 
 	void MoveCameraPos(CameraMoveDir dir, float speed); 
  
@@ -74,15 +70,22 @@ public:
 	void            SetFar(float amount) noexcept { farClip = amount; }
 	void            SetPitch(float amount) noexcept { pitch = amount; }
 	void            SetYaw(float amount) noexcept { yaw = amount; }
+	void            SetBaseFov(float amount) noexcept { baseFov = amount; }
 	void            SetCameraSensitivity(float amount) noexcept { cameraSensitivity = amount; }
 	void UpdaetCameraDirectrion(glm::vec2 dir);
 
+	float	  GetNear() { return nearClip; }
+	float	  GetFar() { return farClip; }
+	float	  GetPitch() { return pitch; }
+	float	  GetYaw() { return yaw; }
+	float	  GetBaseFov() { return baseFov; }
 private:
 	//2D, 3D
 	glm::vec3 cameraPosition{ 0.0f, 0.0f, 1.0f }; 
 	glm::vec3 up{ 0.0f, 1.0f, 0.0f }; 
 	glm::vec3 right{ 1.0f, 0.0f, 0.0f }; 
-	float zoom = 1.0f; 
+	float zoom = 1.0f;
+	float baseFov = 45.f;
 
 	glm::mat4 view = glm::mat4(0.f); 
 	glm::mat4 projection = glm::mat4(0.f); 
@@ -99,7 +102,7 @@ private:
 	glm::vec3 back{ 0.0f, 0.0f, -1.0f };
 
 	float aspectRatio = 1.f; //(TBD)
-	float nearClip = 0.1f;
+	float nearClip = 1.f;
 	float farClip = 45.0f;
 	float pitch = 0.0f;
 	float yaw = -90.0f;

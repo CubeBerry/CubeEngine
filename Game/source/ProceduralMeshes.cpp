@@ -9,8 +9,11 @@
 void ProceduralMeshes::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 45.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().SetFar(45.f);
+	Engine::GetCameraManager().SetBaseFov(22.5f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().SetCameraPosition({ 0.f,0.f,3.f });
 	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
