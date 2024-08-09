@@ -209,6 +209,7 @@ void Camera::Reset()
 	farClip = 45.0f;
 	baseFov = 45.f;
 	cameraSensitivity = 1.f;
+	isCenterFollow = false;
 }
 
 void Camera::SetViewSize(int width, int height) noexcept
