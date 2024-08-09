@@ -31,6 +31,11 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
 
+![image](https://github.com/user-attachments/assets/36c003b4-65c5-413f-9faf-e71366a791f3)
+
+![image](https://github.com/user-attachments/assets/a69866a0-6780-413b-86f7-c8a73a5cd5fc)
+
+
 ## Future Plans
 1. Linux Support
 2. Basic 3D Mesh Lighting
