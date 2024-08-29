@@ -15,5 +15,6 @@ add_library(common_gl STATIC ${GL_SOURCES} ${GL_INCLUDES})
 target_include_directories(common_gl PRIVATE ${GL_INC_DIR})
 
 target_include_directories(common_gl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
+target_include_directories(common_gl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/SDL2-2.30.6/include)
 target_include_directories(common_gl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/imgui)
 target_include_directories(common_gl PUBLIC ${LIB_DIR})

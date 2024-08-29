@@ -80,7 +80,8 @@ source_group("ImGui"            FILES ${IMGUI_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/vulkan-1.lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/SDL2.lib)
+# target_link_libraries(${PROJECT_NAME} PRIVATE ${VK_DIR}/libs/VulkanSDK/1.3.268.0/Lib/SDL2.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/SDL2-2.30.6/lib/x64/SDL2.lib)
 # target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.dll)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 # For MSVC
@@ -92,9 +93,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2)
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2-2.30.6/include)
 
 file(COPY ./Engine/common_gl/libs/glew/glew32.dll
+DESTINATION ${CMAKE_BINARY_DIR}
+)
+
+file(COPY ./Engine/libs/SDL2-2.30.6/lib/x64/SDL2.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
 
