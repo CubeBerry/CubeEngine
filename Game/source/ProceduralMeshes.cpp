@@ -42,6 +42,11 @@ void ProceduralMeshes::Update(float dt)
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, stacks, slices, { color[0], color[1], color[2], color[3] });
 		break;
+	case MeshType::SPHERE:
+		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::SPHERE, stacks, slices, { color[0], color[1], color[2], color[3] });
+		break;
 	default:
 		break;
 	}
@@ -72,6 +77,12 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			slices = 2;
 			currentMesh = MeshType::CUBE;
 		}
+		if (ImGui::MenuItem("Sphere", "2"))
+		{
+			stacks = 30;
+			slices = 30;
+			currentMesh = MeshType::SPHERE;
+		}
 		ImGui::EndMenu();
 	}
 
@@ -93,14 +104,22 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		{
 		}
 		break;
+	case MeshType::SPHERE:
+		if (ImGui::SliderInt("stacks", &stacks, 5, 35))
+		{
+		}
+		if (ImGui::SliderInt("slices", &slices, 5, 35))
+		{
+		}
+		break;
 	}
 
-	if (ImGui::Button("GL_FILL", ImVec2(100, 0)))
+	if (ImGui::Button("FILL", ImVec2(100, 0)))
 	{
 		isFill = true;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("GL_LINE", ImVec2(100, 0)))
+	if (ImGui::Button("LINE", ImVec2(100, 0)))
 	{
 		isFill = false;
 	}

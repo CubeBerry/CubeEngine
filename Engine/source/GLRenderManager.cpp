@@ -537,7 +537,60 @@ void GLRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int s
 	break;
 	case MeshType::SPHERE:
 	{
+        //Vertices
+		const float rad = 0.5;
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			const float row = static_cast<float>(stack) / stacks;
+			const float beta = PI * (row - 0.5f);
+			const float sin_beta = sin(beta);
+			const float cos_beta = cos(beta);
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				const float col = static_cast<float>(slice) / slices;
+				const float alpha = PI * 2.f - col * PI * 2.f;
+				ThreeDimension::Vertex v;
+				v.position = glm::vec4(rad * sin(alpha) * cos_beta, rad * sin_beta, rad * cos(alpha) * cos_beta, 1.0f);
+				v.normal = glm::vec4(glm::normalize(v.position));
+				v.uv = glm::vec2(col, row);
+				v.index = quadCount;
+				tempVertices.push_back(v);
+			}
+		}
 
+        //Indices
+		int i0 = 0, i1 = 0, i2 = 0;
+		for (int i = 0; i < stacks; ++i)
+		{
+			for (int j = 0; j < slices; ++j)
+			{
+				/*  You need to compute the indices for the first triangle here */
+				i0 = i * (slices + 1) + j;
+				i1 = i0 + 1;
+				i2 = i1 + slices + 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				{
+					/*  Add the indices for the first triangle */
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+				}
+
+				/*  You need to compute the indices for the second triangle here */
+				i1 = i2;
+				i2 = i1 - 1;
+
+				/*  Ignore degenerate triangle */
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				{
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+				}
+			}
+		}
 	}
 	break;
 	case MeshType::TORUS:
