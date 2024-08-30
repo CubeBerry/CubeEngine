@@ -62,14 +62,7 @@ void VKInit::InitInstance()
 
 		//Create VkInstance
 		//VkResult result = VK_SUCCESS;
-		//if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS)
-		//{
-		//	throw std::runtime_error{ "vkInstance Creation Failed" };
-		//}
-
-		VkResult result = VK_SUCCESS;
-		result = vkCreateInstance(&createInfo, nullptr, &vkInstance);
-		if (result != VK_SUCCESS)
+		if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS)
 		{
 			throw std::runtime_error{ "vkInstance Creation Failed" };
 		}
