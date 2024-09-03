@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: VKRenderManager.hpp
 #pragma once
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_vulkan.h>
 #include <array>
 
 #include "RenderManager.hpp"

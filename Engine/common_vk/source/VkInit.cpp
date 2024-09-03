@@ -5,8 +5,8 @@
 #include "VKInit.hpp"
 
 #include <iostream>
-#include <SDL2/SDL_vulkan.h>
-#include <SDL2/SDL_syswm.h>
+#include <SDL_vulkan.h>
+#include <SDL_syswm.h>
 #include <string>
 #include <sstream>
 

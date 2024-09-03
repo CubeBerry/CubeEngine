@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: InputManager.hpp
 #pragma once
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <unordered_map>
 #include "glm/vec2.hpp"
 

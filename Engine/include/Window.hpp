@@ -2,9 +2,9 @@
 //Project: CubeEngine
 //File: Window.hpp
 #pragma once
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_vulkan.h"
-#include "SDL2/SDL_syswm.h"
+#include "SDL.h"
+#include "SDL_vulkan.h"
+#include "SDL_syswm.h"
 
 #include "glm/vec2.hpp"
 #include <memory>

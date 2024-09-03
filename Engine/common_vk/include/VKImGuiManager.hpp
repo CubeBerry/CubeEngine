@@ -6,7 +6,7 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "backends/imgui_impl_sdl2.h"
 
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_vulkan.h>
 #include <array>
 #include <vector>
 
