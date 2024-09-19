@@ -7,7 +7,7 @@
 #include <queue>
 #include <functional>
 #include <atomic>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 class ThreadManager {
 public:
