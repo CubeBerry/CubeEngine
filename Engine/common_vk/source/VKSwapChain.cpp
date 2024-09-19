@@ -182,6 +182,9 @@ void VKSwapChain::InitSwapChainImage()
 
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//Deallocate Command Buffers
+	vkFreeCommandBuffers(*vkInit->GetDevice(), *vkCommandPool, 1, &commandBuffer_);
 }
 
 void VKSwapChain::InitSwapChainImageView()

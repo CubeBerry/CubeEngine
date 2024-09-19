@@ -866,6 +866,9 @@ void VKRenderManager::DeleteWithIndex(int id)
 
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//Deallocate Command Buffers
+	vkFreeCommandBuffers(*vkInit->GetDevice(), vkCommandPool, 1, &commandBuffer);
 }
 
 VKTexture* VKRenderManager::GetTexture(std::string name)

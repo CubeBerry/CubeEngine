@@ -355,6 +355,9 @@ void VKIndexBuffer::InitIndexBuffer(std::vector<uint16_t>* indices_)
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 
+	//Deallocate Command Buffers
+	vkFreeCommandBuffers(*vkInit->GetDevice(), *vkCommandPool, 1, &commandBuffer);
+
 	//Free Staging Device Memory
 	vkFreeMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, nullptr);
 
