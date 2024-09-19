@@ -12,6 +12,7 @@
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
+#include "ThreadManager.hpp"
 #include "Particle/ParticleManager.hpp"
 
 class Engine
@@ -36,10 +37,9 @@ public:
 	void End();
 
 	void SetFPS(FrameRate fps);
+	FrameRate GetFPS() { return timer.GetFrameRate(); }
 private:
 	Timer timer;
-	std::chrono::system_clock::time_point lastTick;
-	std::chrono::system_clock::time_point fpsCalcTime;
 
 	float deltaTime = 0.f;
 	int frameCount = 0;
@@ -54,4 +54,5 @@ private:
 	SoundManager soundManager;
 	SpriteManager spriteManager;
 	ParticleManager particleManager;
+	ThreadManager threadManager;
 };

@@ -4,6 +4,10 @@
 #include "InputManager.hpp"
 #include "Engine.hpp"
 
+InputManager::InputManager() {}
+
+InputManager::~InputManager() {}
+
 void InputManager::InputPollEvent(SDL_Event& event)
 {
 	mouseWheelMotion = { 0.f,0.f };
@@ -16,13 +20,22 @@ void InputManager::InputPollEvent(SDL_Event& event)
 		KeyUp(static_cast<KEYBOARDKEYS>(event.key.keysym.sym));
 		break;
 	case SDL_MOUSEBUTTONDOWN:
-		MouseButtonDown(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
+		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
+		{
+			MouseButtonDown(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
+		}
 		break;
 	case SDL_MOUSEBUTTONUP:
-		MouseButtonUp(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
+		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
+		{
+			MouseButtonUp(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
+		}
 		break;
 	case SDL_MOUSEWHEEL:
-		MouseWheel(event);
+		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
+		{
+			MouseWheel(event);
+		}
 		break;
 	case SDL_MOUSEMOTION:
 		mouseRelX = event.motion.xrel;
@@ -128,6 +141,11 @@ void InputManager::SetRelativeMouseMode(bool state)
 	}
 	mouseRelX = 0;
 	mouseRelY = 0;
+}
+
+bool InputManager::GetRelativeMouseMode()
+{
+	return SDL_GetRelativeMouseMode();
 }
 
 glm::vec2 InputManager::GetRelativeMouseState()

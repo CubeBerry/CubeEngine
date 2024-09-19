@@ -4,6 +4,8 @@
 //File: GameStateManager.cpp
 #include "GameStateManager.hpp"
 #include "Engine.hpp"
+
+#include "BasicComponents/Physics3D.hpp"
 #ifdef _DEBUG
 #include "imgui.h"
 #endif
@@ -64,28 +66,9 @@ void GameStateManager::Update(float dt)
 #endif
 		break;
 	case State::UPDATE:
-		if (levelSelected != currentLevel)
-		{
-			state = State::CHANGE;
-		}
-		else
-		{
-			levelList.at(static_cast<int>(currentLevel))->Update(dt);
-			Engine::GetSpriteManager().Update(dt);
-			Engine::GetObjectManager().Update(dt);
-			Engine::GetParticleManager().Update(dt);
-			Engine::GetCameraManager().Update();
-			CollideObjects();
-
-			if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
-			{
-#ifdef _DEBUG
-				DrawWithImGui(dt);
-#else
-				Draw();
-#endif
-			}
-		}
+		UpdateGameLogic(dt);
+		UpdateDraw(dt);
+		//순서 반대일시 마우스 입력 X
 		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();
@@ -174,6 +157,39 @@ void GameStateManager::RestartLevel()
 }
 
 #ifdef _DEBUG
+void GameStateManager::UpdateGameLogic(float dt)
+{
+	if (state == State::UPDATE)
+	{
+		if (levelSelected != currentLevel)
+		{
+			state = State::CHANGE;
+		}
+		else
+		{
+			levelList.at(static_cast<int>(currentLevel))->Update(dt);
+			Engine::GetObjectManager().Update(dt);
+			Engine::GetParticleManager().Update(dt);
+			Engine::GetCameraManager().Update();
+			CollideObjects();
+			Engine::GetSpriteManager().Update(dt);
+		}
+	}
+}
+void GameStateManager::UpdateDraw(float dt)
+{
+	if (state == State::UPDATE)
+	{
+		if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
+		{
+#ifdef _DEBUG
+			DrawWithImGui(dt);
+#else
+			Draw();
+#endif
+		}
+	}
+}
 void GameStateManager::StateChanger()
 {
 	if (ImGui::BeginMainMenuBar())
@@ -186,11 +202,93 @@ void GameStateManager::StateChanger()
 				if (ImGui::MenuItem(levelName.c_str(), std::to_string(i).c_str(), levelSelected == static_cast<GameLevel>(i)))
 				{
 					levelSelected = static_cast<GameLevel>(i);
+					showDescription = false;
 				}
 			}
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("Help"))
+		{
+			if (ImGui::MenuItem("How To Control"))
+			{
+				showDescription = true;
+			}
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
+	}
+
+	if (showDescription)
+	{
+		ImGui::OpenPopup("DescriptionPopup");
+		showDescription = false;
+	}
+
+	if (ImGui::BeginPopup("DescriptionPopup"))
+	{
+		switch (currentLevel)
+		{
+		case GameLevel::PROCEDURALMESHES:
+			ImGui::Text("PROCEDURALMESHES DEMO                              ");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move : Arrow Keys\nMove Up/Down : Space Bar/Left Shift\nMove Camera view: Drag with Mouse Right Click\nYou can adjust the mesh's components via the control panel.");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		case GameLevel::VERTICES:
+			ImGui::Text("This is a test level");
+			ImGui::Separator();
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		case GameLevel::PHYSICSDEMO:
+			ImGui::Text("PHYSICS DEMO          ");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move CUBE: Arrow Keys");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		case GameLevel::POCKETBALL:
+			ImGui::Text("POCKETBALL DEMO          ");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move Cursor: Arrow Keys\nShot : SpaceBar\n");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		case GameLevel::PLATFORMDEMO:
+			ImGui::Text("PLATFORM DEMO          ");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move : Arrow Keys\nAttack : Z\nJump : X");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		case GameLevel::BEATEMUPDEMO:
+			ImGui::Text("BEATEMUP DEMO          ");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move : Arrow Keys\nAttack : Z\nJump : X");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		}
+		ImGui::EndPopup();
 	}
 }
 
@@ -203,6 +301,9 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 		break;
 	case GameLevel::VERTICES:
 		return "VERTICES";
+		break;
+	case GameLevel::PHYSICSDEMO:
+		return "PHYSICSDEMO";
 		break;
 	case GameLevel::POCKETBALL:
 		return "POCKETBALL";
@@ -224,10 +325,16 @@ void GameStateManager::CollideObjects()
 	{
 		for (auto& object : Engine::GetObjectManager().GetObjectMap())
 		{
-			if (target.second != nullptr && object.second != nullptr && target.second != object.second
-				&& target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
+			if (target.second != nullptr && object.second != nullptr && target.second != object.second)
 			{
-				target.second->CollideObject(object.second.get());
+				if (target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
+				{
+					target.second->CollideObject(object.second.get());
+				}
+				else if (target.second->HasComponent<Physics3D>() == true && object.second->HasComponent<Physics3D>() == true)
+				{
+					target.second->CollideObject(object.second.get());
+				}
 			}
 		}
 	}

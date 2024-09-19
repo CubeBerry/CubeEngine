@@ -8,6 +8,7 @@
 
 #include "glm/vec2.hpp"
 #include <memory>
+#include <string>
 
 enum class GraphicsMode
 {
@@ -35,6 +36,9 @@ public:
 	//bool GetMinimized() { return isMinimized; };
 
 	glm::vec2 GetWindowSize() { return wSize; }
+	std::string GetWindowTitle() { return titleName; }
+	void SetMainWindowTitle(std::string title);
+	void SetSubWindowTitle(std::string subTitle);
 private:
 	//SDL_Window* window;
 	struct SDLWindowDestroyer
@@ -47,6 +51,7 @@ private:
 	std::unique_ptr<SDL_Window, SDLWindowDestroyer> window;
 	SDL_GLContext context;
 
+	std::string titleName = "";
 	glm::vec2 wSize = { 0,0 };
 	//bool isMinimized{ false };
 };

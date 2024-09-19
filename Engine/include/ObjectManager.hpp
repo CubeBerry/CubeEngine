@@ -49,8 +49,16 @@ public:
         }
         return objectMap.at(lastObjectID - 1).get();
     }
+#ifdef _DEBUG
+    void ObjectControllerForImGui();
+#endif
 private:
     int                                    lastObjectID = 0;
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
+
+
+#ifdef _DEBUG
+    int currentIndex = 0;
+#endif
 };

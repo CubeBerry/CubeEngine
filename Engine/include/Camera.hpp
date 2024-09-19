@@ -38,7 +38,7 @@ public:
 	void Reset();
 
 	//2D, 3D
-	void    SetCenter(glm::vec3 pos, bool isCenterFollow_ = false) noexcept;
+	void    SetCenterPos(glm::vec3 pos);
 	void    SetCameraPosition(glm::vec3 cameraPosition_) noexcept; 
 	void    SetViewSize(int width, int height) noexcept;
 	void    SetZoom(float amount) noexcept; 
@@ -63,6 +63,7 @@ public:
 	constexpr CameraCenterMode GetCameraCenterMode() const noexcept { return cameraCenterMode; } //(TBD)
 	
 	//3D
+	void LookAt(glm::vec3 pos);
 	float			GetCameraSensitivity() { return cameraSensitivity; }
 
 	void			SetCameraType(CameraType type) { cameraType = type; }
@@ -72,16 +73,27 @@ public:
 	void            SetYaw(float amount) noexcept { yaw = amount; }
 	void            SetBaseFov(float amount) noexcept { baseFov = amount; }
 	void            SetCameraSensitivity(float amount) noexcept { cameraSensitivity = amount; }
-	void UpdaetCameraDirectrion(glm::vec2 dir);
+	void			UpdaetCameraDirectrion(glm::vec2 dir);
+	void			SetIsThirdPersonViewMod(bool state) { isThirdPersonView = state; }
+	void            SetCameraDistance(float amount) noexcept { cameraDistance = amount; }
+	void            SetCameraOffset(glm::vec3 amount) noexcept { cameraOffset = amount; }
 
 	float	  GetNear() { return nearClip; }
 	float	  GetFar() { return farClip; }
 	float	  GetPitch() { return pitch; }
 	float	  GetYaw() { return yaw; }
 	float	  GetBaseFov() { return baseFov; }
+	float	  GetIsThirdPersonView() { return isThirdPersonView; }
+	float	  GetCameraDistance() { return cameraDistance; }
+	glm::vec3 GetCameraOffset() { return cameraOffset; }
+
+	glm::vec3 GetUpVector() const { return up; }
+	glm::vec3 GetBackVector() const { return back; }
+	glm::vec3 GetRightVector() const { return right; }
+
 private:
 	//2D, 3D
-	glm::vec3 cameraPosition{ 0.0f, 0.0f, 1.0f }; 
+	glm::vec3 cameraPosition{ 0.0f, 0.0f, 0.0f }; 
 	glm::vec3 up{ 0.0f, 1.0f, 0.0f }; 
 	glm::vec3 right{ 1.0f, 0.0f, 0.0f }; 
 	float zoom = 1.0f;
@@ -100,6 +112,7 @@ private:
 	glm::vec3 cameraCenter{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 worldUp{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 back{ 0.0f, 0.0f, -1.0f };
+	glm::vec3 cameraOffset{ 0.0f, 0.0f, 0.0f }; //In ThirdPersonView
 
 	float aspectRatio = 1.f; //(TBD)
 	float nearClip = 1.f;
@@ -107,6 +120,6 @@ private:
 	float pitch = 0.0f;
 	float yaw = -90.0f;
 	float cameraSensitivity = 1.f;
-
-	bool isCenterFollow = false;
+	float cameraDistance = 5.0f; //In ThirdPersonView
+	bool isThirdPersonView = false; //In ThirdPersonView
 };

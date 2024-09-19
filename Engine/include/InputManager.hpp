@@ -8,6 +8,13 @@
 
 #include <iostream>
 
+//Thread
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <atomic>
+//Thread
+
 enum class MOUSEBUTTON
 {
 	LEFT   =  1,
@@ -157,8 +164,8 @@ enum class KEYBOARDKEYS
 class InputManager
 {
 public:
-	InputManager() = default;
-	~InputManager() = default;
+	InputManager();
+	~InputManager();
 
 	void InputPollEvent(SDL_Event& event);
 
@@ -173,6 +180,7 @@ public:
 	glm::vec2 GetMouseWheelMotion();
 
 	void SetRelativeMouseMode(bool state);
+	bool GetRelativeMouseMode();
 	glm::vec2 GetRelativeMouseState();
 protected:
 	void KeyDown(KEYBOARDKEYS keycode)

@@ -36,41 +36,34 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	timer.Init();
 
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
-
-	//soundManager = new SoundManager;
 	soundManager.Initialize(8);
 
-	//spriteManager = new SpriteManager;
-	//particleManager = new ParticleManager();
+	threadManager.Start();
 }
 
 void Engine::Update()
 {
 	SDL_Event event;
+	//double fpsAmount = 0.0;
 	while (gameStateManger.GetGameState() != State::SHUTDOWN)
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
-		if (deltaTime > 1.f / static_cast<float>(timer.GetFrameRate()))
+		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
-			SDL_PollEvent(&event);
-#ifdef _DEBUG
-			//ImGui
-			ImGui_ImplSDL2_ProcessEvent(&event);
-#endif
+			threadManager.ProcessSDLEvents();
+			SDL_PollEvent(&event); // Need to merge with thread
 			switch (event.type)
 			{
 			case SDL_QUIT:
 				gameStateManger.SetGameState(State::UNLOAD);
 				break;
-			//case SDL_WINDOWEVENT:
-			//	if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED || event.window.event == SDL_WINDOWEVENT_MOVED ||
-			//		event.window.event == SDL_WINDOWEVENT_MINIMIZED)
-			//	{
-			//		deltaTime = 0.f;
-			//		std::cout << deltaTime << ", Window" << std::endl;
-			//	}
-			//	break;
+			case SDL_WINDOWEVENT:
+				//if ((event.window.event != SDL_WINDOWEVENT_RESIZED) || (event.window.event != SDL_WINDOWEVENT_MOVED) ||
+				//	(event.window.event == SDL_WINDOWEVENT_MINIMIZED))
+				//{
+				//}
+				break;
 			default:
 				break;
 			}
@@ -80,18 +73,40 @@ void Engine::Update()
 			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
 			{
 				int averageFrameRate = static_cast<int>(frameCount / timer.GetFrameRateCalculateTime());
-				//windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
-				//window.SetWindowTitle(windowTitleWithFrameCount.c_str());
-				std::cout << "\r" << averageFrameRate;
+				windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
+				window.SetSubWindowTitle(windowTitleWithFrameCount);
 				timer.ResetFPSCalculateTime();
 				frameCount = 0;
-			}//fps
 
-			inputManager.InputPollEvent(event);
+			}//fps
 			gameStateManger.Update(deltaTime);
-			if (renderManager->GetGraphicsMode() == GraphicsMode::GL)
-				window.UpdateWindowGL(event);
 		}
+
+		//else
+		//{
+		//	deltaTime = timer.Update(fpsAmount, 1);
+		//	threadManager.ProcessSDLEvents();
+		//	SDL_PollEvent(&event); // Need to merge with thread
+
+		//	switch (event.type)
+		//	{
+		//	case SDL_QUIT:
+		//		gameStateManger.SetGameState(State::UNLOAD);
+		//		break;
+		//	case SDL_WINDOWEVENT:
+		//		//if ((event.window.event != SDL_WINDOWEVENT_RESIZED) || (event.window.event != SDL_WINDOWEVENT_MOVED) ||
+		//		//	(event.window.event == SDL_WINDOWEVENT_MINIMIZED))
+		//		//{
+		//		//}
+		//		break;
+		//	default:
+		//		break;
+		//	}
+		//	windowTitleWithFrameCount = " (fps: " + std::to_string(fpsAmount) + ")";
+		//	window.SetSubWindowTitle(windowTitleWithFrameCount);
+
+		//	gameStateManger.Update(deltaTime);
+		//}
 	}
 }
 
@@ -101,16 +116,7 @@ void Engine::End()
 		delete dynamic_cast<GLRenderManager*>(renderManager);
 	else
 		delete dynamic_cast<VKRenderManager*>(renderManager);
-	//delete gameStateManger;
-	//delete cameraManager;
-	//delete inputManager;
-	//delete particleManager;
-	//delete objectManager;
-	//delete spriteManager;
-	//delete vkRenderManager;
-	//delete soundManager;
-	//delete window;
-	//delete vkInit;
+	threadManager.Stop();
 }
 
 void Engine::SetFPS(FrameRate fps)
