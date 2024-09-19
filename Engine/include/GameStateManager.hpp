@@ -39,6 +39,9 @@ public:
 
 	void SetGameState(State state_) { state = state_; }
 	State GetGameState() { return state; }
+
+	void UpdateGameLogic(float dt);
+	void UpdateDraw(float dt);
 #ifdef _DEBUG
 	void StateChanger();
 #endif
@@ -53,4 +56,6 @@ private:
 	GameLevel levelSelected = GameLevel::NONE;
 	std::vector<GameState*> levelList;
 	State state = State::START;
+
+	bool showDescription = false;
 };

@@ -15,7 +15,7 @@ void Camera::Update()
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:
-		if (isCenterFollow == true)
+		if (isThirdPersonView == true)
 		{
 			view = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraCenter.x * 2.f, -cameraCenter.y * 2.f, 0.0f)) *
 				glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
@@ -39,6 +39,8 @@ void Camera::Update()
 		break;
 	case CameraType::ThreeDimension:
 		glm::vec3 direction;
+		glm::vec3 desiredPosition = cameraCenter + cameraOffset;
+
 		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
@@ -50,18 +52,28 @@ void Camera::Update()
 			break;
 		}
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
 		back = glm::normalize(direction);
-		right = glm::normalize(glm::cross(direction, worldUp));
-		up = glm::normalize(glm::cross(right, back));
+
+		if (isThirdPersonView == true)
+		{
+			right = glm::normalize(glm::cross(back, worldUp));
+			up = glm::normalize(glm::cross(right, back));
+			cameraPosition = desiredPosition - back * cameraDistance;
+		}
+		else
+		{
+			right = glm::normalize(glm::cross(direction, worldUp));
+			up = glm::normalize(glm::cross(right, back));
+		}
 
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
 
-			if (isCenterFollow == true)
+			if (isThirdPersonView == true)
 			{
-				view = glm::lookAt(cameraPosition, cameraCenter + back, up);
+				view = glm::lookAt(cameraPosition, cameraCenter, up);
+				//view = glm::lookAt(cameraPosition, cameraCenter + back, up);
 			}
 			else
 			{
@@ -71,9 +83,10 @@ void Camera::Update()
 			break;
 		case GraphicsMode::VK:
 
-			if (isCenterFollow == true)
+			if (isThirdPersonView == true)
 			{
-				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, cameraCenter + back, up);
+				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
+				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, cameraCenter + back, up);
 			}
 			else
 			{
@@ -88,7 +101,7 @@ void Camera::Update()
 	}
 }
 
-void Camera::SetCenter(glm::vec3 pos, bool isCenterFollow_) noexcept
+void Camera::SetCenterPos(glm::vec3 pos)
 {
 	switch (cameraType)
 	{
@@ -97,11 +110,16 @@ void Camera::SetCenter(glm::vec3 pos, bool isCenterFollow_) noexcept
 		cameraCenter = pos;
 		break;
 	case CameraType::ThreeDimension:
-		cameraCenter = pos;
-		view = glm::lookAt(cameraPosition, cameraCenter + back, up);
-		break;
+		if (isThirdPersonView)
+		{
+			cameraCenter = pos;
+		}
+		else
+		{
+			LookAt(pos);
+			break;
+		}
 	}
-	isCenterFollow = isCenterFollow_;
 }
 
 void Camera::SetCameraPosition(glm::vec3 cameraPosition_) noexcept
@@ -178,6 +196,11 @@ void Camera::UpdaetCameraDirectrion(glm::vec2 dir)
 	pitch += dir.y * cameraSensitivity;
 
 	pitch = glm::clamp(pitch, -89.f, 89.f);
+	yaw = fmod(yaw, 360.0f);
+	if (yaw < 0.0f)
+	{
+		yaw += 360.0f;
+	}
 	Update();
 }
 
@@ -195,6 +218,52 @@ void Camera::Rotate2D(float angle) noexcept
 	}
 }
 
+void Camera::LookAt(glm::vec3 pos)
+{
+	if (cameraType == CameraType::ThreeDimension)
+	{
+		cameraCenter = pos;
+		glm::vec3 direction = glm::normalize(cameraCenter - cameraPosition);
+
+		pitch = glm::degrees(asin(-direction.y));
+		yaw = glm::degrees(atan2(direction.z, direction.x));
+
+		pitch = glm::clamp(pitch, -89.0f, 89.0f);
+
+		yaw = glm::mod(yaw, 360.0f);
+		if (yaw < 0.0f)
+		{
+			yaw += 360.0f;
+		}
+
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		switch (Engine::GetRenderManager()->GetGraphicsMode())
+		{
+		case GraphicsMode::GL:
+			direction.y = sin(glm::radians(-pitch));
+			break;
+		case GraphicsMode::VK:
+			direction.y = sin(glm::radians(pitch));
+			break;
+		}
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		back = glm::normalize(direction);
+
+		right = glm::normalize(glm::cross(back, worldUp));
+		up = glm::normalize(glm::cross(right, back));
+
+		switch (Engine::GetRenderManager()->GetGraphicsMode())
+		{
+		case GraphicsMode::GL:
+			view = glm::lookAt(cameraPosition, cameraCenter, up);
+			break;
+		case GraphicsMode::VK:
+			view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
+			break;
+		}
+	}
+}
+
 void Camera::Reset()
 {
 	up = { 0.0f, 1.0f, 0.0f };
@@ -209,7 +278,7 @@ void Camera::Reset()
 	farClip = 45.0f;
 	baseFov = 45.f;
 	cameraSensitivity = 1.f;
-	isCenterFollow = false;
+	isThirdPersonView = false;
 }
 
 void Camera::SetViewSize(int width, int height) noexcept

@@ -50,32 +50,85 @@ bool CameraManager::IsInCamera(Object* object)
 #ifdef _DEBUG
 void CameraManager::CameraControllerImGui()
 {
-	float targetP[3] = {GetCameraPosition().x, GetCameraPosition().y, GetCameraPosition().z};
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
+	{
+		if (SDL_GetRelativeMouseMode() == SDL_FALSE)
+		{
+			Engine::Instance().GetInputManager().SetRelativeMouseMode(true);
+		}
+		else
+		{
+			Engine::Instance().GetInputManager().SetRelativeMouseMode(false);
+		}
+	}
+
+	glm::vec3 position = GetCameraPosition();
 	float zoom = GetZoom();
 	float nearClip = GetNear();
 	float farClip = GetFar();
 	float pitch = GetPitch();
 	float yaw = GetYaw();
-	//float cameraSensitivity = GetCameraSensitivity();
+	float cameraSensitivity = GetCameraSensitivity();
+	bool isRelativeOn = Engine::GetInputManager().GetRelativeMouseMode();
+
+	glm::vec3 cameraOffset = GetCameraOffset(); 
+	float cameraDistance = GetCameraDistance();
+	bool isThirdPersonView = GetIsThirdPersonView();
 
 	ImGui::Begin("CameraController");
 
-	ImGui::InputFloat3("Position", targetP);
-	SetCameraPosition(glm::vec3{ targetP[0], targetP[1], targetP[2] });
+	ImGui::Checkbox("Third Person View Mod", &isThirdPersonView);
+	SetIsThirdPersonViewMod(isThirdPersonView);
 
-	ImGui::InputFloat("Zoom", &zoom, 0.5f, 1.0f);
+	ImGui::Checkbox("Relative Mouse Mod (Press Q)", &isRelativeOn);
+	Engine::GetInputManager().SetRelativeMouseMode(isRelativeOn);
+
+	ImGui::SliderFloat("CameraSensitivity", &cameraSensitivity, 0.1f, 100.f);
+	SetCameraSensitivity(cameraSensitivity);
+
+	ImGui::DragFloat3("Position", &position.x, 0.01f);
+	SetCameraPosition(position);
+
+	ImGui::DragFloat("Zoom", &zoom, 0.5f);
 	SetZoom(zoom);
 
-	ImGui::InputFloat("NearClip", &nearClip, 1.0f, 1.0f);
+	ImGui::DragFloat("Near", &nearClip, 0.05f);
 	SetNear(nearClip);
-	ImGui::InputFloat("FarClip", &farClip, 1.0f, 1.0f);
+
+	ImGui::DragFloat("Far", &farClip, 0.05f);
 	SetFar(farClip);
 
-	ImGui::InputFloat("Pitch", &pitch, 1.0f, 1.0f);
+	ImGui::DragFloat("Pitch", &pitch, 0.5f);
 	SetPitch(pitch);
-	ImGui::InputFloat("Yaw", &yaw, 1.0f, 1.0f);
-	SetYaw(yaw);
 
+	ImGui::DragFloat("Yaw", &yaw, 0.5f);
+	SetYaw(yaw);
+	
+	if (isThirdPersonView == true && !Engine::GetObjectManager().GetObjectMap().empty())
+	{
+		if (ImGui::CollapsingHeader("Third Person View Option", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::BeginChild("Scolling");
+			int index = 0;
+			for (auto& object : Engine::GetObjectManager().GetObjectMap())
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, (currentObjIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
+				if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
+				{
+					currentObjIndex = index;
+				}
+				ImGui::PopStyleColor();
+				index++;
+			}
+			ImGui::EndChild();
+			SetCenter(Engine::GetObjectManager().FindObjectWithId(currentObjIndex)->GetPosition());
+
+			ImGui::DragFloat("Distance", &cameraDistance, 0.05f);
+			SetCameraDistance(cameraDistance);
+			ImGui::DragFloat3("Offset", &cameraOffset.x, 0.01f);
+			SetCameraOffset(cameraOffset);
+		}
+	}
 	ImGui::End();
 }
 #endif
@@ -106,22 +159,11 @@ void CameraManager::ControlCamera(float dt)
 	{
 		MoveCameraPos(CameraMoveDir::DOWN, 5.f * dt);
 	}
-	//if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
-	//{
-	//	if (SDL_GetRelativeMouseMode() == SDL_FALSE)
-	//	{
-	//		Engine::Instance().GetInputManager().SetRelativeMouseMode(true);
-	//	}
-	//	else
-	//	{
-	//		Engine::Instance().GetInputManager().SetRelativeMouseMode(false);
-	//	}
-	//}
 	if (Engine::GetInputManager().GetMouseWheelMotion().y != 0.f)
 	{
 		SetZoom(GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
 	}
-	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::RIGHT))
+	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::RIGHT) || SDL_GetRelativeMouseMode() == SDL_TRUE)
 	{
 		UpdaetCameraDirectrion(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
 	}

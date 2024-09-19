@@ -68,7 +68,7 @@ public:
 	void SetMass(float amount) { mass = amount; }
 	void SetRestitution(float amount) { restitution = amount; }
 	void SetBodyType(BodyType type) { bodyType = type; };
-	void SetGhostCollision(bool state) { isGhostCollision = state; }
+	void SetIsGhostCollision(bool state) { isGhostCollision = state; }
 
 	BodyType GetBodyType() { return bodyType; };
 	CollideType GetCollideType() { return collideType; };

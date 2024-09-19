@@ -65,6 +65,13 @@ void Object::SetRotate(float value)
 	}
 }
 
+void Object::SetRotate(glm::vec3 value)
+{
+	SetXRotate(value.x);
+	SetYRotate(value.y);
+	SetZRotate(value.z);
+}
+
 void Object::SetXRotate(float value)
 {
 	{

@@ -15,7 +15,7 @@ public:
 	// 2D, 3D
 	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); }
 	void SetViewSize(int width, int height) noexcept { camera.SetViewSize(width, height); }
-	void SetCenter(glm::vec3 pos, bool isCenterFollow = false) { camera.SetCenter(pos, isCenterFollow); }
+	void SetCenter(glm::vec3 pos) { camera.SetCenterPos(pos); }
 	void SetCameraPosition(glm::vec3 pos) { camera.SetCameraPosition(pos); }
 
 	float GetZoom() noexcept { return camera.GetZoom(); }
@@ -35,6 +35,8 @@ public:
 	bool IsInCamera(Object* object); //2D (TBD in 3D)
 
 	//3D
+	void LookAt(glm::vec3 pos) { camera.LookAt(pos); }
+
 	void MoveCameraPos(CameraMoveDir dir, float speed) { camera.MoveCameraPos(dir, speed); }
 	void UpdaetCameraDirectrion(glm::vec2 dir) { camera.UpdaetCameraDirectrion(dir); } 
 	void SetCameraSensitivity(float amount) noexcept { camera.SetCameraSensitivity(amount); } 
@@ -45,15 +47,26 @@ public:
 	void SetPitch(float amount) noexcept { camera.SetPitch(amount); }
 	void SetYaw(float amount) noexcept { camera.SetYaw(amount); }
 	void SetBaseFov(float amount) noexcept { camera.SetBaseFov(amount); }
+	void SetIsThirdPersonViewMod(bool state) { camera.SetIsThirdPersonViewMod(state); }
+	void  SetCameraDistance(float amount) noexcept { camera.SetCameraDistance(amount); }
+	void  SetCameraOffset(glm::vec3 amount) noexcept { camera.SetCameraOffset(amount); }
 
 	float GetNear() noexcept { return camera.GetNear(); }
 	float GetFar() noexcept { return camera.GetFar(); }
 	float GetPitch() noexcept { return camera.GetPitch(); }
 	float GetYaw() noexcept { return camera.GetYaw(); }
 	float GetBaseFov() { return camera.GetBaseFov(); }
+	float GetIsThirdPersonView() { return camera.GetIsThirdPersonView();}
+	float GetCameraDistance() { return camera.GetCameraDistance(); }
+	glm::vec3 GetCameraOffset() { return camera.GetCameraOffset(); }
+
+	glm::vec3 GetUpVector() const { return camera.GetUpVector(); }
+	glm::vec3 GetBackVector() const { return camera.GetBackVector(); }
+	glm::vec3 GetRightVector() const { return camera.GetRightVector(); }
 
 #ifdef _DEBUG
 	void CameraControllerImGui();
+	int currentObjIndex = 0;
 #endif
 private:
 	Camera camera;

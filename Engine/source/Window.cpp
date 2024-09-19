@@ -52,7 +52,7 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 			};
 			break;
 		}
-
+		SetMainWindowTitle(title);
 		std::cout << "Create Window Successful" << '\n' << std::endl;
 	}
 }
@@ -132,4 +132,15 @@ void Window::UpdateWindowGL(SDL_Event& event)
 		glViewport(0, 0, event.window.data1, event.window.data2);
 	}
 	//SDL_GL_SwapWindow(window.get());
+}
+
+void Window::SetMainWindowTitle(std::string title)
+{
+	titleName = title;
+	SDL_SetWindowTitle(window.get(), titleName.c_str());
+}
+
+void Window::SetSubWindowTitle(std::string subTitle)
+{
+	SDL_SetWindowTitle(window.get(), (titleName + subTitle).c_str());
 }

@@ -6,6 +6,7 @@
 
 #include "VerticesDemo.hpp"
 #include "ProceduralMeshes.hpp"
+#include "3DPhysicsDemo.hpp"
 #include "PocketBallDemo/PocketBallDemo.hpp"
 #include "PlatformDemo/PlatformDemo.hpp"
 #include "BeatEmUpDemo/BeatEmUpDemo.hpp"
@@ -37,13 +38,14 @@ int main(void)
 
     Engine& engine = Engine::Instance();
     engine.Init("CubeEngine", 1280, 720, false, WindowMode::NORMAL);
-    engine.SetFPS(FrameRate::FPS_60);
+    engine.SetFPS(FrameRate::UNLIMIT);
 
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
     engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");
 
     engine.GetGameStateManager().AddLevel(new ProceduralMeshes);
     engine.GetGameStateManager().AddLevel(new VerticesDemo);
+    engine.GetGameStateManager().AddLevel(new PhysicsDemo);
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
     engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);

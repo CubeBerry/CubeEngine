@@ -33,7 +33,7 @@ PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type
 		GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/vehicle.spt", "Vehicle");
 		GetComponent<Sprite>()->PlayAnimation(0);
 
-		GetComponent<Physics2D>()->SetGhostCollision(true);
+		GetComponent<Physics2D>()->SetIsGhostCollision(true);
 		GetComponent<Physics2D>()->SetMaxVelocity({ 5.f,4.f });
 		GetComponent<Physics2D>()->SetFriction(1.f);
 		size.x = -size.x;

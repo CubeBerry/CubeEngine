@@ -34,10 +34,12 @@ public:
 	
 	void       SetId(int value) { id = value; }
 	void       SetRotate(float value);
+	void       SetRotate(glm::vec3 value);
 	void       SetXRotate(float value);
 	void       SetYRotate(float value);
 	void       SetZRotate(float value);
 
+	void       SetPosition(glm::vec3 value) { position = value; }
 	void       SetXPosition(float newX) { position.x = newX; }
 	void       SetYPosition(float newY) { position.y = newY; }
 	void       SetZPosition(float newZ) { position.z = newZ; }
