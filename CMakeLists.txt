@@ -67,6 +67,7 @@ FILE(GLOB IMGUI_SOURCES
 
 if (MSVC)
     add_compile_options(/W4)
+    add_compile_options(/MP)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()

@@ -22,7 +22,7 @@ void GLImGuiManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
+	//ImGuiIO& io = ImGui::GetIO();
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
@@ -46,7 +46,7 @@ void GLImGuiManager::End()
 {
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	const ImGuiIO& io = ImGui::GetIO();
+	//const ImGuiIO& io = ImGui::GetIO();
 	//if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	//{
 	//	ImGui::UpdatePlatformWindows();
