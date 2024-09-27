@@ -83,6 +83,8 @@ protected:
 		return glm::vec4(RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]), 1.0f);
 	}
 
+	void CreateMesh(MeshType type, int stacks, int slices);
+
 	std::vector<ThreeDimension::Vertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;
 	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
