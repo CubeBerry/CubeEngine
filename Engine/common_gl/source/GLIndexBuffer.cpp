@@ -8,7 +8,8 @@
 GLIndexBuffer::GLIndexBuffer(std::vector<uint16_t>* indices) : count(static_cast<GLsizei>(indices->size()))
 {
 	glCheck(glCreateBuffers(1, &indexHandle));
-	glCheck(glNamedBufferStorage(indexHandle, sizeof(uint16_t) * count, indices->data(), GL_DYNAMIC_STORAGE_BIT));
+	//glCheck(glNamedBufferStorage(indexHandle, sizeof(uint16_t) * count, indices->data(), GL_DYNAMIC_STORAGE_BIT));
+	glCheck(glNamedBufferData(indexHandle, sizeof(uint16_t) * count, indices->data(), GL_DYNAMIC_DRAW));
 }
 
 GLIndexBuffer::~GLIndexBuffer()

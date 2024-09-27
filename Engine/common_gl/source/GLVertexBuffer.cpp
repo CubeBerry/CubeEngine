@@ -22,8 +22,8 @@ void GLVertexBuffer::SetData(GLsizei size, const void* data)
 {
 	//Sub == When the size is fixed
 	//glCheck(glNamedBufferSubData(vboHandle, 0, size, data));
-	//glCheck(glNamedBufferData(vboHandle, size, data, GL_DYNAMIC_DRAW));
-	glCheck(glNamedBufferStorage(vboHandle, size, data, GL_DYNAMIC_STORAGE_BIT));
+	glCheck(glNamedBufferData(vboHandle, size, data, GL_DYNAMIC_DRAW));
+	//glCheck(glNamedBufferStorage(vboHandle, size, data, GL_DYNAMIC_STORAGE_BIT));
 }
 
 //void GLVertexBuffer::Use()
