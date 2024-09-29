@@ -325,14 +325,14 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			glm::vec3 normal_second = glm::cross(ab, bc);
 			glm::vec3 normal_third = glm::cross(ac, bc);
 
-			//	//Put normals
+			//Put normals
 			tempVertices[tempIndices[i]].normal += glm::vec4(normal_first * glm::length(normal_first), 0.f);
 			tempVertices[tempIndices[i + 1]].normal += glm::vec4(normal_second * glm::length(normal_second), 0.f);
 			tempVertices[tempIndices[i + 2]].normal += glm::vec4(normal_third * glm::length(normal_third), 0.f);
 		}
 
 		for (auto& vn : tempVertices)
-			vn.normal = glm::normalize(vn.normal);
+			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
 	}
 	break;
 	}

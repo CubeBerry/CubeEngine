@@ -58,6 +58,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
+	glCheck(glCullFace(GL_BACK));
 	switch (pMode)
 	{
 	case PolygonType::FILL:
