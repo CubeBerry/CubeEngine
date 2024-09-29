@@ -51,7 +51,7 @@ public:
 	GLTexture* GetTexture(std::string name);
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) override;
+	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices) override;
 private:
 	//--------------------Common--------------------//
 	GLVertexBuffer* vertexBuffer{ nullptr };
@@ -67,4 +67,7 @@ private:
 	//--------------------3D Render--------------------//
 	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
+
+	//Lighting
+	GLUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
 };

@@ -2,9 +2,12 @@
 //Project: CubeEngine
 //File: RenderManager.cpp
 #include "RenderManager.hpp"
+
+#include <iostream>
+#include <fstream>
 #include <glm/gtx/transform.hpp>
 
-void RenderManager::CreateMesh(MeshType type, int stacks, int slices)
+void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
 	std::vector<ThreeDimension::Vertex> tempVertices;
 	std::vector<uint16_t> tempIndices;
@@ -229,17 +232,107 @@ void RenderManager::CreateMesh(MeshType type, int stacks, int slices)
 	break;
 	case MeshType::TORUS:
 	{
-
 	}
 	break;
 	case MeshType::CYLINDER:
 	{
-
 	}
 	break;
 	case MeshType::CONE:
 	{
+	}
+	break;
+	case MeshType::OBJ:
+	{
+		std::ifstream file(path);
+		if (!file.is_open())
+			std::cout << "Open File Failed!" << '\n';
 
+		std::string line;
+		while (std::getline(file, line))
+		{
+			std::stringstream ss{ line };
+			std::string prefix;
+			ss >> prefix;
+
+			if (prefix == "v")
+			{
+				glm::vec3 temp_vertex;
+				ss >> temp_vertex.x >> temp_vertex.y >> temp_vertex.z;
+				tempVertices.push_back(ThreeDimension::Vertex(
+					glm::vec4(temp_vertex, 1.f),
+					glm::vec4(0.f, 0.f, 0.f, 1.f),
+					glm::vec2(0.f, 0.f),
+					0)
+				);
+			}
+			else if (prefix == "f")
+			{
+				std::string data;
+
+				for (int i = 0; i < 3; ++i)
+				{
+					ss >> data;
+					std::stringstream d(data);
+					std::string index;
+
+
+					std::getline(d, index, '/');
+
+					tempIndices.push_back(static_cast<uint16_t>(std::stoi(index) - 1));
+				}
+			}
+		}
+		file.close();
+
+		glm::vec3 min(FLT_MAX), max(FLT_MIN);
+		for (const auto& vertex : tempVertices)
+		{
+			min = glm::min(min, glm::vec3(vertex.position));
+			max = glm::max(max, glm::vec3(vertex.position));
+		}
+
+		glm::vec3 center;
+		float unitScale;
+
+		center = (min + max) / 2.f;
+		glm::vec3 size = max - min;
+		float extent = glm::max(size.x, glm::max(size.y, size.z));
+		unitScale = 1.f / extent;
+
+		for (auto& vertex : tempVertices)
+		{
+			vertex.position -= glm::vec4(center, 0.f);
+			vertex.position *= glm::vec4(unitScale, unitScale, unitScale, 1.f);
+		}
+
+		// Calculate vertex normals here
+		//allVertexNormals.assign(allVertices.size(), glm::vec3(0.f));
+		for (size_t i = 0; i < tempIndices.size(); i += 3)
+		{
+			//Find vectors of triangle
+			glm::vec3 ab = glm::normalize(tempVertices[tempIndices[i + 1]].position - tempVertices[tempIndices[i]].position);
+			glm::vec3 ac = glm::normalize(tempVertices[tempIndices[i + 2]].position - tempVertices[tempIndices[i]].position);
+			glm::vec3 bc = glm::normalize(tempVertices[tempIndices[i + 2]].position - tempVertices[tempIndices[i + 1]].position);
+
+			//Find normals
+			//Mean Weighted by Angle
+			//|cross(A, B)| = |A||B|sin(x), |A||B| is 1 because of normalization
+			//|cross(A, B)| == |A||B|sin(x)== sin(x)
+			//glm::length(normal_first) == |cross(A, B)| == sin(x)
+			//N = normalize(Sigma sin(xi) * Ni)
+			glm::vec3 normal_first = glm::cross(ab, ac);
+			glm::vec3 normal_second = glm::cross(ab, bc);
+			glm::vec3 normal_third = glm::cross(ac, bc);
+
+			//	//Put normals
+			tempVertices[tempIndices[i]].normal += glm::vec4(normal_first * glm::length(normal_first), 0.f);
+			tempVertices[tempIndices[i + 1]].normal += glm::vec4(normal_second * glm::length(normal_second), 0.f);
+			tempVertices[tempIndices[i + 2]].normal += glm::vec4(normal_third * glm::length(normal_third), 0.f);
+		}
+
+		for (auto& vn : tempVertices)
+			vn.normal = glm::normalize(vn.normal);
 	}
 	break;
 	}

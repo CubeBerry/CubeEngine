@@ -33,6 +33,7 @@ enum class MeshType
 	TORUS,
 	CYLINDER,
 	CONE,
+	OBJ,
 };
 
 class RenderManager
@@ -55,7 +56,13 @@ public:
 	std::vector<TwoDimension::FragmentUniform>* GetFragmentUniforms2D() { return &fragUniforms2D; };
 
 	//--------------------3D Render--------------------//
-	virtual void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) = 0;
+	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices) = 0;
+	virtual void EnableLighting(bool isEnabled, ThreeDimension::VertexLightingUniform uniform = {})
+	{
+		isLighting = isEnabled;
+		vertexLightingUniform = uniform;
+		vertexLightingUniform.isLighting = isLighting;
+	}
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
 	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
@@ -83,7 +90,11 @@ protected:
 		return glm::vec4(RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]), 1.0f);
 	}
 
-	void CreateMesh(MeshType type, int stacks, int slices);
+	void CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices);
+
+	//Lighting
+	bool isLighting{ false };
+	ThreeDimension::VertexLightingUniform vertexLightingUniform{};
 
 	std::vector<ThreeDimension::Vertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;

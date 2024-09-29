@@ -887,9 +887,9 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices)
+void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices)
 {
-	CreateMesh(type, stacks, slices);
+	CreateMesh(type, path, stacks, slices);
 
 	if (vertex3DBuffer != nullptr)
 		delete vertex3DBuffer;

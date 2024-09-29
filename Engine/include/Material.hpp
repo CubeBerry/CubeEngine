@@ -54,6 +54,20 @@ namespace ThreeDimension
 		glm::vec4 color;
 	};
 
+	struct alignas(16)VertexLightingUniform
+	{
+		//Common
+		glm::vec4 lightPosition;
+		glm::vec4 lightColor;
+		//Ambient
+		glm::vec4 viewPosition;
+		float ambientStrength;
+		//Specular
+		float specularStrength;
+
+		float isLighting;
+	};
+
 	struct alignas(16) FragmentUniform
 	{
 		int texIndex;

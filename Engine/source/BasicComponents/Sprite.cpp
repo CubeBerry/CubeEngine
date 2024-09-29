@@ -234,10 +234,10 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void Sprite::AddMesh3D(MeshType type, int stacks, int slices, glm::vec4 color)
+void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->LoadMesh(type, color, stacks, slices);
+	renderManager->LoadMesh(type, path, color, stacks, slices);
 	materialId = Engine::GetSpriteManager().GetSpritesAmount();
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();

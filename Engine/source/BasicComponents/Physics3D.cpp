@@ -436,7 +436,7 @@ void Physics3D::AddPoint(glm::vec3 pos)
 		Point3D temp;
 		temp.pos = { 0.f,0.f,0.f };
 		temp.sprite = new Sprite();
-		temp.sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 0.5 });
+		temp.sprite->AddMesh3D(MeshType::CUBE, "", 2, 2, { 1.0, 0.0, 0.0, 0.5 });
 		points.push_back(std::move(temp));
 	}
 	Point3D temp;
@@ -445,13 +445,13 @@ void Physics3D::AddPoint(glm::vec3 pos)
 	switch (bodyType)
 	{
 	case BodyType3D::RIGID:
-		temp.sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
+		temp.sprite->AddMesh3D(MeshType::CUBE, "", 2, 2, { 0.0, 1.0, 0.0, 1.0 });
 		break;
 	case BodyType3D::BLOCK:
-		temp.sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 1.0 });
+		temp.sprite->AddMesh3D(MeshType::CUBE, "", 2, 2, { 1.0, 0.0, 0.0, 1.0 });
 		break;
 	default:
-		temp.sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
+		temp.sprite->AddMesh3D(MeshType::CUBE, "", 2, 2, { 0.0, 1.0, 0.0, 1.0 });
 		break;
 	}
 	points.push_back(std::move(temp));
