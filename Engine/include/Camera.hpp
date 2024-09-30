@@ -2,7 +2,10 @@
 //Project: CubeEngine
 //File: Camera.hpp
 #pragma once
+#include "3DPhysicsDemo.hpp"
+#include "3DPhysicsDemo.hpp"
 #include "glm/glm.hpp"
+#include "Ray.hpp"
 
 enum class CameraMoveDir
 {
@@ -38,7 +41,7 @@ public:
 	void Reset();
 
 	//2D, 3D
-	void    SetCenterPos(glm::vec3 pos);
+	void    SetTarget(glm::vec3 pos);
 	void    SetCameraPosition(glm::vec3 cameraPosition_) noexcept; 
 	void    SetViewSize(int width, int height) noexcept;
 	void    SetZoom(float amount) noexcept; 
@@ -91,6 +94,7 @@ public:
 	glm::vec3 GetBackVector() const { return back; }
 	glm::vec3 GetRightVector() const { return right; }
 
+	Ray CalculateRayFrom2DPosition(glm::vec2 pos);
 private:
 	//2D, 3D
 	glm::vec3 cameraPosition{ 0.0f, 0.0f, 0.0f }; 

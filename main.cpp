@@ -37,7 +37,7 @@ int main(void)
 #endif
 
     Engine& engine = Engine::Instance();
-    engine.Init("CubeEngine", 1280, 720, false, WindowMode::NORMAL);
+    engine.Init("CubeEngine", 1280, 720 , false, WindowMode::NORMAL);
     engine.SetFPS(FrameRate::UNLIMIT);
 
     //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
@@ -49,7 +49,7 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
     engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
+    engine.GetGameStateManager().LevelInit(GameLevel::PHYSICSDEMO);
 
     engine.Update();
     engine.End();
