@@ -21,7 +21,7 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/obj/teapot.obj", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
 
 	ThreeDimension::VertexLightingUniform l;
 	l.lightPosition = glm::vec4(0.f, 15.f, 10.f, 1.f);
