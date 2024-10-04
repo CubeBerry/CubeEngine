@@ -57,11 +57,18 @@ public:
 
 	//--------------------3D Render--------------------//
 	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices) = 0;
-	virtual void EnableLighting(bool isEnabled, ThreeDimension::VertexLightingUniform uniform = {})
+	void EnableLighting(bool isEnabled)
 	{
 		isLighting = isEnabled;
-		vertexLightingUniform = uniform;
 		vertexLightingUniform.isLighting = isLighting;
+	}
+	void UpdateLighting(glm::vec4 lightPosition, glm::vec4 lightColor, glm::vec4 viewPosition, float ambientStrength, float specularStrength)
+	{
+		vertexLightingUniform.lightPosition = lightPosition;
+		vertexLightingUniform.lightColor = lightColor;
+		vertexLightingUniform.viewPosition = viewPosition;
+		vertexLightingUniform.ambientStrength = ambientStrength;
+		vertexLightingUniform.specularStrength = specularStrength;
 	}
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };

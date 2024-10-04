@@ -31,8 +31,8 @@ uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    //if (i_is_lighting == 1.0)
-    //{
+    if (abs(i_is_lighting) > 0.001)
+    {
         //Ambient Lighting
         vec3 ambient = i_ambient_strength * i_light_color;
 
@@ -55,7 +55,7 @@ void main()
         }
 
         fragmentColor = vec4(ambient + diffuse + specular, 1.0) * (i_col + 0.5);
-    //}
-    //else
-        //fragmentColor = i_col;
+    }
+    else
+        fragmentColor = i_col;
 }
