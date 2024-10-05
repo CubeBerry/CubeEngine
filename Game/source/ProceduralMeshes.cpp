@@ -238,6 +238,7 @@ void ProceduralMeshes::End()
 {
 	isFill = true;
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
+	Engine::GetRenderManager()->EnableLighting(false);
 
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();

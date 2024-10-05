@@ -99,7 +99,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		{
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
 		}
-		if (isLighting)
+		if (vertexLightingUniformBuffer != nullptr)
 		{
 			vertexLightingUniformBuffer->UpdateUniform(sizeof(ThreeDimension::VertexLightingUniform), &vertexLightingUniform);
 		}
