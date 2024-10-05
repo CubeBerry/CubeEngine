@@ -17,11 +17,10 @@ void ProceduralMeshes::Init()
 	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
-	//currentMesh = MeshType::PLANE;
-	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
-	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
+	currentMesh = MeshType::PLANE;
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
 
 	l.lightPosition = glm::vec4(0.f, 15.f, 10.f, 1.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
@@ -37,6 +36,9 @@ void ProceduralMeshes::Update(float dt)
 {
 	Engine::GetCameraManager().ControlCamera(dt);
 
+	//Update Color
+	(*Engine::GetRenderManager()->GetVertexUniforms3D())[0].color = glm::vec4{ color[0], color[1], color[2], color[3] };
+
 	//Update Lighting Variables
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	Engine::GetRenderManager()->UpdateLighting(l.lightPosition, l.lightColor, l.viewPosition, l.ambientStrength, l.specularStrength);
@@ -45,36 +47,6 @@ void ProceduralMeshes::Update(float dt)
 	Engine::GetCameraManager().SetNear(cNear);
 	Engine::GetCameraManager().SetFar(cFar);
 	Engine::GetCameraManager().SetBaseFov(cFov);
-
-	//Recreate Meshes
-	if (Engine::GetObjectManager().GetLastObject() != nullptr)
-		Engine::GetObjectManager().Destroy(Engine::GetObjectManager().GetLastObject()->GetId());
-
-	switch (currentMesh)
-	{
-	case MeshType::PLANE:
-		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", stacks, slices, { color[0], color[1], color[2], color[3] });
-		break;
-	case MeshType::CUBE:
-		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", stacks, slices, { color[0], color[1], color[2], color[3] });
-		break;
-	case MeshType::SPHERE:
-		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::SPHERE, "", stacks, slices, { color[0], color[1], color[2], color[3] });
-		break;
-	case MeshType::OBJ:
-		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, objPath, 2, 2, { color[0], color[1], color[2], color[3] });
-		break;
-	default:
-		break;
-	}
 
 	if (isFill)
 		Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
@@ -112,18 +84,21 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 				stacks = 2;
 				slices = 2;
 				currentMesh = MeshType::PLANE;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Cube", "1"))
 			{
 				stacks = 2;
 				slices = 2;
 				currentMesh = MeshType::CUBE;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Sphere", "2"))
 			{
 				stacks = 30;
 				slices = 30;
 				currentMesh = MeshType::SPHERE;
+				RecreateMesh();
 			}
 			ImGui::EndMenu();
 		}
@@ -133,25 +108,31 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		case MeshType::PLANE:
 			if (ImGui::SliderInt("stacks", &stacks, 2, 30))
 			{
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 2, 30))
 			{
+				RecreateMesh();
 			}
 			break;
 		case MeshType::CUBE:
 			if (ImGui::SliderInt("stacks", &stacks, 2, 10))
 			{
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 2, 10))
 			{
+				RecreateMesh();
 			}
 			break;
 		case MeshType::SPHERE:
 			if (ImGui::SliderInt("stacks", &stacks, 5, 35))
 			{
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 5, 35))
 			{
+				RecreateMesh();
 			}
 			break;
 		}
@@ -167,41 +148,49 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/cube.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("car", "1"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/car.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("diamond", "2"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/diamond.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("dodecahedron", "3"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/dodecahedron.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("gourd", "4"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/gourd.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("sphere", "5"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/sphere.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("teapot", "6"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/teapot.obj";
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("vase", "7"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/vase.obj";
+				RecreateMesh();
 			}
 			ImGui::EndMenu();
 		}
@@ -223,6 +212,19 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		ImGui::ColorPicker4("Mesh Color", color);
 	}
 
+	//Lighting
+	if (ImGui::CollapsingHeader("Lights"))
+	{
+		//Change Light Color
+		ImGui::SliderFloat3("Light Color", &l.lightColor.x, 0.f, 1.f);
+
+		//Change Ambient Strength
+		ImGui::SliderFloat("Ambient Strength", &l.ambientStrength, 0.f, 1.f);
+
+		//Change Specular Strength
+		ImGui::SliderFloat("Specular Strength", &l.specularStrength, 0.f, 1.f);
+	}
+
 	ImGui::End();
 }
 #endif
@@ -240,4 +242,26 @@ void ProceduralMeshes::End()
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
+}
+
+void ProceduralMeshes::RecreateMesh()
+{
+	if (currentMesh != MeshType::OBJ)
+	{
+		if (Engine::GetObjectManager().GetLastObject() != nullptr)
+			Engine::GetObjectManager().Destroy(Engine::GetObjectManager().GetLastObject()->GetId());
+
+		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(currentMesh, objPath, stacks, slices, { color[0], color[1], color[2], color[3] });
+	}
+	else
+	{
+		if (Engine::GetObjectManager().GetLastObject() != nullptr)
+			Engine::GetObjectManager().Destroy(Engine::GetObjectManager().GetLastObject()->GetId());
+
+		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, objPath, stacks, slices, { color[0], color[1], color[2], color[3] });
+	}
 }
