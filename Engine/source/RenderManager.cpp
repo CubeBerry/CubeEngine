@@ -263,7 +263,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 					glm::vec4(temp_vertex, 1.f),
 					glm::vec4(0.f, 0.f, 0.f, 1.f),
 					glm::vec2(0.f, 0.f),
-					0)
+					quadCount)
 				);
 			}
 			else if (prefix == "f")
@@ -275,7 +275,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 					ss >> data;
 					std::stringstream d(data);
 					std::string index;
-
 
 					std::getline(d, index, '/');
 
@@ -333,6 +332,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		for (auto& vn : tempVertices)
 			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
+
+		for (auto& i : tempIndices)
+			i += static_cast<uint16_t>(verticesCount);
 	}
 	break;
 	}
