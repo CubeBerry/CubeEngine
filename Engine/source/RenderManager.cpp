@@ -30,7 +30,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(slice) / slices;
 
 				tempVertices.push_back(ThreeDimension::Vertex(
-					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
+					glm::vec4(col - 0.5f, row - 0.5f, 0.0f, 1.0f),
 					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
 					glm::vec2(col, row),
 					quadCount
@@ -87,7 +87,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(slice) / slices;
 
 				planeVertices.push_back(ThreeDimension::Vertex(
-					glm::vec4(col - 0.5f, 0.5f - row, 0.0f, 1.0f),
+					glm::vec4(col - 0.5f, row - 0.5f, 0.0f, 1.0f),
 					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
 					glm::vec2(col, row),
 					quadCount
