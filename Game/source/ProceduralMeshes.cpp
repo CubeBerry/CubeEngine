@@ -106,6 +106,13 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 				currentMesh = MeshType::SPHERE;
 				isRecreate = true;
 			}
+			if (ImGui::MenuItem("Cone", "3"))
+			{
+				stacks = 10;
+				slices = 10;
+				currentMesh = MeshType::CONE;
+				isRecreate = true;
+			}
 			ImGui::EndMenu();
 		}
 

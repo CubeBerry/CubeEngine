@@ -242,6 +242,62 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	break;
 	case MeshType::CONE:
 	{
+		const float height = 1.0f;
+		const float radius = 0.5f;
+
+		for (int i = 0; i <= stacks; ++i)
+		{
+			float row = (float)i / stacks;
+			for (int j = 0; j <= slices; ++j)
+			{
+				float col = (float)j / slices;
+				float alpha = col * 2.0f * PI;
+
+				//row == stacks
+				ThreeDimension::Vertex v;
+				v.position = glm::vec4{ radius * (height - row) * sin(alpha), row - radius , radius * (height - row) * cos(alpha), 1.f };
+				v.normal = glm::vec4{ glm::vec4{ radius * (height - row) * sin(alpha), row - radius , radius * (height - row) * cos(alpha), 1.f } / radius };
+				v.uv = glm::vec2{ col, 1 - row };
+				v.index = quadCount;
+				tempVertices.push_back(v);
+			}
+		}
+		size_t current_index{ tempVertices.size() };
+
+		//bottom
+		//P0
+		ThreeDimension::Vertex P0;
+		P0.position = glm::vec4{ 0.0f, -0.5f, 0.0f, 1.f };
+		P0.normal = glm::vec4{ 0.0f, -0.5f, 0.0f, 1.f } / radius;
+		tempVertices.push_back(P0);
+		for (int i = 0; i < slices; ++i)
+		{
+			float col = (float)i / slices;
+			float alpha = col * 2.0f * PI;
+
+			ThreeDimension::Vertex Pi;
+			Pi.position = glm::vec4{ radius * sin(alpha), -0.5f,radius * cos(alpha), 1.f };
+			Pi.normal = Pi.position / radius;
+			tempVertices.push_back(Pi);
+
+			ThreeDimension::Vertex Pj;
+			float deltaAlpha{ (2.f * PI) / slices };
+			Pj.position = glm::vec4{ radius * sin(alpha + deltaAlpha), -0.5f, radius * cos(alpha + deltaAlpha), 1.f };
+			Pj.normal = Pj.position / radius;
+			tempVertices.push_back(Pj);
+		}
+
+		for (uint16_t i = static_cast<uint16_t>(tempVertices.size()) - 1; i > current_index; --i)
+		{
+			tempIndices.push_back(static_cast<uint16_t>(current_index));
+			tempIndices.push_back(i);
+			if (i == current_index + 1)
+			{
+				tempIndices.push_back(static_cast<uint16_t>(tempVertices.size()) - 1);
+				break;
+			}
+			tempIndices.push_back(i - 1);
+		}
 	}
 	break;
 	case MeshType::OBJ:
@@ -334,8 +390,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		for (auto& vn : tempVertices)
 		{
-			if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
-				vn.position.y = -vn.position.y;
+			//if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+			//	vn.position.y = -vn.position.y;
 			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
 		}
 
