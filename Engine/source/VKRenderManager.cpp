@@ -40,6 +40,7 @@ VKRenderManager::~VKRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -303,6 +304,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::FILL);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::LINE);
+
+	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
 
 #ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
@@ -985,7 +988,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
-			vertexUniform2D->UpdateUniform(vertexUniforms2D, frameIndex);
+			vertexUniform2D->UpdateUniform(vertexUniforms2D.size(), vertexUniforms2D.data(), frameIndex);
 		}
 
 		if (fragmentUniform2D != nullptr)
@@ -1025,7 +1028,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
-			fragmentUniform2D->UpdateUniform(fragUniforms2D, frameIndex);
+			fragmentUniform2D->UpdateUniform(fragUniforms2D.size(), fragUniforms2D.data(), frameIndex);
 		}
 		break;
 	case RenderType::ThreeDimension:
@@ -1034,30 +1037,38 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
-				//std::vector<VkDescriptorBufferInfo> bufferInfos;
-				//for (auto& t : textures)
-				//{
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
-				//bufferInfos.push_back(bufferInfo);
-				//}
 
 				//Define which resource descriptor set will point
-				VkWriteDescriptorSet descriptorWrite{};
-				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
-				descriptorWrite.dstBinding = 0;
-				descriptorWrite.descriptorCount = 1;
-				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite.pBufferInfo = &bufferInfo;
+				VkWriteDescriptorSet descriptorWrite[2] = {};
+				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[0].dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite[0].dstBinding = 0;
+				descriptorWrite[0].descriptorCount = 1;
+				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[0].pBufferInfo = &bufferInfo;
+
+				VkDescriptorBufferInfo lightingBufferInfo;
+				lightingBufferInfo.buffer = (*(vertexLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
+				lightingBufferInfo.offset = 0;
+				lightingBufferInfo.range = sizeof(ThreeDimension::VertexLightingUniform);
+
+				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[1].dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite[1].dstBinding = 1;
+				descriptorWrite[1].descriptorCount = 1;
+				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[1].pBufferInfo = &lightingBufferInfo;
 
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
-			vertexUniform3D->UpdateUniform(vertexUniforms3D, frameIndex);
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+			vertexLightingUniformBuffer->UpdateUniform(1, &vertexLightingUniform, frameIndex);
 		}
 
 		if (fragmentUniform3D != nullptr)
@@ -1097,7 +1108,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
-			fragmentUniform3D->UpdateUniform(fragUniforms3D, frameIndex);
+			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
 		}
 		break;
 	}

@@ -13,8 +13,8 @@ public:
 	VKUniformBuffer(VKInit* init_, const int size_);
 	~VKUniformBuffer();
 
-	void InitUniformBuffer(const int size_);
-	void UpdateUniform(std::vector<Material> vector_, const uint32_t frameIndex_);
+	void InitUniformBuffer(const int count_);
+	void UpdateUniform(size_t count_, void* data_, const uint32_t frameIndex_);
 
 	std::array<VkBuffer, 2>* GetUniformBuffers() { return &vkUniformBuffers; };
 	std::array<VkDeviceMemory, 2>* GetUniformDeviceMemories() { return &vkUniformDeviceMemories; };
@@ -49,14 +49,14 @@ VKUniformBuffer<Material>::~VKUniformBuffer()
 }
 
 template<typename Material>
-inline void VKUniformBuffer<Material>::InitUniformBuffer(const int size_)
+inline void VKUniformBuffer<Material>::InitUniformBuffer(const int count_)
 {
 	for (auto i = 0; i != 2; ++i)
 	{
 		//Create Uniform Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = sizeof(Material) * size_;
+		createInfo.size = sizeof(Material) * count_;
 		createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		//Create Uniform Buffer
@@ -167,17 +167,17 @@ inline void VKUniformBuffer<Material>::InitUniformBuffer(const int size_)
 }
 
 template<typename Material>
-inline void VKUniformBuffer<Material>::UpdateUniform(std::vector<Material> vector_, const uint32_t frameIndex_)
+inline void VKUniformBuffer<Material>::UpdateUniform(size_t count_, void* data_, const uint32_t frameIndex_)
 {
 	auto& vkUniformDeviceMemory = vkUniformDeviceMemories[frameIndex_];
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material) * vector_.size(), 0, &contents);
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material) * count_, 0, &contents);
 
 	//auto material = static_cast<Material*>(contents);
 	//*material = *material_;
-	memcpy(contents, vector_.data(), sizeof(Material) * vector_.size());
+	memcpy(contents, data_, sizeof(Material) * count_);
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 }
