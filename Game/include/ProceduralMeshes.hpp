@@ -28,6 +28,7 @@ private:
 
 	MeshType currentMesh{ MeshType::PLANE };
 
+	bool isRecreate{ false };
 	void RecreateMesh();
 
 	//ImGui - Projection

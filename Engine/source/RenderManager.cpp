@@ -7,6 +7,8 @@
 #include <fstream>
 #include <glm/gtx/transform.hpp>
 
+#include "Engine.hpp"
+
 void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
 	std::vector<ThreeDimension::Vertex> tempVertices;
@@ -331,7 +333,11 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		}
 
 		for (auto& vn : tempVertices)
+		{
+			if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+				vn.position.y = -vn.position.y;
 			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
+		}
 
 		for (auto& i : tempIndices)
 			i += static_cast<uint16_t>(verticesCount);
