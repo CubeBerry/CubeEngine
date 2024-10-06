@@ -23,7 +23,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 2, 2, { 0.0, 0.8f, 0.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetBodyType(BodyType3D::BLOCK);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 20.f,0.01f,20.f });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 20.f,20.f,0.001f });
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
