@@ -256,7 +256,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				//row == stacks
 				ThreeDimension::Vertex v;
 				v.position = glm::vec4{ radius * (height - row) * sin(alpha), row - radius , radius * (height - row) * cos(alpha), 1.f };
-				v.normal = glm::vec4{ glm::vec4{ radius * (height - row) * sin(alpha), row - radius , radius * (height - row) * cos(alpha), 1.f } / radius };
+				v.normal = v.position / radius;
 				v.uv = glm::vec2{ col, 1 - row };
 				v.index = quadCount;
 				tempVertices.push_back(v);
@@ -268,7 +268,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		//P0
 		ThreeDimension::Vertex P0;
 		P0.position = glm::vec4{ 0.0f, -0.5f, 0.0f, 1.f };
-		P0.normal = glm::vec4{ 0.0f, -0.5f, 0.0f, 1.f } / radius;
+		P0.normal = P0.position / radius;
+		P0.index = quadCount;
 		tempVertices.push_back(P0);
 		for (int i = 0; i < slices; ++i)
 		{
@@ -278,12 +279,14 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			ThreeDimension::Vertex Pi;
 			Pi.position = glm::vec4{ radius * sin(alpha), -0.5f,radius * cos(alpha), 1.f };
 			Pi.normal = Pi.position / radius;
+			Pi.index = quadCount;
 			tempVertices.push_back(Pi);
 
 			ThreeDimension::Vertex Pj;
 			float deltaAlpha{ (2.f * PI) / slices };
 			Pj.position = glm::vec4{ radius * sin(alpha + deltaAlpha), -0.5f, radius * cos(alpha + deltaAlpha), 1.f };
 			Pj.normal = Pj.position / radius;
+			P0.index = quadCount;
 			tempVertices.push_back(Pj);
 		}
 
@@ -390,9 +393,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		for (auto& vn : tempVertices)
 		{
-			//if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
-			//	vn.position.y = -vn.position.y;
-			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
+			if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+				vn.position.y = -vn.position.y;
+			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, -vn.normal.y, vn.normal.z)), 1.f);
 		}
 
 		for (auto& i : tempIndices)
