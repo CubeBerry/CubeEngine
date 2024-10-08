@@ -3,7 +3,6 @@
 //Project: CubeEngine
 //File: VKRenderManager.hpp
 #pragma once
-#include <SDL_vulkan.h>
 #include <array>
 
 #include "RenderManager.hpp"
@@ -13,6 +12,8 @@
 #include "VKIndexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
+
+#include <SDL_vulkan.h>
 
 const auto IMAGE_AVAILABLE_INDEX{ 0 };
 const auto RENDERING_DONE_INDEX{ 1 };

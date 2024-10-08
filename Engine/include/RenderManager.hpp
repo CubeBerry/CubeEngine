@@ -2,6 +2,8 @@
 //Project: CubeEngine
 //File: RenderManager.hpp
 #pragma once
+#define NOMINMAX
+
 #include <filesystem>
 #include "Material.hpp"
 #include "Window.hpp"

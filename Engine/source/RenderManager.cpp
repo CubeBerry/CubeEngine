@@ -9,6 +9,7 @@
 
 #include "Engine.hpp"
 
+
 void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
 	std::vector<ThreeDimension::Vertex> tempVertices;
@@ -345,18 +346,18 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		}
 		file.close();
 
-		glm::vec3 min(FLT_MAX), max(FLT_MIN);
+		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
 		for (const auto& vertex : tempVertices)
 		{
-			min = glm::min(min, glm::vec3(vertex.position));
-			max = glm::max(max, glm::vec3(vertex.position));
+			minPos = glm::min(minPos, glm::vec3(vertex.position));
+			maxPos = glm::max(maxPos, glm::vec3(vertex.position));
 		}
 
 		glm::vec3 center;
 		float unitScale;
 
-		center = (min + max) / 2.f;
-		glm::vec3 size = max - min;
+		center = (minPos + maxPos) / 2.f;
+		glm::vec3 size = maxPos - minPos;
 		float extent = glm::max(size.x, glm::max(size.y, size.z));
 		unitScale = 1.f / extent;
 
@@ -393,9 +394,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		for (auto& vn : tempVertices)
 		{
-			if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
-				vn.position.y = -vn.position.y;
-			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, -vn.normal.y, vn.normal.z)), 1.f);
+			//if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+			//	vn.position.y = vn.position.y;
+			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
 		}
 
 		for (auto& i : tempIndices)

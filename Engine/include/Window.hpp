@@ -3,8 +3,6 @@
 //File: Window.hpp
 #pragma once
 #include "SDL.h"
-#include "SDL_vulkan.h"
-#include "SDL_syswm.h"
 
 #include "glm/vec2.hpp"
 #include <memory>
