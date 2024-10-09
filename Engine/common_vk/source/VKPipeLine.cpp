@@ -26,6 +26,7 @@ void VKPipeLine::InitPipeLine(
 	VkRenderPass* renderPass,
 	uint32_t stride,
 	std::initializer_list<VKAttributeLayout> layout,
+	VkCullModeFlags cull_,
 	POLYGON_MODE mode_)
 {
 	//Create Pipeline Shader Stage Info
@@ -140,7 +141,7 @@ void VKPipeLine::InitPipeLine(
 	}
 	//Culling
 	//rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
+	rasterizationStateInfo.cullMode = cull_;
 	rasterizationStateInfo.lineWidth = 1.0f;
 
 	//Create Multisample State Info(MSAA)
