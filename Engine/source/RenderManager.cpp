@@ -387,16 +387,16 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			glm::vec3 normal_third = glm::cross(ac, bc);
 
 			//Put normals
-			tempVertices[tempIndices[i]].normal += glm::vec4(normal_first * glm::length(normal_first), 0.f);
-			tempVertices[tempIndices[i + 1]].normal += glm::vec4(normal_second * glm::length(normal_second), 0.f);
-			tempVertices[tempIndices[i + 2]].normal += glm::vec4(normal_third * glm::length(normal_third), 0.f);
+			tempVertices[tempIndices[i]].normal += glm::vec4(normal_first * glm::length(normal_first), 1.f);
+			tempVertices[tempIndices[i + 1]].normal += glm::vec4(normal_second * glm::length(normal_second), 1.f);
+			tempVertices[tempIndices[i + 2]].normal += glm::vec4(normal_third * glm::length(normal_third), 1.f);
 		}
 
 		for (auto& vn : tempVertices)
 		{
-			if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
-				vn.position.y = -vn.position.y;
-			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, -vn.normal.y, vn.normal.z)), 1.f);
+			//if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+			//	vn.position.y = -vn.position.y;
+			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
 		}
 
 		for (auto& i : tempIndices)

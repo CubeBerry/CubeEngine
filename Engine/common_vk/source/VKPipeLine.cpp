@@ -109,8 +109,10 @@ void VKPipeLine::InitPipeLine(
 
 	//Create Viewport
 	VkViewport viewport{};
+	viewport.x = 0.f;
+	viewport.y = static_cast<float>(swapchainImageExtent->height);
 	viewport.width = static_cast<float>(swapchainImageExtent->width);
-	viewport.height = static_cast<float>(swapchainImageExtent->height);
+	viewport.height = -static_cast<float>(swapchainImageExtent->height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -158,7 +160,7 @@ void VKPipeLine::InitPipeLine(
 	depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
 	depthStencilCreateInfo.minDepthBounds = 0.0f;
 	depthStencilCreateInfo.maxDepthBounds = 1.0f;
-	depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
+	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
 	depthStencilCreateInfo.front = {};
 	depthStencilCreateInfo.back = {};
 

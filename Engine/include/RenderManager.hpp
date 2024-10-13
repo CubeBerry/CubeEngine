@@ -67,8 +67,8 @@ public:
 	void UpdateLighting(glm::vec4 lightPosition, glm::vec4 lightColor, glm::vec4 viewPosition, float ambientStrength, float specularStrength)
 	{
 		vertexLightingUniform.lightPosition = lightPosition;
-		if (gMode == GraphicsMode::VK)
-			vertexLightingUniform.lightPosition.y = -lightPosition.y;
+		//if (gMode == GraphicsMode::VK)
+		//	vertexLightingUniform.lightPosition.y = -lightPosition.y;
 		vertexLightingUniform.lightColor = lightColor;
 		vertexLightingUniform.viewPosition = viewPosition;
 		vertexLightingUniform.ambientStrength = ambientStrength;

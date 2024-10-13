@@ -63,8 +63,8 @@ void main()
     o_light_position = lightingMatrix.lightPosition.xyz;
     o_light_color = lightingMatrix.lightColor.xyz;
     o_ambient_strength = lightingMatrix.ambientStrength;
-    o_normal = (transpose(inverse(matrix[index].model)) * i_normal).xyz;
-    o_fragment_position = (matrix[index].model * i_pos).xyz;
+    o_normal = (transpose(inverse(mat3(matrix[index].model))) * i_normal.xyz);
+    o_fragment_position = (mat3(matrix[index].model) * i_pos.xyz);
     o_view_position = lightingMatrix.viewPosition.xyz;
     o_specular_strength = lightingMatrix.specularStrength;
     o_is_lighting = lightingMatrix.isLighting;

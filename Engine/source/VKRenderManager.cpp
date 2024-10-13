@@ -449,10 +449,11 @@ void VKRenderManager::InitRenderPass()
 	subpassDescription.pColorAttachments = &colorAttachmentReference;
 	subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
 
-	//VkSubpassDependency dependency{};
-	//dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	//dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	//dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency dependency{};
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	//Create Renderpass Info
 	std::array<VkAttachmentDescription, 2> attachments = { attachmentDescription, depthDescription };
@@ -463,8 +464,8 @@ void VKRenderManager::InitRenderPass()
 	createInfo.pAttachments = attachments.data();
 	createInfo.subpassCount = 1;
 	createInfo.pSubpasses = &subpassDescription;
-	//createInfo.dependencyCount = 1;
-	//createInfo.pDependencies = &dependency;
+	createInfo.dependencyCount = 1;
+	createInfo.pDependencies = &dependency;
 
 	//Create Renderpass
 	try
@@ -504,7 +505,7 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 
 	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		std::array<VkImageView, 2> attachments = { (*swapchainImageViews_)[i], depthImageView};
+		std::array<VkImageView, 2> attachments = { (*swapchainImageViews_)[i], depthImageView };
 
 		//Create framebuffer info
 		VkFramebufferCreateInfo createInfo{};
@@ -1150,7 +1151,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	//Set clear color
 	std::array<VkClearValue, 2> clearValues{};
 	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, bgColor.a} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
+	clearValues[1].depthStencil = { 1.f, 0 };
 
 	//VkClearValue clearValue{};
 	//clearValue.color.float32[0] = bgColor.r;	//R
@@ -1176,9 +1177,9 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
 	viewport.x = 0.f;
-	viewport.y = 0.f;
+	viewport.y = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
 	viewport.width = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->width);
-	viewport.height = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
+	viewport.height = -static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
