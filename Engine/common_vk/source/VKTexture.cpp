@@ -52,6 +52,8 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 {
 	name = name_;
 
+	stbi_set_flip_vertically_on_load(true);
+
 	auto path = path_;
 	int color;
 	//Read in image file
