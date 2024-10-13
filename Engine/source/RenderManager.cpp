@@ -43,34 +43,39 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		//Indices
 		int i0 = 0, i1 = 0, i2 = 0;
+		int i3 = 0, i4 = 0, i5 = 0;
+
+		int stride = slices + 1;
 		for (int i = 0; i < stacks; ++i)
 		{
+			int curr_row = i * stride;
 			for (int j = 0; j < slices; ++j)
 			{
 				/*  You need to compute the indices for the first triangle here */
-				i0 = i * (slices + 1) + j;
+				i0 = curr_row + j;
 				i1 = i0 + 1;
-				i2 = i1 + slices + 1;
+				i2 = i1 + stride;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i1].position, tempVertices[i2].position))
 				{
 					/*  Add the indices for the first triangle */
 					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
 					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
-				i1 = i2;
-				i2 = i1 - 1;
+				i3 = i2;
+				i4 = i3 - 1;
+				i5 = i0;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				if (!DegenerateTri(tempVertices[i3].position, tempVertices[i4].position, tempVertices[i5].position))
 				{
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i3));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i4));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i5));
 				}
 			}
 		}
@@ -100,34 +105,39 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		//Indices
 		int i0 = 0, i1 = 0, i2 = 0;
+		int i3 = 0, i4 = 0, i5 = 0;
+
+		int stride = slices + 1;
 		for (int i = 0; i < stacks; ++i)
 		{
+			int curr_row = i * stride;
 			for (int j = 0; j < slices; ++j)
 			{
 				/*  You need to compute the indices for the first triangle here */
-				i0 = i * (slices + 1) + j;
+				i0 = curr_row + j;
 				i1 = i0 + 1;
-				i2 = i1 + slices + 1;
+				i2 = i1 + stride;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i2].position, planeVertices[i1].position))
+				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i1].position, planeVertices[i2].position))
 				{
 					/*  Add the indices for the first triangle */
 					planeIndices.push_back(static_cast<uint16_t>(i0));
-					planeIndices.push_back(static_cast<uint16_t>(i2));
 					planeIndices.push_back(static_cast<uint16_t>(i1));
+					planeIndices.push_back(static_cast<uint16_t>(i2));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
-				i1 = i2;
-				i2 = i1 - 1;
+				i3 = i2;
+				i4 = i3 - 1;
+				i5 = i0;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i2].position, planeVertices[i1].position))
+				if (!DegenerateTri(planeVertices[i3].position, planeVertices[i4].position, planeVertices[i5].position))
 				{
-					planeIndices.push_back(static_cast<uint16_t>(i0));
-					planeIndices.push_back(static_cast<uint16_t>(i2));
-					planeIndices.push_back(static_cast<uint16_t>(i1));
+					planeIndices.push_back(static_cast<uint16_t>(i3));
+					planeIndices.push_back(static_cast<uint16_t>(i4));
+					planeIndices.push_back(static_cast<uint16_t>(i5));
 				}
 			}
 		}
@@ -178,7 +188,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	case MeshType::SPHERE:
 	{
 		//Vertices
-		const float rad = 0.5;
+		const float rad = 0.5f;
 		for (int stack = 0; stack <= stacks; ++stack)
 		{
 			const float row = static_cast<float>(stack) / stacks;
@@ -188,10 +198,11 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			for (int slice = 0; slice <= slices; ++slice)
 			{
 				const float col = static_cast<float>(slice) / slices;
-				const float alpha = PI * 2.f - col * PI * 2.f;
+				const float alpha = col * PI * 2.f;
 				ThreeDimension::Vertex v;
 				v.position = glm::vec4(rad * sin(alpha) * cos_beta, rad * sin_beta, rad * cos(alpha) * cos_beta, 1.0f);
 				v.normal = glm::vec4(glm::normalize(v.position));
+				v.normal /= rad;
 				v.uv = glm::vec2(col, row);
 				v.index = quadCount;
 				tempVertices.push_back(v);
@@ -200,34 +211,39 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		//Indices
 		int i0 = 0, i1 = 0, i2 = 0;
+		int i3 = 0, i4 = 0, i5 = 0;
+
+		int stride = slices + 1;
 		for (int i = 0; i < stacks; ++i)
 		{
+			int curr_row = i * stride;
 			for (int j = 0; j < slices; ++j)
 			{
 				/*  You need to compute the indices for the first triangle here */
-				i0 = i * (slices + 1) + j;
+				i0 = curr_row + j;
 				i1 = i0 + 1;
-				i2 = i1 + slices + 1;
+				i2 = i1 + stride;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i1].position, tempVertices[i2].position))
 				{
 					/*  Add the indices for the first triangle */
 					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
 					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
-				i1 = i2;
-				i2 = i1 - 1;
+				i3 = i2;
+				i4 = i3 - 1;
+				i5 = i0;
 
 				/*  Ignore degenerate triangle */
-				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i2].position, tempVertices[i1].position))
+				if (!DegenerateTri(tempVertices[i3].position, tempVertices[i4].position, tempVertices[i5].position))
 				{
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i3));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i4));
+					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i5));
 				}
 			}
 		}
