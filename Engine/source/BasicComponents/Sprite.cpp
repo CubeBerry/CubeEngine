@@ -125,7 +125,7 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 	case GraphicsMode::VK:
 		if (spriteDrawType == SpriteDrawType::ThreeDimension)
 		{
-			rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(angle.x, -angle.y, angle.z))));
+			rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(-angle.x, -angle.y, -angle.z))));
 			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 
 			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
@@ -133,9 +133,9 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 		}
 		else
 		{
-			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
 				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
 			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
 
 			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *

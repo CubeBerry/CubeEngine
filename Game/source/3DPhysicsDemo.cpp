@@ -19,7 +19,7 @@ void PhysicsDemo::Init()
 	Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f,0.f });
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-2.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->SetXRotate(-90.f);
+	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 2, 2, { 0.0, 0.8f, 0.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
