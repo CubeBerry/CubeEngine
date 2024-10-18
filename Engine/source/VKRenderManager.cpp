@@ -88,7 +88,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
 	//Depth Buffering
-	VkFormat depthFormat = FindDepthFormat();
+	depthFormat = FindDepthFormat();
 
 	{
 		//Define an image to create
@@ -221,7 +221,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	createInfo.format = depthFormat;
 	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	createInfo.subresourceRange.baseMipLevel = 0;
 	createInfo.subresourceRange.levelCount = 1;
+	createInfo.subresourceRange.baseArrayLayer = 0;
 	createInfo.subresourceRange.layerCount = 1;
 
 	//Create ImageView
@@ -427,11 +429,11 @@ void VKRenderManager::InitRenderPass()
 	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription depthDescription{};
-	depthDescription.format = FindDepthFormat();
+	depthDescription.format = depthFormat;
 	depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	depthDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depthDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -450,22 +452,33 @@ void VKRenderManager::InitRenderPass()
 	subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
 
 	VkSubpassDependency dependency{};
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency depthDependency{};
+	depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	depthDependency.dstSubpass = 0;
+	depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	depthDependency.srcAccessMask = 0;
+	depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	//Create Renderpass Info
-	std::array<VkAttachmentDescription, 2> attachments = { attachmentDescription, depthDescription };
+	VkAttachmentDescription attachments[2] = {attachmentDescription, depthDescription};
+	VkSubpassDependency dependencies[2] = { dependency, depthDependency };
 
 	VkRenderPassCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	createInfo.pAttachments = attachments.data();
+	createInfo.attachmentCount = 2;
+	createInfo.pAttachments = &attachments[0];
 	createInfo.subpassCount = 1;
 	createInfo.pSubpasses = &subpassDescription;
-	createInfo.dependencyCount = 1;
-	createInfo.pDependencies = &dependency;
+	createInfo.dependencyCount = 2;
+	createInfo.pDependencies = &dependencies[0];
 
 	//Create Renderpass
 	try
@@ -505,14 +518,14 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 
 	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		std::array<VkImageView, 2> attachments = { (*swapchainImageViews_)[i], depthImageView };
+		VkImageView attachments[2] = {(*swapchainImageViews_)[i], depthImageView};
 
 		//Create framebuffer info
 		VkFramebufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		createInfo.renderPass = vkRenderPass;
-		createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		createInfo.pAttachments = attachments.data();
+		createInfo.attachmentCount = 2;
+		createInfo.pAttachments = attachments;
 		createInfo.width = swapchainImageExtent_->width;
 		createInfo.height = swapchainImageExtent_->height;
 		createInfo.layers = 1;
@@ -1149,7 +1162,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	}
 
 	//Set clear color
-	std::array<VkClearValue, 2> clearValues{};
+	VkClearValue clearValues[2];
 	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, bgColor.a} };
 	clearValues[1].depthStencil = { 1.f, 0 };
 
@@ -1166,8 +1179,8 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	renderpassBeginInfo.renderPass = vkRenderPass;
 	renderpassBeginInfo.framebuffer = vkFrameBuffers[swapchainIndex];
 	renderpassBeginInfo.renderArea.extent = *vkSwapChain->GetSwapChainImageExtent();
-	renderpassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderpassBeginInfo.pClearValues = clearValues.data();
+	renderpassBeginInfo.clearValueCount = 2;
+	renderpassBeginInfo.pClearValues = clearValues;
 
 	//Begin renderpass
 	vkCmdBeginRenderPass(*currentCommandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1184,7 +1197,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor{};
-	scissor.offset = { 0,0 };
+	scissor.offset = { 0, 0 };
 	scissor.extent = *vkSwapChain->GetSwapChainImageExtent();
 
 	//Draw Quad

@@ -161,8 +161,6 @@ void VKPipeLine::InitPipeLine(
 	depthStencilCreateInfo.minDepthBounds = 0.0f;
 	depthStencilCreateInfo.maxDepthBounds = 1.0f;
 	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
-	depthStencilCreateInfo.front = {};
-	depthStencilCreateInfo.back = {};
 
 	//Create Color Blend Attachment
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};

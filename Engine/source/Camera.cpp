@@ -94,7 +94,7 @@ void Camera::Update()
 				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
 			}
 			//projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
-			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
 
 			break;
 		}

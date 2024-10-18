@@ -205,6 +205,12 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 				objPath = "../Game/assets/Models/vase.obj";
 				isRecreate = true;
 			}
+			if (ImGui::MenuItem("monkey", "8"))
+			{
+				currentMesh = MeshType::OBJ;
+				objPath = "../Game/assets/Models/monkey.obj";
+				isRecreate = true;
+			}
 			ImGui::EndMenu();
 		}
 	}
