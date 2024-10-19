@@ -1,5 +1,4 @@
 #version 460
-precision mediump float;
 
 #define MAX_TEXTURES 20
 

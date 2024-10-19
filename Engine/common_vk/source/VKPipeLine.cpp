@@ -142,7 +142,6 @@ void VKPipeLine::InitPipeLine(
 		break;
 	}
 	//Culling
-	//rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizationStateInfo.cullMode = cull_;
 	rasterizationStateInfo.lineWidth = 1.0f;
 

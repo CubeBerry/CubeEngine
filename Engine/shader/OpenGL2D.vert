@@ -1,5 +1,5 @@
 #version 460
-precision mediump float;
+//precision mediump float;
 
 #define MAX_MATRICES 20
 
