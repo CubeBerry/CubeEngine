@@ -110,6 +110,7 @@ private:
 		}
 		return UINT32_MAX;
 	}
+	void CreateDepthBuffer();
 
 #ifdef _DEBUG
 	VKImGuiManager* imguiManager;

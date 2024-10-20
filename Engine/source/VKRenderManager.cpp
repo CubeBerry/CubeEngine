@@ -75,19 +75,8 @@ VKRenderManager::~VKRenderManager()
 	delete vkInit;
 }
 
-void VKRenderManager::Initialize(SDL_Window* window_)
+void VKRenderManager::CreateDepthBuffer()
 {
-	window = window_;
-
-	vkInit = new VKInit;
-	vkInit->Initialize(window);
-
-	InitCommandPool();
-	InitCommandBuffer();
-
-	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
-
-	//Depth Buffering
 	depthFormat = FindDepthFormat();
 
 	{
@@ -255,6 +244,23 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
+}
+
+
+void VKRenderManager::Initialize(SDL_Window* window_)
+{
+	window = window_;
+
+	vkInit = new VKInit;
+	vkInit->Initialize(window);
+
+	InitCommandPool();
+	InitCommandBuffer();
+
+	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
+
+	//Depth Buffering
+	CreateDepthBuffer();
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
@@ -606,8 +612,14 @@ void VKRenderManager::RecreateSwapChain()
 		vkDestroyFramebuffer(*vkInit->GetDevice(), framebuffer, nullptr);
 	}
 
+	//Destroy Depth Buffering
+	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
+
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
+	CreateDepthBuffer();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
