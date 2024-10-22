@@ -29,18 +29,25 @@ void VKDescriptor::InitDescriptorSetLayouts()
 {
 	{
 		//Create Binding for Vertex Uniform Block
-		VkDescriptorSetLayoutBinding binding{};
-		binding.binding = 0;
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		binding.descriptorCount = 1;
+		VkDescriptorSetLayoutBinding binding[2];
+		binding[0].binding = 0;
+		binding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		binding[0].descriptorCount = 1;
 		//Only vertex shader accesses
-		binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		//Create Binding for Lighting Uniform Block
+		binding[1].binding = 1;
+		binding[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		binding[1].descriptorCount = 1;
+		//Only vertex shader accesses
+		binding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
 		//Create Descriptor Set Layout Info
 		VkDescriptorSetLayoutCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = 1;
-		createInfo.pBindings = &binding;
+		createInfo.bindingCount = 2;
+		createInfo.pBindings = binding;
 
 		//Create Descriptor Set Layout
 		try
@@ -149,7 +156,7 @@ void VKDescriptor::InitDescriptorPool()
 	std::vector<VkDescriptorPoolSize> poolSize
 	{
 		//For Vertex
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
 		//For Fragment
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -164,7 +171,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 1005;
+	createInfo.maxSets = 1007;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = poolSize.data();
 #ifdef _DEBUG

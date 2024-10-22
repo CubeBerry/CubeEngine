@@ -33,28 +33,7 @@ layout(set = 0, binding = 0) uniform vUniformMatrix
     vMatrix matrix[MAX_MATRICES];
 };
 
-// struct vLighting
-// {
-//     //Common
-//     vec4 lightPosition;
-//     vec4 lightColor;
-
-//     //Ambient
-//     vec4 viewPosition;
-//     float ambientStrength;
-
-//     //Specular
-//     float specularStrength;
-
-//     float isLighting;
-// };
-
-// layout(set = 0, binding = 1) uniform vLightingMatrix
-// {
-//     vLighting lightingMatrix;
-// };
-
-layout(push_constant) uniform vLightingMatrix
+struct vLighting
 {
     //Common
     vec4 lightPosition;
@@ -68,7 +47,12 @@ layout(push_constant) uniform vLightingMatrix
     float specularStrength;
 
     float isLighting;
-} lightingMatrix;
+};
+
+layout(set = 0, binding = 1) uniform vLightingMatrix
+{
+    vLighting lightingMatrix;
+};
 
 void main()
 {

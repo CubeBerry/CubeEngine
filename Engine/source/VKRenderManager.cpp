@@ -40,6 +40,7 @@ VKRenderManager::~VKRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -311,6 +312,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE);
+
+	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
 
 #ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
@@ -1066,19 +1069,32 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
 
 				//Define which resource descriptor set will point
-				VkWriteDescriptorSet descriptorWrite{};
-				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
-				descriptorWrite.dstBinding = 0;
-				descriptorWrite.descriptorCount = 1;
-				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite.pBufferInfo = &bufferInfo;
+				VkWriteDescriptorSet descriptorWrite[2] = {};
+				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[0].dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite[0].dstBinding = 0;
+				descriptorWrite[0].descriptorCount = 1;
+				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[0].pBufferInfo = &bufferInfo;
+
+				VkDescriptorBufferInfo lightingBufferInfo;
+				lightingBufferInfo.buffer = (*(vertexLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
+				lightingBufferInfo.offset = 0;
+				lightingBufferInfo.range = sizeof(ThreeDimension::VertexLightingUniform);
+
+				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[1].dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite[1].dstBinding = 1;
+				descriptorWrite[1].descriptorCount = 1;
+				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[1].pBufferInfo = &lightingBufferInfo;
 
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+			vertexLightingUniformBuffer->UpdateUniform(1, &vertexLightingUniform, frameIndex);
 		}
 
 		if (fragmentUniform3D != nullptr)
@@ -1244,8 +1260,6 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-				//Lighting Push Constants
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ThreeDimension::VertexLightingUniform), &vertexLightingUniform);
 				//Draw
 				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 				break;
@@ -1265,8 +1279,6 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-				//Lighting Push Constants
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DLine->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ThreeDimension::VertexLightingUniform), &vertexLightingUniform);
 				//Draw
 				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 				break;
