@@ -54,7 +54,7 @@ namespace ThreeDimension
 		glm::vec4 color;
 	};
 
-	struct alignas(16)VertexLightingUniform
+	struct alignas(16) VertexLightingUniform
 	{
 		//Common
 		glm::vec4 lightPosition;
