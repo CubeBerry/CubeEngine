@@ -163,7 +163,4 @@ private:
 
 	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
-
-	//Lighting
-	VKUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
 };

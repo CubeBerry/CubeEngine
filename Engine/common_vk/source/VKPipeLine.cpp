@@ -6,6 +6,8 @@
 #include <iostream>
 #include <array>
 
+#include "../../include/Material.hpp"
+
 VKPipeLine::VKPipeLine(VkDevice* device_, std::vector<VkDescriptorSetLayout>* layout_) : device(device_), vkDescriptorSetLayout(layout_)
 {
 }
@@ -247,12 +249,19 @@ void VKPipeLine::InitPipeLine(
 
 void VKPipeLine::InitPipeLineLayout()
 {
+	VkPushConstantRange pushConstantRange{};
+	pushConstantRange.offset = 0;
+	pushConstantRange.size = sizeof(ThreeDimension::VertexLightingUniform);
+	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
 	//Create Pipeline Layout Info
 	VkPipelineLayoutCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	createInfo.setLayoutCount = static_cast<uint32_t>(vkDescriptorSetLayout->size());
 	//createInfo.pSetLayouts = &(*vkDescriptorSetLayout)[0];
 	createInfo.pSetLayouts = vkDescriptorSetLayout->data();
+	createInfo.pPushConstantRanges = &pushConstantRange;
+	createInfo.pushConstantRangeCount = 1;
 
 	//Create Pipeline Layout
 	try
