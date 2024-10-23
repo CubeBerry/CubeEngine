@@ -90,6 +90,4 @@ void Engine::SetFPS(FrameRate fps)
 void Engine::ResetDeltaTime()
 {
 	deltaTime = 0.f;
-	timer.ResetFPSCalculateTime();
-	frameCount = 0;
 }
