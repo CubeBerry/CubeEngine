@@ -44,69 +44,32 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 void Engine::Update()
 {
 	SDL_Event event;
-	//double fpsAmount = 0.0;
 	while (gameStateManger.GetGameState() != State::SHUTDOWN)
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
 		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
+			Uint32 winFlag = SDL_GetWindowFlags(window.GetWindow());
 			threadManager.ProcessSDLEvents();
-			SDL_PollEvent(&event); // Need to merge with thread
-			switch (event.type)
-			{
-			case SDL_QUIT:
-				gameStateManger.SetGameState(State::UNLOAD);
-				break;
-			case SDL_WINDOWEVENT:
-				//if ((event.window.event != SDL_WINDOWEVENT_RESIZED) || (event.window.event != SDL_WINDOWEVENT_MOVED) ||
-				//	(event.window.event == SDL_WINDOWEVENT_MINIMIZED))
-				//{
-				//}
-				break;
-			default:
-				break;
-			}
+			SDL_PollEvent(&event);
 
 			timer.ResetLastTimeStamp();
 			frameCount++;
 			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
 			{
-				int averageFrameRate = static_cast<int>(frameCount / timer.GetFrameRateCalculateTime());
-				windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
-				window.SetSubWindowTitle(windowTitleWithFrameCount);
+				if (!(winFlag & SDL_WINDOW_MINIMIZED))
+				{
+					int averageFrameRate = static_cast<int>(frameCount / timer.GetFrameRateCalculateTime());
+					windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
+					window.SetSubWindowTitle(windowTitleWithFrameCount);
+				}
 				timer.ResetFPSCalculateTime();
 				frameCount = 0;
 
 			}//fps
 			gameStateManger.Update(deltaTime);
 		}
-
-		//else
-		//{
-		//	deltaTime = timer.Update(fpsAmount, 1);
-		//	threadManager.ProcessSDLEvents();
-		//	SDL_PollEvent(&event); // Need to merge with thread
-
-		//	switch (event.type)
-		//	{
-		//	case SDL_QUIT:
-		//		gameStateManger.SetGameState(State::UNLOAD);
-		//		break;
-		//	case SDL_WINDOWEVENT:
-		//		//if ((event.window.event != SDL_WINDOWEVENT_RESIZED) || (event.window.event != SDL_WINDOWEVENT_MOVED) ||
-		//		//	(event.window.event == SDL_WINDOWEVENT_MINIMIZED))
-		//		//{
-		//		//}
-		//		break;
-		//	default:
-		//		break;
-		//	}
-		//	windowTitleWithFrameCount = " (fps: " + std::to_string(fpsAmount) + ")";
-		//	window.SetSubWindowTitle(windowTitleWithFrameCount);
-
-		//	gameStateManger.Update(deltaTime);
-		//}
 	}
 }
 
@@ -122,4 +85,11 @@ void Engine::End()
 void Engine::SetFPS(FrameRate fps)
 {
 	timer.Init(fps);
+}
+
+void Engine::ResetDeltaTime()
+{
+	deltaTime = 0.f;
+	timer.ResetFPSCalculateTime();
+	frameCount = 0;
 }
