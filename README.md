@@ -26,7 +26,9 @@ All required APIs and Libraries are integrated in Project.
 3. [ImGui](https://github.com/ocornut/imgui) Integrated
 4. SoundManager with ImGui UI
 5. Basic 2D Game Engine Features
-6. 3D Plane, Cube(3D Collision Applied) Meshes
+6. 3D Plane, Cube(3D Collision Applied), Sphere Meshes
+7. Simple Model Loading
+8. Phong Lighting
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/3b158449-7532-4848-8766-957e6d7c58ba)
@@ -35,7 +37,7 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/36c003b4-65c5-413f-9faf-e71366a791f3)
 
-![image](https://github.com/user-attachments/assets/a69866a0-6780-413b-86f7-c8a73a5cd5fc)
+![image](https://github.com/user-attachments/assets/5402760a-c1bc-4008-89c6-d93ef44192fb)
 
 ![image](https://github.com/user-attachments/assets/b232e7ea-8e9d-477c-90c3-ba03e17830d5)
 
