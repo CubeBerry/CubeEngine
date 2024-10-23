@@ -31,6 +31,7 @@ public:
 	static SoundManager& GetSoundManager() { return Instance().soundManager; }
 	static SpriteManager& GetSpriteManager() { return Instance().spriteManager; }
 	static ParticleManager& GetParticleManager() { return Instance().particleManager; }
+	static Timer& GetTimer() { return Instance().timer; }
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
@@ -38,6 +39,8 @@ public:
 
 	void SetFPS(FrameRate fps);
 	FrameRate GetFPS() { return timer.GetFrameRate(); }
+
+	void ResetDeltaTime();
 private:
 	Timer timer;
 
