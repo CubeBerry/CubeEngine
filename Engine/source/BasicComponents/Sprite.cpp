@@ -67,16 +67,20 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 	case GraphicsMode::VK:
 		if (spriteDrawType == SpriteDrawType::ThreeDimension)
 		{
-			pos = glm::vec3(pos_.x, -pos_.y, pos_.z);
+			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
+
+			modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		}
 		else
 		{
-			pos = glm::vec3(pos_.x * 2, -pos_.y * 2, pos_.z);
-		}
+			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
 
-		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
+			modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
+		}
 		break;
 	}
 
@@ -121,18 +125,22 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 	case GraphicsMode::VK:
 		if (spriteDrawType == SpriteDrawType::ThreeDimension)
 		{
-			rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(angle.x, -angle.y, angle.z))));
-			pos = glm::vec3(pos_.x, -pos_.y, pos_.z);
+			rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(-angle.x, -angle.y, -angle.z))));
+			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
+
+			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
+				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		}
 		else
 		{
-			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
 				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
-			pos = glm::vec3(pos_.x * 2, -pos_.y * 2, pos_.z);
+				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
+			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
+
+			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
+				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		}
-		modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
-			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
 
@@ -234,10 +242,10 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void Sprite::AddMesh3D(MeshType type, int stacks, int slices, glm::vec4 color)
+void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->LoadMesh(type, color, stacks, slices);
+	renderManager->LoadMesh(type, path, color, stacks, slices);
 	materialId = Engine::GetSpriteManager().GetSpritesAmount();
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();

@@ -48,7 +48,7 @@ void Camera::Update()
 			direction.y = sin(glm::radians(-pitch));
 			break;
 		case GraphicsMode::VK:
-			direction.y = sin(glm::radians(pitch));
+			direction.y = sin(glm::radians(-pitch));
 			break;
 		}
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -90,9 +90,12 @@ void Camera::Update()
 			}
 			else
 			{
-				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
+				view = glm::lookAt(cameraPosition, cameraPosition + back, up);
+				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
 			}
-			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			//projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
+
 			break;
 		}
 		break;
@@ -243,7 +246,7 @@ void Camera::LookAt(glm::vec3 pos)
 			direction.y = sin(glm::radians(-pitch));
 			break;
 		case GraphicsMode::VK:
-			direction.y = sin(glm::radians(pitch));
+			direction.y = sin(glm::radians(-pitch));
 			break;
 		}
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -258,7 +261,7 @@ void Camera::LookAt(glm::vec3 pos)
 			view = glm::lookAt(cameraPosition, cameraCenter, up);
 			break;
 		case GraphicsMode::VK:
-			view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
+			view = glm::lookAt({ cameraPosition.x, cameraPosition.y, cameraPosition.z }, { cameraCenter.x, cameraCenter.y, cameraCenter.z }, up);
 			break;
 		}
 	}

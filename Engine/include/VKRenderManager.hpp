@@ -57,6 +57,7 @@ private:
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
+	VkFormat depthFormat;
 	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
 		for (VkFormat format : candidates)
@@ -109,6 +110,7 @@ private:
 		}
 		return UINT32_MAX;
 	}
+	void CreateDepthBuffer();
 
 #ifdef _DEBUG
 	VKImGuiManager* imguiManager;
@@ -142,7 +144,7 @@ public:
 	VKTexture* GetTexture(std::string name);
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices) override;
+	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices) override;
 private:
 	//--------------------Common--------------------//
 	VKIndexBuffer* indexBuffer{ nullptr };
@@ -161,4 +163,7 @@ private:
 
 	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
+
+	//Lighting
+	VKUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
 };

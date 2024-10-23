@@ -40,6 +40,7 @@ VKRenderManager::~VKRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -74,20 +75,9 @@ VKRenderManager::~VKRenderManager()
 	delete vkInit;
 }
 
-void VKRenderManager::Initialize(SDL_Window* window_)
+void VKRenderManager::CreateDepthBuffer()
 {
-	window = window_;
-
-	vkInit = new VKInit;
-	vkInit->Initialize(window);
-
-	InitCommandPool();
-	InitCommandBuffer();
-
-	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
-
-	//Depth Buffering
-	VkFormat depthFormat = FindDepthFormat();
+	depthFormat = FindDepthFormat();
 
 	{
 		//Define an image to create
@@ -220,7 +210,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	createInfo.format = depthFormat;
 	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	createInfo.subresourceRange.baseMipLevel = 0;
 	createInfo.subresourceRange.levelCount = 1;
+	createInfo.subresourceRange.baseArrayLayer = 0;
 	createInfo.subresourceRange.layerCount = 1;
 
 	//Create ImageView
@@ -252,6 +244,23 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
+}
+
+
+void VKRenderManager::Initialize(SDL_Window* window_)
+{
+	window = window_;
+
+	vkInit = new VKInit;
+	vkInit->Initialize(window);
+
+	InitCommandPool();
+	InitCommandBuffer();
+
+	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
+
+	//Depth Buffering
+	CreateDepthBuffer();
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
@@ -278,7 +287,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(TwoDimension::Vertex, index);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, POLYGON_MODE::FILL);
+	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
 
 	//3D Pipeline
 	position_layout.vertex_layout_location = 0;
@@ -300,9 +309,11 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(ThreeDimension::Vertex, index);
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::FILL);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, POLYGON_MODE::LINE);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE);
+
+	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
 
 #ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
@@ -424,11 +435,11 @@ void VKRenderManager::InitRenderPass()
 	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription depthDescription{};
-	depthDescription.format = FindDepthFormat();
+	depthDescription.format = depthFormat;
 	depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	depthDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depthDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -446,22 +457,34 @@ void VKRenderManager::InitRenderPass()
 	subpassDescription.pColorAttachments = &colorAttachmentReference;
 	subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
 
-	//VkSubpassDependency dependency{};
-	//dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	//dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	//dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency dependency{};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency depthDependency{};
+	depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	depthDependency.dstSubpass = 0;
+	depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	depthDependency.srcAccessMask = 0;
+	depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	//Create Renderpass Info
-	std::array<VkAttachmentDescription, 2> attachments = { attachmentDescription, depthDescription };
+	VkAttachmentDescription attachments[2] = {attachmentDescription, depthDescription};
+	VkSubpassDependency dependencies[2] = { dependency, depthDependency };
 
 	VkRenderPassCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	createInfo.pAttachments = attachments.data();
+	createInfo.attachmentCount = 2;
+	createInfo.pAttachments = &attachments[0];
 	createInfo.subpassCount = 1;
 	createInfo.pSubpasses = &subpassDescription;
-	//createInfo.dependencyCount = 1;
-	//createInfo.pDependencies = &dependency;
+	createInfo.dependencyCount = 2;
+	createInfo.pDependencies = &dependencies[0];
 
 	//Create Renderpass
 	try
@@ -501,14 +524,14 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 
 	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		std::array<VkImageView, 2> attachments = { (*swapchainImageViews_)[i], depthImageView};
+		VkImageView attachments[2] = {(*swapchainImageViews_)[i], depthImageView};
 
 		//Create framebuffer info
 		VkFramebufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		createInfo.renderPass = vkRenderPass;
-		createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		createInfo.pAttachments = attachments.data();
+		createInfo.attachmentCount = 2;
+		createInfo.pAttachments = attachments;
 		createInfo.width = swapchainImageExtent_->width;
 		createInfo.height = swapchainImageExtent_->height;
 		createInfo.layers = 1;
@@ -589,8 +612,14 @@ void VKRenderManager::RecreateSwapChain()
 		vkDestroyFramebuffer(*vkInit->GetDevice(), framebuffer, nullptr);
 	}
 
+	//Destroy Depth Buffering
+	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
+
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
+	CreateDepthBuffer();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
@@ -887,9 +916,9 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::LoadMesh(MeshType type, glm::vec4 color, int stacks, int slices)
+void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices)
 {
-	CreateMesh(type, stacks, slices);
+	CreateMesh(type, path, stacks, slices);
 
 	if (vertex3DBuffer != nullptr)
 		delete vertex3DBuffer;
@@ -985,7 +1014,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
-			vertexUniform2D->UpdateUniform(vertexUniforms2D, frameIndex);
+			vertexUniform2D->UpdateUniform(vertexUniforms2D.size(), vertexUniforms2D.data(), frameIndex);
 		}
 
 		if (fragmentUniform2D != nullptr)
@@ -1025,7 +1054,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
-			fragmentUniform2D->UpdateUniform(fragUniforms2D, frameIndex);
+			fragmentUniform2D->UpdateUniform(fragUniforms2D.size(), fragUniforms2D.data(), frameIndex);
 		}
 		break;
 	case RenderType::ThreeDimension:
@@ -1034,30 +1063,38 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
-				//std::vector<VkDescriptorBufferInfo> bufferInfos;
-				//for (auto& t : textures)
-				//{
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
-				//bufferInfos.push_back(bufferInfo);
-				//}
 
 				//Define which resource descriptor set will point
-				VkWriteDescriptorSet descriptorWrite{};
-				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
-				descriptorWrite.dstBinding = 0;
-				descriptorWrite.descriptorCount = 1;
-				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite.pBufferInfo = &bufferInfo;
+				VkWriteDescriptorSet descriptorWrite[2] = {};
+				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[0].dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite[0].dstBinding = 0;
+				descriptorWrite[0].descriptorCount = 1;
+				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[0].pBufferInfo = &bufferInfo;
+
+				VkDescriptorBufferInfo lightingBufferInfo;
+				lightingBufferInfo.buffer = (*(vertexLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
+				lightingBufferInfo.offset = 0;
+				lightingBufferInfo.range = sizeof(ThreeDimension::VertexLightingUniform);
+
+				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[1].dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite[1].dstBinding = 1;
+				descriptorWrite[1].descriptorCount = 1;
+				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[1].pBufferInfo = &lightingBufferInfo;
 
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
-			vertexUniform3D->UpdateUniform(vertexUniforms3D, frameIndex);
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+			vertexLightingUniformBuffer->UpdateUniform(1, &vertexLightingUniform, frameIndex);
 		}
 
 		if (fragmentUniform3D != nullptr)
@@ -1097,7 +1134,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 			}
-			fragmentUniform3D->UpdateUniform(fragUniforms3D, frameIndex);
+			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
 		}
 		break;
 	}
@@ -1137,9 +1174,9 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	}
 
 	//Set clear color
-	std::array<VkClearValue, 2> clearValues{};
+	VkClearValue clearValues[2];
 	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, bgColor.a} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
+	clearValues[1].depthStencil = { 1.f, 0 };
 
 	//VkClearValue clearValue{};
 	//clearValue.color.float32[0] = bgColor.r;	//R
@@ -1154,8 +1191,8 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	renderpassBeginInfo.renderPass = vkRenderPass;
 	renderpassBeginInfo.framebuffer = vkFrameBuffers[swapchainIndex];
 	renderpassBeginInfo.renderArea.extent = *vkSwapChain->GetSwapChainImageExtent();
-	renderpassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderpassBeginInfo.pClearValues = clearValues.data();
+	renderpassBeginInfo.clearValueCount = 2;
+	renderpassBeginInfo.pClearValues = clearValues;
 
 	//Begin renderpass
 	vkCmdBeginRenderPass(*currentCommandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1165,14 +1202,14 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
 	viewport.x = 0.f;
-	viewport.y = 0.f;
+	viewport.y = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
 	viewport.width = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->width);
-	viewport.height = static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
+	viewport.height = -static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor{};
-	scissor.offset = { 0,0 };
+	scissor.offset = { 0, 0 };
 	scissor.extent = *vkSwapChain->GetSwapChainImageExtent();
 
 	//Draw Quad

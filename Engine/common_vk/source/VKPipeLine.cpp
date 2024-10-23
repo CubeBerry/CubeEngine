@@ -26,6 +26,7 @@ void VKPipeLine::InitPipeLine(
 	VkRenderPass* renderPass,
 	uint32_t stride,
 	std::initializer_list<VKAttributeLayout> layout,
+	VkCullModeFlags cull_,
 	POLYGON_MODE mode_)
 {
 	//Create Pipeline Shader Stage Info
@@ -108,8 +109,10 @@ void VKPipeLine::InitPipeLine(
 
 	//Create Viewport
 	VkViewport viewport{};
+	viewport.x = 0.f;
+	viewport.y = static_cast<float>(swapchainImageExtent->height);
 	viewport.width = static_cast<float>(swapchainImageExtent->width);
-	viewport.height = static_cast<float>(swapchainImageExtent->height);
+	viewport.height = -static_cast<float>(swapchainImageExtent->height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -139,8 +142,7 @@ void VKPipeLine::InitPipeLine(
 		break;
 	}
 	//Culling
-	//rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
+	rasterizationStateInfo.cullMode = cull_;
 	rasterizationStateInfo.lineWidth = 1.0f;
 
 	//Create Multisample State Info(MSAA)
@@ -157,9 +159,7 @@ void VKPipeLine::InitPipeLine(
 	depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
 	depthStencilCreateInfo.minDepthBounds = 0.0f;
 	depthStencilCreateInfo.maxDepthBounds = 1.0f;
-	depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
-	depthStencilCreateInfo.front = {};
-	depthStencilCreateInfo.back = {};
+	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
 
 	//Create Color Blend Attachment
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};

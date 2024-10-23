@@ -11,50 +11,63 @@ void PhysicsDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().SetNear(0.5f);
 	Engine::GetCameraManager().SetFar(45.f);
 	Engine::GetCameraManager().SetBaseFov(22.5f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
 	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,13.f });
-	Engine::GetCameraManager().SetCenter(glm::vec3{ -1.f, 0.f,0.f });
+	Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f,0.f });
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-2.f,0.f }, glm::vec3{ 20.f,0.01f,20.f }, "PLANE", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-2.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 0.8f, 0.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 2, 2, { 0.0, 0.8f, 0.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetBodyType(BodyType3D::BLOCK);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 20.f,0.01f,20.f });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 20.f,20.f,0.001f });
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 1.0, 1.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE1", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 1.0, 1.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,1.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE2", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 1.0, 1.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,-1.f }, glm::vec3{ 0.5f,0.5f,0.5f }, "CUBE3", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 1.0, 1.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 });
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 0.5f,0.5f,0.5f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
+
+	l.lightPosition = glm::vec4(0.f, 20.f, 0.f, 1.f);
+	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	//viewPosition == cameraPosition
+	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
+	l.ambientStrength = 0.1f;
+	l.specularStrength = 0.5f;
+	l.isLighting = true;
+	Engine::GetRenderManager()->EnableLighting(true);
 }
 
 void PhysicsDemo::Update(float dt)
 {
+	//Engine::GetRenderManager()->SetPolygonType(PolygonType::LINE);
+
 	for (auto& target : Engine::GetObjectManager().GetObjectMap())
 	{
 		for (auto& object : Engine::GetObjectManager().GetObjectMap())
@@ -102,6 +115,10 @@ void PhysicsDemo::Update(float dt)
 		}
 	}
 
+	//Update Lighting Variables
+	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
+	Engine::GetRenderManager()->UpdateLighting(l.lightPosition, l.lightColor, l.viewPosition, l.ambientStrength, l.specularStrength);
+
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
@@ -112,7 +129,7 @@ void PhysicsDemo::Update(float dt)
 		{
 			Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "TEMP", ObjectType::NONE);
 			Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 1.0, 1.0, 1.0 });
+			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
 			Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 			Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 			Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);

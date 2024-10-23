@@ -13,8 +13,8 @@
 void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
-	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
-	objectsToBeDeleted.clear();
+	//std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
+	//objectsToBeDeleted.clear();
 }
 
 void ObjectManager::End()
@@ -30,6 +30,8 @@ void ObjectManager::Draw(float dt)
 void ObjectManager::Destroy(int id)
 {
     objectsToBeDeleted.push_back(id);
+    std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
+    objectsToBeDeleted.clear();
 }
 
 void ObjectManager::DestroyAllObjects()

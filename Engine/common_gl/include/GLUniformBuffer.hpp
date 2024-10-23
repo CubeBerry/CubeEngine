@@ -15,8 +15,8 @@ public:
     GLUniformBuffer() = default;
     ~GLUniformBuffer();
 
-    void InitUniform(GLuint program, GLuint binding, const char* name, std::vector<Material>& vector);
-    void UpdateUniform(std::vector<Material>& vector);
+    void InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* data);
+    void UpdateUniform(size_t size, const void* data);
 
 private:
     GLuint uniformHandle{ 0 };
@@ -31,7 +31,7 @@ GLUniformBuffer<Material>::~GLUniformBuffer()
 }
 
 template <typename Material>
-void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, const char* name, std::vector<Material>& vector)
+void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* data)
 {
     //GLuint uniformBlockIndex = glGetUniformBlockIndex(program, name);
     //GLuint uniformBindingPoint{ binding };
@@ -52,18 +52,18 @@ void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, cons
 
     glCheck(glGenBuffers(1, &uniformHandle));
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, uniformHandle));
-    glCheck(glBufferData(GL_UNIFORM_BUFFER, vector.size() * sizeof(Material), nullptr, GL_DYNAMIC_DRAW));
-    glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, vector.size() * sizeof(Material), vector.data()));
+    glCheck(glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW));
+    glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
     glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, uniformBindingPoint, uniformHandle));
 }
 
 template <typename Material>
-void GLUniformBuffer<Material>::UpdateUniform(std::vector<Material>& vector)
+void GLUniformBuffer<Material>::UpdateUniform(size_t size, const void* data)
 {
     //glBindBufferRange(GL_UNIFORM_BUFFER, 0, uniformHandle, 0, vector.size() * sizeof(Material));
 
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, uniformHandle));
-    glCheck(glBufferData(GL_UNIFORM_BUFFER, vector.size() * sizeof(Material), nullptr, GL_DYNAMIC_DRAW));
-    glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, vector.size() * sizeof(Material), vector.data()));
+    glCheck(glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW));
+    glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }

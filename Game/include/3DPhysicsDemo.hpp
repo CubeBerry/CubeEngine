@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include "Material.hpp"
+
 class PhysicsDemo : public GameState
 {
 public:
@@ -20,4 +22,6 @@ public:
 #endif
 	void Restart() override;
 	void End() override;
+private:
+	ThreeDimension::VertexLightingUniform l;
 };
