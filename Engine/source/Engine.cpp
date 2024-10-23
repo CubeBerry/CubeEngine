@@ -74,7 +74,7 @@ void Engine::Update()
 			{
 				int averageFrameRate = static_cast<int>(frameCount / timer.GetFrameRateCalculateTime());
 				windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
-				window.SetSubWindowTitle(windowTitleWithFrameCount);
+				//window.SetSubWindowTitle(windowTitleWithFrameCount);
 				timer.ResetFPSCalculateTime();
 				frameCount = 0;
 
