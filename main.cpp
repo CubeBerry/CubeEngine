@@ -49,7 +49,7 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
     engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);
-    engine.GetGameStateManager().LevelInit(GameLevel::PHYSICSDEMO);
+    engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
 
     engine.Update();
     engine.End();

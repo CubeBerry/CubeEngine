@@ -49,57 +49,45 @@ void Physics3D::Update(float dt)
 	//}
 
 #ifdef _DEBUG
-		if(!points.empty())
+		std::vector<glm::vec3> rotatedPoints1;
+		glm::quat rotation1 = glm::quat(glm::radians(-GetOwner()->GetRotate3D()));
+
+		int i = 0;
+		for (auto& v : points)
 		{
-			if(colliderType == ColliderType3D::BOX)
+			if (i == 0)
 			{
-				std::vector<glm::vec3> rotatedPoints1;
-				glm::quat rotation1 = glm::quat(glm::radians(-GetOwner()->GetRotate3D()));
-
-				int i = 0;
-				for (auto& v : points)
-				{
-					if (i == 0)
-					{
-						i++;
-					}
-					else
-					{
-						rotatedPoints1.push_back(RotatePoint(v.pos, GetOwner()->GetPosition(), rotation1));
-					}
-				}
-				for (auto& v : rotatedPoints1)
-				{
-					v;
-					//v;
-					//glm::vec3 A = rotatedPoints1[i - 1];
-					glm::vec3 B = { 0.f, 0.f, 0.f };
-					if (rotatedPoints1.size() > i)
-					{
-						B = rotatedPoints1[i];
-					}
-					else
-					{
-						B = rotatedPoints1[0];
-					}
-
-					points[i].sprite->UpdateModel(B, { 0.1f,0.1f,0.1f }, 0.f);
-					points[i].sprite->UpdateProjection();
-					points[i].sprite->UpdateView();
-					i++;
-				}
-				glm::vec3 centerP = FindSATCenter(rotatedPoints1);
-				points[0].sprite->UpdateModel({ centerP.x, centerP.y ,centerP.z }, { 0.1f,0.1f,0.1f }, 0.f);
-				points[0].sprite->UpdateProjection();
-				points[0].sprite->UpdateView();
+				i++;
 			}
-			else if(colliderType == ColliderType3D::SPHERE)
+			else
 			{
-				points[0].sprite->UpdateModel({ GetOwner()->GetPosition() }, {sphere.radius,sphere.radius,sphere.radius }, GetOwner()->GetRotate3D());
-				points[0].sprite->UpdateProjection();
-				points[0].sprite->UpdateView();
+				rotatedPoints1.push_back(RotatePoint(v.pos, GetOwner()->GetPosition(), rotation1));
 			}
 		}
+		for (auto& v : rotatedPoints1)
+		{
+			v;
+			//v;
+			//glm::vec3 A = rotatedPoints1[i - 1];
+			glm::vec3 B = { 0.f, 0.f, 0.f };
+			if (rotatedPoints1.size() > i)
+			{
+				B = rotatedPoints1[i];
+			}
+			else
+			{
+				B = rotatedPoints1[0];
+			}
+
+			points[i].sprite->UpdateModel(B, { 0.1f,0.1f,0.1f }, 0.f);
+			points[i].sprite->UpdateProjection();
+			points[i].sprite->UpdateView();
+			i++;
+		}
+		glm::vec3 centerP = FindSATCenter(rotatedPoints1);
+		points[0].sprite->UpdateModel({ centerP.x, centerP.y ,centerP.z }, { 0.1f,0.1f,0.1f }, 0.f);
+		points[0].sprite->UpdateProjection();
+		points[0].sprite->UpdateView();
 #endif // _DEBUG
 
 }
@@ -491,7 +479,7 @@ void Physics3D::AddCollideSphere(float r)
 		temp.pos = { 0.f,0.f,0.f };
 		points.push_back(std::move(temp));
 		points.at(points.size() - 1).sprite = new Sprite();
-		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::SPHERE, 30, 30, { 0.0, 1.0, 0.0, 0.5 });
+		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 30, 30, { 0.0, 1.0, 0.0, 1.0 });
 		//temp.sprite = nullptr;
 	}
 #endif
@@ -614,26 +602,25 @@ void Physics3D::AddPoint(glm::vec3 pos)
 	{
 		Point3D temp;
 		temp.pos = { 0.f,0.f,0.f };
+		temp.sprite = new Sprite();
+		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 		points.push_back(std::move(temp));
-		points.at(points.size() - 1).sprite = new Sprite();
-		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 0.5 });
-		//temp.sprite = nullptr;
 	}
 	Point3D temp;
 	temp.pos = pos;
-	points.push_back(std::move(temp));
-	points.at(points.size() - 1).sprite = new Sprite();
+	temp.sprite = new Sprite();
 	switch (bodyType)
 	{
 	case BodyType3D::RIGID:
-		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
+		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 1.0, 0.0, 1.0 });
 		break;
 	case BodyType3D::BLOCK:
-		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 1.0 });
+		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 		break;
 	default:
-		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
+		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 1.0, 0.0, 1.0 });
 		break;
 	}
+	points.push_back(std::move(temp));
 }
 #endif
