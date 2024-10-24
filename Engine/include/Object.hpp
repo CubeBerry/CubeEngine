@@ -117,8 +117,8 @@ public:
 	//	return nullptr;
 	//}
 
-protected:
 	void DestroyAllComponents();
+protected:
 
 	glm::vec3 position{ 0.f, 0.f, 0.f };
 	glm::vec3 speed{ 0.f, 0.f, 0.f };

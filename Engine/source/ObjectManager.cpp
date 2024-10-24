@@ -32,8 +32,11 @@ void ObjectManager::Draw(float dt)
 void ObjectManager::Destroy(int id)
 {
     objectsToBeDeleted.push_back(id);
-    std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
-    objectsToBeDeleted.clear();
+    objectMap.at(id).get()->DestroyAllComponents();
+
+    //objectsToBeDeleted.push_back(id);
+    //std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
+    //objectsToBeDeleted.clear();
 }
 
 void ObjectManager::DestroyAllObjects()
