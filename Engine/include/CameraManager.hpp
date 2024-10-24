@@ -15,7 +15,7 @@ public:
 	// 2D, 3D
 	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); }
 	void SetViewSize(int width, int height) noexcept { camera.SetViewSize(width, height); }
-	void SetCenter(glm::vec3 pos) { camera.SetCenterPos(pos); }
+	void SetTarget(glm::vec3 pos) { camera.SetTarget(pos); }
 	void SetCameraPosition(glm::vec3 pos) { camera.SetCameraPosition(pos); }
 
 	float GetZoom() noexcept { return camera.GetZoom(); }
@@ -64,6 +64,7 @@ public:
 	glm::vec3 GetBackVector() const { return camera.GetBackVector(); }
 	glm::vec3 GetRightVector() const { return camera.GetRightVector(); }
 
+	Ray CalculateRayFrom2DPosition(glm::vec2 pos) { return camera.CalculateRayFrom2DPosition(pos); }
 #ifdef _DEBUG
 	void CameraControllerImGui();
 	int currentObjIndex = 0;

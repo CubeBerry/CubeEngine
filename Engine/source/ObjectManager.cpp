@@ -5,7 +5,9 @@
 
 #include <iostream>
 
+
 #ifdef _DEBUG
+#include "Engine.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "imgui.h"
 #endif
@@ -146,6 +148,67 @@ void ObjectManager::ObjectControllerForImGui()
     }
     obj = nullptr;
     ImGui::End();
+
+    //SelectObject
+    if(Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    {
+        Ray ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+        int closestObjectId = lastObjectID;
+    	bool isIntersect = false;
+
+    	float tMin, tMax;
+        float closestDistance = std::numeric_limits<float>::max();
+
+    	for (auto& object : objectMap) 
+        {
+
+            glm::vec3 posTemp = object.second.get()->GetPosition();
+            glm::vec3 sizeTemp = object.second.get()->GetSize();
+
+            glm::vec3 invDir = 1.0f / ray.direction;
+            glm::vec3 t0 = (posTemp - (sizeTemp / 2.f) - ray.origin) * invDir;
+            glm::vec3 t1 = (posTemp + (sizeTemp / 2.f) - ray.origin) * invDir;
+
+            glm::vec3 tMinVec = glm::min(t0, t1);
+            glm::vec3 tMaxVec = glm::max(t0, t1);
+
+            tMin = glm::max(glm::max(tMinVec.x, tMinVec.y), tMinVec.z);
+            tMax = glm::min(glm::min(tMaxVec.x, tMaxVec.y), tMaxVec.z);
+
+            if (tMax >= tMin && tMax >= 0)
+            {
+                if (tMin < closestDistance) 
+                {
+                    closestDistance = tMin;
+                    closestObjectId = object.second.get()->GetId();
+                    isIntersect = true;
+                }
+            }
+        }
+
+        if (isIntersect == true)
+        {
+            if (currentIndex == closestObjectId)
+            {
+                ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+            	float t = -ray.origin.z / ray.direction.z;
+				glm::vec3 intersectionPoint = ray.origin + t * ray.direction;
+
+                Object* objT = FindObjectWithId(currentIndex);
+                objT->SetPosition(intersectionPoint);
+                objT = nullptr;
+            }
+            else
+            {
+                currentIndex = closestObjectId;
+            	
+                //Object* objT = FindObjectWithId(currentIndex);
+                //Engine::GetCameraManager().SetCameraPosition({ objT->GetPosition().x, objT->GetPosition().y , Engine::GetCameraManager().GetCameraPosition().z });
+                //objT = nullptr;
+            }
+        }
+    }
+    //SelectObject
 }
 #endif
 

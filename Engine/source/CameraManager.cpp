@@ -121,7 +121,7 @@ void CameraManager::CameraControllerImGui()
 				index++;
 			}
 			ImGui::EndChild();
-			SetCenter(Engine::GetObjectManager().FindObjectWithId(currentObjIndex)->GetPosition());
+			SetTarget(Engine::GetObjectManager().FindObjectWithId(currentObjIndex)->GetPosition());
 
 			ImGui::DragFloat("Distance", &cameraDistance, 0.05f);
 			SetCameraDistance(cameraDistance);

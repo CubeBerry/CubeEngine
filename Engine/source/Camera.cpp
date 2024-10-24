@@ -104,7 +104,7 @@ void Camera::Update()
 	}
 }
 
-void Camera::SetCenterPos(glm::vec3 pos)
+void Camera::SetTarget(glm::vec3 pos)
 {
 	switch (cameraType)
 	{
@@ -205,6 +205,23 @@ void Camera::UpdaetCameraDirectrion(glm::vec2 dir)
 		yaw += 360.0f;
 	}
 	Update();
+}
+
+Ray Camera::CalculateRayFrom2DPosition(glm::vec2 pos)
+{
+	float x = (2.0f * pos.x) / cameraViewSize.x;
+	float y = -(2.0f * pos.y) / cameraViewSize.y;
+	glm::vec4 rayClip = glm::vec4(x, y, -1.0, 1.0);
+
+	glm::vec4 rayEye = glm::inverse(projection) * rayClip;
+	rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0, 0.0);
+
+	glm::vec4 rayWorld = glm::inverse(view) * rayEye;
+	glm::vec3 rayDirection = glm::normalize(glm::vec3(rayWorld));
+
+	glm::vec3 cameraPos = glm::vec3(glm::inverse(view)[3]);
+
+	return Ray{ cameraPos, rayDirection };
 }
 
 void Camera::Rotate2D(float angle) noexcept

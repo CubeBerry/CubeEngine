@@ -1,7 +1,7 @@
-﻿
-//Author: DOYEONG LEE
+﻿//Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Physics3D.cpp
+
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Sprite.hpp"
 
@@ -49,45 +49,57 @@ void Physics3D::Update(float dt)
 	//}
 
 #ifdef _DEBUG
-	std::vector<glm::vec3> rotatedPoints1;
-	glm::quat rotation1 = glm::quat(glm::radians(-GetOwner()->GetRotate3D()));
+		if(!points.empty())
+		{
+			if(colliderType == ColliderType3D::BOX)
+			{
+				std::vector<glm::vec3> rotatedPoints1;
+				glm::quat rotation1 = glm::quat(glm::radians(-GetOwner()->GetRotate3D()));
 
-	int i = 0;
-	for (auto& v : points)
-	{
-		if (i == 0)
-		{
-			i++;
-		}
-		else
-		{
-			rotatedPoints1.push_back(RotatePoint(v.pos, GetOwner()->GetPosition(), rotation1));
-		}
-	}
-	for (auto& v : rotatedPoints1)
-	{
-		v;
-		//v;
-		//glm::vec3 A = rotatedPoints1[i - 1];
-		glm::vec3 B = { 0.f, 0.f, 0.f };
-		if (rotatedPoints1.size() > i)
-		{
-			B = rotatedPoints1[i];
-		}
-		else
-		{
-			B = rotatedPoints1[0];
-		}
+				int i = 0;
+				for (auto& v : points)
+				{
+					if (i == 0)
+					{
+						i++;
+					}
+					else
+					{
+						rotatedPoints1.push_back(RotatePoint(v.pos, GetOwner()->GetPosition(), rotation1));
+					}
+				}
+				for (auto& v : rotatedPoints1)
+				{
+					v;
+					//v;
+					//glm::vec3 A = rotatedPoints1[i - 1];
+					glm::vec3 B = { 0.f, 0.f, 0.f };
+					if (rotatedPoints1.size() > i)
+					{
+						B = rotatedPoints1[i];
+					}
+					else
+					{
+						B = rotatedPoints1[0];
+					}
 
-		points[i].sprite->UpdateModel(B, { 0.1f,0.1f,0.1f }, 0.f);
-		points[i].sprite->UpdateProjection();
-		points[i].sprite->UpdateView();
-		i++;
-	}
-	glm::vec3 centerP = FindSATCenter(rotatedPoints1);
-	points[0].sprite->UpdateModel({ centerP.x, centerP.y ,centerP.z }, { 0.1f,0.1f,0.1f }, 0.f);
-	points[0].sprite->UpdateProjection();
-	points[0].sprite->UpdateView();
+					points[i].sprite->UpdateModel(B, { 0.1f,0.1f,0.1f }, 0.f);
+					points[i].sprite->UpdateProjection();
+					points[i].sprite->UpdateView();
+					i++;
+				}
+				glm::vec3 centerP = FindSATCenter(rotatedPoints1);
+				points[0].sprite->UpdateModel({ centerP.x, centerP.y ,centerP.z }, { 0.1f,0.1f,0.1f }, 0.f);
+				points[0].sprite->UpdateProjection();
+				points[0].sprite->UpdateView();
+			}
+			else if(colliderType == ColliderType3D::SPHERE)
+			{
+				points[0].sprite->UpdateModel({ GetOwner()->GetPosition() }, {sphere.radius,sphere.radius,sphere.radius }, GetOwner()->GetRotate3D());
+				points[0].sprite->UpdateProjection();
+				points[0].sprite->UpdateView();
+			}
+		}
 #endif // _DEBUG
 
 }
@@ -227,17 +239,17 @@ bool Physics3D::CheckCollision(Object* obj)
 		}
 		else if (obj->GetComponent<Physics3D>()->GetColliderType() == ColliderType3D::SPHERE)
 		{
-			//return CollisionPC(GetOwner(), obj);
+			return CollisionPS(GetOwner(), obj);
 		}
 		break;
 	case ColliderType3D::SPHERE:
-		if (obj->GetComponent<Physics3D>()->GetColliderType() == ColliderType3D::SPHERE)
+		if (obj->GetComponent<Physics3D>()->GetColliderType() == ColliderType3D::BOX)
 		{
-			//return CollisionPC(obj, GetOwner());
+			return CollisionPS(obj, GetOwner());
 		}
 		else if (obj->GetComponent<Physics3D>()->GetColliderType() == ColliderType3D::SPHERE)
 		{
-			//return CollisionCC(GetOwner(), obj);
+			return CollisionSS(GetOwner(), obj);
 		}
 		break;
 	default:
@@ -264,15 +276,15 @@ bool Physics3D::CollisionPP(Object* obj, Object* obj2)
 		glm::mat4 transform2 = glm::translate(glm::mat4(1.0f), obj2->GetPosition()) * glm::mat4_cast(glm::quat(-glm::radians(obj2->GetRotate3D())));
 
 		for (const auto& point : poly1)
-			rotatedPoly1.push_back(glm::vec3(transform1 * glm::vec4(point, 1.0f)));
+			rotatedPoly1.emplace_back(glm::vec3(transform1 * glm::vec4(point, 1.0f)));
 		for (const auto& point : poly2)
-			rotatedPoly2.push_back(glm::vec3(transform2 * glm::vec4(point, 1.0f)));
+			rotatedPoly2.emplace_back(glm::vec3(transform2 * glm::vec4(point, 1.0f)));
 
 
 		std::vector<glm::vec3> axes;
-		axes.push_back(glm::vec3(1, 0, 0));
-		axes.push_back(glm::vec3(0, 1, 0));
-		axes.push_back(glm::vec3(0, 0, 1));
+		axes.emplace_back(glm::vec3(1, 0, 0));
+		axes.emplace_back(glm::vec3(0, 1, 0));
+		axes.emplace_back(glm::vec3(0, 0, 1));
 
 		for (size_t i = 0; i < rotatedPoly1.size(); ++i) 
 		{
@@ -329,6 +341,104 @@ bool Physics3D::CollisionPP(Object* obj, Object* obj2)
 	return false;
 }
 
+bool Physics3D::CollisionSS(Object* obj, Object* obj2)
+{
+	glm::vec3 center1 = obj->GetPosition();
+	glm::vec3 center2 = obj2->GetPosition();
+	float radius1 = obj->GetComponent<Physics3D>()->sphere.radius / 2.f;
+	float radius2 = obj2->GetComponent<Physics3D>()->sphere.radius / 2.f;
+
+	float distanceSquared = glm::length2(center2 - center1);
+	float radiusSum = radius1 + radius2;
+
+	if (distanceSquared <= radiusSum * radiusSum)
+	{
+		float distance = std::sqrt(distanceSquared);
+		glm::vec3 normal = (center2 - center1) / distance;
+		float depth = radiusSum - distance;
+
+		if (obj->GetComponent<Physics3D>()->GetIsGhostCollision() == false &&
+			obj2->GetComponent<Physics3D>()->GetIsGhostCollision() == false)
+		{
+			if (obj->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID &&
+				obj2->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID)
+			{
+				obj->SetPosition(obj->GetPosition() - normal * depth * 0.5f);
+				obj2->SetPosition(obj2->GetPosition() + normal * depth * 0.5f);
+			}
+			else if (obj->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID &&
+				obj2->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::BLOCK)
+			{
+				obj->SetPosition(obj->GetPosition() - normal * depth);
+			}
+			else if (obj->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::BLOCK &&
+				obj2->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID)
+			{
+				obj2->SetPosition(obj2->GetPosition() + normal * depth);
+			}
+			CalculateLinearVelocity(*obj->GetComponent<Physics3D>(), *obj2->GetComponent<Physics3D>(), normal, &depth);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool Physics3D::CollisionPS(Object* poly, Object* sph)
+{
+	std::vector<glm::vec3> polyVertices;
+	glm::mat4 transformPoly = glm::translate(glm::mat4(1.0f), poly->GetPosition()) * glm::mat4_cast(glm::quat(-glm::radians(poly->GetRotate3D())));
+	for (const auto& point : poly->GetComponent<Physics3D>()->GetCollidePolyhedron())
+	{
+		polyVertices.emplace_back(glm::vec3(transformPoly * glm::vec4(point, 1.0f)));
+	}
+
+	glm::vec3 sphereCenter = sph->GetPosition();
+	float sphereRadius = sph->GetComponent<Physics3D>()->sphere.radius / 2.f;
+
+	glm::vec3 closestPoint = FindClosestPointOnSegment(sphereCenter, polyVertices);
+	glm::vec3 normal = glm::normalize(sphereCenter - closestPoint);
+
+	std::vector<glm::vec3> axes = {
+		glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1),
+		normal
+	};
+	float minDepth = INFINITY;
+	glm::vec3 collisionNormal;
+
+	for (const auto& axis : axes)
+	{
+		float depth, min1, max1, min2, max2;
+		if (IsSeparatingAxis(axis, polyVertices, sphereCenter, sphereRadius, &depth, &min1, &max1, &min2, &max2))
+		{
+			return false;
+		}
+		if (depth < minDepth)
+		{
+			minDepth = depth;
+			collisionNormal = axis;
+		}
+	}
+
+	if (glm::dot(sphereCenter - closestPoint, collisionNormal) < 0)
+	{
+		collisionNormal = -collisionNormal;
+	}
+
+	if (!poly->GetComponent<Physics3D>()->GetIsGhostCollision() && !sph->GetComponent<Physics3D>()->GetIsGhostCollision())
+	{
+		glm::vec3 moveVector = collisionNormal * (minDepth / 2.0f);
+
+		if (poly->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID)
+			poly->SetPosition(poly->GetPosition() - moveVector);
+		if (sph->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID)
+			sph->SetPosition(sph->GetPosition() + moveVector);
+
+		CalculateLinearVelocity(*poly->GetComponent<Physics3D>(), *sph->GetComponent<Physics3D>(), collisionNormal, &minDepth);
+	}
+
+	return true;
+}
+
 void Physics3D::AddCollidePolyhedron(glm::vec3 position)
 {
 	colliderType = ColliderType3D::BOX;
@@ -364,6 +474,30 @@ void Physics3D::AddCollidePolyhedronAABB(glm::vec3 min, glm::vec3 max)
 void Physics3D::AddCollidePolyhedronAABB(glm::vec3 size)
 {
 	AddCollidePolyhedronAABB(-size / 2.f, size / 2.f);
+}
+
+void Physics3D::AddCollideSphere(float r)
+{
+#ifdef _DEBUG
+	for (auto& v : points)
+	{
+		delete v.sprite;
+	}
+	points.clear();
+
+	if (points.empty() == true)
+	{
+		Point3D temp;
+		temp.pos = { 0.f,0.f,0.f };
+		points.push_back(std::move(temp));
+		points.at(points.size() - 1).sprite = new Sprite();
+		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::SPHERE, 30, 30, { 0.0, 1.0, 0.0, 0.5 });
+		//temp.sprite = nullptr;
+	}
+#endif
+	colliderType = ColliderType3D::SPHERE;
+	collidePolyhedron.clear();
+	sphere.radius = r;
 }
 
 glm::vec3 Physics3D::FindSATCenter(const std::vector<glm::vec3>& points_)
@@ -409,6 +543,33 @@ bool Physics3D::IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::ve
 	return !(max1 >= min2 && max2 >= min1);
 }
 
+bool Physics3D::IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_)
+{
+	float min1 = INFINITY;
+	float max1 = -INFINITY;
+	float min2 = INFINITY;
+	float max2 = -INFINITY;
+
+	for (const glm::vec3& point : pointsPoly)
+	{
+		float projection = glm::dot(point, axis);
+		min1 = std::min(min1, projection);
+		max1 = std::max(max1, projection);
+	}
+
+	float sphereProjection = glm::dot(pointSphere, axis);
+	min2 = sphereProjection - radius;
+	max2 = sphereProjection + radius;
+
+	*axisDepth = std::min(max2 - min1, max1 - min2);
+	*min1_ = min1;
+	*max1_ = max1;
+	*min2_ = min2;
+	*max2_ = max2;
+
+	return (min1 > max2) || (min2 > max1);
+}
+
 void Physics3D::CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::vec3 normal, float* /*axisDepth*/)
 {
 	glm::vec3 relativeVelocity = body2.GetVelocity() - body.GetVelocity();
@@ -427,33 +588,52 @@ void Physics3D::CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::
 	}
 }
 
+glm::vec3 Physics3D::FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices)
+{
+	glm::vec3 closestPoint = vertices[0];
+	float minDistanceSquared = glm::length2(sphereCenter - closestPoint);
+
+	for (size_t i = 1; i < vertices.size(); ++i)
+	{
+		const glm::vec3& v = vertices[i];
+		float distanceSquared = glm::length2(v - sphereCenter);
+
+		if (distanceSquared < minDistanceSquared)
+		{
+			minDistanceSquared = distanceSquared;
+			closestPoint = v;
+		}
+	}
+	return closestPoint;
+}
+
 #ifdef _DEBUG
 void Physics3D::AddPoint(glm::vec3 pos)
 {
-	
 	if (points.empty() == true)
 	{
 		Point3D temp;
 		temp.pos = { 0.f,0.f,0.f };
-		temp.sprite = new Sprite();
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 		points.push_back(std::move(temp));
+		points.at(points.size() - 1).sprite = new Sprite();
+		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 0.5 });
+		//temp.sprite = nullptr;
 	}
 	Point3D temp;
 	temp.pos = pos;
-	temp.sprite = new Sprite();
+	points.push_back(std::move(temp));
+	points.at(points.size() - 1).sprite = new Sprite();
 	switch (bodyType)
 	{
 	case BodyType3D::RIGID:
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 1.0, 0.0, 1.0 });
+		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
 		break;
 	case BodyType3D::BLOCK:
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
+		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 1.0, 0.0, 0.0, 1.0 });
 		break;
 	default:
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 1.0, 0.0, 1.0 });
+		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::CUBE, 2, 2, { 0.0, 1.0, 0.0, 1.0 });
 		break;
 	}
-	points.push_back(std::move(temp));
 }
 #endif

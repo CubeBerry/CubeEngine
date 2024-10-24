@@ -1,6 +1,7 @@
 //Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Physics3D.hpp
+
 #pragma once
 #include <math.h>
 #include <glm/vec3.hpp>
@@ -42,7 +43,7 @@ struct Sphere
 class Physics3D : public Component
 {
 public:
-	Physics3D() : Component(ComponentTypes::PHYSICS3D) { Init(); };
+	Physics3D() : Component(ComponentTypes::PHYSICS3D) {/* Init(); */};
 	~Physics3D() override;
 
 	void Init() override ;
@@ -60,16 +61,16 @@ public:
 	void SetMinVelocity(glm::vec3 v) { velocityMin = v; }
 	void SetMaxVelocity(glm::vec3 v) { velocityMax = v; }
 
-	glm::vec3 GetVelocity() { return velocity; }
-	glm::vec3 GetMinVelocity() { return velocityMin; }
-	glm::vec3 GetMaxVelocity() { return velocityMax; }
-	float GetGravity() { return gravity; }
-	bool GetIsGravityOn() { return isGravityOn; }
-	float GetFriction() { return friction; }
-	float GetMass() { return mass; }
-	glm::quat GetOrientation() { return orientation; }
-	glm::vec3 GetPosition() { return GetOwner()->GetPosition(); }
-	float GetRestitution() { return restitution; }
+	glm::vec3 GetVelocity() const { return velocity; } 
+	glm::vec3 GetMinVelocity() const { return velocityMin; }
+	glm::vec3 GetMaxVelocity() const { return velocityMax; }
+	float GetGravity() const { return gravity; }
+	bool GetIsGravityOn() const { return isGravityOn; }
+	float GetFriction() const { return friction; }
+	float GetMass() const { return mass; }
+	glm::quat GetOrientation() const { return orientation; }
+	glm::vec3 GetPosition() const { return GetOwner()->GetPosition(); }
+	float GetRestitution() const { return restitution; }
 
 	void SetAcceleration(glm::vec3 v) { acceleration = v; };
 	void AddForce(glm::vec3 v) { force = v; }
@@ -84,9 +85,9 @@ public:
 
 	void SetOrientation(glm::quat q) { orientation = q; }
 
-	bool GetIsGhostCollision() { return isGhostCollision; }
-	BodyType3D GetBodyType() { return bodyType; };
-	ColliderType3D GetColliderType() { return colliderType; }
+	bool GetIsGhostCollision() const { return isGhostCollision; }
+	BodyType3D GetBodyType() const { return bodyType; };
+	ColliderType3D GetColliderType() const { return colliderType; }
 
 	void SetColliderType(ColliderType3D type) { colliderType = type; }
 	void SetIsGhostCollision(bool state) { isGhostCollision = state; }
@@ -96,9 +97,13 @@ public:
 	std::vector<glm::vec3> GetCollidePolyhedron() { return collidePolyhedron; }
 	bool CheckCollision(Object* obj);
 	bool CollisionPP(Object* obj, Object* obj2);
+	bool CollisionSS(Object* obj, Object* obj2);
+	bool CollisionPS(Object* poly, Object* sph);
+
 	void AddCollidePolyhedron(glm::vec3 position);
 	void AddCollidePolyhedronAABB(glm::vec3 min, glm::vec3 max);
 	void AddCollidePolyhedronAABB(glm::vec3 size);
+	void AddCollideSphere(float r);
 	//2d->3d
 private:
 	glm::vec3 velocity = { 0.0f, 0.0f, 0.0f };
@@ -121,13 +126,15 @@ private:
 
 	//2d->3d
 	glm::vec3 FindSATCenter(const std::vector<glm::vec3>& points_);
-	//glm::vec3 FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices);
 	glm::vec3 RotatePoint(const glm::vec3& point, const glm::vec3& position, const glm::quat& rotation);
 	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> points1, const std::vector<glm::vec3> points2, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
-	//bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
 	void CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::vec3 normal, float* axisDepth);
+	
+	glm::vec3 FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices);
+	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
 
 	std::vector<glm::vec3> collidePolyhedron;
+	Sphere sphere;
 
 	//2d->3d
 #ifdef _DEBUG
