@@ -51,7 +51,7 @@ public:
 	GLTexture* GetTexture(std::string name);
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices) override;
+	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) override;
 private:
 	//--------------------Common--------------------//
 	GLVertexBuffer* vertexBuffer{ nullptr };

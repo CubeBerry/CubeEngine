@@ -58,7 +58,7 @@ public:
 	std::vector<TwoDimension::FragmentUniform>* GetFragmentUniforms2D() { return &fragUniforms2D; };
 
 	//--------------------3D Render--------------------//
-	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices) = 0;
+	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) = 0;
 	void EnableLighting(bool isEnabled)
 	{
 		isLighting = isEnabled;
@@ -110,6 +110,7 @@ protected:
 	std::vector<ThreeDimension::Vertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;
 	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
+	std::vector<ThreeDimension::Material> fragMaterialUniforms3D;
 
 	std::vector<unsigned int> verticesPerMesh;
 	std::vector<unsigned int> indicesPerMesh;
