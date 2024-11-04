@@ -44,8 +44,9 @@ All required APIs and Libraries are integrated in Project.
 
 ## Future Plans
 1. Linux Support
-2. Basic 3D Mesh Lighting
+2. PBR
 3. C++ Code Optimization
+4. MSAA
 
 ## License
 Licensed under the [MIT License](https://github.com/minjae-yu/CubeEngine/blob/main/LICENSE).
