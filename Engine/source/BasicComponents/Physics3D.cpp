@@ -510,6 +510,16 @@ bool Physics3D::IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::ve
 	float max1 = -INFINITY;
 	float max2 = -INFINITY;
 
+	glm::vec3 normalizedAxis = glm::normalize(axis);
+	float xAxisInfluence = std::abs(glm::dot(normalizedAxis, glm::vec3(1, 0, 0)));
+	float yAxisInfluence = std::abs(glm::dot(normalizedAxis, glm::vec3(0, 1, 0)));
+	float zAxisInfluence = std::abs(glm::dot(normalizedAxis, glm::vec3(0, 0, 1)));
+
+	float depthScale = 1.0f +
+		(xAxisInfluence * 0.5f) +
+		(yAxisInfluence * 0.5f) +
+		(zAxisInfluence * 0.5f);
+
 	for (const glm::vec3& vertex : points1)
 	{
 		float projection = glm::dot(axis, vertex);
@@ -523,11 +533,14 @@ bool Physics3D::IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::ve
 		max2 = std::max(max2, projection);
 	}
 
-	*axisDepth = std::min(max2 - min1, max1 - min2);
+	*axisDepth = std::min(max2 - min1, max1 - min2) * depthScale;
+
 	*min1_ = min1;
 	*max1_ = max1;
 	*min2_ = min2;
 	*max2_ = max2;
+
+	// 겹침 검사 
 	return !(max1 >= min2 && max2 >= min1);
 }
 
@@ -537,6 +550,16 @@ bool Physics3D::IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::ve
 	float max1 = -INFINITY;
 	float min2 = INFINITY;
 	float max2 = -INFINITY;
+
+	glm::vec3 normalizedAxis = glm::normalize(axis);
+	float xAxisInfluence = std::abs(glm::dot(normalizedAxis, glm::vec3(1, 0, 0)));
+	float yAxisInfluence = std::abs(glm::dot(normalizedAxis, glm::vec3(0, 1, 0)));
+	float zAxisInfluence = std::abs(glm::dot(normalizedAxis, glm::vec3(0, 0, 1)));
+
+	float depthScale = 1.0f +
+		(xAxisInfluence * 0.5f) +
+		(yAxisInfluence * 0.5f) +
+		(zAxisInfluence * 0.5f);
 
 	for (const glm::vec3& point : pointsPoly)
 	{
@@ -549,13 +572,13 @@ bool Physics3D::IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::ve
 	min2 = sphereProjection - radius;
 	max2 = sphereProjection + radius;
 
-	*axisDepth = std::min(max2 - min1, max1 - min2);
+	*axisDepth = std::min(max2 - min1, max1 - min2) * depthScale;
 	*min1_ = min1;
 	*max1_ = max1;
 	*min2_ = min2;
 	*max2_ = max2;
 
-	return (min1 > max2) || (min2 > max1);
+	return !(max1 >= min2 && max2 >= min1);
 }
 
 void Physics3D::CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::vec3 normal, float* /*axisDepth*/)
