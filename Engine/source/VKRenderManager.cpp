@@ -38,6 +38,7 @@ VKRenderManager::~VKRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete fragmentMaterialUniformBuffer;
 	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
@@ -743,6 +744,10 @@ void VKRenderManager::DeleteWithIndex(int id)
 			fragUniforms3D.erase(end(fragUniforms3D) - 1);
 			delete fragmentUniform3D;
 			fragmentUniform3D = nullptr;
+
+			fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
+			delete fragmentMaterialUniformBuffer;
+			fragmentMaterialUniformBuffer = nullptr;
 			break;
 		}
 
@@ -876,6 +881,12 @@ void VKRenderManager::DeleteWithIndex(int id)
 		for (auto u : *fragmentUniform3D->GetUniformBuffers())
 		{
 			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
+		}
+
+		fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
+		for (auto u : *fragmentMaterialUniformBuffer->GetUniformBuffers())
+		{
+			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
 		break;
 	}

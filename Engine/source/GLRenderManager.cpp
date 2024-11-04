@@ -17,6 +17,7 @@ GLRenderManager::~GLRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete fragmentMaterialUniformBuffer;
 	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
@@ -275,6 +276,10 @@ void GLRenderManager::DeleteWithIndex(int id)
 			fragUniforms3D.erase(end(fragUniforms3D) - 1);
 			delete fragmentUniform3D;
 			fragmentUniform3D = nullptr;
+
+			fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
+			delete fragmentMaterialUniformBuffer;
+			fragmentMaterialUniformBuffer = nullptr;
 			break;
 		}
 
@@ -351,6 +356,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 		break;
 	case RenderType::ThreeDimension:
 		fragUniforms3D.erase(end(fragUniforms3D) - 1);
+		fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
 		break;
 	}
 	//for (auto u : *uFragment->GetUniformBuffers())
