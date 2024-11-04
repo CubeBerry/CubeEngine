@@ -633,6 +633,10 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 	int texId = static_cast<int>(textures.size() - 1);
 	textures.at(texId)->SetTextureID(texId);
+
+	imageInfos[texId].sampler = *textures[texId]->GetSampler();
+	imageInfos[texId].imageView = *textures[texId]->GetImageView();
+	imageInfos[texId].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
@@ -1044,12 +1048,12 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				descriptorWrite[0].pBufferInfo = &bufferInfo;
 
 				//Create Texture DescriptorBuffer Info
-				for (int i = 0; i < textures.size(); ++i)
-				{
-					imageInfos[i].sampler = *textures[i]->GetSampler();
-					imageInfos[i].imageView = *textures[i]->GetImageView();
-					imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				}
+				//for (int i = 0; i < textures.size(); ++i)
+				//{
+				//	imageInfos[i].sampler = *textures[i]->GetSampler();
+				//	imageInfos[i].imageView = *textures[i]->GetImageView();
+				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				//}
 
 				//Define which resource descriptor set will point
 				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1125,12 +1129,12 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				descriptorWrite[0].pBufferInfo = &bufferInfo;
 
 				//Create Texture DescriptorBuffer Info
-				for (int i = 0; i < textures.size(); ++i)
-				{
-					imageInfos[i].sampler = *textures[i]->GetSampler();
-					imageInfos[i].imageView = *textures[i]->GetImageView();
-					imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				}
+				//for (int i = 0; i < textures.size(); ++i)
+				//{
+				//	imageInfos[i].sampler = *textures[i]->GetSampler();
+				//	imageInfos[i].imageView = *textures[i]->GetImageView();
+				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				//}
 
 				//Define which resource descriptor set will point
 				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
