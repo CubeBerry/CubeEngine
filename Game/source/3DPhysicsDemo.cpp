@@ -143,14 +143,12 @@ void PhysicsDemo::Update(float dt)
 	Engine::GetCameraManager().ControlCamera(dt);
 }
 
-#ifdef _DEBUG
 void PhysicsDemo::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetGameStateManager().StateChanger();
 	Engine::GetCameraManager().CameraControllerImGui();
 	Engine::GetObjectManager().ObjectControllerForImGui();
 }
-#endif
 
 void PhysicsDemo::Restart()
 {

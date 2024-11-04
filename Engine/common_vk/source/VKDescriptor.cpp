@@ -168,10 +168,8 @@ void VKDescriptor::InitDescriptorPool()
 		//For Fragment
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-#ifdef _DEBUG
 		//For ImGUI
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-#endif
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
 	};
 
@@ -182,12 +180,9 @@ void VKDescriptor::InitDescriptorPool()
 	createInfo.maxSets = 1009;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = poolSize.data();
-#ifdef _DEBUG
 	//ImGui requires VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-#else
-	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-#endif
+	//createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
 	//Create DescriptorPool
 	try

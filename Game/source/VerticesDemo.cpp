@@ -52,7 +52,6 @@ void VerticesDemo::Update(float dt)
 	Engine::GetCameraManager().ControlCamera(dt);
 }
 
-#ifdef _DEBUG
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetGameStateManager().StateChanger();	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
@@ -67,7 +66,6 @@ void VerticesDemo::ImGuiDraw(float /*dt*/)
 		}
 	}
 }
-#endif
 
 void VerticesDemo::Restart()
 {

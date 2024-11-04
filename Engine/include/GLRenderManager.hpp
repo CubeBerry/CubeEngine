@@ -16,9 +16,7 @@ public:
 	GLRenderManager() { gMode = GraphicsMode::GL; };
 	~GLRenderManager();
 	void Initialize(
-#ifdef _DEBUG
 		SDL_Window* window_, SDL_GLContext context_
-#endif
 	);
 
 	void BeginRender(glm::vec4 bgColor) override;
@@ -37,9 +35,7 @@ private:
 	GLVertexArray vertexArray;
 	GLShader gl2DShader;
 	GLShader gl3DShader;
-#ifdef _DEBUG
 	GLImGuiManager* imguiManager;
-#endif
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;

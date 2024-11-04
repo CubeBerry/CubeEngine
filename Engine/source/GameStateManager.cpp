@@ -6,9 +6,7 @@
 #include "Engine.hpp"
 
 #include "BasicComponents/Physics3D.hpp"
-#ifdef _DEBUG
 #include "imgui.h"
-#endif
 
 GameStateManager::GameStateManager()
 {
@@ -114,7 +112,6 @@ void GameStateManager::Draw()
 	//renderManager->EndRender();
 }
 
-#ifdef _DEBUG
 void GameStateManager::DrawWithImGui(float dt)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
@@ -134,7 +131,6 @@ void GameStateManager::DrawWithImGui(float dt)
 	//levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
 	//renderManager->EndRender();
 }
-#endif
 
 void GameStateManager::LevelEnd()
 {
@@ -156,7 +152,6 @@ void GameStateManager::RestartLevel()
 	levelList.at(static_cast<int>(currentLevel))->Restart();
 }
 
-#ifdef _DEBUG
 void GameStateManager::UpdateGameLogic(float dt)
 {
 	if (state == State::UPDATE)
@@ -182,11 +177,8 @@ void GameStateManager::UpdateDraw(float dt)
 	{
 		if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
 		{
-#ifdef _DEBUG
 			DrawWithImGui(dt);
-#else
-			Draw();
-#endif
+			//Draw();
 		}
 	}
 }
@@ -317,7 +309,6 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 	}
 	return "NONE";
 }
-#endif
 
 void GameStateManager::CollideObjects()
 {

@@ -164,13 +164,11 @@ void PocketBallDemo::Update(float dt)
 	pocketBallSystem->Update(dt);
 }
 
-#ifdef _DEBUG
 void PocketBallDemo::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetGameStateManager().StateChanger();
 	Engine::GetSoundManager().MusicPlayerForImGui(0);
 }
-#endif
 
 void PocketBallDemo::Restart()
 {

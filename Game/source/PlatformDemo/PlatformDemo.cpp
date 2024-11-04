@@ -56,14 +56,12 @@ void PlatformDemo::Update(float dt)
 	platformDemoSystem->Update(dt);
 }
 
-#ifdef _DEBUG
 void PlatformDemo::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetGameStateManager().StateChanger();
 	Engine::GetSoundManager().MusicPlayerForImGui(0);
-	platformDemoSystem->UpdateMapEditorImGui();
+	//platformDemoSystem->UpdateMapEditorImGui();
 }
-#endif
 
 void PlatformDemo::Restart()
 {

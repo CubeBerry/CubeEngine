@@ -65,10 +65,8 @@ public:
 	glm::vec3 GetRightVector() const { return camera.GetRightVector(); }
 
 	Ray CalculateRayFrom2DPosition(glm::vec2 pos) { return camera.CalculateRayFrom2DPosition(pos); }
-#ifdef _DEBUG
 	void CameraControllerImGui();
 	int currentObjIndex = 0;
-#endif
 private:
 	Camera camera;
 };

@@ -47,7 +47,6 @@ bool CameraManager::IsInCamera(Object* object)
 	return false;
 }
 
-#ifdef _DEBUG
 void CameraManager::CameraControllerImGui()
 {
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
@@ -131,7 +130,6 @@ void CameraManager::CameraControllerImGui()
 	}
 	ImGui::End();
 }
-#endif
 
 void CameraManager::ControlCamera(float dt)
 {

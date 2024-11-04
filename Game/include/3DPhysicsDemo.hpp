@@ -17,9 +17,7 @@ public:
 
 	void Init() override;
 	void Update(float dt) override;
-#ifdef _DEBUG
 	void ImGuiDraw(float dt) override;
-#endif
 	void Restart() override;
 	void End() override;
 private:

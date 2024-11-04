@@ -34,8 +34,6 @@ public:
 	void SpawnEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name);
 	std::vector<BEUEnemy*> GetEnemyList() { return enemyList;}
 	void DeleteEnemy(BEUEnemy* enemy);
-#ifdef _DEBUG
-#endif
 protected:
 	Sprite* healthBar = nullptr;
 	Sprite* emeyHealthBar = nullptr;

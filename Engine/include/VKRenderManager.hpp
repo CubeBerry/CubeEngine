@@ -112,9 +112,7 @@ private:
 	}
 	void CreateDepthBuffer();
 
-#ifdef _DEBUG
 	VKImGuiManager* imguiManager;
-#endif
 
 	VKShader* vkShader2D;
 	VKPipeLine* vkPipeline2D;

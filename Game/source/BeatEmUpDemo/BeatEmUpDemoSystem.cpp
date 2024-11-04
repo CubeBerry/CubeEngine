@@ -8,9 +8,7 @@
 #include <iostream>
 #include <fstream>
 
-#ifdef _DEBUG
 #include "imgui.h"
-#endif
 
 void BeatEmUpDemoSystem::Init()
 {

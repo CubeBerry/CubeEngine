@@ -6,11 +6,9 @@
 #include <iostream>
 
 
-#ifdef _DEBUG
 #include "Engine.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "imgui.h"
-#endif
 
 void ObjectManager::Update(float dt)
 {
@@ -62,7 +60,6 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 	return nullptr;
 }
 
-#ifdef _DEBUG
 void ObjectManager::ObjectControllerForImGui()
 {
     ImGui::Begin("ObjectController");
@@ -213,7 +210,6 @@ void ObjectManager::ObjectControllerForImGui()
     }
     //SelectObject
 }
-#endif
 
 
 

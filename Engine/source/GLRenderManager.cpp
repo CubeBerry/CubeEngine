@@ -7,10 +7,8 @@
 
 GLRenderManager::~GLRenderManager()
 {
-#ifdef _DEBUG
 	//Delete ImGui
 	delete imguiManager;
-#endif
 
 	//Destroy Buffers
 	delete vertexBuffer;
@@ -27,9 +25,7 @@ GLRenderManager::~GLRenderManager()
 }
 
 void GLRenderManager::Initialize(
-#ifdef _DEBUG
 	SDL_Window* window_, SDL_GLContext context_
-#endif
 )
 {
 	vertexArray.Initialize();
@@ -49,9 +45,7 @@ void GLRenderManager::Initialize(
 	//Lighting
 	vertexLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::VertexLightingUniform>();
 	vertexLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "vLightingMatrix", sizeof(ThreeDimension::VertexLightingUniform), vertexLightingUniformBuffer);
-#ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
-#endif
 }
 
 void GLRenderManager::BeginRender(glm::vec4 bgColor)
@@ -127,16 +121,12 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		break;
 	}
 
-#ifdef _DEBUG
 	imguiManager->Begin();
-#endif
 }
 
 void GLRenderManager::EndRender()
 {
-#ifdef _DEBUG
 	imguiManager->End();
-#endif
 
 	SDL_GL_SwapWindow(Engine::Instance().GetWindow().GetWindow());
 }

@@ -17,10 +17,8 @@ VKRenderManager::~VKRenderManager()
 {
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 
-#ifdef _DEBUG
 	//delete ImGui
 	delete imguiManager;
-#endif
 
 	//Destroy Command Pool, also Command Buffer destroys with Command Pool
 	vkDestroyCommandPool(*vkInit->GetDevice(), vkCommandPool, nullptr);
@@ -315,9 +313,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
 
-#ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
-#endif
 
 	for (int i = 0; i < 500; ++i)
 	{
@@ -1314,18 +1310,14 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 		break;
 	}
 
-#ifdef _DEBUG
 	imguiManager->Begin();
-#endif
 }
 
 void VKRenderManager::EndRender()
 {
 	if (!isRecreated)
 	{
-#ifdef _DEBUG
 		imguiManager->End(frameIndex);
-#endif
 
 		//--------------------End Draw--------------------//
 

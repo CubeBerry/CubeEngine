@@ -76,9 +76,7 @@ public:
 
 	std::vector<Sound>& GetSoundList() { return sounds; }
 	int GetAmontOfSounds() { return soundMaxIndex; }
-#ifdef _DEBUG
 	void MusicPlayerForImGui(int channelIndex);
-#endif
 private:
 	void ErrorCheck(FMOD_RESULT result_);
 	int FindSoundIndexWithName(std::string name);
@@ -93,9 +91,7 @@ private:
 	FMOD::System* system;
 	FMOD_RESULT result;
 
-#ifdef _DEBUG
 	int currentIndex = 0;
 	bool isAdjusting = false;
-#endif
 };
 #endif
