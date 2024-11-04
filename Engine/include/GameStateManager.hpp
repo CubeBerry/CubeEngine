@@ -26,9 +26,7 @@ public:
 	void LevelInit(GameLevel currentLevel_);
 	void Update(float dt);
 	void Draw();
-#ifdef _DEBUG
 	void DrawWithImGui(float dt);
-#endif
     void LevelEnd();
 	
 	void AddLevel(GameState* level);
@@ -42,13 +40,9 @@ public:
 
 	void UpdateGameLogic(float dt);
 	void UpdateDraw(float dt);
-#ifdef _DEBUG
 	void StateChanger();
-#endif
 private:
-#ifdef _DEBUG
 	const char* GameLevelTypeEnumToChar(GameLevel type);
-#endif
 	void LevelInit();
 	void CollideObjects();
 

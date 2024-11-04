@@ -10,15 +10,16 @@ layout(location = 3) in int index;
 
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
+layout(location = 2) out int o_index;
 //Lighting
-layout(location = 2) out vec3 o_light_position;
-layout(location = 3) out vec3 o_light_color;
-layout(location = 4) out float o_ambient_strength;
-layout(location = 5) out vec3 o_normal;
-layout(location = 6) out vec3 o_fragment_position;
-layout(location = 7) out vec3 o_view_position;
-layout(location = 8) out float o_specular_strength;
-layout(location = 9) out float o_is_lighting;
+layout(location = 3) out vec3 o_light_position;
+layout(location = 4) out vec3 o_light_color;
+layout(location = 5) out float o_ambient_strength;
+layout(location = 6) out vec3 o_normal;
+layout(location = 7) out vec3 o_fragment_position;
+layout(location = 8) out vec3 o_view_position;
+layout(location = 9) out float o_specular_strength;
+layout(location = 10) out float o_is_lighting;
 
 struct vMatrix
 {
@@ -58,6 +59,7 @@ void main()
 {
     o_uv = i_uv;
     o_col = matrix[index].color;
+    o_index = index;
     //Lighting
     o_light_position = lightingMatrix.lightPosition.xyz;
     o_light_color = lightingMatrix.lightColor.xyz;

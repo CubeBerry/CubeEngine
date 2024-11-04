@@ -13,9 +13,7 @@
 
 #include "SoundManager.hpp"
 #include "Engine.hpp"
-#ifdef _DEBUG
 #include "imgui.h"
-#endif
 
 std::string ConvertWideStringToUTF8(const std::wstring& wideString)
 {
@@ -445,7 +443,6 @@ void SoundManager::LoadSoundFilesFromFolder(const std::wstring& folderPath)
 	}
 }
 
-#ifdef _DEBUG
 void SoundManager::MusicPlayerForImGui(int channelIndex)
 {
 	if (soundMaxIndex > 0)
@@ -575,4 +572,3 @@ void SoundManager::MusicPlayerForImGui(int channelIndex)
 		ImGui::End();
 	}
 }
-#endif

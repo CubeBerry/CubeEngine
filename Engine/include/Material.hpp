@@ -72,4 +72,10 @@ namespace ThreeDimension
 	{
 		int texIndex;
 	};
+
+	struct alignas(16) Material
+	{
+		glm::vec3 specularColor;
+		float shininess;
+	};
 }

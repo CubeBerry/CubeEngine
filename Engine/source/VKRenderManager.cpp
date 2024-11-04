@@ -17,10 +17,8 @@ VKRenderManager::~VKRenderManager()
 {
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 
-#ifdef _DEBUG
 	//delete ImGui
 	delete imguiManager;
-#endif
 
 	//Destroy Command Pool, also Command Buffer destroys with Command Pool
 	vkDestroyCommandPool(*vkInit->GetDevice(), vkCommandPool, nullptr);
@@ -40,6 +38,7 @@ VKRenderManager::~VKRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete fragmentMaterialUniformBuffer;
 	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
@@ -315,9 +314,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
 
-#ifdef _DEBUG
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass);
-#endif
 
 	for (int i = 0; i < 500; ++i)
 	{
@@ -633,6 +630,10 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 	int texId = static_cast<int>(textures.size() - 1);
 	textures.at(texId)->SetTextureID(texId);
+
+	imageInfos[texId].sampler = *textures[texId]->GetSampler();
+	imageInfos[texId].imageView = *textures[texId]->GetImageView();
+	imageInfos[texId].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
@@ -743,6 +744,10 @@ void VKRenderManager::DeleteWithIndex(int id)
 			fragUniforms3D.erase(end(fragUniforms3D) - 1);
 			delete fragmentUniform3D;
 			fragmentUniform3D = nullptr;
+
+			fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
+			delete fragmentMaterialUniformBuffer;
+			fragmentMaterialUniformBuffer = nullptr;
 			break;
 		}
 
@@ -877,6 +882,12 @@ void VKRenderManager::DeleteWithIndex(int id)
 		{
 			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 		}
+
+		fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
+		for (auto u : *fragmentMaterialUniformBuffer->GetUniformBuffers())
+		{
+			vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
+		}
 		break;
 	}
 
@@ -916,7 +927,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices)
+void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess, glm::vec3 specularColor)
 {
 	CreateMesh(type, path, stacks, slices);
 
@@ -938,6 +949,10 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 		delete fragmentUniform3D;
 	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, quadCount);
 
+	if (fragmentMaterialUniformBuffer != nullptr)
+		delete fragmentMaterialUniformBuffer;
+	fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, quadCount);
+
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
@@ -948,6 +963,11 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	ThreeDimension::FragmentUniform tIndex;
 	tIndex.texIndex = 0;
 	fragUniforms3D.push_back(tIndex);
+
+	ThreeDimension::Material material;
+	material.shininess = shininess;
+	material.specularColor = specularColor;
+	fragMaterialUniforms3D.push_back(material);
 }
 
 
@@ -1035,12 +1055,12 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				descriptorWrite[0].pBufferInfo = &bufferInfo;
 
 				//Create Texture DescriptorBuffer Info
-				for (int i = 0; i < textures.size(); ++i)
-				{
-					imageInfos[i].sampler = *textures[i]->GetSampler();
-					imageInfos[i].imageView = *textures[i]->GetImageView();
-					imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				}
+				//for (int i = 0; i < textures.size(); ++i)
+				//{
+				//	imageInfos[i].sampler = *textures[i]->GetSampler();
+				//	imageInfos[i].imageView = *textures[i]->GetImageView();
+				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				//}
 
 				//Define which resource descriptor set will point
 				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1101,12 +1121,13 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 		{
 			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
+				VkWriteDescriptorSet descriptorWrite[3] = {};
+
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(fragmentUniform3D->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(ThreeDimension::FragmentUniform) * quadCount;
 
-				VkWriteDescriptorSet descriptorWrite[2] = {};
 				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorWrite[0].dstSet = *currentTextureDescriptorSet;
 				descriptorWrite[0].dstBinding = 0;
@@ -1115,12 +1136,12 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				descriptorWrite[0].pBufferInfo = &bufferInfo;
 
 				//Create Texture DescriptorBuffer Info
-				for (int i = 0; i < textures.size(); ++i)
-				{
-					imageInfos[i].sampler = *textures[i]->GetSampler();
-					imageInfos[i].imageView = *textures[i]->GetImageView();
-					imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				}
+				//for (int i = 0; i < textures.size(); ++i)
+				//{
+				//	imageInfos[i].sampler = *textures[i]->GetSampler();
+				//	imageInfos[i].imageView = *textures[i]->GetImageView();
+				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				//}
 
 				//Define which resource descriptor set will point
 				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1130,11 +1151,24 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				descriptorWrite[1].pImageInfo = imageInfos.data();
 
+				VkDescriptorBufferInfo materialBufferInfo;
+				materialBufferInfo.buffer = (*(fragmentMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
+				materialBufferInfo.offset = 0;
+				materialBufferInfo.range = sizeof(ThreeDimension::Material) * quadCount;
+
+				descriptorWrite[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[2].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[2].dstBinding = 2;
+				descriptorWrite[2].descriptorCount = 1;
+				descriptorWrite[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[2].pBufferInfo = &materialBufferInfo;
+
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 3, descriptorWrite, 0, nullptr);
 			}
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
+			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
 		}
 		break;
 	}
@@ -1287,18 +1321,14 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 		break;
 	}
 
-#ifdef _DEBUG
 	imguiManager->Begin();
-#endif
 }
 
 void VKRenderManager::EndRender()
 {
 	if (!isRecreated)
 	{
-#ifdef _DEBUG
 		imguiManager->End(frameIndex);
-#endif
 
 		//--------------------End Draw--------------------//
 

@@ -7,10 +7,8 @@
 
 GLRenderManager::~GLRenderManager()
 {
-#ifdef _DEBUG
 	//Delete ImGui
 	delete imguiManager;
-#endif
 
 	//Destroy Buffers
 	delete vertexBuffer;
@@ -19,6 +17,7 @@ GLRenderManager::~GLRenderManager()
 	delete fragmentUniform2D;
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
+	delete fragmentMaterialUniformBuffer;
 	delete vertexLightingUniformBuffer;
 
 	//Destroy Texture
@@ -27,9 +26,7 @@ GLRenderManager::~GLRenderManager()
 }
 
 void GLRenderManager::Initialize(
-#ifdef _DEBUG
 	SDL_Window* window_, SDL_GLContext context_
-#endif
 )
 {
 	vertexArray.Initialize();
@@ -49,9 +46,7 @@ void GLRenderManager::Initialize(
 	//Lighting
 	vertexLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::VertexLightingUniform>();
 	vertexLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "vLightingMatrix", sizeof(ThreeDimension::VertexLightingUniform), vertexLightingUniformBuffer);
-#ifdef _DEBUG
 	imguiManager = new GLImGuiManager(window_, context_);
-#endif
 }
 
 void GLRenderManager::BeginRender(glm::vec4 bgColor)
@@ -106,6 +101,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		if (fragmentUniform3D != nullptr)
 		{
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
+			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
 		break;
 	}
@@ -126,16 +122,12 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		break;
 	}
 
-#ifdef _DEBUG
 	imguiManager->Begin();
-#endif
 }
 
 void GLRenderManager::EndRender()
 {
-#ifdef _DEBUG
 	imguiManager->End();
-#endif
 
 	SDL_GL_SwapWindow(Engine::Instance().GetWindow().GetWindow());
 }
@@ -284,6 +276,10 @@ void GLRenderManager::DeleteWithIndex(int id)
 			fragUniforms3D.erase(end(fragUniforms3D) - 1);
 			delete fragmentUniform3D;
 			fragmentUniform3D = nullptr;
+
+			fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
+			delete fragmentMaterialUniformBuffer;
+			fragmentMaterialUniformBuffer = nullptr;
 			break;
 		}
 
@@ -360,6 +356,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 		break;
 	case RenderType::ThreeDimension:
 		fragUniforms3D.erase(end(fragUniforms3D) - 1);
+		fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
 		break;
 	}
 	//for (auto u : *uFragment->GetUniformBuffers())
@@ -380,7 +377,7 @@ GLTexture* GLRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices)
+void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess, glm::vec3 specularColor)
 {
 	CreateMesh(type, path, stacks, slices);
 
@@ -445,6 +442,11 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
 	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
 
+	if (fragmentMaterialUniformBuffer != nullptr)
+		delete fragmentMaterialUniformBuffer;
+	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
+	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
+
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
@@ -455,4 +457,9 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	ThreeDimension::FragmentUniform tIndex;
 	tIndex.texIndex = 0;
 	fragUniforms3D.push_back(tIndex);
+
+	ThreeDimension::Material material;
+	material.shininess = shininess;
+	material.specularColor = specularColor;
+	fragMaterialUniforms3D.push_back(material);
 }

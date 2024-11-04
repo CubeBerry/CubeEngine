@@ -60,7 +60,6 @@ void ProceduralMeshes::Update(float dt)
 		Engine::GetRenderManager()->SetPolygonType(PolygonType::LINE);
 }
 
-#ifdef _DEBUG
 void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetGameStateManager().StateChanger();
@@ -246,7 +245,6 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 
 	ImGui::End();
 }
-#endif
 
 void ProceduralMeshes::Restart()
 {

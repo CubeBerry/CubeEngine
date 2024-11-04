@@ -122,9 +122,7 @@ void ThreadManager::ProcessSDLEventsMainThread()
 	while (!localMainThreadEventQueue.empty())
 	{
 		SDL_Event& event = localMainThreadEventQueue.front();
-#ifdef _DEBUG
 		ImGui_ImplSDL2_ProcessEvent(&event);
-#endif
 
 		switch (event.type)
 		{
