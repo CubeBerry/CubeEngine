@@ -106,6 +106,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		if (fragmentUniform3D != nullptr)
 		{
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
+			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
 		break;
 	}
@@ -445,6 +446,11 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
 	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
 
+	if (fragmentMaterialUniformBuffer != nullptr)
+		delete fragmentMaterialUniformBuffer;
+	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
+	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
+
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
@@ -459,4 +465,5 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	ThreeDimension::Material material;
 	material.shininess = shininess;
 	material.specularColor = specularColor;
+	fragMaterialUniforms3D.push_back(material);
 }

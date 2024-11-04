@@ -67,6 +67,7 @@ private:
 	//--------------------3D Render--------------------//
 	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
+	GLUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
 
 	//Lighting
 	GLUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
