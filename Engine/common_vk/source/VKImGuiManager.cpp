@@ -9,14 +9,14 @@
 #include "VKDescriptor.hpp"
 #include "VKPipeLine.hpp"
 
-VKImGuiManager::VKImGuiManager(VKInit* init_, SDL_Window* window_, VkCommandPool* cpool_, std::array<VkCommandBuffer, 2>* cbuffers_, VkDescriptorPool* dpool_, VkRenderPass* pass_)
+VKImGuiManager::VKImGuiManager(VKInit* init_, SDL_Window* window_, VkCommandPool* cpool_, std::array<VkCommandBuffer, 2>* cbuffers_, VkDescriptorPool* dpool_, VkRenderPass* pass_, VkSampleCountFlagBits samples_)
 {
 	vkCommandPool = *cpool_;
 	vkCommandBuffers = *cbuffers_;
 	vkDescriptorPool = *dpool_;
 	renderPass = *pass_;
 
-	Initialize(init_, window_);
+	Initialize(init_, window_, samples_);
 }
 
 VKImGuiManager::~VKImGuiManager()
@@ -24,7 +24,7 @@ VKImGuiManager::~VKImGuiManager()
 	Shutdown();
 }
 
-void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_)
+void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_, VkSampleCountFlagBits samples)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -45,7 +45,7 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_)
 	initInfo.RenderPass = renderPass;
 	initInfo.MinImageCount = 2;
 	initInfo.ImageCount = 2;
-	initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	initInfo.MSAASamples = samples;
 	initInfo.Allocator = nullptr;
 	initInfo.CheckVkResultFn = nullptr;
 

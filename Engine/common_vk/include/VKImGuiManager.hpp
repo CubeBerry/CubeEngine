@@ -23,11 +23,12 @@ public:
 		VkCommandPool* cpool_,
 		std::array<VkCommandBuffer, 2>* cbuffers_,
 		VkDescriptorPool* dpool_,
-		VkRenderPass* pass_
+		VkRenderPass* pass_,
+		VkSampleCountFlagBits samples_
 		);
 	~VKImGuiManager();
 
-	void Initialize(VKInit* init_, SDL_Window* window_);
+	void Initialize(VKInit* init_, SDL_Window* window_, VkSampleCountFlagBits samples);
 	//void FeedEvent(const SDL_Event& event_);
 	void Begin();
 	void End(uint32_t index_);
