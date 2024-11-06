@@ -8,7 +8,7 @@ CubeEngine is a rendering engine written in C++, developed as a personal hobby p
 
 ## Minimum Requirements
 1. Latest Graphics Driver
-2. GPU with Vulkan version 1.3 or above supported
+2. GPU with Vulkan version 1.3.296.0 or above supported
 3. Discrete GPU recommended
 4. Download [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/) Minimum Version 1.3.268.0
  
@@ -29,6 +29,7 @@ All required APIs and Libraries are integrated in Project.
 6. 3D Plane, Cube(3D Collision Applied), Sphere Meshes
 7. Simple Model Loading
 8. Phong Lighting
+9. MSAA
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/3b158449-7532-4848-8766-957e6d7c58ba)
@@ -46,7 +47,6 @@ All required APIs and Libraries are integrated in Project.
 1. Linux Support
 2. PBR
 3. C++ Code Optimization
-4. MSAA
 
 ## License
 Licensed under the [MIT License](https://github.com/minjae-yu/CubeEngine/blob/main/LICENSE).
