@@ -74,7 +74,7 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	//MultiSampling
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
 
 	switch (wMode)
 	{
@@ -116,9 +116,12 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	//}
 
 	//Anti-Aliasing
-	glEnable(GL_LINE_SMOOTH);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	//glEnable(GL_LINE_SMOOTH);
+	//glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+	//MSAA Anti-Aliasing
+	glEnable(GL_MULTISAMPLE);
 
 	//Blend
 	glEnable(GL_BLEND);

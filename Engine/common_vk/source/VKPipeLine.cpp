@@ -26,6 +26,7 @@ void VKPipeLine::InitPipeLine(
 	VkRenderPass* renderPass,
 	uint32_t stride,
 	std::initializer_list<VKAttributeLayout> layout,
+	VkSampleCountFlagBits samples,
 	VkCullModeFlags cull_,
 	POLYGON_MODE mode_)
 {
@@ -148,7 +149,7 @@ void VKPipeLine::InitPipeLine(
 	//Create Multisample State Info(MSAA)
 	VkPipelineMultisampleStateCreateInfo multisampleCreateInfo{};
 	multisampleCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampleCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampleCreateInfo.rasterizationSamples = samples;
 
 	//Create Depth Stencil State Info
 	VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo{};
