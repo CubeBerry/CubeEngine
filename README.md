@@ -46,7 +46,8 @@ All required APIs and Libraries are integrated in Project.
 ## Future Plans
 1. Linux Support
 2. PBR
-3. C++ Code Optimization
+3. Assimp Model Loading
+4. C++ Code Optimization
 
 ## License
 Licensed under the [MIT License](https://github.com/minjae-yu/CubeEngine/blob/main/LICENSE).
