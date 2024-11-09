@@ -322,6 +322,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	break;
 	case MeshType::OBJ:
 	{
+		//Assimp Model Load
 		const aiScene* scene = importer.ReadFile(path.string(), 
 			aiProcess_Triangulate |
 			aiProcess_GenSmoothNormals |
@@ -387,9 +388,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			vertex.position *= glm::vec4(unitScale, unitScale, unitScale, 1.f);
 		}
 
-		for (auto& i : tempIndices)
-			i += static_cast<uint16_t>(verticesCount);
-
+		//Custom Model Load
 		//std::ifstream file(path);
 		//if (!file.is_open())
 		//	std::cout << "Open File Failed!" << '\n';
