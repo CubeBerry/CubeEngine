@@ -8,6 +8,10 @@
 #include "Material.hpp"
 #include "Window.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
 constexpr float HALF_PI = 0.5f * PI;
@@ -114,4 +118,7 @@ protected:
 
 	std::vector<unsigned int> verticesPerMesh;
 	std::vector<unsigned int> indicesPerMesh;
+
+	//Assimp
+	Assimp::Importer importer;
 };

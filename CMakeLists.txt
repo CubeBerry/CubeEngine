@@ -21,13 +21,16 @@ set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
 set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
 # target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR})
 
-# common libs (FMOD, ImGUI, stb)
+# common libs (FMOD, ImGUI, stb, SDL, glm, assimp)
 set(COMMON_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs")
 
 # FMOD
 set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
 set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
 # target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
+
+# Assimp
+set(ASSIMP_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/assimp/include")
 
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
@@ -92,6 +95,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2-2.30.6/include)
@@ -122,3 +126,9 @@ file(COPY ./Engine/libs/fmod/lib/fmod.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
+
+# Assimp
+file(COPY ./Engine/libs/assimp/assimp-vc143-mtd.dll
+DESTINATION ${CMAKE_BINARY_DIR}
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
