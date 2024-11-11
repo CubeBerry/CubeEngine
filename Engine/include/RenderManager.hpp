@@ -116,6 +116,10 @@ protected:
 	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
 	std::vector<ThreeDimension::Material> fragMaterialUniforms3D;
 
+#ifdef _DEBUG
+	std::vector<ThreeDimension::NormalVertex> normalVertices3D;
+#endif
+
 	std::vector<unsigned int> verticesPerMesh;
 	std::vector<unsigned int> indicesPerMesh;
 

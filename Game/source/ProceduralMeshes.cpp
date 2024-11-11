@@ -20,7 +20,7 @@ void ProceduralMeshes::Init()
 	currentMesh = MeshType::PLANE;
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 
 	l.lightPosition = glm::vec4(0.f, 15.f, 10.f, 1.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);

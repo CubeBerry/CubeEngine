@@ -46,6 +46,15 @@ namespace ThreeDimension
 		int index;
 	};
 
+#ifdef _DEBUG
+	struct alignas(16) NormalVertex
+	{
+		glm::vec4 position;
+		glm::vec4 color;
+		int index;
+	};
+#endif
+
 	struct alignas(16) VertexUniform
 	{
 		glm::mat4 model;

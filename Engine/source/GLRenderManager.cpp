@@ -30,8 +30,42 @@ void GLRenderManager::Initialize(
 )
 {
 	vertexArray.Initialize();
+#ifdef _DEBUG
+	normalVertexArray.Initialize();
+
+	////Attributes
+	//GLAttributeLayout position_layout;
+	//position_layout.component_type = GLAttributeLayout::Float;
+	//position_layout.component_dimension = GLAttributeLayout::_4;
+	//position_layout.normalized = false;
+	//position_layout.vertex_layout_location = 0;
+	//position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	//position_layout.offset = 0;
+	//position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+	//GLAttributeLayout color_layout;
+	//color_layout.component_type = GLAttributeLayout::Float;
+	//color_layout.component_dimension = GLAttributeLayout::_4;
+	//color_layout.normalized = false;
+	//color_layout.vertex_layout_location = 1;
+	//color_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	//color_layout.offset = 0;
+	//color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
+
+	//GLAttributeLayout index_layout;
+	//index_layout.component_type = GLAttributeLayout::Int;
+	//index_layout.component_dimension = GLAttributeLayout::_1;
+	//index_layout.normalized = false;
+	//index_layout.vertex_layout_location = 2;
+	//index_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	//index_layout.offset = 0;
+	//index_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, index);
+
+	//normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout });
+#endif
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
 	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL3D.frag" } });
+	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGLNormal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGLNormal3D.frag" } });
 
 	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
 	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
@@ -103,13 +137,12 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
+
 		break;
 	}
 
 	vertexArray.Use(true);
-
 	GLDrawIndexed(vertexArray);
-
 	vertexArray.Use(false);
 
 	switch (rMode)
@@ -121,6 +154,23 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		gl3DShader.Use(false);
 		break;
 	}
+
+#ifdef _DEBUG
+	glNormal3DShader.Use(true);
+
+	if (vertexUniform3D != nullptr)
+	{
+		vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+	}
+
+	normalVertexArray.Use(true);
+	//if (isDrawNormal)
+	//{
+		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
+	//}
+	normalVertexArray.Use(false);
+	glNormal3DShader.Use(false);
+#endif
 
 	imguiManager->Begin();
 }
@@ -385,6 +435,10 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 		delete vertexBuffer;
 	vertexBuffer = new GLVertexBuffer;
 	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data());
+#ifdef _DEBUG
+	normalVertexBuffer = new GLVertexBuffer;
+	normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices3D.size()), normalVertices3D.data());
+#endif
 
 	if (indexBuffer != nullptr)
 		delete indexBuffer;
@@ -431,6 +485,37 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 
 	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout });
 	vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+#ifdef _DEBUG
+	//Attributes
+	GLAttributeLayout normal_position_layout;
+	normal_position_layout.component_type = GLAttributeLayout::Float;
+	normal_position_layout.component_dimension = GLAttributeLayout::_4;
+	normal_position_layout.normalized = false;
+	normal_position_layout.vertex_layout_location = 0;
+	normal_position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	normal_position_layout.offset = 0;
+	normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+	GLAttributeLayout normal_color_layout;
+	normal_color_layout.component_type = GLAttributeLayout::Float;
+	normal_color_layout.component_dimension = GLAttributeLayout::_4;
+	normal_color_layout.normalized = false;
+	normal_color_layout.vertex_layout_location = 1;
+	normal_color_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	normal_color_layout.offset = 0;
+	normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
+
+	GLAttributeLayout normal_index_layout;
+	normal_index_layout.component_type = GLAttributeLayout::Int;
+	normal_index_layout.component_dimension = GLAttributeLayout::_1;
+	normal_index_layout.normalized = false;
+	normal_index_layout.vertex_layout_location = 2;
+	normal_index_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	normal_index_layout.offset = 0;
+	normal_index_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, index);
+
+	normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout, normal_index_layout });
+#endif
 
 	if (vertexUniform3D != nullptr)
 		delete vertexUniform3D;

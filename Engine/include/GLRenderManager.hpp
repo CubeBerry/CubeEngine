@@ -48,6 +48,9 @@ public:
 
 	//--------------------3D Render--------------------//
 	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) override;
+#ifdef _DEBUG
+	void DrawNormals(bool isDraw) { this->isDrawNormal = isDraw; };
+#endif
 private:
 	//--------------------Common--------------------//
 	GLVertexBuffer* vertexBuffer{ nullptr };
@@ -64,6 +67,13 @@ private:
 	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 	GLUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
+
+#ifdef _DEBUG
+	GLVertexArray normalVertexArray;
+	GLVertexBuffer* normalVertexBuffer{ nullptr };
+	GLShader glNormal3DShader;
+	bool isDrawNormal{ false };
+#endif
 
 	//Lighting
 	GLUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };

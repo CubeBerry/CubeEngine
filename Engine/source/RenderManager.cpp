@@ -491,6 +491,17 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	break;
 	}
 
+#ifdef _DEBUG
+	for (size_t v = 0; v < tempVertices.size(); ++v)
+	{
+		glm::vec4 start = tempVertices[v].position;
+		glm::vec4 end = tempVertices[v].position + tempVertices[v].normal * 0.1f;
+
+		normalVertices3D.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
+		normalVertices3D.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
+	}
+#endif
+
 	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
 	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
 	vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
