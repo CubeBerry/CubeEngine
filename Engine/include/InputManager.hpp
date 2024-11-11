@@ -175,6 +175,7 @@ public:
 
 	bool IsMouseButtonPressed(MOUSEBUTTON button);
 	bool IsMouseButtonPressOnce(MOUSEBUTTON button);
+	bool IsMouseButtonReleaseOnce(MOUSEBUTTON button);
 
 	glm::vec2 GetMousePosition();
 	glm::vec2 GetMouseWheelMotion();

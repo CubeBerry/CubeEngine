@@ -150,63 +150,80 @@ void ObjectManager::ObjectControllerForImGui()
     ImGui::End();
 
     //SelectObject
-    if(Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
     {
         Ray ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
-        int closestObjectId = lastObjectID;
-    	bool isIntersect = false;
-
-    	float tMin, tMax;
-        float closestDistance = std::numeric_limits<float>::max();
-
-    	for (auto& object : objectMap) 
+        if (isDragObject == false)
         {
+            float tMin, tMax;
+            float closestDistance = std::numeric_limits<float>::max();
 
-            glm::vec3 posTemp = object.second.get()->GetPosition();
-            glm::vec3 sizeTemp = object.second.get()->GetSize();
-
-            glm::vec3 invDir = 1.0f / ray.direction;
-            glm::vec3 t0 = (posTemp - (sizeTemp / 2.f) - ray.origin) * invDir;
-            glm::vec3 t1 = (posTemp + (sizeTemp / 2.f) - ray.origin) * invDir;
-
-            glm::vec3 tMinVec = glm::min(t0, t1);
-            glm::vec3 tMaxVec = glm::max(t0, t1);
-
-            tMin = glm::max(glm::max(tMinVec.x, tMinVec.y), tMinVec.z);
-            tMax = glm::min(glm::min(tMaxVec.x, tMaxVec.y), tMaxVec.z);
-
-            if (tMax >= tMin && tMax >= 0)
+            for (auto& object : objectMap)
             {
-                if (tMin < closestDistance) 
+                glm::vec3 posTemp = object.second.get()->GetPosition();
+                glm::vec3 sizeTemp = object.second.get()->GetSize();
+
+                glm::vec3 invDir = 1.0f / ray.direction;
+                glm::vec3 t0 = (posTemp - (sizeTemp / 2.f) - ray.origin) * invDir;
+                glm::vec3 t1 = (posTemp + (sizeTemp / 2.f) - ray.origin) * invDir;
+
+                glm::vec3 tMinVec = glm::min(t0, t1);
+                glm::vec3 tMaxVec = glm::max(t0, t1);
+
+                tMin = glm::max(glm::max(tMinVec.x, tMinVec.y), tMinVec.z);
+                tMax = glm::min(glm::min(tMaxVec.x, tMaxVec.y), tMaxVec.z);
+
+                if (tMax >= tMin && tMax >= 0)
                 {
-                    closestDistance = tMin;
-                    closestObjectId = object.second.get()->GetId();
-                    isIntersect = true;
+                    if (tMin < closestDistance)
+                    {
+                        closestDistance = tMin;
+                        closestObjectId = object.second.get()->GetId();
+                        isDragObject = true;
+                    }
                 }
             }
         }
-
-        if (isIntersect == true)
+        else
         {
             if (currentIndex == closestObjectId)
             {
-                ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
-            	float t = -ray.origin.z / ray.direction.z;
-				glm::vec3 intersectionPoint = ray.origin + t * ray.direction;
+                Object* objT = FindObjectWithId(closestObjectId);
 
-                Object* objT = FindObjectWithId(currentIndex);
+                if(isObjGravityOn == false && objT->HasComponent<Physics3D>() && objT->GetComponent<Physics3D>()->GetIsGravityOn() == true)
+                {
+                    objT->GetComponent<Physics3D>()->SetIsGravityOn(false);
+                    isObjGravityOn = true;
+                }
+                ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+                glm::vec3 planeNormal = Engine::GetCameraManager().GetBackVector();
+                glm::vec3 objectPosition = objT->GetPosition();
+                float distanceToPlane = glm::dot(planeNormal, objectPosition - ray.origin) / glm::dot(planeNormal, ray.direction);
+                glm::vec3 intersectionPoint = ray.origin + distanceToPlane * ray.direction;
+
                 objT->SetPosition(intersectionPoint);
                 objT = nullptr;
             }
             else
             {
                 currentIndex = closestObjectId;
-            	
-                //Object* objT = FindObjectWithId(currentIndex);
-                //Engine::GetCameraManager().SetCameraPosition({ objT->GetPosition().x, objT->GetPosition().y , Engine::GetCameraManager().GetCameraPosition().z });
-                //objT = nullptr;
             }
         }
+    }
+    else if (isDragObject == true && !Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    {
+        if (isObjGravityOn == true)
+        {
+            Object* objT = FindObjectWithId(closestObjectId);
+            if(objT->HasComponent<Physics3D>())
+            {
+                objT->GetComponent<Physics3D>()->SetIsGravityOn(true);
+                isObjGravityOn = false;
+            }
+            objT = nullptr;
+        }
+        closestObjectId = 0;
+        isDragObject = false;
     }
     //SelectObject
 }

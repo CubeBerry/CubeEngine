@@ -80,6 +80,7 @@ public:
 
 	void SetFriction(float f) { friction = f; }
 	void SetGravity(float g, bool isGravityOn_ = true) { gravity = g; isGravityOn = isGravityOn_; }
+	void SetIsGravityOn(bool state) { isGravityOn = state; }
 	void SetMass(float m) { mass = m; }
 	void SetRestitution(float amount) { restitution = amount; }
 

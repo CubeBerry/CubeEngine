@@ -55,5 +55,10 @@ private:
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
 
+    //For ObjectController
     int currentIndex = 0;
+	int closestObjectId = 0;
+    bool isDragObject = false;
+    bool isObjGravityOn = false;
+    //
 };

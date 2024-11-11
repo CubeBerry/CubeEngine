@@ -109,6 +109,18 @@ bool InputManager::IsMouseButtonPressOnce(MOUSEBUTTON button)
 	return false;
 }
 
+bool InputManager::IsMouseButtonReleaseOnce(MOUSEBUTTON button)
+{
+	auto it = mouseButtonStates.find(button);
+	if (it != mouseButtonStates.end())
+	{
+		bool isReleased = !it->second && mouseButtonStates[button];
+		mouseButtonStatePrev[button] = it->second;
+		return isReleased;
+	}
+	return false;
+}
+
 glm::vec2 InputManager::GetMousePosition()
 {
 	int mouseX, mouseY;
