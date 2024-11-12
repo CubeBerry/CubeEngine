@@ -466,7 +466,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	//3D Pipeline
 	position_layout.vertex_layout_location = 0;
-	position_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(ThreeDimension::Vertex, position);
 
 	VKAttributeLayout normal_layout;
