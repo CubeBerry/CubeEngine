@@ -13,7 +13,7 @@ namespace TwoDimension
 {
 	struct alignas(16) Vertex
 	{
-		glm::vec4 position;
+		glm::vec3 position;
 		int index;
 	};
 
@@ -23,9 +23,9 @@ namespace TwoDimension
 		glm::mat4 view;
 		glm::mat4 projection;
 		glm::vec4 color;
-		glm::vec4 frameSize;
-		glm::vec4 texelPos;
+		glm::vec3 frameSize;
 		float isTex;
+		glm::vec3 texelPos;
 		float isTexel;
 	};
 
@@ -40,8 +40,8 @@ namespace ThreeDimension
 {
 	struct alignas(16) Vertex
 	{
-		glm::vec4 position;
-		glm::vec4 normal;
+		glm::vec3 position;
+		glm::vec3 normal;
 		glm::vec2 uv;
 		int index;
 	};
@@ -49,7 +49,7 @@ namespace ThreeDimension
 #ifdef _DEBUG
 	struct alignas(16) NormalVertex
 	{
-		glm::vec4 position;
+		glm::vec3 position;
 		glm::vec4 color;
 		int index;
 	};
@@ -65,15 +65,11 @@ namespace ThreeDimension
 
 	struct alignas(16) VertexLightingUniform
 	{
-		//Common
-		glm::vec4 lightPosition;
-		glm::vec4 lightColor;
-		//Ambient
-		glm::vec4 viewPosition;
+		glm::vec3 lightPosition;
 		float ambientStrength;
-		//Specular
+		glm::vec3 lightColor;
 		float specularStrength;
-
+		glm::vec3 viewPosition;
 		float isLighting;
 	};
 

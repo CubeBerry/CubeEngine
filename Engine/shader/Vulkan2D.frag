@@ -26,9 +26,7 @@ void main()
 {
     vec4 texColor = mix(i_col, texture(tex[f_matrix[inIndex].texIndex], i_uv), inIsTex);
 
-    if (texColor.a < 0.5) {
-        discard;
-    }
+    if (texColor.a < 0.5) discard;
     fragmentColor = i_col * texColor;
 
     // if(inIsTex == 1.0)

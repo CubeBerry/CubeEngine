@@ -2,7 +2,7 @@
 
 #define MAX_MATRICES 20
 
-layout(location = 0) in vec4 i_pos;
+layout(location = 0) in vec3 i_pos;
 layout(location = 1) in vec4 i_col;
 layout(location = 2) in int index;
 
@@ -25,5 +25,5 @@ void main()
 {
     o_col = i_col;
 
-    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
+    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * vec4(i_pos, 1.0);
 }

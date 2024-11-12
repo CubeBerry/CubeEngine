@@ -836,10 +836,10 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(-1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(1.f, -1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(-1.f, -1.f, 1.f), quadCount));
 	if (vertex2DBuffer != nullptr)
 		delete vertex2DBuffer;
 	vertex2DBuffer = new VKVertexBuffer<TwoDimension::Vertex>(vkInit, &vertices2D);
@@ -1169,7 +1169,7 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 }
 
 
-void VKRenderManager::BeginRender(glm::vec4 bgColor)
+void VKRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	isRecreated = false;
 	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
@@ -1407,7 +1407,7 @@ void VKRenderManager::BeginRender(glm::vec4 bgColor)
 
 	//Set clear color
 	VkClearValue clearValues[2];
-	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, bgColor.a} };
+	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
 	clearValues[1].depthStencil = { 1.f, 0 };
 
 	//VkClearValue clearValue{};

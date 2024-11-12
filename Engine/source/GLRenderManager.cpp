@@ -83,7 +83,7 @@ void GLRenderManager::Initialize(
 	imguiManager = new GLImGuiManager(window_, context_);
 }
 
-void GLRenderManager::BeginRender(glm::vec4 bgColor)
+void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
@@ -97,7 +97,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	}
-	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
+	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.f));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 	switch (rMode)
@@ -195,10 +195,10 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(-1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(1.f, -1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(-1.f, -1.f, 1.f), quadCount));
 
 	if (quadCount > 0)
 		delete vertexBuffer;
@@ -221,7 +221,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	//Attributes
 	GLAttributeLayout position_layout;
 	position_layout.component_type = GLAttributeLayout::Float;
-	position_layout.component_dimension = GLAttributeLayout::_4;
+	position_layout.component_dimension = GLAttributeLayout::_3;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
 	position_layout.stride = sizeof(TwoDimension::Vertex);
@@ -468,7 +468,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	//Attributes
 	GLAttributeLayout position_layout;
 	position_layout.component_type = GLAttributeLayout::Float;
-	position_layout.component_dimension = GLAttributeLayout::_4;
+	position_layout.component_dimension = GLAttributeLayout::_3;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
 	position_layout.stride = sizeof(ThreeDimension::Vertex);
@@ -477,7 +477,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 
 	GLAttributeLayout normal_layout;
 	normal_layout.component_type = GLAttributeLayout::Float;
-	normal_layout.component_dimension = GLAttributeLayout::_4;
+	normal_layout.component_dimension = GLAttributeLayout::_3;
 	normal_layout.normalized = false;
 	normal_layout.vertex_layout_location = 1;
 	normal_layout.stride = sizeof(ThreeDimension::Vertex);
@@ -508,7 +508,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	//Attributes
 	GLAttributeLayout normal_position_layout;
 	normal_position_layout.component_type = GLAttributeLayout::Float;
-	normal_position_layout.component_dimension = GLAttributeLayout::_4;
+	normal_position_layout.component_dimension = GLAttributeLayout::_3;
 	normal_position_layout.normalized = false;
 	normal_position_layout.vertex_layout_location = 0;
 	normal_position_layout.stride = sizeof(ThreeDimension::NormalVertex);
