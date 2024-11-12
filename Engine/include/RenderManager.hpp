@@ -81,6 +81,10 @@ public:
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
 	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
+
+#ifdef _DEBUG
+	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
+#endif
 protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
@@ -117,7 +121,9 @@ protected:
 	std::vector<ThreeDimension::Material> fragMaterialUniforms3D;
 
 #ifdef _DEBUG
+	bool isDrawNormals{ false };
 	std::vector<ThreeDimension::NormalVertex> normalVertices3D;
+	std::vector<unsigned int> normalVerticesPerMesh;
 #endif
 
 	std::vector<unsigned int> verticesPerMesh;

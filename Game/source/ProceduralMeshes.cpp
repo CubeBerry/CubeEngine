@@ -42,6 +42,8 @@ void ProceduralMeshes::Update(float dt)
 		isRecreate = false;
 	}
 
+	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
+
 	//Update Color
 	(*Engine::GetRenderManager()->GetVertexUniforms3D())[0].color = glm::vec4{ color[0], color[1], color[2], color[3] };
 
@@ -228,6 +230,8 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		}
 
 		ImGui::ColorPicker4("Mesh Color", color);
+
+		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
 
 	//Lighting

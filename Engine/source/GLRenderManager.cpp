@@ -156,20 +156,20 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 	}
 
 #ifdef _DEBUG
-	glNormal3DShader.Use(true);
-
-	if (vertexUniform3D != nullptr)
+	if (isDrawNormals)
 	{
-		vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
-	}
+		glNormal3DShader.Use(true);
 
-	normalVertexArray.Use(true);
-	//if (isDrawNormal)
-	//{
+		if (vertexUniform3D != nullptr)
+		{
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		}
+
+		normalVertexArray.Use(true);
 		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
-	//}
-	normalVertexArray.Use(false);
-	glNormal3DShader.Use(false);
+		normalVertexArray.Use(false);
+		glNormal3DShader.Use(false);
+	}
 #endif
 
 	imguiManager->Begin();
@@ -278,6 +278,11 @@ void GLRenderManager::DeleteWithIndex(int id)
 			break;
 		case RenderType::ThreeDimension:
 			vertices3D.erase(end(vertices3D) - *verticesPerMesh.begin(), end(vertices3D));
+#ifdef _DEBUG
+			normalVertices3D.erase(end(normalVertices3D) - *normalVerticesPerMesh.begin(), end(normalVertices3D));
+			delete normalVertexBuffer;
+			normalVertexBuffer = nullptr;
+#endif
 			break;
 		}
 		delete vertexBuffer;
@@ -298,6 +303,9 @@ void GLRenderManager::DeleteWithIndex(int id)
 		if (rMode == RenderType::ThreeDimension)
 		{
 			verticesPerMesh.erase(verticesPerMesh.begin());
+#ifdef _DEBUG
+			normalVerticesPerMesh.erase(normalVerticesPerMesh.begin());
+#endif
 			indicesPerMesh.erase(indicesPerMesh.begin());
 		}
 
@@ -376,6 +384,22 @@ void GLRenderManager::DeleteWithIndex(int id)
 		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
 		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
 		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+
+#ifdef _DEBUG
+		beginCount = 0;
+		for (int vn = 0; vn < id; ++vn)
+		{
+			beginCount += normalVerticesPerMesh[vn];
+		}
+
+		normalVertices3D.erase(begin(normalVertices3D) + beginCount, begin(normalVertices3D) + beginCount + normalVerticesPerMesh[id]);
+		for (auto it = normalVertices3D.begin() + beginCount; it != normalVertices3D.end(); ++it)
+		{
+			it->index--;
+		}
+
+		glCheck(glNamedBufferSubData(normalVertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex)* normalVertices3D.size()), normalVertices3D.data()));
+#endif
 		break;
 	}
 
@@ -383,6 +407,9 @@ void GLRenderManager::DeleteWithIndex(int id)
 	{
 		verticesPerMesh.erase(verticesPerMesh.begin() + id);
 		indicesPerMesh.erase(indicesPerMesh.begin() + id);
+#ifdef _DEBUG
+		normalVerticesPerMesh.erase(normalVerticesPerMesh.begin() + id);
+#endif
 	}
 
 	switch (rMode)
@@ -394,10 +421,6 @@ void GLRenderManager::DeleteWithIndex(int id)
 		vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
 		break;
 	}
-	//for (auto u : *uVertex->GetUniformBuffers())
-	//{
-	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VertexUniform), vertexVector.data());
-	//}
 
 	switch (rMode)
 	{
@@ -409,10 +432,6 @@ void GLRenderManager::DeleteWithIndex(int id)
 		fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
 		break;
 	}
-	//for (auto u : *uFragment->GetUniformBuffers())
-	//{
-	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
-	//}
 }
 
 GLTexture* GLRenderManager::GetTexture(std::string name)

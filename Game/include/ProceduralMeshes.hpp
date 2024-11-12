@@ -28,6 +28,7 @@ private:
 
 	bool isRecreate{ false };
 	void RecreateMesh();
+	bool isDrawNormals{ false };
 
 	//ImGui - Projection
 	float cNear{ 0.05f }, cFar{ 45.f };
