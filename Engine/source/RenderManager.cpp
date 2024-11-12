@@ -12,6 +12,7 @@
 
 void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
+	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	std::vector<ThreeDimension::Vertex> tempVertices;
 	std::vector<uint16_t> tempIndices;
 	unsigned int verticesCount{ 0 };
