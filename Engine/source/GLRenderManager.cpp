@@ -398,7 +398,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 			it->index--;
 		}
 
-		glCheck(glNamedBufferSubData(normalVertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex)* normalVertices3D.size()), normalVertices3D.data()));
+		glCheck(glNamedBufferSubData(normalVertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex)* normalVertices3D.size()), normalVertices3D.data()));
 #endif
 		break;
 	}
