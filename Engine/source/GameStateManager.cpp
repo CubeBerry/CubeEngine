@@ -61,6 +61,7 @@ void GameStateManager::Update(float dt)
 		state = State::UPDATE;
 #ifdef _DEBUG
 		std::cout << "Update" << std::endl;
+		Engine::Instance().GetTimer().Init(FrameRate::UNLIMIT);
 #endif
 		break;
 	case State::UPDATE:
