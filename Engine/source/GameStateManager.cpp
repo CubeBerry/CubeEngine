@@ -55,7 +55,6 @@ void GameStateManager::Update(float dt)
 		break;
 	case State::LOAD:
 		LevelInit();
-		isStartUpdate = false;
 #ifdef _DEBUG
 		std::cout << "Load Complete" << std::endl;
 #endif
@@ -65,18 +64,9 @@ void GameStateManager::Update(float dt)
 #endif
 		break;
 	case State::UPDATE:
-		if (isStartUpdate == false)
-		{
-			isStartUpdate = true;
-			UpdateGameLogic(0.f);
-			UpdateDraw(0.f);
-		}
-		else
-		{
-			UpdateGameLogic(dt);
-			UpdateDraw(dt);
-			//순서 반대일시 마우스 입력 
-		}
+		UpdateGameLogic(dt);
+		UpdateDraw(dt);
+		//순서 반대일시 마우스 입력 X
 		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();

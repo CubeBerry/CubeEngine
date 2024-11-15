@@ -52,5 +52,4 @@ private:
 	State state = State::START;
 
 	bool showDescription = false;
-	bool isStartUpdate = false;
 };
