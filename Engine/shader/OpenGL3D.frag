@@ -59,9 +59,11 @@ void main()
         if (diff > 0.0)
         {
             vec3 view_direction = normalize(i_view_position - i_fragment_position);
-            vec3 reflect_direction = reflect(-light_direction, normal);
+            // vec3 reflect_direction = reflect(-light_direction, normal);
+            vec3 halfway_vector = normalize(view_direction + light_direction);
 
-            float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+            // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+            float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_index].shininess);
             specular = i_specular_strength * spec * i_light_color * f_material[i_index].specularColor;
         }
 

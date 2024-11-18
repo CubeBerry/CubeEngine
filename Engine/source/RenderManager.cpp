@@ -12,6 +12,7 @@
 
 void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
+	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	std::vector<ThreeDimension::Vertex> tempVertices;
 	std::vector<uint16_t> tempIndices;
 	unsigned int verticesCount{ 0 };
@@ -33,8 +34,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(slice) / slices;
 
 				tempVertices.push_back(ThreeDimension::Vertex(
-					glm::vec4(col - 0.5f, row - 0.5f, 0.0f, 1.0f),
-					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
+					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row),
 					quadCount
 				));
@@ -95,8 +96,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(slice) / slices;
 
 				planeVertices.push_back(ThreeDimension::Vertex(
-					glm::vec4(col - 0.5f, row - 0.5f, 0.0f, 1.0f),
-					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
+					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row),
 					quadCount
 				));
@@ -170,8 +171,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			for (const auto& plane_vertex : planeVertices)
 			{
 				tempVertices.push_back(ThreeDimension::Vertex(
-					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.position))),
-					RoundDecimal(glm::vec4(transformMat * glm::vec4(plane_vertex.normal))),
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
 					plane_vertex.uv,
 					quadCount
 				));
@@ -200,8 +201,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				const float col = static_cast<float>(slice) / slices;
 				const float alpha = col * PI * 2.f;
 				ThreeDimension::Vertex v;
-				v.position = glm::vec4(rad * sin(alpha) * cos_beta, rad * sin_beta, rad * cos(alpha) * cos_beta, 1.0f);
-				v.normal = glm::vec4(glm::normalize(v.position));
+				v.position = glm::vec3(rad * sin(alpha) * cos_beta, rad * sin_beta, rad * cos(alpha) * cos_beta);
+				v.normal = glm::normalize(v.position);
 				v.normal /= rad;
 				v.uv = glm::vec2(col, row);
 				v.index = quadCount;
@@ -272,7 +273,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 				//row == stacks
 				ThreeDimension::Vertex v;
-				v.position = glm::vec4{ radius * (height - row) * sin(alpha), row - radius , radius * (height - row) * cos(alpha), 1.f };
+				v.position = glm::vec3{ radius * (height - row) * sin(alpha), row - radius , radius * (height - row) * cos(alpha) };
 				v.normal = v.position / radius;
 				v.uv = glm::vec2{ col, 1 - row };
 				v.index = quadCount;
@@ -284,7 +285,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		//bottom
 		//P0
 		ThreeDimension::Vertex P0;
-		P0.position = glm::vec4{ 0.0f, -0.5f, 0.0f, 1.f };
+		P0.position = glm::vec3{ 0.0f, -0.5f, 0.0f };
 		P0.normal = P0.position / radius;
 		P0.index = quadCount;
 		tempVertices.push_back(P0);
@@ -294,14 +295,14 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			float alpha = col * 2.0f * PI;
 
 			ThreeDimension::Vertex Pi;
-			Pi.position = glm::vec4{ radius * sin(alpha), -0.5f,radius * cos(alpha), 1.f };
+			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = Pi.position / radius;
 			Pi.index = quadCount;
 			tempVertices.push_back(Pi);
 
 			ThreeDimension::Vertex Pj;
 			float deltaAlpha{ (2.f * PI) / slices };
-			Pj.position = glm::vec4{ radius * sin(alpha + deltaAlpha), -0.5f, radius * cos(alpha + deltaAlpha), 1.f };
+			Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha), -0.5f, radius * cos(alpha + deltaAlpha) };
 			Pj.normal = Pj.position / radius;
 			P0.index = quadCount;
 			tempVertices.push_back(Pj);
@@ -322,45 +323,50 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	break;
 	case MeshType::OBJ:
 	{
-		std::ifstream file(path);
-		if (!file.is_open())
-			std::cout << "Open File Failed!" << '\n';
+		//Assimp Model Load
+		const aiScene* scene = importer.ReadFile(path.string(), 
+			aiProcess_Triangulate |
+			aiProcess_GenSmoothNormals |
+			aiProcess_CalcTangentSpace |
+			aiProcess_FlipUVs |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_TransformUVCoords |
+			aiProcess_PreTransformVertices
+		);
 
-		std::string line;
-		while (std::getline(file, line))
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			std::stringstream ss{ line };
-			std::string prefix;
-			ss >> prefix;
+			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
 
-			if (prefix == "v")
+		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
+		{
+			aiMesh* mesh = scene->mMeshes[m];
+
+			//Vertices
+			for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
 			{
-				glm::vec3 temp_vertex;
-				ss >> temp_vertex.x >> temp_vertex.y >> temp_vertex.z;
+				aiVector3D vertex = mesh->mVertices[v];
+				aiVector3D normal = mesh->mNormals[v];
 				tempVertices.push_back(ThreeDimension::Vertex(
-					glm::vec4(temp_vertex, 1.f),
-					glm::vec4(0.f, 0.f, 0.f, 1.f),
-					glm::vec2(0.f, 0.f),
+					glm::vec3(vertex.x, vertex.y, vertex.z),
+					glm::vec3(normal.x, normal.y, normal.z),
+					mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
 					quadCount)
 				);
 			}
-			else if (prefix == "f")
+
+			//Indices
+			for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
 			{
-				std::string data;
-
-				for (int i = 0; i < 3; ++i)
+				aiFace face = mesh->mFaces[f];
+				for (unsigned int i = 0; i < face.mNumIndices; i++)
 				{
-					ss >> data;
-					std::stringstream d(data);
-					std::string index;
-
-					std::getline(d, index, '/');
-
-					tempIndices.push_back(static_cast<uint16_t>(std::stoi(index) - 1));
+					tempIndices.push_back(static_cast<uint16_t>(face.mIndices[i]));
 				}
 			}
 		}
-		file.close();
 
 		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
 		for (const auto& vertex : tempVertices)
@@ -379,47 +385,127 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		for (auto& vertex : tempVertices)
 		{
-			vertex.position -= glm::vec4(center, 0.f);
-			vertex.position *= glm::vec4(unitScale, unitScale, unitScale, 1.f);
-		}
-
-		// Calculate vertex normals here
-		//allVertexNormals.assign(allVertices.size(), glm::vec3(0.f));
-		for (size_t i = 0; i < tempIndices.size(); i += 3)
-		{
-			//Find vectors of triangle
-			glm::vec3 ab = glm::normalize(tempVertices[tempIndices[i + 1]].position - tempVertices[tempIndices[i]].position);
-			glm::vec3 ac = glm::normalize(tempVertices[tempIndices[i + 2]].position - tempVertices[tempIndices[i]].position);
-			glm::vec3 bc = glm::normalize(tempVertices[tempIndices[i + 2]].position - tempVertices[tempIndices[i + 1]].position);
-
-			//Find normals
-			//Mean Weighted by Angle
-			//|cross(A, B)| = |A||B|sin(x), |A||B| is 1 because of normalization
-			//|cross(A, B)| == |A||B|sin(x)== sin(x)
-			//glm::length(normal_first) == |cross(A, B)| == sin(x)
-			//N = normalize(Sigma sin(xi) * Ni)
-			glm::vec3 normal_first = glm::cross(ab, ac);
-			glm::vec3 normal_second = glm::cross(ab, bc);
-			glm::vec3 normal_third = glm::cross(ac, bc);
-
-			//Put normals
-			tempVertices[tempIndices[i]].normal += glm::vec4(normal_first * glm::length(normal_first), 1.f);
-			tempVertices[tempIndices[i + 1]].normal += glm::vec4(normal_second * glm::length(normal_second), 1.f);
-			tempVertices[tempIndices[i + 2]].normal += glm::vec4(normal_third * glm::length(normal_third), 1.f);
-		}
-
-		for (auto& vn : tempVertices)
-		{
-			//if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
-			//	vn.position.y = -vn.position.y;
-			vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
+			vertex.position -= center;
+			vertex.position *= glm::vec3(unitScale, unitScale, unitScale);
 		}
 
 		for (auto& i : tempIndices)
 			i += static_cast<uint16_t>(verticesCount);
+
+		//Custom Model Load
+		//std::ifstream file(path);
+		//if (!file.is_open())
+		//	std::cout << "Open File Failed!" << '\n';
+
+		//std::string line;
+		//while (std::getline(file, line))
+		//{
+		//	std::stringstream ss{ line };
+		//	std::string prefix;
+		//	ss >> prefix;
+
+		//	if (prefix == "v")
+		//	{
+		//		glm::vec3 temp_vertex;
+		//		ss >> temp_vertex.x >> temp_vertex.y >> temp_vertex.z;
+		//		tempVertices.push_back(ThreeDimension::Vertex(
+		//			glm::vec4(temp_vertex, 1.f),
+		//			glm::vec4(0.f, 0.f, 0.f, 1.f),
+		//			glm::vec2(0.f, 0.f),
+		//			quadCount)
+		//		);
+		//	}
+		//	else if (prefix == "f")
+		//	{
+		//		std::string data;
+
+		//		for (int i = 0; i < 3; ++i)
+		//		{
+		//			ss >> data;
+		//			std::stringstream d(data);
+		//			std::string index;
+
+		//			std::getline(d, index, '/');
+
+		//			tempIndices.push_back(static_cast<uint16_t>(std::stoi(index) - 1));
+		//		}
+		//	}
+		//}
+		//file.close();
+
+		//glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+		//for (const auto& vertex : tempVertices)
+		//{
+		//	minPos = glm::min(minPos, glm::vec3(vertex.position));
+		//	maxPos = glm::max(maxPos, glm::vec3(vertex.position));
+		//}
+
+		//glm::vec3 center;
+		//float unitScale;
+
+		//center = (minPos + maxPos) / 2.f;
+		//glm::vec3 size = maxPos - minPos;
+		//float extent = glm::max(size.x, glm::max(size.y, size.z));
+		//unitScale = 1.f / extent;
+
+		//for (auto& vertex : tempVertices)
+		//{
+		//	vertex.position -= glm::vec4(center, 0.f);
+		//	vertex.position *= glm::vec4(unitScale, unitScale, unitScale, 1.f);
+		//}
+
+		//// Calculate vertex normals here
+		////allVertexNormals.assign(allVertices.size(), glm::vec3(0.f));
+		//for (size_t i = 0; i < tempIndices.size(); i += 3)
+		//{
+		//	//Find vectors of triangle
+		//	glm::vec3 ab = glm::normalize(tempVertices[tempIndices[i + 1]].position - tempVertices[tempIndices[i]].position);
+		//	glm::vec3 ac = glm::normalize(tempVertices[tempIndices[i + 2]].position - tempVertices[tempIndices[i]].position);
+		//	glm::vec3 bc = glm::normalize(tempVertices[tempIndices[i + 2]].position - tempVertices[tempIndices[i + 1]].position);
+
+		//	//Find normals
+		//	//Mean Weighted by Angle
+		//	//|cross(A, B)| = |A||B|sin(x), |A||B| is 1 because of normalization
+		//	//|cross(A, B)| == |A||B|sin(x)== sin(x)
+		//	//glm::length(normal_first) == |cross(A, B)| == sin(x)
+		//	//N = normalize(Sigma sin(xi) * Ni)
+		//	glm::vec3 normal_first = glm::cross(ab, ac);
+		//	glm::vec3 normal_second = glm::cross(ab, bc);
+		//	glm::vec3 normal_third = glm::cross(ac, bc);
+
+		//	//Put normals
+		//	tempVertices[tempIndices[i]].normal += glm::vec4(normal_first * glm::length(normal_first), 1.f);
+		//	tempVertices[tempIndices[i + 1]].normal += glm::vec4(normal_second * glm::length(normal_second), 1.f);
+		//	tempVertices[tempIndices[i + 2]].normal += glm::vec4(normal_third * glm::length(normal_third), 1.f);
+		//}
+
+		//for (auto& vn : tempVertices)
+		//{
+		//	//if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+		//	//	vn.position.y = -vn.position.y;
+		//	vn.normal = glm::vec4(glm::normalize(glm::vec3(vn.normal.x, vn.normal.y, vn.normal.z)), 1.f);
+		//}
+
+		//for (auto& i : tempIndices)
+		//	i += static_cast<uint16_t>(verticesCount);
 	}
 	break;
 	}
+
+#ifdef _DEBUG
+	std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
+	for (size_t v = 0; v < tempVertices.size(); ++v)
+	{
+		glm::vec3 start = tempVertices[v].position;
+		glm::vec3 end = tempVertices[v].position + tempVertices[v].normal * 0.1f;
+
+		tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
+		tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
+	}
+
+	normalVerticesPerMesh.push_back(static_cast<unsigned int>(tempNormalVertices.size()));
+	normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
+#endif
 
 	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
 	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));

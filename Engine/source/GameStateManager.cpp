@@ -61,12 +61,13 @@ void GameStateManager::Update(float dt)
 		state = State::UPDATE;
 #ifdef _DEBUG
 		std::cout << "Update" << std::endl;
+		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #endif
 		break;
 	case State::UPDATE:
 		UpdateGameLogic(dt);
 		UpdateDraw(dt);
-		//순서 반대일시 마우스 입력 X
+		//Mouse Input X if order is opposite
 		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();
@@ -98,7 +99,7 @@ void GameStateManager::Update(float dt)
 void GameStateManager::Draw()
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->BeginRender({ 0.0f, 0.0f, 0.0f, 1.0f });
+	renderManager->BeginRender({ 0.0f, 0.0f, 0.0f });
 	renderManager->EndRender();
 
 	//VK Draw
@@ -115,7 +116,7 @@ void GameStateManager::Draw()
 void GameStateManager::DrawWithImGui(float dt)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->BeginRender({ 0.0f, 0.0f, 0.0f, 1.0f });
+	renderManager->BeginRender({ 0.0f, 0.0f, 0.0f });
 	levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
 	renderManager->EndRender();
 

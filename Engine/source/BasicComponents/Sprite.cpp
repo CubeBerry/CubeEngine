@@ -385,8 +385,8 @@ void Sprite::UpdateAnimation(float dt)
 	if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
 	{
 		animations[currAnim]->Update(dt);
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).frameSize = glm::vec4(GetFrameSize() / textureSize, 0.f, 0.f);
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).texelPos = glm::vec4(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f, 0.f);
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
 	}
 }
 

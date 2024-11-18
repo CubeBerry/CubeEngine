@@ -30,8 +30,42 @@ void GLRenderManager::Initialize(
 )
 {
 	vertexArray.Initialize();
+#ifdef _DEBUG
+	normalVertexArray.Initialize();
+
+	////Attributes
+	//GLAttributeLayout position_layout;
+	//position_layout.component_type = GLAttributeLayout::Float;
+	//position_layout.component_dimension = GLAttributeLayout::_4;
+	//position_layout.normalized = false;
+	//position_layout.vertex_layout_location = 0;
+	//position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	//position_layout.offset = 0;
+	//position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+	//GLAttributeLayout color_layout;
+	//color_layout.component_type = GLAttributeLayout::Float;
+	//color_layout.component_dimension = GLAttributeLayout::_4;
+	//color_layout.normalized = false;
+	//color_layout.vertex_layout_location = 1;
+	//color_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	//color_layout.offset = 0;
+	//color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
+
+	//GLAttributeLayout index_layout;
+	//index_layout.component_type = GLAttributeLayout::Int;
+	//index_layout.component_dimension = GLAttributeLayout::_1;
+	//index_layout.normalized = false;
+	//index_layout.vertex_layout_location = 2;
+	//index_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	//index_layout.offset = 0;
+	//index_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, index);
+
+	//normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout });
+#endif
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
 	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL3D.frag" } });
+	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGLNormal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGLNormal3D.frag" } });
 
 	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
 	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
@@ -49,7 +83,7 @@ void GLRenderManager::Initialize(
 	imguiManager = new GLImGuiManager(window_, context_);
 }
 
-void GLRenderManager::BeginRender(glm::vec4 bgColor)
+void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
@@ -63,7 +97,7 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	}
-	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
+	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.f));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 	switch (rMode)
@@ -103,13 +137,12 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
+
 		break;
 	}
 
 	vertexArray.Use(true);
-
 	GLDrawIndexed(vertexArray);
-
 	vertexArray.Use(false);
 
 	switch (rMode)
@@ -121,6 +154,23 @@ void GLRenderManager::BeginRender(glm::vec4 bgColor)
 		gl3DShader.Use(false);
 		break;
 	}
+
+#ifdef _DEBUG
+	if (isDrawNormals)
+	{
+		glNormal3DShader.Use(true);
+
+		if (vertexUniform3D != nullptr)
+		{
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		}
+
+		normalVertexArray.Use(true);
+		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
+		normalVertexArray.Use(false);
+		glNormal3DShader.Use(false);
+	}
+#endif
 
 	imguiManager->Begin();
 }
@@ -145,10 +195,10 @@ void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 {
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, 1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, 1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(1.f, -1.f, 1.f, 1.f), quadCount));
-	vertices2D.push_back(TwoDimension::Vertex(glm::vec4(-1.f, -1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(-1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(1.f, 1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(1.f, -1.f, 1.f), quadCount));
+	vertices2D.push_back(TwoDimension::Vertex(glm::vec3(-1.f, -1.f, 1.f), quadCount));
 
 	if (quadCount > 0)
 		delete vertexBuffer;
@@ -171,7 +221,7 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	//Attributes
 	GLAttributeLayout position_layout;
 	position_layout.component_type = GLAttributeLayout::Float;
-	position_layout.component_dimension = GLAttributeLayout::_4;
+	position_layout.component_dimension = GLAttributeLayout::_3;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
 	position_layout.stride = sizeof(TwoDimension::Vertex);
@@ -228,6 +278,11 @@ void GLRenderManager::DeleteWithIndex(int id)
 			break;
 		case RenderType::ThreeDimension:
 			vertices3D.erase(end(vertices3D) - *verticesPerMesh.begin(), end(vertices3D));
+#ifdef _DEBUG
+			normalVertices3D.erase(end(normalVertices3D) - *normalVerticesPerMesh.begin(), end(normalVertices3D));
+			delete normalVertexBuffer;
+			normalVertexBuffer = nullptr;
+#endif
 			break;
 		}
 		delete vertexBuffer;
@@ -248,6 +303,9 @@ void GLRenderManager::DeleteWithIndex(int id)
 		if (rMode == RenderType::ThreeDimension)
 		{
 			verticesPerMesh.erase(verticesPerMesh.begin());
+#ifdef _DEBUG
+			normalVerticesPerMesh.erase(normalVerticesPerMesh.begin());
+#endif
 			indicesPerMesh.erase(indicesPerMesh.begin());
 		}
 
@@ -326,6 +384,22 @@ void GLRenderManager::DeleteWithIndex(int id)
 		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
 		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
 		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+
+#ifdef _DEBUG
+		beginCount = 0;
+		for (int vn = 0; vn < id; ++vn)
+		{
+			beginCount += normalVerticesPerMesh[vn];
+		}
+
+		normalVertices3D.erase(begin(normalVertices3D) + beginCount, begin(normalVertices3D) + beginCount + normalVerticesPerMesh[id]);
+		for (auto it = normalVertices3D.begin() + beginCount; it != normalVertices3D.end(); ++it)
+		{
+			it->index--;
+		}
+
+		glCheck(glNamedBufferSubData(normalVertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex)* normalVertices3D.size()), normalVertices3D.data()));
+#endif
 		break;
 	}
 
@@ -333,6 +407,9 @@ void GLRenderManager::DeleteWithIndex(int id)
 	{
 		verticesPerMesh.erase(verticesPerMesh.begin() + id);
 		indicesPerMesh.erase(indicesPerMesh.begin() + id);
+#ifdef _DEBUG
+		normalVerticesPerMesh.erase(normalVerticesPerMesh.begin() + id);
+#endif
 	}
 
 	switch (rMode)
@@ -344,10 +421,6 @@ void GLRenderManager::DeleteWithIndex(int id)
 		vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
 		break;
 	}
-	//for (auto u : *uVertex->GetUniformBuffers())
-	//{
-	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(VertexUniform), vertexVector.data());
-	//}
 
 	switch (rMode)
 	{
@@ -359,10 +432,6 @@ void GLRenderManager::DeleteWithIndex(int id)
 		fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
 		break;
 	}
-	//for (auto u : *uFragment->GetUniformBuffers())
-	//{
-	//	vkCmdUpdateBuffer(commandBuffer, u, 0, quadCount * sizeof(FragmentUniform), fragVector.data());
-	//}
 }
 
 GLTexture* GLRenderManager::GetTexture(std::string name)
@@ -385,6 +454,10 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 		delete vertexBuffer;
 	vertexBuffer = new GLVertexBuffer;
 	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data());
+#ifdef _DEBUG
+	normalVertexBuffer = new GLVertexBuffer;
+	normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices3D.size()), normalVertices3D.data());
+#endif
 
 	if (indexBuffer != nullptr)
 		delete indexBuffer;
@@ -395,7 +468,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	//Attributes
 	GLAttributeLayout position_layout;
 	position_layout.component_type = GLAttributeLayout::Float;
-	position_layout.component_dimension = GLAttributeLayout::_4;
+	position_layout.component_dimension = GLAttributeLayout::_3;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
 	position_layout.stride = sizeof(ThreeDimension::Vertex);
@@ -404,7 +477,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 
 	GLAttributeLayout normal_layout;
 	normal_layout.component_type = GLAttributeLayout::Float;
-	normal_layout.component_dimension = GLAttributeLayout::_4;
+	normal_layout.component_dimension = GLAttributeLayout::_3;
 	normal_layout.normalized = false;
 	normal_layout.vertex_layout_location = 1;
 	normal_layout.stride = sizeof(ThreeDimension::Vertex);
@@ -431,6 +504,37 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 
 	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout });
 	vertexArray.SetIndexBuffer(std::move(*indexBuffer));
+#ifdef _DEBUG
+	//Attributes
+	GLAttributeLayout normal_position_layout;
+	normal_position_layout.component_type = GLAttributeLayout::Float;
+	normal_position_layout.component_dimension = GLAttributeLayout::_3;
+	normal_position_layout.normalized = false;
+	normal_position_layout.vertex_layout_location = 0;
+	normal_position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	normal_position_layout.offset = 0;
+	normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+	GLAttributeLayout normal_color_layout;
+	normal_color_layout.component_type = GLAttributeLayout::Float;
+	normal_color_layout.component_dimension = GLAttributeLayout::_4;
+	normal_color_layout.normalized = false;
+	normal_color_layout.vertex_layout_location = 1;
+	normal_color_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	normal_color_layout.offset = 0;
+	normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
+
+	GLAttributeLayout normal_index_layout;
+	normal_index_layout.component_type = GLAttributeLayout::Int;
+	normal_index_layout.component_dimension = GLAttributeLayout::_1;
+	normal_index_layout.normalized = false;
+	normal_index_layout.vertex_layout_location = 2;
+	normal_index_layout.stride = sizeof(ThreeDimension::NormalVertex);
+	normal_index_layout.offset = 0;
+	normal_index_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, index);
+
+	normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout, normal_index_layout });
+#endif
 
 	if (vertexUniform3D != nullptr)
 		delete vertexUniform3D;

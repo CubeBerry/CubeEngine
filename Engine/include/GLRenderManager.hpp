@@ -19,7 +19,7 @@ public:
 		SDL_Window* window_, SDL_GLContext context_
 	);
 
-	void BeginRender(glm::vec4 bgColor) override;
+	void BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;
 private:
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
@@ -64,6 +64,12 @@ private:
 	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 	GLUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
+
+#ifdef _DEBUG
+	GLVertexArray normalVertexArray;
+	GLVertexBuffer* normalVertexBuffer{ nullptr };
+	GLShader glNormal3DShader;
+#endif
 
 	//Lighting
 	GLUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };

@@ -17,12 +17,7 @@ void ProceduralMeshes::Init()
 	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
-	currentMesh = MeshType::PLANE;
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 10, 10, { 1.0, 0.0, 0.0, 1.0 });
-
-	l.lightPosition = glm::vec4(0.f, 15.f, 10.f, 1.f);
+	l.lightPosition = glm::vec4(0.f, 1.f, 1.f, 1.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	//viewPosition == cameraPosition
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
@@ -30,6 +25,16 @@ void ProceduralMeshes::Init()
 	l.specularStrength = 0.5f;
 	l.isLighting = true;
 	Engine::GetRenderManager()->EnableLighting(true);
+
+	//Debug Lighting
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Mesh", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
+
+	currentMesh = MeshType::PLANE;
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 }
 
 void ProceduralMeshes::Update(float dt)
@@ -41,6 +46,8 @@ void ProceduralMeshes::Update(float dt)
 		RecreateMesh();
 		isRecreate = false;
 	}
+
+	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
 
 	//Update Color
 	(*Engine::GetRenderManager()->GetVertexUniforms3D())[0].color = glm::vec4{ color[0], color[1], color[2], color[3] };
@@ -118,21 +125,21 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		switch (currentMesh)
 		{
 		case MeshType::PLANE:
-			if (ImGui::SliderInt("stacks", &stacks, 2, 30))
+			if (ImGui::SliderInt("stacks", &stacks, 1, 30))
 			{
 				isRecreate = true;
 			}
-			if (ImGui::SliderInt("slices", &slices, 2, 30))
+			if (ImGui::SliderInt("slices", &slices, 1, 30))
 			{
 				isRecreate = true;
 			}
 			break;
 		case MeshType::CUBE:
-			if (ImGui::SliderInt("stacks", &stacks, 2, 10))
+			if (ImGui::SliderInt("stacks", &stacks, 1, 10))
 			{
 				isRecreate = true;
 			}
-			if (ImGui::SliderInt("slices", &slices, 2, 10))
+			if (ImGui::SliderInt("slices", &slices, 1, 10))
 			{
 				isRecreate = true;
 			}
@@ -228,6 +235,8 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		}
 
 		ImGui::ColorPicker4("Mesh Color", color);
+
+		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
 
 	//Lighting

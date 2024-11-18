@@ -2,8 +2,8 @@
 
 #define MAX_MATRICES 20
 
-layout(location = 0) in vec4 i_pos;
-layout(location = 1) in vec4 i_normal;
+layout(location = 0) in vec3 i_pos;
+layout(location = 1) in vec3 i_normal;
 layout(location = 2) in vec2 i_uv;
 layout(location = 3) in int index;
 
@@ -35,17 +35,11 @@ layout(std140, binding = 0) uniform vUniformMatrix
 
 struct vLighting
 {
-    //Common
-    vec4 lightPosition;
-    vec4 lightColor;
-
-    //Ambient
-    vec4 viewPosition;
+    vec3 lightPosition;
     float ambientStrength;
-
-    //Specular
+    vec3 lightColor;
     float specularStrength;
-
+    vec3 viewPosition;
     float isLighting;
 };
 
@@ -60,14 +54,14 @@ void main()
     o_col = matrix[index].color;
     o_index = index;
     //Lighting
-    o_light_position = lightingMatrix.lightPosition.xyz;
-    o_light_color = lightingMatrix.lightColor.xyz;
+    o_light_position = lightingMatrix.lightPosition;
+    o_light_color = lightingMatrix.lightColor;
     o_ambient_strength = lightingMatrix.ambientStrength;
-    o_normal = (transpose(inverse(matrix[index].model)) * i_normal).xyz;
-    o_fragment_position = (matrix[index].model * i_pos).xyz;
-    o_view_position = lightingMatrix.viewPosition.xyz;
+    o_normal = mat3(transpose(inverse(matrix[index].model))) * i_normal;
+    o_fragment_position = mat3(matrix[index].model) * i_pos;
+    o_view_position = lightingMatrix.viewPosition;
     o_specular_strength = lightingMatrix.specularStrength;
     o_is_lighting = lightingMatrix.isLighting;
 
-    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
+    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * vec4(i_pos, 1.0);
 }

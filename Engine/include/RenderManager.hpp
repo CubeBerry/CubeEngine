@@ -8,6 +8,10 @@
 #include "Material.hpp"
 #include "Window.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
 constexpr float HALF_PI = 0.5f * PI;
@@ -42,7 +46,7 @@ class RenderManager
 {
 public:
 	//--------------------Common--------------------//
-	virtual void BeginRender(glm::vec4 bgColor) = 0;
+	virtual void BeginRender(glm::vec3 bgColor) = 0;
 	virtual void EndRender() = 0;
 	virtual void DeleteWithIndex(int id) = 0;
 	void SetRenderType(RenderType type) { rMode = type; };
@@ -64,7 +68,7 @@ public:
 		isLighting = isEnabled;
 		vertexLightingUniform.isLighting = isLighting;
 	}
-	void UpdateLighting(glm::vec4 lightPosition, glm::vec4 lightColor, glm::vec4 viewPosition, float ambientStrength, float specularStrength)
+	void UpdateLighting(glm::vec3 lightPosition, glm::vec3 lightColor, glm::vec3 viewPosition, float ambientStrength, float specularStrength)
 	{
 		vertexLightingUniform.lightPosition = lightPosition;
 		//if (gMode == GraphicsMode::VK)
@@ -77,6 +81,10 @@ public:
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
 	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
+
+#ifdef _DEBUG
+	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
+#endif
 protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
@@ -96,9 +104,9 @@ protected:
 		return (glm::distance(v0, v1) < EPSILON || glm::distance(v1, v2) < EPSILON || glm::distance(v2, v0) < EPSILON);
 	}
 	float RoundDecimal(float input) { return std::floor(input * 10000.0f + 0.5f) / 10000.0f; }
-	glm::vec4 RoundDecimal(const glm::vec4& input)
+	glm::vec3 RoundDecimal(const glm::vec3& input)
 	{
-		return glm::vec4(RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]), 1.0f);
+		return glm::vec3(RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]));
 	}
 
 	void CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices);
@@ -112,6 +120,15 @@ protected:
 	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
 	std::vector<ThreeDimension::Material> fragMaterialUniforms3D;
 
+#ifdef _DEBUG
+	bool isDrawNormals{ false };
+	std::vector<ThreeDimension::NormalVertex> normalVertices3D;
+	std::vector<unsigned int> normalVerticesPerMesh;
+#endif
+
 	std::vector<unsigned int> verticesPerMesh;
 	std::vector<unsigned int> indicesPerMesh;
+
+	//Assimp
+	Assimp::Importer importer;
 };

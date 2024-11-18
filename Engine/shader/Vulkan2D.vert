@@ -3,7 +3,7 @@
 
 #define MAX_MATRICES 500
 
-layout(location = 0) in vec4 i_pos;
+layout(location = 0) in vec3 i_pos;
 layout(location = 1) in int index;
 
 layout(location = 0) out vec2 o_uv;
@@ -17,9 +17,9 @@ struct vMatrix
     mat4 view;
     mat4 projection;
     vec4 color;
-    vec4 frameSize;
-    vec4 texelPos;
+    vec3 frameSize;
     float isTex;
+    vec3 texelPos;
     float isTexel;
 };
 
@@ -51,5 +51,5 @@ void main()
     o_col = matrix[index].color;
     outIndex = index;
 
-    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * i_pos;
+    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * vec4(i_pos, 1.0);
 }
