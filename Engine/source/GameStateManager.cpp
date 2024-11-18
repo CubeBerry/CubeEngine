@@ -67,7 +67,7 @@ void GameStateManager::Update(float dt)
 	case State::UPDATE:
 		UpdateGameLogic(dt);
 		UpdateDraw(dt);
-		//순서 반대일시 마우스 입력 X
+		//Mouse Input X if order is opposite
 		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();

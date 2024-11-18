@@ -120,21 +120,21 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		switch (currentMesh)
 		{
 		case MeshType::PLANE:
-			if (ImGui::SliderInt("stacks", &stacks, 2, 30))
+			if (ImGui::SliderInt("stacks", &stacks, 1, 30))
 			{
 				isRecreate = true;
 			}
-			if (ImGui::SliderInt("slices", &slices, 2, 30))
+			if (ImGui::SliderInt("slices", &slices, 1, 30))
 			{
 				isRecreate = true;
 			}
 			break;
 		case MeshType::CUBE:
-			if (ImGui::SliderInt("stacks", &stacks, 2, 10))
+			if (ImGui::SliderInt("stacks", &stacks, 1, 10))
 			{
 				isRecreate = true;
 			}
-			if (ImGui::SliderInt("slices", &slices, 2, 10))
+			if (ImGui::SliderInt("slices", &slices, 1, 10))
 			{
 				isRecreate = true;
 			}

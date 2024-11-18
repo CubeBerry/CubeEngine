@@ -17,8 +17,8 @@ public:
 	void Restart() override;
 	void End() override;
 private:
-	int stacks{ 2 };
-	int slices{ 2 };
+	int stacks{ 1 };
+	int slices{ 1 };
 	bool isFill{ true };
 	float color[4]{ 1.f, 0.f, 0.f, 1.f };
 
