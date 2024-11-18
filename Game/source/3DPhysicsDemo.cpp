@@ -54,7 +54,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 0.5f,0.5f,0.5f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
-	l.lightPosition = glm::vec4(0.f, 20.f, 0.f, 1.f);
+	l.lightPosition = glm::vec4(0.f, 1.f, 0.f, 1.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	//viewPosition == cameraPosition
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
