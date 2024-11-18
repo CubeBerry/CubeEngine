@@ -46,7 +46,6 @@ All required APIs and Libraries are integrated in Project.
 ## Future Plans
 1. Linux Support
 2. PBR
-3. Assimp Model Loading
 4. C++ Code Optimization
 
 ## License
