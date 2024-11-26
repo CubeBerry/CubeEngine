@@ -50,7 +50,7 @@ void ProceduralMeshes::Update(float dt)
 	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
 
 	//Update Color
-	(*Engine::GetRenderManager()->GetVertexUniforms3D())[0].color = glm::vec4{ color[0], color[1], color[2], color[3] };
+	(*Engine::GetRenderManager()->GetVertexUniforms3D())[1].color = glm::vec4{ color[0], color[1], color[2], color[3] };
 
 	//Update Lighting Variables
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
