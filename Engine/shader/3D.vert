@@ -1,6 +1,13 @@
 #version 460
+#if VULKAN
+#extension GL_EXT_nonuniform_qualifier : enable
+#endif
 
+#if VULKAN
+#define MAX_MATRICES 500
+#else
 #define MAX_MATRICES 20
+#endif
 
 layout(location = 0) in vec3 i_pos;
 layout(location = 1) in vec3 i_normal;
@@ -28,7 +35,11 @@ struct vMatrix
     vec4 color;
 };
 
+#if VULKAN
+layout(set = 0, binding = 0) uniform vUniformMatrix
+#else
 layout(std140, binding = 0) uniform vUniformMatrix
+#endif
 {
     vMatrix matrix[MAX_MATRICES];
 };
@@ -43,7 +54,11 @@ struct vLighting
     float isLighting;
 };
 
+#if VULKAN
+layout(set = 0, binding = 1) uniform vLightingMatrix
+#else
 layout(std140, binding = 3) uniform vLightingMatrix
+#endif
 {
     vLighting lightingMatrix;
 };

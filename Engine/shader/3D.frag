@@ -1,6 +1,9 @@
 #version 460
+#if VULKAN
+#extension GL_EXT_nonuniform_qualifier : enable
+#endif
 
-#define MAX_TEXTURES 20
+#define MAX_TEXTURES 500
 
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
@@ -28,14 +31,26 @@ struct fMaterial
     float shininess;
 };
 
+#if VULKAN
+layout(set = 1, binding = 0) uniform fUniformMatrix
+#else
 layout(std140, binding = 1) uniform fUniformMatrix
+#endif
 {
     fMatrix f_matrix[MAX_TEXTURES];
 };
 
+#if VULKAN
+layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
+#else
 uniform sampler2D tex[MAX_TEXTURES];
+#endif
 
+#if VULKAN
+layout(set = 1, binding = 2) uniform fUniformMaterial
+#else
 layout(std140, binding = 2) uniform fUniformMaterial
+#endif
 {
     fMaterial f_material[MAX_TEXTURES];
 };

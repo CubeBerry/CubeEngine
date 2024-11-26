@@ -63,8 +63,8 @@ void GLRenderManager::Initialize(
 
 	//normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout });
 #endif
-	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL2D.frag" } });
-	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGL3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGL3D.frag" } });
+	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/2D.frag" } });
+	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/3D.frag" } });
 	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGLNormal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGLNormal3D.frag" } });
 
 	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();

@@ -1,7 +1,13 @@
 #version 460
-//precision mediump float;
+#if VULKAN
+#extension GL_EXT_nonuniform_qualifier : enable
+#endif
 
+#if VULKAN
+#define MAX_TEXTURES 500
+#else
 #define MAX_TEXTURES 20
+#endif
 
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
@@ -15,12 +21,20 @@ struct fMatrix
     int texIndex;
 };
 
+#if VULKAN
+layout(set = 1, binding = 0) uniform fUniformMatrix
+#else
 layout(std140, binding = 1) uniform fUniformMatrix
+#endif
 {
     fMatrix f_matrix[MAX_TEXTURES];
 };
 
+#if VULKAN
+layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
+#else
 uniform sampler2D tex[MAX_TEXTURES];
+#endif
 
 void main()
 {

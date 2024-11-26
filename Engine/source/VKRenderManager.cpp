@@ -443,11 +443,11 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkDescriptor = new VKDescriptor(vkInit);
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
-	vkShader2D->LoadShader("../Engine/shader/Vulkan2D.vert", "../Engine/shader/Vulkan2D.frag");
+	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
 	std::cout << std::endl;
 
 	vkShader3D = new VKShader(vkInit->GetDevice());
-	vkShader3D->LoadShader("../Engine/shader/Vulkan3D.vert", "../Engine/shader/Vulkan3D.frag");
+	vkShader3D->LoadShader("../Engine/shader/3D.vert", "../Engine/shader/3D.frag");
 	std::cout << std::endl;
 
 	//2D Pipeline
