@@ -186,6 +186,12 @@ private:
 	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
 	VKUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
 
+#ifdef _DEBUG
+	VKShader* vkNormal3DShader;
+	VKPipeLine* vkPipeline3DNormal;
+	VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer{ nullptr };
+#endif
+
 	//Lighting
 	VKUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
 };

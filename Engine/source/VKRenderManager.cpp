@@ -450,6 +450,12 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkShader3D->LoadShader("../Engine/shader/3D.vert", "../Engine/shader/3D.frag");
 	std::cout << std::endl;
 
+#ifdef _DEBUG
+	vkNormal3DShader = new VKShader(vkInit->GetDevice());
+	vkNormal3DShader->LoadShader("../Engine/shader/Normal3D.vert", "../Engine/shader/Normal3D.frag");
+	std::cout << std::endl;
+#endif
+
 	//2D Pipeline
 	VKAttributeLayout position_layout;
 	position_layout.vertex_layout_location = 0;
@@ -462,7 +468,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(TwoDimension::Vertex, index);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, msaaSamples, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
+	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
 
 	//3D Pipeline
 	position_layout.vertex_layout_location = 0;
@@ -484,9 +490,26 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(ThreeDimension::Vertex, index);
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE);
+#ifdef _DEBUG
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = offsetof(ThreeDimension::NormalVertex, position);
+
+	VKAttributeLayout color_layout;
+	color_layout.vertex_layout_location = 1;
+	color_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	color_layout.offset = offsetof(ThreeDimension::NormalVertex, color);
+
+	index_layout.vertex_layout_location = 2;
+	index_layout.format = VK_FORMAT_R32_SINT;
+	index_layout.offset = offsetof(ThreeDimension::NormalVertex, index);
+
+	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
+#endif
 
 	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
 
@@ -896,6 +919,11 @@ void VKRenderManager::DeleteWithIndex(int id)
 			vertices3D.erase(end(vertices3D) - *verticesPerMesh.begin(), end(vertices3D));
 			delete vertex3DBuffer;
 			vertex3DBuffer = nullptr;
+#ifdef _DEBUG
+			normalVertices3D.erase(end(normalVertices3D) - *normalVerticesPerMesh.begin(), end(normalVertices3D));
+			delete normalVertexBuffer;
+			normalVertexBuffer = nullptr;
+#endif
 			break;
 		}
 
@@ -914,6 +942,9 @@ void VKRenderManager::DeleteWithIndex(int id)
 		if (rMode == RenderType::ThreeDimension)
 		{
 			verticesPerMesh.erase(verticesPerMesh.begin());
+#ifdef _DEBUG
+			normalVerticesPerMesh.erase(normalVerticesPerMesh.begin());
+#endif
 			indicesPerMesh.erase(indicesPerMesh.begin());
 		}
 
@@ -1033,6 +1064,21 @@ void VKRenderManager::DeleteWithIndex(int id)
 
 		vkCmdUpdateBuffer(commandBuffer, *vertex3DBuffer->GetVertexBuffer(), 0, vertices3D.size() * sizeof(ThreeDimension::Vertex), vertices3D.data());
 		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+
+#ifdef _DEBUG
+		beginCount = 0;
+		for (int vn = 0; vn < id; ++vn)
+		{
+			beginCount += normalVerticesPerMesh[vn];
+		}
+
+		normalVertices3D.erase(begin(normalVertices3D) + beginCount, begin(normalVertices3D) + beginCount + normalVerticesPerMesh[id]);
+		for (auto it = normalVertices3D.begin() + beginCount; it != normalVertices3D.end(); ++it)
+		{
+			it->index--;
+		}
+		vkCmdUpdateBuffer(commandBuffer, *normalVertexBuffer->GetVertexBuffer(), 0, normalVertices3D.size() * sizeof(ThreeDimension::NormalVertex), normalVertices3D.data());
+#endif
 		break;
 	}
 	//vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
@@ -1045,6 +1091,9 @@ void VKRenderManager::DeleteWithIndex(int id)
 	{
 		verticesPerMesh.erase(verticesPerMesh.begin() + id);
 		indicesPerMesh.erase(indicesPerMesh.begin() + id);
+#ifdef _DEBUG
+		normalVerticesPerMesh.erase(normalVerticesPerMesh.begin() + id);
+#endif
 	}
 
 	switch (rMode)
@@ -1132,6 +1181,9 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	if (vertex3DBuffer != nullptr)
 		delete vertex3DBuffer;
 	vertex3DBuffer = new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices3D);
+#ifdef _DEBUG
+	normalVertexBuffer = new VKVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &normalVertices3D);
+#endif
 
 	if (indexBuffer != nullptr)
 		delete indexBuffer;
@@ -1510,11 +1562,34 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Bind Texture DescriptorSet
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
-				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
 				//Draw
 				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 				break;
 			}
+#ifdef _DEBUG
+			if (isDrawNormals)
+			{
+				//Bind Vertex Buffer
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, normalVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				//Bind Index Buffer
+				//vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+				//Bind Pipeline
+				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLine());
+				//Dynamic Viewport & Scissor
+				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+				//Bind Material DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				//Bind Texture DescriptorSet
+				//vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				//Change Primitive Topology
+				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+				//Draw
+				//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+				vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(normalVertices3D.size()), 1, 0, 0);
+			}
+#endif
 		}
 		break;
 	}

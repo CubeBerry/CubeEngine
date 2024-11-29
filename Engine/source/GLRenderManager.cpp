@@ -65,7 +65,9 @@ void GLRenderManager::Initialize(
 #endif
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/2D.frag" } });
 	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/3D.frag" } });
-	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/OpenGLNormal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/OpenGLNormal3D.frag" } });
+#ifdef _DEBUG
+	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Normal3D.frag" } });
+#endif
 
 	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
 	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
@@ -159,12 +161,6 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 	if (isDrawNormals)
 	{
 		glNormal3DShader.Use(true);
-
-		if (vertexUniform3D != nullptr)
-		{
-			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
-		}
-
 		normalVertexArray.Use(true);
 		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
 		normalVertexArray.Use(false);

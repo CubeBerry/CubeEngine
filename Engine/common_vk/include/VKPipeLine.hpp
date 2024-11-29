@@ -35,6 +35,7 @@ public:
 		uint32_t stride,
 		std::initializer_list<VKAttributeLayout> layout,
 		VkSampleCountFlagBits samples,
+		VkPrimitiveTopology primitiveTopology,
 		VkCullModeFlags cull_,
 		POLYGON_MODE mode_
 	);

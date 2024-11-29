@@ -1,6 +1,10 @@
 #version 460
 
+#if VULKAN
+#define MAX_TEXTURES 500
+#else
 #define MAX_TEXTURES 20
+#endif
 
 layout(location = 0) in vec4 i_col;
 

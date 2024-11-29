@@ -27,6 +27,7 @@ void VKPipeLine::InitPipeLine(
 	uint32_t stride,
 	std::initializer_list<VKAttributeLayout> layout,
 	VkSampleCountFlagBits samples,
+	VkPrimitiveTopology primitiveTopology,
 	VkCullModeFlags cull_,
 	POLYGON_MODE mode_)
 {
@@ -105,8 +106,8 @@ void VKPipeLine::InitPipeLine(
 	//Create Pipeline Input Assembly State Info
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
 	inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	//inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	inputAssemblyStateInfo.topology = primitiveTopology;
+	//inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	//Create Viewport
 	VkViewport viewport{};
@@ -186,9 +187,9 @@ void VKPipeLine::InitPipeLine(
 	//Create Dynamic State Info
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 	dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicStateInfo.dynamicStateCount = 3;
+	dynamicStateInfo.dynamicStateCount = 2;
 	VkDynamicState dynamicStates[] = {
-		VK_DYNAMIC_STATE_LINE_WIDTH,
+		//VK_DYNAMIC_STATE_LINE_WIDTH,
 		//For vkCmdSetPrimitiveTopology
 		//VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY,
 		VK_DYNAMIC_STATE_VIEWPORT,
