@@ -60,6 +60,8 @@ void GLTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 	faces[5] = back;
 	unsigned char* data;
 	int nrChannels;
+
+	stbi_set_flip_vertically_on_load(false);
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		data = stbi_load(faces[i].string().c_str(), &width, &height, &nrChannels, 0);
