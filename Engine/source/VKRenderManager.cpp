@@ -1220,6 +1220,10 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragMaterialUniforms3D.push_back(material);
 }
 
+void VKRenderManager::LoadSkyBox()
+{
+	
+}
 
 void VKRenderManager::BeginRender(glm::vec3 bgColor)
 {

@@ -83,6 +83,8 @@ void GLRenderManager::Initialize(
 	vertexLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::VertexLightingUniform>();
 	vertexLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "vLightingMatrix", sizeof(ThreeDimension::VertexLightingUniform), vertexLightingUniformBuffer);
 	imguiManager = new GLImGuiManager(window_, context_);
+
+	LoadSkyBox();
 }
 
 void GLRenderManager::BeginRender(glm::vec3 bgColor)
@@ -99,7 +101,8 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	}
-	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.f));
+	glCheck(glClearColor(0, 1.f, 0, 1.f));
+	bgColor;
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 	switch (rMode)
@@ -139,7 +142,6 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
-
 		break;
 	}
 
@@ -167,6 +169,21 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		glNormal3DShader.Use(false);
 	}
 #endif
+
+	//Skybox
+	skyboxShader.Use(true);
+	if (vertexUniform3D != nullptr)
+	{
+		vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+	}
+	skyboxVertexArray.Use(true);
+	auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+	glCheck(glUniform1i(skyboxLocation, 0));
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetTextureHandle());
+	glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
+	skyboxVertexArray.Use(false);
+	skyboxShader.Use(false);
 
 	imguiManager->Begin();
 }
@@ -562,4 +579,78 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	material.shininess = shininess;
 	material.specularColor = specularColor;
 	fragMaterialUniforms3D.push_back(material);
+}
+
+void GLRenderManager::LoadSkyBox()
+{
+	skyboxVertexArray.Initialize();
+
+	float skyboxVertices[] = {
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	skyboxVertexBuffer = new GLVertexBuffer;
+	skyboxVertexBuffer->SetData(sizeof(float) * 108, skyboxVertices);
+
+	GLAttributeLayout position_layout;
+	position_layout.component_type = GLAttributeLayout::Float;
+	position_layout.component_dimension = GLAttributeLayout::_3;
+	position_layout.normalized = false;
+	position_layout.vertex_layout_location = 0;
+	position_layout.stride = sizeof(float) * 3;
+	position_layout.offset = 0;
+	position_layout.relative_offset = 0;
+
+	skyboxVertexArray.AddVertexBuffer(std::move(*skyboxVertexBuffer), sizeof(float) * 3, { position_layout });
+
+	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
+	skybox = new GLTexture;
+	skybox->LoadSkyBox(
+		"../Game/assets/Skybox/right.jpg",
+		"../Game/assets/Skybox/left.jpg",
+		"../Game/assets/Skybox/top.jpg",
+		"../Game/assets/Skybox/bottom.jpg",
+		"../Game/assets/Skybox/back.jpg",
+		"../Game/assets/Skybox/front.jpg"
+	);
 }

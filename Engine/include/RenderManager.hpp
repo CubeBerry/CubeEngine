@@ -85,6 +85,9 @@ public:
 #ifdef _DEBUG
 	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
 #endif
+
+	//Skybox
+	virtual void LoadSkyBox() = 0;
 protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
