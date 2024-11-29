@@ -35,4 +35,6 @@ private:
 	float cFov{ 22.5f };
 	//ImGui - Object
 	std::filesystem::path objPath = "";
+
+	float angle{ 0 };
 };

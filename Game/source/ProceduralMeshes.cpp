@@ -17,7 +17,7 @@ void ProceduralMeshes::Init()
 	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
-	l.lightPosition = glm::vec4(0.f, 1.f, 1.f, 1.f);
+	l.lightPosition = glm::vec4(0.f, 0.f, 1.f, 1.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	//viewPosition == cameraPosition
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
@@ -27,7 +27,7 @@ void ProceduralMeshes::Init()
 	Engine::GetRenderManager()->EnableLighting(true);
 
 	//Debug Lighting
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Mesh", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
 
@@ -53,8 +53,18 @@ void ProceduralMeshes::Update(float dt)
 	(*Engine::GetRenderManager()->GetVertexUniforms3D())[1].color = glm::vec4{ color[0], color[1], color[2], color[3] };
 
 	//Update Lighting Variables
+	angle += 50.f * dt;
+	if (angle >= 360.f) angle -= 360.f;
+	float radians = glm::radians(angle);
+
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1), radians, glm::vec3(0.f, 1.f, 0.f));
+	glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
+	l.lightPosition.x = rotatedPosition.x;
+	l.lightPosition.z = rotatedPosition.z;
+
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	Engine::GetRenderManager()->UpdateLighting(l.lightPosition, l.lightColor, l.viewPosition, l.ambientStrength, l.specularStrength);
+	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
 
 	//Camera Update
 	Engine::GetCameraManager().SetNear(cNear);
