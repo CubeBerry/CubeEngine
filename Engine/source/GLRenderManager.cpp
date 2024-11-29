@@ -101,8 +101,7 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	}
-	glCheck(glClearColor(0, 1.f, 0, 1.f));
-	bgColor;
+	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.f));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 	switch (rMode)
