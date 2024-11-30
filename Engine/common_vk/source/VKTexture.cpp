@@ -536,17 +536,15 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 	int texChannels;
 	data[0] = stbi_load(right.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 	data[1] = stbi_load(left.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	stbi_set_flip_vertically_on_load(true);
 	data[2] = stbi_load(top.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 	data[3] = stbi_load(bottom.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	stbi_set_flip_vertically_on_load(false);
-	data[4] = stbi_load(front.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	data[5] = stbi_load(back.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	data[4] = stbi_load(back.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	data[5] = stbi_load(front.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 
-	FlipTextureHorizontally(data[0], width, height, STBI_rgb_alpha);
-	FlipTextureHorizontally(data[1], width, height, STBI_rgb_alpha);
-	FlipTextureHorizontally(data[4], width, height, STBI_rgb_alpha);
-	FlipTextureHorizontally(data[5], width, height, STBI_rgb_alpha);
+	//FlipTextureHorizontally(data[0], width, height, STBI_rgb_alpha);
+	//FlipTextureHorizontally(data[1], width, height, STBI_rgb_alpha);
+	//FlipTextureHorizontally(data[4], width, height, STBI_rgb_alpha);
+	//FlipTextureHorizontally(data[5], width, height, STBI_rgb_alpha);
 
 	{
 		//Define an image to create
