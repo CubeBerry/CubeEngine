@@ -901,7 +901,7 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 			barrier.image = vkTextureImage;
 			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			barrier.subresourceRange.levelCount = 1;
-			barrier.subresourceRange.layerCount = 1;
+			barrier.subresourceRange.layerCount = 6;
 
 			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		}
