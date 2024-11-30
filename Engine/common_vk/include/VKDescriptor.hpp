@@ -45,4 +45,8 @@ private:
 	VkDescriptorPool vkDescriptorPool{ VK_NULL_HANDLE };
 	std::array<VkDescriptorSet, 2> vkVertexMaterialDescriptorSets{ VK_NULL_HANDLE };
 	std::array<VkDescriptorSet, 2> vkFragmentMaterialDescriptorSets{ VK_NULL_HANDLE };
+
+	uint32_t vertexDescriptorCount{ 0 };
+	uint32_t fragmentDescriptorCount{ 0 };
+	uint32_t samplerDescriptorCount{ 0 };
 };

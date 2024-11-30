@@ -42,6 +42,7 @@ void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLa
 				//Only vertex shader accesses
 				binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
+				vertexDescriptorCount += l.descriptorCount;
 				vertexBindings.push_back(binding);
 				count++;
 			}
@@ -102,6 +103,17 @@ void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLa
 				binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 				binding.pImmutableSamplers = nullptr;
 
+				switch (static_cast<VkDescriptorType>(l.descriptorType))
+				{
+				case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+					fragmentDescriptorCount += l.descriptorCount;
+					break;
+				case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+					samplerDescriptorCount += l.descriptorCount;
+					break;
+				default:
+					break;
+				}
 				fragmentBindings.push_back(binding);
 				count++;
 			}
@@ -163,10 +175,10 @@ void VKDescriptor::InitDescriptorPool()
 	std::vector<VkDescriptorPoolSize> poolSize
 	{
 		//For Vertex
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vertexDescriptorCount * 2 },
 		//For Fragment
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, fragmentDescriptorCount * 2 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, samplerDescriptorCount * 2 },
 		//For ImGUI
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		//For Texture maybe should change for batch rendering(multiple image + one sampler)
