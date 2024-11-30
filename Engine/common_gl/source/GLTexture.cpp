@@ -56,8 +56,8 @@ void GLTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 	faces[1] = left;
 	faces[2] = top;
 	faces[3] = bottom;
-	faces[4] = front;
-	faces[5] = back;
+	faces[4] = back;
+	faces[5] = front;
 	unsigned char* data;
 	int nrChannels;
 
