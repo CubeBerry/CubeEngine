@@ -23,6 +23,13 @@ GLRenderManager::~GLRenderManager()
 	//Destroy Texture
 	for (const auto t : textures)
 		delete t;
+
+	//Destroy Skybox
+	if (skyboxEnabled)
+	{
+		delete skybox;
+		delete skyboxVertexBuffer;
+	}
 }
 
 void GLRenderManager::Initialize(
@@ -83,8 +90,6 @@ void GLRenderManager::Initialize(
 	vertexLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::VertexLightingUniform>();
 	vertexLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "vLightingMatrix", sizeof(ThreeDimension::VertexLightingUniform), vertexLightingUniformBuffer);
 	imguiManager = new GLImGuiManager(window_, context_);
-
-	LoadSkyBox();
 }
 
 void GLRenderManager::BeginRender(glm::vec3 bgColor)
@@ -580,7 +585,14 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragMaterialUniforms3D.push_back(material);
 }
 
-void GLRenderManager::LoadSkyBox()
+void GLRenderManager::LoadSkyBox(
+	const std::filesystem::path& right,
+	const std::filesystem::path& left,
+	const std::filesystem::path& top,
+	const std::filesystem::path& bottom,
+	const std::filesystem::path& front,
+	const std::filesystem::path& back
+)
 {
 	skyboxVertexArray.Initialize();
 
@@ -644,12 +656,13 @@ void GLRenderManager::LoadSkyBox()
 
 	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
 	skybox = new GLTexture;
-	skybox->LoadSkyBox(
-		"../Game/assets/Skybox/right.jpg",
-		"../Game/assets/Skybox/left.jpg",
-		"../Game/assets/Skybox/top.jpg",
-		"../Game/assets/Skybox/bottom.jpg",
-		"../Game/assets/Skybox/back.jpg",
-		"../Game/assets/Skybox/front.jpg"
-	);
+	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skyboxEnabled = true;
+}
+
+void GLRenderManager::DeleteSkyBox()
+{
+	delete skyboxVertexBuffer;
+	delete skybox;
+	skyboxEnabled = false;
 }

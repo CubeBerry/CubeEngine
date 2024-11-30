@@ -63,6 +63,23 @@ VKRenderManager::~VKRenderManager()
 	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
 
+	//Destroy Normal
+#ifdef _DEBUG
+	delete vkNormal3DShader;
+	delete vkPipeline3DNormal;
+	delete normalVertexBuffer;
+#endif
+
+	//Destroy Skybox
+	if (skyboxEnabled)
+	{
+		delete skybox;
+		delete skyboxShader;
+		delete skyboxDescriptor;
+		delete vkPipeline3DSkybox;
+		delete skyboxVertexBuffer;
+	}
+
 	//Destroy Shader
 	delete vkShader2D;
 	delete vkShader3D;
@@ -543,8 +560,6 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfos.push_back(imageInfo);
 	}
-
-	LoadSkyBox();
 }
 
 void VKRenderManager::InitCommandPool()
@@ -1235,7 +1250,14 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragMaterialUniforms3D.push_back(material);
 }
 
-void VKRenderManager::LoadSkyBox()
+void VKRenderManager::LoadSkyBox(
+	const std::filesystem::path& right,
+	const std::filesystem::path& left,
+	const std::filesystem::path& top,
+	const std::filesystem::path& bottom,
+	const std::filesystem::path& front,
+	const std::filesystem::path& back
+)
 {
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
@@ -1303,14 +1325,18 @@ void VKRenderManager::LoadSkyBox()
 	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
 
 	skybox = new VKTexture(vkInit, &vkCommandPool);
-	skybox->LoadSkyBox(
-		"../Game/assets/Skybox/right.jpg",
-		"../Game/assets/Skybox/left.jpg",
-		"../Game/assets/Skybox/top.jpg",
-		"../Game/assets/Skybox/bottom.jpg",
-		"../Game/assets/Skybox/back.jpg",
-		"../Game/assets/Skybox/front.jpg"
-	);
+	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skyboxEnabled = true;
+}
+
+void VKRenderManager::DeleteSkyBox()
+{
+	delete skybox;
+	delete skyboxShader;
+	delete skyboxDescriptor;
+	delete vkPipeline3DSkybox;
+	delete skyboxVertexBuffer;
+	skyboxEnabled = false;
 }
 
 void VKRenderManager::BeginRender(glm::vec3 bgColor)
@@ -1513,51 +1539,54 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
 		}
 
-		//Skybox Vertex Descriptor
-		currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+		if (skyboxEnabled)
 		{
-			//Create Vertex Material DescriptorBuffer Info
-			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
+			//Skybox Vertex Descriptor
+			currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			{
+				//Create Vertex Material DescriptorBuffer Info
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
 
-			//Define which resource descriptor set will point
-			VkWriteDescriptorSet descriptorWrite{};
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite.pBufferInfo = &bufferInfo;
+				//Define which resource descriptor set will point
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite.pBufferInfo = &bufferInfo;
 
-			//Update DescriptorSet
-			//DescriptorSet does not have to update every frame since it points same uniform buffer
-			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-		}
-		vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
 
-		//Skybox Fragment Descriptor
-		currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
-		{
-			VkWriteDescriptorSet descriptorWrite{};
+			//Skybox Fragment Descriptor
+			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			{
+				VkWriteDescriptorSet descriptorWrite{};
 
-			VkDescriptorImageInfo skyboxDescriptorImageInfo{};
-			skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
-			skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
-			skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				VkDescriptorImageInfo skyboxDescriptorImageInfo{};
+				skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
+				skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
+				skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			//Define which resource descriptor set will point
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = *currentFragmentSkyboxDescriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrite.pImageInfo = &skyboxDescriptorImageInfo;
+				//Define which resource descriptor set will point
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentFragmentSkyboxDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descriptorWrite.pImageInfo = &skyboxDescriptorImageInfo;
 
-			//Update DescriptorSet
-			//DescriptorSet does not have to update every frame since it points same uniform buffer
-			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
 		}
 		break;
 	}
@@ -1731,23 +1760,26 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 #endif
 		}
 
-		//Skybox
-		//Bind Vertex Buffer
-		vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-		//Bind Pipeline
-		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
-		//Dynamic Viewport & Scissor
-		vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-		//Bind Material DescriptorSet
-		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentVertexSkyboxDescriptorSet, 0, nullptr);
-		//Bind Texture DescriptorSet
-		vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 1, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
-		//Change Primitive Topology
-		//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		//Draw
-		//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-		vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
+		if (skyboxEnabled)
+		{
+			//Skybox
+			//Bind Vertex Buffer
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			//Bind Pipeline
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
+			//Dynamic Viewport & Scissor
+			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+			//Bind Material DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentVertexSkyboxDescriptorSet, 0, nullptr);
+			//Bind Texture DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 1, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
+			//Change Primitive Topology
+			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			//Draw
+			//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
+		}
 
 		break;
 	}

@@ -62,6 +62,15 @@ void PhysicsDemo::Init()
 	l.specularStrength = 0.5f;
 	l.isLighting = true;
 	Engine::GetRenderManager()->EnableLighting(true);
+
+	Engine::GetRenderManager()->LoadSkyBox(
+		"../Game/assets/Skybox/right.jpg",
+		"../Game/assets/Skybox/left.jpg",
+		"../Game/assets/Skybox/top.jpg",
+		"../Game/assets/Skybox/bottom.jpg",
+		"../Game/assets/Skybox/back.jpg",
+		"../Game/assets/Skybox/front.jpg"
+	);
 }
 
 void PhysicsDemo::Update(float dt)
@@ -160,4 +169,5 @@ void PhysicsDemo::End()
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
+	Engine::GetRenderManager()->DeleteSkyBox();
 }
