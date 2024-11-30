@@ -865,9 +865,15 @@ void VKRenderManager::RecreateSwapChain()
 	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
 
+	//Destroy MSAA
+	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
+
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 	CreateDepthBuffer();
+	CreateColorResources();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
