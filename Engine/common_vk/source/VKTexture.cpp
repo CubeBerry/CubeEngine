@@ -667,11 +667,10 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 	//--------------------Staging Buffer--------------------//
 
 	VkBuffer vkStagingBuffer;
+	VkDeviceSize imageSize = width * height * STBI_rgb_alpha;
+	VkDeviceSize totalSize = imageSize * 6;
 	VkDeviceMemory vkStagingDeviceMemory;
 	{
-		VkDeviceSize imageSize = width * height * STBI_rgb_alpha;
-		VkDeviceSize totalSize = imageSize * 6;
-
 		//Create Staging Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -871,7 +870,7 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 		}
 
 		//Define Copy Region
-		std::array<VkBufferImageCopy, 6> regions{};
+		std::vector<VkBufferImageCopy> regions{};
 		for (int i = 0; i < 6; ++i)
 		{
 			//Define Image Subresource which will be copied
@@ -882,8 +881,12 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 			subresourceLayers.baseArrayLayer = i;
 
 			//It assumes region has same size as image if buffer region is not defined
-			regions[i].imageSubresource = subresourceLayers;
-			regions[i].imageExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+			VkBufferImageCopy region{};
+			region.imageSubresource = subresourceLayers;
+			region.imageExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+			region.imageOffset = { 0, 0, 0 };
+			region.bufferOffset = i * imageSize;
+			regions.push_back(region);
 		}
 
 		//Copy Staging Buffer to Image by defined region
