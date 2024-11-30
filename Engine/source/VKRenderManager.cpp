@@ -1212,6 +1212,8 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 		delete vertex3DBuffer;
 	vertex3DBuffer = new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices3D);
 #ifdef _DEBUG
+	if (normalVertexBuffer != nullptr)
+		delete normalVertexBuffer;
 	normalVertexBuffer = new VKVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &normalVertices3D);
 #endif
 
