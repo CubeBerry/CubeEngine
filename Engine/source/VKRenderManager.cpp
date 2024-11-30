@@ -440,7 +440,20 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
-	vkDescriptor = new VKDescriptor(vkInit);
+	VKDescriptorLayout vertexLayout[2];
+	vertexLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout[0].descriptorCount = 1;
+	vertexLayout[1].descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout[1].descriptorCount = 1;
+
+	VKDescriptorLayout fragmentLayout[3];
+	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
+	fragmentLayout[0].descriptorCount = 1;
+	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[1].descriptorCount = 500;
+	fragmentLayout[2].descriptorType = VKDescriptorLayout::UNIFORM;
+	fragmentLayout[2].descriptorCount = 1;
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout[0], vertexLayout[1] }, { fragmentLayout[0], fragmentLayout[1] ,fragmentLayout[2] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");

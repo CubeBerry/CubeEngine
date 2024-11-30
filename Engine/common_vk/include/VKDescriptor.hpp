@@ -9,13 +9,25 @@
 
 class VKInit;
 
+struct VKDescriptorLayout
+{
+    enum DescriptorType
+    {
+        UNIFORM = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        SAMPLER = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+    };
+    DescriptorType descriptorType = DescriptorType::UNIFORM;
+
+    uint32_t descriptorCount = 0;
+};
+
 class VKDescriptor
 {
 public:
-	VKDescriptor(VKInit* init);
+	VKDescriptor(VKInit* init, std::initializer_list<VKDescriptorLayout> vertexLayout, std::initializer_list<VKDescriptorLayout> fragmentLayout);
 	~VKDescriptor();
 
-	void InitDescriptorSetLayouts();
+	void InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLayout> vertexLayout, std::initializer_list<VKDescriptorLayout> fragmentLayout);
 	void InitDescriptorPool();
 	void InitDescriptorSets();
 

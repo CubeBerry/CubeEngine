@@ -6,9 +6,9 @@
 #include "VKInit.hpp"
 #include <iostream>
 
-VKDescriptor::VKDescriptor(VKInit* init) : vkInit(init)
+VKDescriptor::VKDescriptor(VKInit* init, std::initializer_list<VKDescriptorLayout> vertexLayout, std::initializer_list<VKDescriptorLayout> fragmentLayout) : vkInit(init)
 {
-	InitDescriptorSetLayouts();
+	InitDescriptorSetLayouts(vertexLayout, fragmentLayout);
 	InitDescriptorPool();
 	InitDescriptorSets();
 }
@@ -25,29 +25,33 @@ VKDescriptor::~VKDescriptor()
 	vkDestroyDescriptorPool(*vkInit->GetDevice(), vkDescriptorPool, nullptr);
 }
 
-void VKDescriptor::InitDescriptorSetLayouts()
+void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLayout> vertexLayout, std::initializer_list<VKDescriptorLayout> fragmentLayout)
 {
 	{
-		//Create Binding for Vertex Uniform Block
-		VkDescriptorSetLayoutBinding binding[2];
-		binding[0].binding = 0;
-		binding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		binding[0].descriptorCount = 1;
-		//Only vertex shader accesses
-		binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		std::vector<VkDescriptorSetLayoutBinding> vertexBindings;
+		if (vertexLayout.size())
+		{
+			int count{ 0 };
+			for (const auto& l : vertexLayout)
+			{
+				//Create Binding for Vertex Uniform Block
+				VkDescriptorSetLayoutBinding binding;
+				binding.binding = count;
+				binding.descriptorType = static_cast<VkDescriptorType>(l.descriptorType);
+				binding.descriptorCount = l.descriptorCount;
+				//Only vertex shader accesses
+				binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-		//Create Binding for Lighting Uniform Block
-		binding[1].binding = 1;
-		binding[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		binding[1].descriptorCount = 1;
-		//Only vertex shader accesses
-		binding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+				vertexBindings.push_back(binding);
+				count++;
+			}
+		}
 
 		//Create Descriptor Set Layout Info
 		VkDescriptorSetLayoutCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = 2;
-		createInfo.pBindings = binding;
+		createInfo.bindingCount = static_cast<uint32_t>(vertexBindings.size());
+		createInfo.pBindings = vertexBindings.data();
 
 		//Create Descriptor Set Layout
 		try
@@ -83,30 +87,25 @@ void VKDescriptor::InitDescriptorSetLayouts()
 	}
 
 	{
-		//Create Binding for Fragment Uniform Block
-		std::array< VkDescriptorSetLayoutBinding, 3> bindings;
-		bindings[0].binding = 0;
-		bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		bindings[0].descriptorCount = 1;
-		//Only fragment shader accesses
-		bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		bindings[0].pImmutableSamplers = nullptr;
+		std::vector<VkDescriptorSetLayoutBinding> fragmentBindings;
+		if (fragmentLayout.size())
+		{
+			int count{ 0 };
+			for (const auto& l : fragmentLayout)
+			{
+				//Create Binding for Vertex Uniform Block
+				VkDescriptorSetLayoutBinding binding;
+				binding.binding = count;
+				binding.descriptorType = static_cast<VkDescriptorType>(l.descriptorType);
+				binding.descriptorCount = l.descriptorCount;
+				//Only fragment shader accesses
+				binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+				binding.pImmutableSamplers = nullptr;
 
-		//Create Binding for Combined Image Sampler
-		bindings[1].binding = 1;
-		bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		bindings[1].descriptorCount = 500;
-		//Only fragment shader accesses
-		bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		bindings[1].pImmutableSamplers = nullptr;
-
-		//Create Binding for Material
-		bindings[2].binding = 2;
-		bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		bindings[2].descriptorCount = 1;
-		//Only fragment shader accesses
-		bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		bindings[2].pImmutableSamplers = nullptr;
+				fragmentBindings.push_back(binding);
+				count++;
+			}
+		}
 
 		VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo{};
 		bindingFlagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
@@ -116,8 +115,8 @@ void VKDescriptor::InitDescriptorSetLayouts()
 		//Create Descriptor Set Layout Info
 		VkDescriptorSetLayoutCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		createInfo.pBindings = bindings.data();
+		createInfo.bindingCount = static_cast<uint32_t>(fragmentBindings.size());
+		createInfo.pBindings = fragmentBindings.data();
 		createInfo.pNext = &bindingFlagsInfo;
 		createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
 
