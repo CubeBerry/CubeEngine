@@ -9,7 +9,7 @@ in vec3 tex_coords;
 layout(location = 0) out vec4 fragmentColor;
 
 #if VULKAN
-layout(set = 0, binding = 0) uniform samplerCube skybox;
+layout(set = 1, binding = 0) uniform samplerCube skybox;
 #else
 uniform samplerCube skybox;
 #endif

@@ -200,4 +200,8 @@ private:
 	VKTexture* skybox;
 	VKShader* skyboxShader;
 	VKPipeLine* vkPipeline3DSkybox;
+	VKDescriptor* skyboxDescriptor;
+	VKVertexBuffer<glm::vec3>* skyboxVertexBuffer{ nullptr };
+	VkDescriptorSet* currentVertexSkyboxDescriptorSet{ VK_NULL_HANDLE };
+	VkDescriptorSet* currentFragmentSkyboxDescriptorSet{ VK_NULL_HANDLE };
 };

@@ -1240,56 +1240,66 @@ void VKRenderManager::LoadSkyBox()
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
 
-	float skyboxVertices[] = {
-	-1.0f,  1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
+	std::vector<glm::vec3> skyboxVertices = {
+		{-1.0f,  1.0f, -1.0f},
+	{-1.0f, -1.0f, -1.0f},
+	 {1.0f, -1.0f, -1.0f },
+	 {1.0f, -1.0f, -1.0f},
+	 {1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
 
-	-1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
+	{-1.0f, -1.0f,  1.0f},
+	{-1.0f, -1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{-1.0f, -1.0f,  1.0f},
 
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
+	 {1.0f, -1.0f, -1.0f},
+	 {1.0f, -1.0f,  1.0f},
+	 {1.0f,  1.0f,  1.0f},
+	 {1.0f,  1.0f,  1.0f},
+	 {1.0f,  1.0f, -1.0f},
+	 {1.0f, -1.0f, -1.0f},
 
-	-1.0f, -1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
+	{-1.0f, -1.0f,  1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f, -1.0f,  1.0f},
+	{-1.0f, -1.0f,  1.0f},
 
-	-1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f, -1.0f,
+	{-1.0f,  1.0f, -1.0f},
+	{ 1.0f,  1.0f, -1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{-1.0f,  1.0f, -1.0f},
 
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f
+	{-1.0f, -1.0f, -1.0f},
+	{-1.0f, -1.0f,  1.0f},
+	{ 1.0f, -1.0f, -1.0f},
+	{ 1.0f, -1.0f, -1.0f},
+	{-1.0f, -1.0f,  1.0f},
+	{ 1.0f, -1.0f,  1.0f}
 	};
+	skyboxVertexBuffer = new VKVertexBuffer<glm::vec3>(vkInit, &skyboxVertices);
+
+	VKDescriptorLayout vertexLayout;
+	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout.descriptorCount = 1;
+
+	VKDescriptorLayout fragmentLayout;
+	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout.descriptorCount = 1;
+	skyboxDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout });
 
 	VKAttributeLayout position_layout;
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = 0;
 
-	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
 	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
 
 	skybox = new VKTexture(vkInit, &vkCommandPool);
@@ -1501,6 +1511,53 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
+		}
+
+		//Skybox Vertex Descriptor
+		currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+		{
+			//Create Vertex Material DescriptorBuffer Info
+			VkDescriptorBufferInfo bufferInfo;
+			bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
+
+			//Define which resource descriptor set will point
+			VkWriteDescriptorSet descriptorWrite{};
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrite.pBufferInfo = &bufferInfo;
+
+			//Update DescriptorSet
+			//DescriptorSet does not have to update every frame since it points same uniform buffer
+			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+		}
+		vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+
+		//Skybox Fragment Descriptor
+		currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+		{
+			VkWriteDescriptorSet descriptorWrite{};
+
+			VkDescriptorImageInfo skyboxDescriptorImageInfo{};
+			skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
+			skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
+			skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			//Define which resource descriptor set will point
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = *currentFragmentSkyboxDescriptorSet;
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrite.pImageInfo = &skyboxDescriptorImageInfo;
+
+			//Update DescriptorSet
+			//DescriptorSet does not have to update every frame since it points same uniform buffer
+			vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 		}
 		break;
 	}

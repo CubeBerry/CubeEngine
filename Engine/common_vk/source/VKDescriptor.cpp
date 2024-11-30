@@ -174,21 +174,43 @@ void VKDescriptor::InitDescriptorPool()
 	//2nd parameter == number of uniform buffer
 	std::vector<VkDescriptorPoolSize> poolSize
 	{
-		//For Vertex
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vertexDescriptorCount * 2 },
-		//For Fragment
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, fragmentDescriptorCount * 2 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, samplerDescriptorCount * 2 },
-		//For ImGUI
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-		//For Texture maybe should change for batch rendering(multiple image + one sampler)
+		////For Vertex
+		//{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, vertexDescriptorCount * 2 },
+		////For Fragment
+		//{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, fragmentDescriptorCount * 2 },
+		//{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, samplerDescriptorCount * 2 },
+		////For ImGUI
+		//{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+		////For Texture maybe should change for batch rendering(multiple image + one sampler)
 	};
+
+	if (vertexDescriptorCount)
+	{
+		VkDescriptorPoolSize size;
+		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		size.descriptorCount = vertexDescriptorCount * 2;
+		poolSize.push_back(size);
+	}
+	if (fragmentDescriptorCount)
+	{
+		VkDescriptorPoolSize size;
+		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		size.descriptorCount = fragmentDescriptorCount * 2;
+		poolSize.push_back(size);
+	}
+	if (samplerDescriptorCount)
+	{
+		VkDescriptorPoolSize size;
+		size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		size.descriptorCount = samplerDescriptorCount * 2;
+		poolSize.push_back(size);
+	}
 
 	//Create DescriptorPool Info
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = 1009;
+	createInfo.maxSets = (vertexDescriptorCount + fragmentDescriptorCount + samplerDescriptorCount) * 2 + 1;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = poolSize.data();
 	//ImGui requires VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
