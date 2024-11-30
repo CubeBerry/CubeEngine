@@ -8,7 +8,11 @@
 
 layout(location = 0) in vec3 i_pos;
 
+#if VULKAN
+layout(location = 0) out vec3 tex_coords;
+#else
 out vec3 tex_coords;
+#endif
 
 struct vMatrix
 {

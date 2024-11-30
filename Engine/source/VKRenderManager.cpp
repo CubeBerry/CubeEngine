@@ -530,6 +530,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfos.push_back(imageInfo);
 	}
+
+	LoadSkyBox();
 }
 
 void VKRenderManager::InitCommandPool()
@@ -1222,7 +1224,70 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 
 void VKRenderManager::LoadSkyBox()
 {
-	
+	skyboxShader = new VKShader(vkInit->GetDevice());
+	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
+
+	float skyboxVertices[] = {
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
+	};
+
+	VKAttributeLayout position_layout;
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = 0;
+
+	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
+
+	skybox = new VKTexture(vkInit, &vkCommandPool);
+	skybox->LoadSkyBox(
+		"../Game/assets/Skybox/right.jpg",
+		"../Game/assets/Skybox/left.jpg",
+		"../Game/assets/Skybox/top.jpg",
+		"../Game/assets/Skybox/bottom.jpg",
+		"../Game/assets/Skybox/back.jpg",
+		"../Game/assets/Skybox/front.jpg"
+	);
 }
 
 void VKRenderManager::BeginRender(glm::vec3 bgColor)

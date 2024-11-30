@@ -18,8 +18,8 @@ public:
         const std::filesystem::path& left,
         const std::filesystem::path& top,
         const std::filesystem::path& bottom,
-        const std::filesystem::path& back,
-        const std::filesystem::path& front
+        const std::filesystem::path& front,
+        const std::filesystem::path& back
     );
     void SetTextureID(int id) { texID = id; };
     void DeleteTexture();

@@ -47,7 +47,7 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	stbi_image_free(data);
 }
 
-void GLTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& back, const std::filesystem::path& front)
+void GLTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
 {
 	glCheck(glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &textureHandle));
 
@@ -81,9 +81,6 @@ void GLTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	name = "Skybox";
-
-	//SetTextureID(0);
-	//UseForSlot(texID);
 }
 
 void GLTexture::UseForSlot(unsigned int unit) const noexcept

@@ -195,4 +195,9 @@ private:
 
 	//Lighting
 	VKUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
+
+	//Skyobx
+	VKTexture* skybox;
+	VKShader* skyboxShader;
+	VKPipeLine* vkPipeline3DSkybox;
 };

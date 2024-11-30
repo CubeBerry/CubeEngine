@@ -1,6 +1,10 @@
 #version 460
 
+#if VULKAN
+layout(location = 0) in vec3 tex_coords;
+#else
 in vec3 tex_coords;
+#endif
 
 layout(location = 0) out vec4 fragmentColor;
 

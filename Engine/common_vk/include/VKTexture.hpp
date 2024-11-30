@@ -15,6 +15,14 @@ public:
 	~VKTexture();
 
 	void LoadTexture(const std::filesystem::path& path_, std::string name_);
+	void LoadSkyBox(
+		const std::filesystem::path& right,
+		const std::filesystem::path& left,
+		const std::filesystem::path& top,
+		const std::filesystem::path& bottom,
+		const std::filesystem::path& front,
+		const std::filesystem::path& back
+	);
 	void SetTextureID(int id) { texID = id; };
 
 	VkSampler* GetSampler() { return &vkTextureSampler; };
