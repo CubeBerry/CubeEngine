@@ -45,4 +45,23 @@ private:
 	int width, height;
 	int texID;
 	std::string name;
+
+	void FlipTextureHorizontally(uint8_t* src, int width_, int height_, int numComponents) const
+	{
+		for (int row = 0; row < height_; ++row)
+		{
+			for (int column = 0; column < width_ / 2; ++column)
+			{
+				int src_row{ row };
+				int src_column{ column };
+				int dest_column = width_ - 1 - src_column;
+
+				int src_index{ (src_row * width_ + src_column) * numComponents };
+				int dest_index{ (src_row * width_ + dest_column) * numComponents };
+
+				for (int component = 0; component < numComponents; ++component)
+					std::swap(src[src_index + component], src[dest_index + component]);
+			}
+		}
+	};
 };
