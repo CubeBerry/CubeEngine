@@ -29,7 +29,8 @@ All required APIs and Libraries are integrated in Project.
 6. 3D Plane, Cube(3D Collision Applied), Sphere Meshes + Normal Debugger
 7. Assimp Model Loading
 8. Blinn-Phong Lighting
-9. MSAA
+9. Skybox
+10. MSAA
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/3b158449-7532-4848-8766-957e6d7c58ba)
