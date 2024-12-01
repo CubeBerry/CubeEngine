@@ -35,6 +35,15 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
+
+	Engine::GetRenderManager()->LoadSkyBox(
+		"../Game/assets/Skybox/right.jpg",
+		"../Game/assets/Skybox/left.jpg",
+		"../Game/assets/Skybox/top.jpg",
+		"../Game/assets/Skybox/bottom.jpg",
+		"../Game/assets/Skybox/back.jpg",
+		"../Game/assets/Skybox/front.jpg"
+	);
 }
 
 void ProceduralMeshes::Update(float dt)
@@ -47,7 +56,9 @@ void ProceduralMeshes::Update(float dt)
 		isRecreate = false;
 	}
 
+#ifdef _DEBUG
 	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
+#endif
 
 	//Update Color
 	(*Engine::GetRenderManager()->GetVertexUniforms3D())[1].color = glm::vec4{ color[0], color[1], color[2], color[3] };
@@ -275,6 +286,7 @@ void ProceduralMeshes::End()
 	isFill = true;
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
 	Engine::GetRenderManager()->EnableLighting(false);
+	Engine::GetRenderManager()->DeleteSkyBox();
 
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();

@@ -24,7 +24,7 @@ struct fMatrix
 #if VULKAN
 layout(set = 1, binding = 0) uniform fUniformMatrix
 #else
-layout(std140, binding = 1) uniform fUniformMatrix
+layout(std140, binding = 0) uniform fUniformMatrix
 #endif
 {
     fMatrix f_matrix[MAX_TEXTURES];

@@ -23,6 +23,13 @@ GLRenderManager::~GLRenderManager()
 	//Destroy Texture
 	for (const auto t : textures)
 		delete t;
+
+	//Destroy Skybox
+	if (skyboxEnabled)
+	{
+		delete skybox;
+		delete skyboxVertexBuffer;
+	}
 }
 
 void GLRenderManager::Initialize(
@@ -139,7 +146,6 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
-
 		break;
 	}
 
@@ -167,6 +173,24 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		glNormal3DShader.Use(false);
 	}
 #endif
+
+	//Skybox
+	if (skyboxEnabled)
+	{
+		skyboxShader.Use(true);
+		if (vertexUniform3D != nullptr)
+		{
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		}
+		skyboxVertexArray.Use(true);
+		auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+		glCheck(glUniform1i(skyboxLocation, 0));
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetTextureHandle());
+		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
+		skyboxVertexArray.Use(false);
+		skyboxShader.Use(false);
+	}
 
 	imguiManager->Begin();
 }
@@ -562,4 +586,86 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	material.shininess = shininess;
 	material.specularColor = specularColor;
 	fragMaterialUniforms3D.push_back(material);
+}
+
+void GLRenderManager::LoadSkyBox(
+	const std::filesystem::path& right,
+	const std::filesystem::path& left,
+	const std::filesystem::path& top,
+	const std::filesystem::path& bottom,
+	const std::filesystem::path& front,
+	const std::filesystem::path& back
+)
+{
+	skyboxVertexArray.Initialize();
+
+	float skyboxVertices[] = {
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	skyboxVertexBuffer = new GLVertexBuffer;
+	skyboxVertexBuffer->SetData(sizeof(float) * 108, skyboxVertices);
+
+	GLAttributeLayout position_layout;
+	position_layout.component_type = GLAttributeLayout::Float;
+	position_layout.component_dimension = GLAttributeLayout::_3;
+	position_layout.normalized = false;
+	position_layout.vertex_layout_location = 0;
+	position_layout.stride = sizeof(float) * 3;
+	position_layout.offset = 0;
+	position_layout.relative_offset = 0;
+
+	skyboxVertexArray.AddVertexBuffer(std::move(*skyboxVertexBuffer), sizeof(float) * 3, { position_layout });
+
+	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
+	skybox = new GLTexture;
+	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skyboxEnabled = true;
+}
+
+void GLRenderManager::DeleteSkyBox()
+{
+	delete skyboxVertexBuffer;
+	delete skybox;
+	skyboxEnabled = false;
 }

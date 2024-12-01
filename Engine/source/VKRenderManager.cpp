@@ -63,6 +63,23 @@ VKRenderManager::~VKRenderManager()
 	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
 
+	//Destroy Normal
+#ifdef _DEBUG
+	delete vkNormal3DShader;
+	delete vkPipeline3DNormal;
+	delete normalVertexBuffer;
+#endif
+
+	//Destroy Skybox
+	if (skyboxEnabled)
+	{
+		delete skybox;
+		delete skyboxShader;
+		delete skyboxDescriptor;
+		delete vkPipeline3DSkybox;
+		delete skyboxVertexBuffer;
+	}
+
 	//Destroy Shader
 	delete vkShader2D;
 	delete vkShader3D;
@@ -440,7 +457,20 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
-	vkDescriptor = new VKDescriptor(vkInit);
+	VKDescriptorLayout vertexLayout[2];
+	vertexLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout[0].descriptorCount = 1;
+	vertexLayout[1].descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout[1].descriptorCount = 1;
+
+	VKDescriptorLayout fragmentLayout[3];
+	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
+	fragmentLayout[0].descriptorCount = 1;
+	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[1].descriptorCount = 500;
+	fragmentLayout[2].descriptorType = VKDescriptorLayout::UNIFORM;
+	fragmentLayout[2].descriptorCount = 1;
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout[0], vertexLayout[1] }, { fragmentLayout[0], fragmentLayout[1] ,fragmentLayout[2] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
@@ -835,9 +865,15 @@ void VKRenderManager::RecreateSwapChain()
 	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
 
+	//Destroy MSAA
+	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
+
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 	CreateDepthBuffer();
+	CreateColorResources();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
@@ -1182,6 +1218,8 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 		delete vertex3DBuffer;
 	vertex3DBuffer = new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices3D);
 #ifdef _DEBUG
+	if (normalVertexBuffer != nullptr)
+		delete normalVertexBuffer;
 	normalVertexBuffer = new VKVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &normalVertices3D);
 #endif
 
@@ -1220,6 +1258,94 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragMaterialUniforms3D.push_back(material);
 }
 
+void VKRenderManager::LoadSkyBox(
+	const std::filesystem::path& right,
+	const std::filesystem::path& left,
+	const std::filesystem::path& top,
+	const std::filesystem::path& bottom,
+	const std::filesystem::path& front,
+	const std::filesystem::path& back
+)
+{
+	skyboxShader = new VKShader(vkInit->GetDevice());
+	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
+
+	std::vector<glm::vec3> skyboxVertices = {
+		{-1.0f,  1.0f, -1.0f},
+	{-1.0f, -1.0f, -1.0f},
+	 {1.0f, -1.0f, -1.0f },
+	 {1.0f, -1.0f, -1.0f},
+	 {1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+
+	{-1.0f, -1.0f,  1.0f},
+	{-1.0f, -1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{-1.0f, -1.0f,  1.0f},
+
+	 {1.0f, -1.0f, -1.0f},
+	 {1.0f, -1.0f,  1.0f},
+	 {1.0f,  1.0f,  1.0f},
+	 {1.0f,  1.0f,  1.0f},
+	 {1.0f,  1.0f, -1.0f},
+	 {1.0f, -1.0f, -1.0f},
+
+	{-1.0f, -1.0f,  1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f, -1.0f,  1.0f},
+	{-1.0f, -1.0f,  1.0f},
+
+	{-1.0f,  1.0f, -1.0f},
+	{ 1.0f,  1.0f, -1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{-1.0f,  1.0f, -1.0f},
+
+	{-1.0f, -1.0f, -1.0f},
+	{-1.0f, -1.0f,  1.0f},
+	{ 1.0f, -1.0f, -1.0f},
+	{ 1.0f, -1.0f, -1.0f},
+	{-1.0f, -1.0f,  1.0f},
+	{ 1.0f, -1.0f,  1.0f}
+	};
+	skyboxVertexBuffer = new VKVertexBuffer<glm::vec3>(vkInit, &skyboxVertices);
+
+	VKDescriptorLayout vertexLayout;
+	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout.descriptorCount = 1;
+
+	VKDescriptorLayout fragmentLayout;
+	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout.descriptorCount = 1;
+	skyboxDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout });
+
+	VKAttributeLayout position_layout;
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = 0;
+
+	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
+
+	skybox = new VKTexture(vkInit, &vkCommandPool);
+	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skyboxEnabled = true;
+}
+
+void VKRenderManager::DeleteSkyBox()
+{
+	delete skybox;
+	delete skyboxShader;
+	delete skyboxDescriptor;
+	delete vkPipeline3DSkybox;
+	delete skyboxVertexBuffer;
+	skyboxEnabled = false;
+}
 
 void VKRenderManager::BeginRender(glm::vec3 bgColor)
 {
@@ -1420,6 +1546,56 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
 		}
+
+		if (skyboxEnabled)
+		{
+			//Skybox Vertex Descriptor
+			currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			{
+				//Create Vertex Material DescriptorBuffer Info
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
+
+				//Define which resource descriptor set will point
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite.pBufferInfo = &bufferInfo;
+
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+
+			//Skybox Fragment Descriptor
+			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			{
+				VkWriteDescriptorSet descriptorWrite{};
+
+				VkDescriptorImageInfo skyboxDescriptorImageInfo{};
+				skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
+				skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
+				skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				//Define which resource descriptor set will point
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentFragmentSkyboxDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descriptorWrite.pImageInfo = &skyboxDescriptorImageInfo;
+
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+		}
 		break;
 	}
 
@@ -1591,6 +1767,28 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 #endif
 		}
+
+		if (skyboxEnabled)
+		{
+			//Skybox
+			//Bind Vertex Buffer
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			//Bind Pipeline
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
+			//Dynamic Viewport & Scissor
+			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+			//Bind Material DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentVertexSkyboxDescriptorSet, 0, nullptr);
+			//Bind Texture DescriptorSet
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 1, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
+			//Change Primitive Topology
+			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			//Draw
+			//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
+		}
+
 		break;
 	}
 

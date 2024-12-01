@@ -48,6 +48,15 @@ public:
 
 	//--------------------3D Render--------------------//
 	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) override;
+	void LoadSkyBox(
+		const std::filesystem::path& right,
+		const std::filesystem::path& left,
+		const std::filesystem::path& top,
+		const std::filesystem::path& bottom,
+		const std::filesystem::path& front,
+		const std::filesystem::path& back
+	) override;
+	void DeleteSkyBox() override;
 private:
 	//--------------------Common--------------------//
 	GLVertexBuffer* vertexBuffer{ nullptr };
@@ -73,4 +82,10 @@ private:
 
 	//Lighting
 	GLUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
+
+	//Skybox
+	GLVertexArray skyboxVertexArray;
+	GLVertexBuffer* skyboxVertexBuffer{ nullptr };
+	GLShader skyboxShader;
+	GLTexture* skybox;
 };

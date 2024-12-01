@@ -47,6 +47,42 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	stbi_image_free(data);
 }
 
+void GLTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
+{
+	glCheck(glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &textureHandle));
+
+	std::filesystem::path faces[6];
+	faces[0] = right;
+	faces[1] = left;
+	faces[2] = top;
+	faces[3] = bottom;
+	faces[4] = back;
+	faces[5] = front;
+	unsigned char* data;
+	int nrChannels;
+
+	stbi_set_flip_vertically_on_load(false);
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		data = stbi_load(faces[i].string().c_str(), &width, &height, &nrChannels, 0);
+		if (nrChannels == 1)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+		else if (nrChannels == 3)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		else if (nrChannels == 4)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		stbi_image_free(data);
+	}
+	
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	name = "Skybox";
+}
+
 void GLTexture::UseForSlot(unsigned int unit) const noexcept
 {
 	// == Shader layout binding

@@ -85,6 +85,17 @@ public:
 #ifdef _DEBUG
 	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
 #endif
+
+	//Skybox
+	virtual void LoadSkyBox(
+		const std::filesystem::path& right,
+		const std::filesystem::path& left,
+		const std::filesystem::path& top,
+		const std::filesystem::path& bottom,
+		const std::filesystem::path& front,
+		const std::filesystem::path& back
+	) = 0;
+	virtual void DeleteSkyBox() = 0;
 protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };
@@ -99,14 +110,14 @@ protected:
 	std::vector<TwoDimension::FragmentUniform> fragUniforms2D;
 
 	//--------------------3D Render--------------------//
-	bool DegenerateTri(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
+	static bool DegenerateTri(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
 	{
 		return (glm::distance(v0, v1) < EPSILON || glm::distance(v1, v2) < EPSILON || glm::distance(v2, v0) < EPSILON);
 	}
-	float RoundDecimal(float input) { return std::floor(input * 10000.0f + 0.5f) / 10000.0f; }
-	glm::vec3 RoundDecimal(const glm::vec3& input)
+	static float RoundDecimal(float input) { return std::floor(input * 10000.0f + 0.5f) / 10000.0f; }
+	static glm::vec3 RoundDecimal(const glm::vec3& input)
 	{
-		return glm::vec3(RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]));
+		return { RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]) };
 	}
 
 	void CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices);
@@ -131,4 +142,7 @@ protected:
 
 	//Assimp
 	Assimp::Importer importer;
+
+	//Skybox
+	bool skyboxEnabled{ false };
 };
