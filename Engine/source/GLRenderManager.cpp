@@ -175,19 +175,22 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 #endif
 
 	//Skybox
-	skyboxShader.Use(true);
-	if (vertexUniform3D != nullptr)
+	if (skyboxEnabled)
 	{
-		vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		skyboxShader.Use(true);
+		if (vertexUniform3D != nullptr)
+		{
+			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		}
+		skyboxVertexArray.Use(true);
+		auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+		glCheck(glUniform1i(skyboxLocation, 0));
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetTextureHandle());
+		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
+		skyboxVertexArray.Use(false);
+		skyboxShader.Use(false);
 	}
-	skyboxVertexArray.Use(true);
-	auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
-	glCheck(glUniform1i(skyboxLocation, 0));
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetTextureHandle());
-	glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
-	skyboxVertexArray.Use(false);
-	skyboxShader.Use(false);
 
 	imguiManager->Begin();
 }
