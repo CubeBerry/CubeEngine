@@ -96,6 +96,7 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
+	glCheck(glEnable(GL_CULL_FACE));
 	glCheck(glCullFace(GL_BACK));
 	switch (pMode)
 	{
