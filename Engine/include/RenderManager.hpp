@@ -63,21 +63,17 @@ public:
 
 	//--------------------3D Render--------------------//
 	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) = 0;
-	void EnableLighting(bool isEnabled)
+	//void EnableLighting(bool isEnabled) { isLighting = isEnabled; };
+	void AddLight(const ThreeDimension::FragmentLightingUniform& light)
 	{
-		isLighting = isEnabled;
-		vertexLightingUniform.isLighting = isLighting;
+		fragmentLightingUniforms.push_back(light);
 	}
-	void UpdateLighting(glm::vec3 lightPosition, glm::vec3 lightColor, glm::vec3 viewPosition, float ambientStrength, float specularStrength)
+	void DeleteLights()
 	{
-		vertexLightingUniform.lightPosition = lightPosition;
-		//if (gMode == GraphicsMode::VK)
-		//	vertexLightingUniform.lightPosition.y = -lightPosition.y;
-		vertexLightingUniform.lightColor = lightColor;
-		vertexLightingUniform.viewPosition = viewPosition;
-		vertexLightingUniform.ambientStrength = ambientStrength;
-		vertexLightingUniform.specularStrength = specularStrength;
+		fragmentLightingUniforms.clear();
+		fragmentLightingUniforms.shrink_to_fit();
 	}
+	std::vector<ThreeDimension::FragmentLightingUniform>& GetLightingUniforms() { return fragmentLightingUniforms; };
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
 	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
@@ -123,8 +119,9 @@ protected:
 	void CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices);
 
 	//Lighting
-	bool isLighting{ false };
-	ThreeDimension::VertexLightingUniform vertexLightingUniform{};
+	//bool isLighting{ false };
+	//ThreeDimension::VertexLightingUniform vertexLightingUniform{};
+	std::vector<ThreeDimension::FragmentLightingUniform> fragmentLightingUniforms;
 
 	std::vector<ThreeDimension::Vertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;

@@ -18,7 +18,7 @@ GLRenderManager::~GLRenderManager()
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
 	delete fragmentMaterialUniformBuffer;
-	delete vertexLightingUniformBuffer;
+	delete fragmentLightingUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -76,19 +76,19 @@ void GLRenderManager::Initialize(
 	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Normal3D.frag" } });
 #endif
 
-	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
-	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
-	vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms2D.size() * sizeof(TwoDimension::VertexUniform), vertexUniforms2D.data());
-	fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms2D.size() * sizeof(TwoDimension::FragmentUniform), fragUniforms2D.data());
+	//vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
+	//fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
+	//vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms2D.size() * sizeof(TwoDimension::VertexUniform), vertexUniforms2D.data());
+	//fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms2D.size() * sizeof(TwoDimension::FragmentUniform), fragUniforms2D.data());
 
-	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
-	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
-	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
-	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
+	//vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
+	//fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
+	//vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+	//fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 
 	//Lighting
-	vertexLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::VertexLightingUniform>();
-	vertexLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "vLightingMatrix", sizeof(ThreeDimension::VertexLightingUniform), vertexLightingUniformBuffer);
+	fragmentLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::FragmentLightingUniform>();
+	fragmentLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fLightingMatrix", sizeof(ThreeDimension::FragmentLightingUniform), fragmentLightingUniformBuffer);
 	imguiManager = new GLImGuiManager(window_, context_);
 }
 
@@ -141,9 +141,9 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
 		}
-		if (vertexLightingUniformBuffer != nullptr)
+		if (fragmentLightingUniformBuffer != nullptr)
 		{
-			vertexLightingUniformBuffer->UpdateUniform(sizeof(ThreeDimension::VertexLightingUniform), &vertexLightingUniform);
+			fragmentLightingUniformBuffer->UpdateUniform(fragmentLightingUniforms.size() * sizeof(ThreeDimension::FragmentLightingUniform), fragmentLightingUniforms.data());
 		}
 		if (fragmentUniform3D != nullptr)
 		{

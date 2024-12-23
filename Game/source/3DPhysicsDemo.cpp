@@ -60,8 +60,7 @@ void PhysicsDemo::Init()
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l.ambientStrength = 0.1f;
 	l.specularStrength = 0.5f;
-	l.isLighting = true;
-	Engine::GetRenderManager()->EnableLighting(true);
+	Engine::GetRenderManager()->AddLight(l);
 
 	Engine::GetRenderManager()->LoadSkyBox(
 		"../Game/assets/Skybox/right.jpg",
@@ -126,7 +125,7 @@ void PhysicsDemo::Update(float dt)
 
 	//Update Lighting Variables
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
-	Engine::GetRenderManager()->UpdateLighting(l.lightPosition, l.lightColor, l.viewPosition, l.ambientStrength, l.specularStrength);
+	Engine::GetRenderManager()->GetLightingUniforms()[0] = l;
 
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{

@@ -12,20 +12,14 @@
 layout(location = 0) in vec3 i_pos;
 layout(location = 1) in vec3 i_normal;
 layout(location = 2) in vec2 i_uv;
-layout(location = 3) in int index;
+layout(location = 3) in int object_index;
 
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
-layout(location = 2) out int o_index;
+layout(location = 2) out int o_object_index;
 //Lighting
-layout(location = 3) out vec3 o_light_position;
-layout(location = 4) out vec3 o_light_color;
-layout(location = 5) out float o_ambient_strength;
 layout(location = 6) out vec3 o_normal;
 layout(location = 7) out vec3 o_fragment_position;
-layout(location = 8) out vec3 o_view_position;
-layout(location = 9) out float o_specular_strength;
-layout(location = 10) out float o_is_lighting;
 
 struct vMatrix
 {
@@ -44,39 +38,14 @@ layout(std140, binding = 0) uniform vUniformMatrix
     vMatrix matrix[MAX_MATRICES];
 };
 
-struct vLighting
-{
-    vec3 lightPosition;
-    float ambientStrength;
-    vec3 lightColor;
-    float specularStrength;
-    vec3 viewPosition;
-    float isLighting;
-};
-
-#if VULKAN
-layout(set = 0, binding = 1) uniform vLightingMatrix
-#else
-layout(std140, binding = 3) uniform vLightingMatrix
-#endif
-{
-    vLighting lightingMatrix;
-};
-
 void main()
 {
     o_uv = i_uv;
-    o_col = matrix[index].color;
-    o_index = index;
+    o_col = matrix[object_index].color;
+    o_object_index = object_index;
     //Lighting
-    o_light_position = lightingMatrix.lightPosition;
-    o_light_color = lightingMatrix.lightColor;
-    o_ambient_strength = lightingMatrix.ambientStrength;
-    o_normal = mat3(transpose(inverse(matrix[index].model))) * i_normal;
-    o_fragment_position = mat3(matrix[index].model) * i_pos;
-    o_view_position = lightingMatrix.viewPosition;
-    o_specular_strength = lightingMatrix.specularStrength;
-    o_is_lighting = lightingMatrix.isLighting;
+    o_normal = mat3(transpose(inverse(matrix[object_index].model))) * i_normal;
+    o_fragment_position = mat3(matrix[object_index].model) * i_pos;
 
-    gl_Position = matrix[index].projection * matrix[index].view * matrix[index].model * vec4(i_pos, 1.0);
+    gl_Position = matrix[object_index].projection * matrix[object_index].view * matrix[object_index].model * vec4(i_pos, 1.0);
 }

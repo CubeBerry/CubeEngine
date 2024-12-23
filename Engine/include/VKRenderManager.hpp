@@ -202,7 +202,7 @@ private:
 #endif
 
 	//Lighting
-	VKUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
+	VKUniformBuffer<ThreeDimension::FragmentLightingUniform>* fragmentLightingUniformBuffer{ nullptr };
 
 	//Skyobx
 	VKTexture* skybox;

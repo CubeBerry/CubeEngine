@@ -81,7 +81,7 @@ private:
 #endif
 
 	//Lighting
-	GLUniformBuffer<ThreeDimension::VertexLightingUniform>* vertexLightingUniformBuffer{ nullptr };
+	GLUniformBuffer<ThreeDimension::FragmentLightingUniform>* fragmentLightingUniformBuffer{ nullptr };
 
 	//Skybox
 	GLVertexArray skyboxVertexArray;

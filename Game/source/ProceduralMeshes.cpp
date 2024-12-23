@@ -23,8 +23,7 @@ void ProceduralMeshes::Init()
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l.ambientStrength = 0.1f;
 	l.specularStrength = 0.5f;
-	l.isLighting = true;
-	Engine::GetRenderManager()->EnableLighting(true);
+	Engine::GetRenderManager()->AddLight(l);
 
 	//Debug Lighting
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light", ObjectType::NONE);
@@ -74,7 +73,7 @@ void ProceduralMeshes::Update(float dt)
 	l.lightPosition.z = rotatedPosition.z;
 
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
-	Engine::GetRenderManager()->UpdateLighting(l.lightPosition, l.lightColor, l.viewPosition, l.ambientStrength, l.specularStrength);
+	Engine::GetRenderManager()->GetLightingUniforms()[0] = l;
 	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
 
 	//Camera Update
@@ -285,7 +284,7 @@ void ProceduralMeshes::End()
 {
 	isFill = true;
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
-	Engine::GetRenderManager()->EnableLighting(false);
+	Engine::GetRenderManager()->DeleteLights();
 	Engine::GetRenderManager()->DeleteSkyBox();
 
 	Engine::GetCameraManager().Reset();

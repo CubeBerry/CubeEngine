@@ -39,7 +39,7 @@ VKRenderManager::~VKRenderManager()
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
 	delete fragmentMaterialUniformBuffer;
-	delete vertexLightingUniformBuffer;
+	delete fragmentLightingUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -457,20 +457,20 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
-	VKDescriptorLayout vertexLayout[2];
-	vertexLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
-	vertexLayout[0].descriptorCount = 1;
-	vertexLayout[1].descriptorType = VKDescriptorLayout::UNIFORM;
-	vertexLayout[1].descriptorCount = 1;
+	VKDescriptorLayout vertexLayout;
+	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
+	vertexLayout.descriptorCount = 1;
 
-	VKDescriptorLayout fragmentLayout[3];
+	VKDescriptorLayout fragmentLayout[4];
 	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[0].descriptorCount = 1;
 	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
 	fragmentLayout[1].descriptorCount = 500;
 	fragmentLayout[2].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[2].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout[0], vertexLayout[1] }, { fragmentLayout[0], fragmentLayout[1] ,fragmentLayout[2] });
+	fragmentLayout[3].descriptorType = VKDescriptorLayout::UNIFORM;
+	fragmentLayout[3].descriptorCount = 1;
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
@@ -541,7 +541,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
 #endif
 
-	vertexLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexLightingUniform>(vkInit, 1);
+	fragmentLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentLightingUniform>(vkInit, 1);
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
@@ -1465,39 +1465,26 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
 
 				//Define which resource descriptor set will point
-				VkWriteDescriptorSet descriptorWrite[2] = {};
-				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite[0].dstSet = *currentVertexMaterialDescriptorSet;
-				descriptorWrite[0].dstBinding = 0;
-				descriptorWrite[0].descriptorCount = 1;
-				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite[0].pBufferInfo = &bufferInfo;
-
-				VkDescriptorBufferInfo lightingBufferInfo;
-				lightingBufferInfo.buffer = (*(vertexLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
-				lightingBufferInfo.offset = 0;
-				lightingBufferInfo.range = sizeof(ThreeDimension::VertexLightingUniform);
-
-				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite[1].dstSet = *currentVertexMaterialDescriptorSet;
-				descriptorWrite[1].dstBinding = 1;
-				descriptorWrite[1].descriptorCount = 1;
-				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite[1].pBufferInfo = &lightingBufferInfo;
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite.pBufferInfo = &bufferInfo;
 
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
-			vertexLightingUniformBuffer->UpdateUniform(1, &vertexLightingUniform, frameIndex);
 		}
 
 		if (fragmentUniform3D != nullptr)
 		{
 			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
-				VkWriteDescriptorSet descriptorWrite[3] = {};
+				VkWriteDescriptorSet descriptorWrite[4] = {};
 
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(fragmentUniform3D->GetUniformBuffers()))[frameIndex];
@@ -1539,12 +1526,25 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				descriptorWrite[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descriptorWrite[2].pBufferInfo = &materialBufferInfo;
 
+				VkDescriptorBufferInfo lightingBufferInfo;
+				lightingBufferInfo.buffer = (*(fragmentLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
+				lightingBufferInfo.offset = 0;
+				lightingBufferInfo.range = sizeof(ThreeDimension::FragmentLightingUniform);
+
+				descriptorWrite[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite[3].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[3].dstBinding = 3;
+				descriptorWrite[3].descriptorCount = 1;
+				descriptorWrite[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite[3].pBufferInfo = &lightingBufferInfo;
+
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 3, descriptorWrite, 0, nullptr);
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 4, descriptorWrite, 0, nullptr);
 			}
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
+			fragmentLightingUniformBuffer->UpdateUniform(fragmentLightingUniforms.size(), fragmentLightingUniforms.data(), frameIndex);
 		}
 
 		if (skyboxEnabled)

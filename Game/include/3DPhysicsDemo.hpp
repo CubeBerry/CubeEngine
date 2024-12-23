@@ -21,5 +21,5 @@ public:
 	void Restart() override;
 	void End() override;
 private:
-	ThreeDimension::VertexLightingUniform l;
+	ThreeDimension::FragmentLightingUniform l;
 };
