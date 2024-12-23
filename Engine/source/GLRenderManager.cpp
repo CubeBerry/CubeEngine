@@ -96,8 +96,6 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
-	glCheck(glEnable(GL_CULL_FACE));
-	glCheck(glCullFace(GL_BACK));
 	switch (pMode)
 	{
 	case PolygonType::FILL:
@@ -113,6 +111,8 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:
+		glCheck(glDisable(GL_CULL_FACE));
+
 		gl2DShader.Use(true);
 
 		//For Texture Array
@@ -132,6 +132,9 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		}
 		break;
 	case RenderType::ThreeDimension:
+		glCheck(glEnable(GL_CULL_FACE));
+		glCheck(glCullFace(GL_BACK));
+
 		gl3DShader.Use(true);
 
 		if (vertexUniform3D != nullptr)
