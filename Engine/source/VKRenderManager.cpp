@@ -541,7 +541,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
 #endif
 
-	fragmentLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentLightingUniform>(vkInit, 1);
+	fragmentLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentLightingUniform>(vkInit, 10);
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
@@ -1529,7 +1529,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkDescriptorBufferInfo lightingBufferInfo;
 				lightingBufferInfo.buffer = (*(fragmentLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
 				lightingBufferInfo.offset = 0;
-				lightingBufferInfo.range = sizeof(ThreeDimension::FragmentLightingUniform);
+				lightingBufferInfo.range = sizeof(ThreeDimension::FragmentLightingUniform) * fragmentLightingUniforms.size();
 
 				descriptorWrite[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorWrite[3].dstSet = *currentTextureDescriptorSet;

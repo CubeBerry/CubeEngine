@@ -25,6 +25,14 @@ void ProceduralMeshes::Init()
 	l.specularStrength = 0.5f;
 	Engine::GetRenderManager()->AddLight(l);
 
+	ThreeDimension::FragmentLightingUniform l2;
+	l2.lightPosition = glm::vec4(0.f, 1.f, 0.f, 1.f);
+	l2.lightColor = glm::vec4(0.f, 1.f, 0.f, 1.f);
+	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
+	l2.ambientStrength = 0.1f;
+	l2.specularStrength = 0.5f;
+	Engine::GetRenderManager()->AddLight(l2);
+
 	//Debug Lighting
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();

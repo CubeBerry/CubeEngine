@@ -4,6 +4,7 @@
 #endif
 
 #define MAX_TEXTURES 500
+#define MAX_LIGHTS 10
 
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
@@ -64,33 +65,39 @@ layout(set = 1, binding = 3) uniform fLightingMatrix
 layout(std140, binding = 3) uniform fLightingMatrix
 #endif
 {
-    fLighting lightingMatrix;
+    fLighting lightingMatrix[MAX_LIGHTS];
 };
 
 void main()
 {
-    //Ambient Lighting
-    vec3 ambient = lightingMatrix.ambientStrength * lightingMatrix.lightColor;
-
-    //Diffuse Lighting
-    vec3 normal = normalize(i_normal);
-    vec3 light_direction = normalize(lightingMatrix.lightPosition - i_fragment_position);
-
-    float diff = max(dot(normal, light_direction), 0.0);
-    vec3 diffuse = diff * lightingMatrix.lightColor;
-
-    //Specular Lighting
-    vec3 specular = vec3(0.0);
-    if (diff > 0.0)
+    vec3 resultColor = vec3(0.0);
+    for (int l = 0; l < MAX_LIGHTS; ++l)
     {
-        vec3 view_direction = normalize(lightingMatrix.viewPosition - i_fragment_position);
-        // vec3 reflect_direction = reflect(-light_direction, normal);
-        vec3 halfway_vector = normalize(view_direction + light_direction);
+        //Ambient Lighting
+        vec3 ambient = lightingMatrix[l].ambientStrength * lightingMatrix[l].lightColor;
 
-        // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
-        float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
-        specular = lightingMatrix.specularStrength * spec * lightingMatrix.lightColor * f_material[i_object_index].specularColor;
+        //Diffuse Lighting
+        vec3 normal = normalize(i_normal);
+        vec3 light_direction = normalize(lightingMatrix[l].lightPosition - i_fragment_position);
+
+        float diff = max(dot(normal, light_direction), 0.0);
+        vec3 diffuse = diff * lightingMatrix[l].lightColor;
+
+        //Specular Lighting
+        vec3 specular = vec3(0.0);
+        if (diff > 0.0)
+        {
+            vec3 view_direction = normalize(lightingMatrix[l].viewPosition - i_fragment_position);
+            // vec3 reflect_direction = reflect(-light_direction, normal);
+            vec3 halfway_vector = normalize(view_direction + light_direction);
+
+            // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+            float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
+            specular = lightingMatrix[l].specularStrength * spec * lightingMatrix[l].lightColor * f_material[i_object_index].specularColor;
         }
 
-    fragmentColor = vec4(ambient + diffuse + specular, 1.0) * (i_col + 0.5);
+        resultColor += ambient + diffuse + specular;
+    }
+
+    fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 }
