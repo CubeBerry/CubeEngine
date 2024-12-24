@@ -33,7 +33,7 @@ void ProceduralMeshes::Init()
 	Engine::GetRenderManager()->AddLight(l2);
 
 	l3.lightPosition = glm::vec4(0.f, 10.f, 0.f, 1.f);
-	l3.lightColor = glm::vec4(1.f, 1.f, 0.f, 1.f);
+	l3.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	l3.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l3.ambientStrength = 0.1f;
 	l3.specularStrength = 0.5f;
@@ -107,8 +107,10 @@ void ProceduralMeshes::Update(float dt)
 
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
+
 	Engine::GetRenderManager()->GetLightingUniforms()[0] = l;
 	Engine::GetRenderManager()->GetLightingUniforms()[1] = l2;
+
 	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
 	Engine::GetObjectManager().FindObjectWithName("Light2")->SetPosition(l2.lightPosition);
 
@@ -296,16 +298,38 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 	}
 
 	//Lighting
+	static int selectedLightIndex = -1;
 	if (ImGui::CollapsingHeader("Lights"))
 	{
-		//Change Light Color
-		ImGui::SliderFloat3("Light Color", &l.lightColor.x, 0.f, 1.f);
+		if (ImGui::BeginMenu("Select Light"))
+		{
+			auto& lights = Engine::GetRenderManager()->GetLightingUniforms();
+			for (size_t i = 0; i < lights.size(); ++i)
+			{
+				if (ImGui::Selectable(("Light " + std::to_string(i)).c_str(), selectedLightIndex == i))
+				{
+					selectedLightIndex = static_cast<int>(i);
+				}
+			}
+			ImGui::EndMenu();
+		}
+	}
 
-		//Change Ambient Strength
-		ImGui::SliderFloat("Ambient Strength", &l.ambientStrength, 0.f, 1.f);
+	if (selectedLightIndex >= 0 && selectedLightIndex < Engine::GetRenderManager()->GetLightingUniforms().size())
+	{
+		auto& light = Engine::GetRenderManager()->GetLightingUniforms()[selectedLightIndex];
 
-		//Change Specular Strength
-		ImGui::SliderFloat("Specular Strength", &l.specularStrength, 0.f, 1.f);
+		float color_[3] = { light.lightColor.x, light.lightColor.y, light.lightColor.z };
+		if (ImGui::ColorEdit3("Light Color", color_))
+		{
+			light.lightColor.x = color_[0];
+			light.lightColor.y = color_[1];
+			light.lightColor.z = color_[2];
+		}
+
+		ImGui::SliderFloat("Ambient Strength", &light.ambientStrength, 0.f, 1.f);
+
+		ImGui::SliderFloat("Specular Strength", &light.specularStrength, 0.f, 1.f);
 	}
 
 	ImGui::End();
