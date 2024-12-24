@@ -23,6 +23,8 @@ private:
 	float color[4]{ 1.f, 0.f, 0.f, 1.f };
 
 	ThreeDimension::FragmentLightingUniform l;
+	ThreeDimension::FragmentLightingUniform l2;
+	ThreeDimension::FragmentLightingUniform l3;
 
 	MeshType currentMesh{ MeshType::PLANE };
 
@@ -36,5 +38,5 @@ private:
 	//ImGui - Object
 	std::filesystem::path objPath = "";
 
-	float angle{ 0 };
+	float angle[2] = { 0,0 };
 };
