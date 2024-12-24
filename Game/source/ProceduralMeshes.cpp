@@ -108,8 +108,10 @@ void ProceduralMeshes::Update(float dt)
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 
-	Engine::GetRenderManager()->GetLightingUniforms()[0] = l;
-	Engine::GetRenderManager()->GetLightingUniforms()[1] = l2;
+	Engine::GetRenderManager()->GetLightingUniforms()[0].lightPosition = l.lightPosition;
+	Engine::GetRenderManager()->GetLightingUniforms()[0].viewPosition = l.viewPosition;
+	Engine::GetRenderManager()->GetLightingUniforms()[1].lightPosition = l2.lightPosition;
+	Engine::GetRenderManager()->GetLightingUniforms()[1].viewPosition = l2.viewPosition;
 
 	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
 	Engine::GetObjectManager().FindObjectWithName("Light2")->SetPosition(l2.lightPosition);
@@ -292,13 +294,13 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			isFill = false;
 		}
 
-		ImGui::ColorPicker4("Mesh Color", color);
+		ImGui::ColorPicker3("Mesh Color", color);
 
 		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
 
 	//Lighting
-	static int selectedLightIndex = -1;
+	static int selectedLightIndex = 0;
 	if (ImGui::CollapsingHeader("Lights"))
 	{
 		if (ImGui::BeginMenu("Select Light"))
@@ -313,23 +315,23 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			}
 			ImGui::EndMenu();
 		}
-	}
 
-	if (selectedLightIndex >= 0 && selectedLightIndex < Engine::GetRenderManager()->GetLightingUniforms().size())
-	{
-		auto& light = Engine::GetRenderManager()->GetLightingUniforms()[selectedLightIndex];
-
-		float color_[3] = { light.lightColor.x, light.lightColor.y, light.lightColor.z };
-		if (ImGui::ColorEdit3("Light Color", color_))
+		if (selectedLightIndex >= 0 && selectedLightIndex < Engine::GetRenderManager()->GetLightingUniforms().size())
 		{
-			light.lightColor.x = color_[0];
-			light.lightColor.y = color_[1];
-			light.lightColor.z = color_[2];
+			auto& light = Engine::GetRenderManager()->GetLightingUniforms()[selectedLightIndex];
+
+			float color_[3] = { light.lightColor.x, light.lightColor.y, light.lightColor.z };
+			if (ImGui::ColorEdit3("Light Color", color_))
+			{
+				light.lightColor.x = color_[0];
+				light.lightColor.y = color_[1];
+				light.lightColor.z = color_[2];
+			}
+
+			ImGui::SliderFloat("Ambient Strength", &light.ambientStrength, 0.f, 1.f);
+
+			ImGui::SliderFloat("Specular Strength", &light.specularStrength, 0.f, 1.f);
 		}
-
-		ImGui::SliderFloat("Ambient Strength", &light.ambientStrength, 0.f, 1.f);
-
-		ImGui::SliderFloat("Specular Strength", &light.specularStrength, 0.f, 1.f);
 	}
 
 	ImGui::End();
