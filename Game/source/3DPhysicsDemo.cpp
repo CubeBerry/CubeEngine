@@ -168,5 +168,6 @@ void PhysicsDemo::End()
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
 	Engine::GetObjectManager().DestroyAllObjects();
+	Engine::GetRenderManager()->DeleteLights();
 	Engine::GetRenderManager()->DeleteSkyBox();
 }
