@@ -573,7 +573,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	if (fragmentMaterialUniformBuffer != nullptr)
 		delete fragmentMaterialUniformBuffer;
 	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
-	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
+	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
 
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
