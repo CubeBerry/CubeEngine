@@ -23,6 +23,8 @@ public:
     {
         return count;
     }
+
+    void SetCount(int count_) noexcept { count = count_; }
 private:
     GLuint indexHandle{ 0 };
     GLsizei count{ 0 };
