@@ -76,18 +76,6 @@ void GLRenderManager::Initialize(
 	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Normal3D.frag" } });
 #endif
 
-	//vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
-	//vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", 0, nullptr);
-	//fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
-	//fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", 0, nullptr);
-
-	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
-	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
-	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
-	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", 0, nullptr);
-	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", 0, nullptr);
-	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", 0, nullptr);
-
 	//Lighting
 	fragmentLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::FragmentLightingUniform>();
 	fragmentLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fLightingMatrix", 0, nullptr);
@@ -345,8 +333,8 @@ void GLRenderManager::DeleteWithIndex(int id)
 			break;
 		case RenderType::ThreeDimension:
 			vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
-			//delete vertexUniform3D;
-			//vertexUniform3D = nullptr;
+			delete vertexUniform3D;
+			vertexUniform3D = nullptr;
 			break;
 		}
 
@@ -359,12 +347,12 @@ void GLRenderManager::DeleteWithIndex(int id)
 			break;
 		case RenderType::ThreeDimension:
 			fragUniforms3D.erase(end(fragUniforms3D) - 1);
-			//delete fragmentUniform3D;
-			//fragmentUniform3D = nullptr;
+			delete fragmentUniform3D;
+			fragmentUniform3D = nullptr;
 
 			fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
-			//delete fragmentMaterialUniformBuffer;
-			//fragmentMaterialUniformBuffer = nullptr;
+			delete fragmentMaterialUniformBuffer;
+			fragmentMaterialUniformBuffer = nullptr;
 			break;
 		}
 
@@ -563,20 +551,20 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout, normal_index_layout });
 #endif
 
-	//if (vertexUniform3D != nullptr)
-	//	delete vertexUniform3D;
-	//vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
-	//vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D.size(), vertexUniforms3D.data());
+	if (vertexUniform3D != nullptr)
+		delete vertexUniform3D;
+	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
+	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D.size(), vertexUniforms3D.data());
 
-	//if (fragmentUniform3D != nullptr)
-	//	delete fragmentUniform3D;
-	//fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
-	//fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
+	if (fragmentUniform3D != nullptr)
+		delete fragmentUniform3D;
+	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
+	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
 
-	//if (fragmentMaterialUniformBuffer != nullptr)
-	//	delete fragmentMaterialUniformBuffer;
-	//fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
-	//fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
+	if (fragmentMaterialUniformBuffer != nullptr)
+		delete fragmentMaterialUniformBuffer;
+	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
+	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
 
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
