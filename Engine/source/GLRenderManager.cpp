@@ -398,6 +398,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 
 		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
 		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
+		indexBuffer->SetCount(static_cast<int>(indices.size()));
 		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
 
 #ifdef _DEBUG
@@ -551,21 +552,6 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	normalVertexArray.AddVertexBuffer(std::move(*normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout, normal_index_layout });
 #endif
 
-	if (vertexUniform3D != nullptr)
-		delete vertexUniform3D;
-	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
-	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D.size(), vertexUniforms3D.data());
-
-	if (fragmentUniform3D != nullptr)
-		delete fragmentUniform3D;
-	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
-	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
-
-	if (fragmentMaterialUniformBuffer != nullptr)
-		delete fragmentMaterialUniformBuffer;
-	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
-	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
-
 	ThreeDimension::VertexUniform mat;
 	mat.model = glm::mat4(1.f);
 	mat.view = glm::mat4(1.f);
@@ -581,6 +567,21 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	material.shininess = shininess;
 	material.specularColor = specularColor;
 	fragMaterialUniforms3D.push_back(material);
+
+	if (vertexUniform3D != nullptr)
+		delete vertexUniform3D;
+	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
+	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 0, "vUniformMatrix", vertexUniforms3D.size(), vertexUniforms3D.data());
+
+	if (fragmentUniform3D != nullptr)
+		delete fragmentUniform3D;
+	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
+	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 1, "fUniformMatrix", fragUniforms3D.size(), fragUniforms3D.data());
+
+	if (fragmentMaterialUniformBuffer != nullptr)
+		delete fragmentMaterialUniformBuffer;
+	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
+	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
 }
 
 void GLRenderManager::LoadSkyBox(
