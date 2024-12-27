@@ -88,7 +88,8 @@ void GLRenderManager::Initialize(
 
 	//Lighting
 	fragmentLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::FragmentLightingUniform>();
-	fragmentLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fLightingMatrix", sizeof(ThreeDimension::FragmentLightingUniform), fragmentLightingUniformBuffer);
+	fragmentLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fLightingMatrix", sizeof(ThreeDimension::FragmentLightingUniform) , fragmentLightingUniforms.data());
+
 	imguiManager = new GLImGuiManager(window_, context_);
 }
 
@@ -141,14 +142,15 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
 		}
-		if (fragmentLightingUniformBuffer != nullptr)
-		{
-			fragmentLightingUniformBuffer->UpdateUniform(fragmentLightingUniforms.size() * sizeof(ThreeDimension::FragmentLightingUniform), fragmentLightingUniforms.data());
-		}
 		if (fragmentUniform3D != nullptr)
 		{
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
+		}
+		if (fragmentLightingUniformBuffer != nullptr)
+		{
+			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activeLights"), static_cast<GLint>(fragmentLightingUniforms.size())));
+			fragmentLightingUniformBuffer->UpdateUniform(fragmentLightingUniforms.size() * sizeof(ThreeDimension::FragmentLightingUniform), fragmentLightingUniforms.data());
 		}
 		break;
 	}

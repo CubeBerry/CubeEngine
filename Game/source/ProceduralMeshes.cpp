@@ -82,7 +82,7 @@ void ProceduralMeshes::Update(float dt)
 #endif
 
 	//Update Color
-	(*Engine::GetRenderManager()->GetVertexUniforms3D())[1].color = glm::vec4{ color[0], color[1], color[2], color[3] };
+	(*Engine::GetRenderManager()->GetVertexUniforms3D())[3].color = glm::vec4{ color[0], color[1], color[2], color[3] };
 
 	//Update Lighting Variables
 	angle[0] += 50.f * dt;
@@ -294,7 +294,7 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			isFill = false;
 		}
 
-		ImGui::ColorPicker3("Mesh Color", color);
+		ImGui::ColorPicker3("Mesh Color", color.data());
 
 		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
@@ -344,7 +344,15 @@ void ProceduralMeshes::Restart()
 
 void ProceduralMeshes::End()
 {
+	stacks = 1;
+	slices = 1;
 	isFill = true;
+	color = { 1.f, 0.f, 0.f, 1.f };
+	isRecreate = false;
+	isDrawNormals = false;
+	angle[0] = 0;
+	angle[1] = 0;
+
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
 	Engine::GetRenderManager()->DeleteLights();
 	Engine::GetRenderManager()->DeleteSkyBox();

@@ -4,6 +4,7 @@
 #pragma once
 #include "GameState.hpp"
 #include "RenderManager.hpp"
+#include <array>
 
 class ProceduralMeshes : public GameState
 {
@@ -20,7 +21,7 @@ private:
 	int stacks{ 1 };
 	int slices{ 1 };
 	bool isFill{ true };
-	float color[4]{ 1.f, 0.f, 0.f, 1.f };
+	std::array<float, 4> color = { 1.f, 0.f, 0.f, 1.f };
 
 	ThreeDimension::FragmentLightingUniform l;
 	ThreeDimension::FragmentLightingUniform l2;
