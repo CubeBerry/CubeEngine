@@ -31,7 +31,7 @@ GLUniformBuffer<Material>::~GLUniformBuffer()
 }
 
 template <typename Material>
-void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* data)
+void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* /*data*/)
 {
     //GLuint uniformBlockIndex = glGetUniformBlockIndex(program, name);
     //GLuint uniformBindingPoint{ binding };
@@ -53,8 +53,9 @@ void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, cons
     glCheck(glGenBuffers(1, &uniformHandle));
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, uniformHandle));
     glCheck(glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW));
-    glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
+    //glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
     glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, uniformBindingPoint, uniformHandle));
+    glCheck(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }
 
 template <typename Material>
