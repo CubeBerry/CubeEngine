@@ -23,7 +23,7 @@ struct vMatrix
 #if VULKAN
 layout(set = 0, binding = 0) uniform vUniformMatrix
 #else
-layout(std140, binding = 0) uniform vUniformMatrix
+layout(std140, binding = 2) uniform vUniformMatrix
 #endif
 {
     vMatrix matrix[MAX_MATRICES];

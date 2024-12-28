@@ -38,7 +38,7 @@ struct fLighting
 #if VULKAN
 layout(set = 1, binding = 0) uniform fUniformMatrix
 #else
-layout(std140, binding = 1) uniform fUniformMatrix
+layout(std140, binding = 3) uniform fUniformMatrix
 #endif
 {
     fMatrix f_matrix[MAX_TEXTURES];
@@ -53,7 +53,7 @@ uniform sampler2D tex[MAX_TEXTURES];
 #if VULKAN
 layout(set = 1, binding = 2) uniform fUniformMaterial
 #else
-layout(std140, binding = 2) uniform fUniformMaterial
+layout(std140, binding = 4) uniform fUniformMaterial
 #endif
 {
     fMaterial f_material[MAX_TEXTURES];
@@ -62,7 +62,7 @@ layout(std140, binding = 2) uniform fUniformMaterial
 #if VULKAN
 layout(set = 1, binding = 3) uniform fLightingMatrix
 #else
-layout(std140, binding = 3) uniform fLightingMatrix
+layout(std140, binding = 5) uniform fLightingMatrix
 #endif
 {
     fLighting lightingMatrix[MAX_LIGHTS];
