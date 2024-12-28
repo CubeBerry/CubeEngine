@@ -1103,8 +1103,8 @@ void VKRenderManager::DeleteWithIndex(int id)
 		{
 			(*it) = (*it) - static_cast<unsigned short>(verticesPerMesh[id]);
 		}
-
-		vkCmdUpdateBuffer(commandBuffer, *vertex3DBuffer->GetVertexBuffer(), 0, vertices3D.size() * sizeof(ThreeDimension::Vertex), vertices3D.data());
+		//vkCmdUpdateBuffer(commandBuffer, *vertex3DBuffer->GetVertexBuffer(), 0, vertices3D.size() * sizeof(ThreeDimension::Vertex), vertices3D.data());
+		vertex3DBuffer->UpdateVertexBuffer(&vertices3D);
 		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
 
 #ifdef _DEBUG
@@ -1119,7 +1119,8 @@ void VKRenderManager::DeleteWithIndex(int id)
 		{
 			it->index--;
 		}
-		vkCmdUpdateBuffer(commandBuffer, *normalVertexBuffer->GetVertexBuffer(), 0, normalVertices3D.size() * sizeof(ThreeDimension::NormalVertex), normalVertices3D.data());
+		//vkCmdUpdateBuffer(commandBuffer, *normalVertexBuffer->GetVertexBuffer(), 0, normalVertices3D.size() * sizeof(ThreeDimension::NormalVertex), normalVertices3D.data());
+		normalVertexBuffer->UpdateVertexBuffer(&normalVertices3D);
 #endif
 		break;
 	}

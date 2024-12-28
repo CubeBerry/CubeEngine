@@ -178,6 +178,51 @@ public:
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);
 	};
+
+	void UpdateVertexBuffer(std::vector<Vertex>* vertices_)
+	{
+		//Get Virtual Address for CPU to access Memory
+		void* contents;
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, sizeof(Vertex) * vertices_->size(), 0, &contents);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_MEMORY_MAP_FAILED:
+					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Memory Map Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKVertexBuffer::~VKVertexBuffer();
+			std::exit(EXIT_FAILURE);
+		}
+
+		//Copy Vertex Info to Memory
+		//&(*vertices_)[0] == vertices_->data()
+		memcpy(contents, vertices_->data(), sizeof(Vertex) * vertices_->size());
+
+		//End Accessing Memory from CPU
+		vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);
+	};
+
 	VkBuffer* GetVertexBuffer() { return &vkVertexBuffer; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
