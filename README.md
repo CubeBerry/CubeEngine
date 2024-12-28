@@ -39,14 +39,14 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/36c003b4-65c5-413f-9faf-e71366a791f3)
 
-![image](https://github.com/user-attachments/assets/01522166-6c82-4d7b-b2e5-83a7d88348da)
+![image](https://github.com/user-attachments/assets/a59986d5-f250-4307-ac20-722a742bbfb5)
 
 ![image](https://github.com/user-attachments/assets/b232e7ea-8e9d-477c-90c3-ba03e17830d5)
 
 
 ## Future Plans
-1. Linux Support
-2. PBR
+1. PBR
+2. 3D Mesh Texture
 4. C++ Code Optimization
 
 ## License
