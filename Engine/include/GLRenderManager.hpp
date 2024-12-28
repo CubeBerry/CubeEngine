@@ -24,7 +24,7 @@ public:
 private:
 	void GLDrawIndexed(const GLVertexArray& vertex_array) noexcept
 	{
-		glCheck(glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_SHORT, 0));
+		glCheck(glDrawElements(GL_TRIANGLES, vertex_array.GetIndicesCount(), GL_UNSIGNED_INT, 0));
 	}
 
 	void GLDrawVertices(const GLVertexArray& vertex_array) noexcept

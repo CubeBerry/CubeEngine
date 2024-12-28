@@ -98,7 +98,7 @@ protected:
 	RenderType rMode = RenderType::TwoDimension;
 	PolygonType pMode = PolygonType::FILL;
 	unsigned int quadCount{ 0 };
-	std::vector<uint16_t> indices;
+	std::vector<uint32_t> indices;
 
 	//--------------------2D Render--------------------//
 	std::vector<TwoDimension::Vertex> vertices2D;

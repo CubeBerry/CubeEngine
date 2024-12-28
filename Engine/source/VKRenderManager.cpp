@@ -910,12 +910,12 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	vertex2DBuffer = new VKVertexBuffer<TwoDimension::Vertex>(vkInit, &vertices2D);
 
 	uint64_t indexNumber{ vertices2D.size() / 4 - 1 };
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 1));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 3));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber));
 	if (indexBuffer != nullptr)
 		delete indexBuffer;
 	indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
@@ -1079,7 +1079,7 @@ void VKRenderManager::DeleteWithIndex(int id)
 		vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
 
 		indices.erase(end(indices) - 6, end(indices));
-		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
 		break;
 	case RenderType::ThreeDimension:
 		unsigned int beginCount{ 0 };
@@ -1105,7 +1105,7 @@ void VKRenderManager::DeleteWithIndex(int id)
 		}
 
 		vkCmdUpdateBuffer(commandBuffer, *vertex3DBuffer->GetVertexBuffer(), 0, vertices3D.size() * sizeof(ThreeDimension::Vertex), vertices3D.data());
-		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
 
 #ifdef _DEBUG
 		beginCount = 0;
@@ -1127,7 +1127,7 @@ void VKRenderManager::DeleteWithIndex(int id)
 	//vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
 
 	//indices.erase(end(indices) - 6, end(indices));
-	//vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint16_t), indices.data());
+	//vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
 
 	if (rMode == RenderType::ThreeDimension)
 	{
@@ -1689,7 +1689,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			//Bind Vertex Buffer
 			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex2DBuffer->GetVertexBuffer(), &vertexBufferOffset);
 			//Bind Index Buffer
-			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 			//Bind Pipeline
 			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
 			//Dynamic Viewport & Scissor
@@ -1714,7 +1714,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Bind Vertex Buffer
 				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
 				//Dynamic Viewport & Scissor
@@ -1733,7 +1733,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Bind Vertex Buffer
 				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLine());
 				//Dynamic Viewport & Scissor

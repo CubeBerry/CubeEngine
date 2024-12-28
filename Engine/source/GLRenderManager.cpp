@@ -205,12 +205,12 @@ void GLRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices2D.size()), vertices2D.data());
 
 	uint64_t indexNumber{ vertices2D.size() / 4 - 1 };
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 1));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 2));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber + 3));
-	indices.push_back(static_cast<uint16_t>(4 * indexNumber));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 1));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 2));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber + 3));
+	indices.push_back(static_cast<uint32_t>(4 * indexNumber));
 	if (indexBuffer != nullptr)
 		delete indexBuffer;
 	indexBuffer = new GLIndexBuffer(&indices);
@@ -354,7 +354,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 		vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
 		indices.erase(end(indices) - 6, end(indices));
 		//glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices2D.size()), vertices2D.data()));
-		//glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
+		//glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint32_t) * indices.size(), indices.data()));
 		break;
 	case RenderType::ThreeDimension:
 		unsigned int beginCount{ 0 };
@@ -380,7 +380,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 		}
 
 		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
-		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint16_t) * indices.size(), indices.data()));
+		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint32_t) * indices.size(), indices.data()));
 		indexBuffer->SetCount(static_cast<int>(indices.size()));
 		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
 

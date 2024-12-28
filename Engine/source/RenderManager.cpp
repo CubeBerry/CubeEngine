@@ -14,7 +14,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 {
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	std::vector<ThreeDimension::Vertex> tempVertices;
-	std::vector<uint16_t> tempIndices;
+	std::vector<uint32_t> tempIndices;
 	unsigned int verticesCount{ 0 };
 	for (unsigned int vertex : verticesPerMesh)
 	{
@@ -61,9 +61,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i1].position, tempVertices[i2].position))
 				{
 					/*  Add the indices for the first triangle */
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i1));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i2));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
@@ -74,9 +74,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				/*  Ignore degenerate triangle */
 				if (!DegenerateTri(tempVertices[i3].position, tempVertices[i4].position, tempVertices[i5].position))
 				{
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i3));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i4));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i5));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i3));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i4));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i5));
 				}
 			}
 		}
@@ -85,7 +85,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	case MeshType::CUBE:
 	{
 		std::vector<ThreeDimension::Vertex> planeVertices;
-		std::vector<uint16_t> planeIndices;
+		std::vector<uint32_t> planeIndices;
 		//Vertices
 		for (int stack = 0; stack <= stacks; ++stack)
 		{
@@ -123,9 +123,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				if (!DegenerateTri(planeVertices[i0].position, planeVertices[i1].position, planeVertices[i2].position))
 				{
 					/*  Add the indices for the first triangle */
-					planeIndices.push_back(static_cast<uint16_t>(i0));
-					planeIndices.push_back(static_cast<uint16_t>(i1));
-					planeIndices.push_back(static_cast<uint16_t>(i2));
+					planeIndices.push_back(static_cast<uint32_t>(i0));
+					planeIndices.push_back(static_cast<uint32_t>(i1));
+					planeIndices.push_back(static_cast<uint32_t>(i2));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
@@ -136,9 +136,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				/*  Ignore degenerate triangle */
 				if (!DegenerateTri(planeVertices[i3].position, planeVertices[i4].position, planeVertices[i5].position))
 				{
-					planeIndices.push_back(static_cast<uint16_t>(i3));
-					planeIndices.push_back(static_cast<uint16_t>(i4));
-					planeIndices.push_back(static_cast<uint16_t>(i5));
+					planeIndices.push_back(static_cast<uint32_t>(i3));
+					planeIndices.push_back(static_cast<uint32_t>(i4));
+					planeIndices.push_back(static_cast<uint32_t>(i5));
 				}
 			}
 		}
@@ -181,7 +181,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			//Indices
 			for (const auto index : planeIndices)
 			{
-				tempIndices.push_back(static_cast<uint16_t>(verticesCount + (index + static_cast<int>(planeVertices.size()) * i)));
+				tempIndices.push_back(static_cast<uint32_t>(verticesCount + (index + static_cast<int>(planeVertices.size()) * i)));
 			}
 		}
 	}
@@ -229,9 +229,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				if (!DegenerateTri(tempVertices[i0].position, tempVertices[i1].position, tempVertices[i2].position))
 				{
 					/*  Add the indices for the first triangle */
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i0));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i1));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i2));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i0));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i1));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i2));
 				}
 
 				/*  You need to compute the indices for the second triangle here */
@@ -242,9 +242,9 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				/*  Ignore degenerate triangle */
 				if (!DegenerateTri(tempVertices[i3].position, tempVertices[i4].position, tempVertices[i5].position))
 				{
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i3));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i4));
-					tempIndices.push_back(static_cast<uint16_t>(verticesCount + i5));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i3));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i4));
+					tempIndices.push_back(static_cast<uint32_t>(verticesCount + i5));
 				}
 			}
 		}
@@ -308,13 +308,13 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			tempVertices.push_back(Pj);
 		}
 
-		for (uint16_t i = static_cast<uint16_t>(tempVertices.size()) - 1; i > current_index; --i)
+		for (uint32_t i = static_cast<uint32_t>(tempVertices.size()) - 1; i > current_index; --i)
 		{
-			tempIndices.push_back(static_cast<uint16_t>(current_index));
+			tempIndices.push_back(static_cast<uint32_t>(current_index));
 			tempIndices.push_back(i);
 			if (i == current_index + 1)
 			{
-				tempIndices.push_back(static_cast<uint16_t>(tempVertices.size()) - 1);
+				tempIndices.push_back(static_cast<uint32_t>(tempVertices.size()) - 1);
 				break;
 			}
 			tempIndices.push_back(i - 1);
@@ -363,7 +363,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				aiFace face = mesh->mFaces[f];
 				for (unsigned int i = 0; i < face.mNumIndices; i++)
 				{
-					tempIndices.push_back(static_cast<uint16_t>(face.mIndices[i]));
+					tempIndices.push_back(static_cast<uint32_t>(face.mIndices[i]));
 				}
 			}
 		}
@@ -390,7 +390,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		}
 
 		for (auto& i : tempIndices)
-			i += static_cast<uint16_t>(verticesCount);
+			i += static_cast<uint32_t>(verticesCount);
 
 		//Custom Model Load
 		//std::ifstream file(path);
@@ -427,7 +427,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		//			std::getline(d, index, '/');
 
-		//			tempIndices.push_back(static_cast<uint16_t>(std::stoi(index) - 1));
+		//			tempIndices.push_back(static_cast<uint32_t>(std::stoi(index) - 1));
 		//		}
 		//	}
 		//}
@@ -487,7 +487,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		//}
 
 		//for (auto& i : tempIndices)
-		//	i += static_cast<uint16_t>(verticesCount);
+		//	i += static_cast<uint32_t>(verticesCount);
 	}
 	break;
 	}

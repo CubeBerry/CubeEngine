@@ -9,7 +9,7 @@ class GLIndexBuffer
 {
 public:
     GLIndexBuffer() = default;
-    GLIndexBuffer(std::vector<uint16_t>* indices);
+    GLIndexBuffer(std::vector<uint32_t>* indices);
     ~GLIndexBuffer();
 
     //void Use(bool bind);

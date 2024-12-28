@@ -9,10 +9,10 @@ class VKInit;
 class VKIndexBuffer
 {
 public:
-	VKIndexBuffer(VKInit* init_, VkCommandPool* pool_, std::vector<uint16_t>* indices_);
+	VKIndexBuffer(VKInit* init_, VkCommandPool* pool_, std::vector<uint32_t>* indices_);
 	~VKIndexBuffer();
 
-	void InitIndexBuffer(std::vector<uint16_t>* indices_);
+	void InitIndexBuffer(std::vector<uint32_t>* indices_);
 	VkBuffer* GetIndexBuffer() { return &vkIndexBuffer; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);

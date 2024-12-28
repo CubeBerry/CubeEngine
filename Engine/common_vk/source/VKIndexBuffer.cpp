@@ -5,7 +5,7 @@
 #include "VKInit.hpp"
 #include <iostream>
 
-VKIndexBuffer::VKIndexBuffer(VKInit* init_, VkCommandPool* pool_, std::vector<uint16_t>* indices_) : vkInit(init_), vkCommandPool(pool_)
+VKIndexBuffer::VKIndexBuffer(VKInit* init_, VkCommandPool* pool_, std::vector<uint32_t>* indices_) : vkInit(init_), vkCommandPool(pool_)
 {
 	InitIndexBuffer(indices_);
 }
@@ -40,13 +40,13 @@ uint32_t VKIndexBuffer::FindMemoryTypeIndex(const VkMemoryRequirements requireme
 	return UINT32_MAX;
 }
 
-void VKIndexBuffer::InitIndexBuffer(std::vector<uint16_t>* indices_)
+void VKIndexBuffer::InitIndexBuffer(std::vector<uint32_t>* indices_)
 {
 	{
 		//Create Index Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = sizeof(uint16_t) * indices_->size();
+		createInfo.size = sizeof(uint32_t) * indices_->size();
 		createInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		//Create Vertex Buffer
@@ -163,7 +163,7 @@ void VKIndexBuffer::InitIndexBuffer(std::vector<uint16_t>* indices_)
 		//Create Staging Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = sizeof(uint16_t) * indices_->size();
+		createInfo.size = sizeof(uint32_t) * indices_->size();
 		createInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		//Create Staging Buffer
@@ -276,7 +276,7 @@ void VKIndexBuffer::InitIndexBuffer(std::vector<uint16_t>* indices_)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, sizeof(uint16_t) * indices_->size(), 0, &contents);
+			result = vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, sizeof(uint32_t) * indices_->size(), 0, &contents);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -307,7 +307,7 @@ void VKIndexBuffer::InitIndexBuffer(std::vector<uint16_t>* indices_)
 
 		//Copy Vertex Info to Memory
 		//&(*indices_)[0] == vertices_->data()
-		memcpy(contents, indices_->data(), sizeof(uint16_t)* indices_->size());
+		memcpy(contents, indices_->data(), sizeof(uint32_t)* indices_->size());
 
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory);
@@ -334,7 +334,7 @@ void VKIndexBuffer::InitIndexBuffer(std::vector<uint16_t>* indices_)
 
 	//Set Copy Region
 	VkBufferCopy region{};
-	region.size = sizeof(uint16_t) * indices_->size();
+	region.size = sizeof(uint32_t) * indices_->size();
 
 	//Copy Staging Buffer to Index Buffer as Designated Region
 	vkCmdCopyBuffer(commandBuffer, vkStagingBuffer, vkIndexBuffer, 1, &region);
