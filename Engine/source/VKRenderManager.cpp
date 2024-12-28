@@ -541,6 +541,12 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
 #endif
 
+	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, 500);
+	fragmentUniform2D = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, 500);
+
+	vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, 500);
+	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, 500);
+	fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, 500);
 	fragmentLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentLightingUniform>(vkInit, 10);
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
@@ -929,13 +935,13 @@ void VKRenderManager::LoadQuad(glm::vec4 color_, float isTex_, float isTexel_)
 	tIndex.texIndex = 0;
 	fragUniforms2D.push_back(tIndex);
 
-	if (vertexUniform2D != nullptr)
-		delete vertexUniform2D;
-	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, quadCount);
+	//if (vertexUniform2D != nullptr)
+	//	delete vertexUniform2D;
+	//vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, quadCount);
 
-	if (fragmentUniform2D != nullptr)
-		delete fragmentUniform2D;
-	fragmentUniform2D = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, quadCount);
+	//if (fragmentUniform2D != nullptr)
+	//	delete fragmentUniform2D;
+	//fragmentUniform2D = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, quadCount);
 }
 
 void VKRenderManager::DeleteWithIndex(int id)
@@ -988,13 +994,13 @@ void VKRenderManager::DeleteWithIndex(int id)
 		{
 		case RenderType::TwoDimension:
 			vertexUniforms2D.erase(end(vertexUniforms2D) - 1);
-			delete vertexUniform2D;
-			vertexUniform2D = nullptr;
+			//delete vertexUniform2D;
+			//vertexUniform2D = nullptr;
 			break;
 		case RenderType::ThreeDimension:
 			vertexUniforms3D.erase(end(vertexUniforms3D) - 1);
-			delete vertexUniform3D;
-			vertexUniform3D = nullptr;
+			//delete vertexUniform3D;
+			//vertexUniform3D = nullptr;
 			break;
 		}
 
@@ -1002,17 +1008,17 @@ void VKRenderManager::DeleteWithIndex(int id)
 		{
 		case RenderType::TwoDimension:
 			fragUniforms2D.erase(end(fragUniforms2D) - 1);
-			delete fragmentUniform2D;
-			fragmentUniform2D = nullptr;
+			//delete fragmentUniform2D;
+			//fragmentUniform2D = nullptr;
 			break;
 		case RenderType::ThreeDimension:
 			fragUniforms3D.erase(end(fragUniforms3D) - 1);
-			delete fragmentUniform3D;
-			fragmentUniform3D = nullptr;
+			//delete fragmentUniform3D;
+			//fragmentUniform3D = nullptr;
 
 			fragMaterialUniforms3D.erase(end(fragMaterialUniforms3D) - 1);
-			delete fragmentMaterialUniformBuffer;
-			fragmentMaterialUniformBuffer = nullptr;
+			//delete fragmentMaterialUniformBuffer;
+			//fragmentMaterialUniformBuffer = nullptr;
 			break;
 		}
 
@@ -1245,17 +1251,17 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	material.specularColor = specularColor;
 	fragMaterialUniforms3D.push_back(material);
 
-	if (vertexUniform3D != nullptr)
-		delete vertexUniform3D;
-	vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, quadCount);
+	//if (vertexUniform3D != nullptr)
+	//	delete vertexUniform3D;
+	//vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, quadCount);
 
-	if (fragmentUniform3D != nullptr)
-		delete fragmentUniform3D;
-	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, quadCount);
+	//if (fragmentUniform3D != nullptr)
+	//	delete fragmentUniform3D;
+	//fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, quadCount);
 
-	if (fragmentMaterialUniformBuffer != nullptr)
-		delete fragmentMaterialUniformBuffer;
-	fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, quadCount);
+	//if (fragmentMaterialUniformBuffer != nullptr)
+	//	delete fragmentMaterialUniformBuffer;
+	//fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, quadCount);
 }
 
 void VKRenderManager::LoadSkyBox(
