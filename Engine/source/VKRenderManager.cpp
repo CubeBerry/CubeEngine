@@ -1105,7 +1105,8 @@ void VKRenderManager::DeleteWithIndex(int id)
 		}
 		//vkCmdUpdateBuffer(commandBuffer, *vertex3DBuffer->GetVertexBuffer(), 0, vertices3D.size() * sizeof(ThreeDimension::Vertex), vertices3D.data());
 		vertex3DBuffer->UpdateVertexBuffer(&vertices3D);
-		vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
+		//vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
+		indexBuffer->UpdateIndexBuffer(&indices);
 
 #ifdef _DEBUG
 		beginCount = 0;
