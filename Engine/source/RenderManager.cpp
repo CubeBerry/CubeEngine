@@ -350,33 +350,35 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			std::exit(EXIT_FAILURE);
 		}
 
-		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
-		{
-			aiMesh* mesh = scene->mMeshes[m];
+		ProcessNode(scene->mRootNode, scene, tempVertices, tempIndices);
 
-			//Vertices
-			for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
-			{
-				aiVector3D vertex = mesh->mVertices[v];
-				aiVector3D normal = mesh->mNormals[v];
-				tempVertices.push_back(ThreeDimension::Vertex(
-					glm::vec3(vertex.x, vertex.y, vertex.z),
-					glm::vec3(normal.x, normal.y, normal.z),
-					mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
-					quadCount)
-				);
-			}
+		//for (unsigned int m = 0; m < scene->mNumMeshes; m++)
+		//{
+		//	aiMesh* mesh = scene->mMeshes[m];
 
-			//Indices
-			for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
-			{
-				aiFace face = mesh->mFaces[f];
-				for (unsigned int i = 0; i < face.mNumIndices; i++)
-				{
-					tempIndices.push_back(static_cast<uint32_t>(face.mIndices[i]));
-				}
-			}
-		}
+		//	//Vertices
+		//	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
+		//	{
+		//		aiVector3D vertex = mesh->mVertices[v];
+		//		aiVector3D normal = mesh->mNormals[v];
+		//		tempVertices.push_back(ThreeDimension::Vertex(
+		//			glm::vec3(vertex.x, vertex.y, vertex.z),
+		//			glm::vec3(normal.x, normal.y, normal.z),
+		//			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
+		//			quadCount)
+		//		);
+		//	}
+
+		//	//Indices
+		//	for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
+		//	{
+		//		aiFace face = mesh->mFaces[f];
+		//		for (unsigned int i = 0; i < face.mNumIndices; i++)
+		//		{
+		//			tempIndices.push_back(static_cast<uint32_t>(face.mIndices[i]));
+		//		}
+		//	}
+		//}
 
 		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
 		for (const auto& vertex : tempVertices)
@@ -563,4 +565,82 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 			}
 		}
 	}
+}
+
+void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices)
+{
+	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		ProcessMesh(mesh, scene, tempVertices, tempIndices);
+	}
+
+	for (unsigned int i = 0; i < node->mNumChildren; ++i)
+	{
+		ProcessNode(node->mChildren[i], scene, tempVertices, tempIndices);
+	}
+}
+
+void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices)
+{
+	//Vertices
+	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
+	{
+		aiVector3D vertex = mesh->mVertices[v];
+		aiVector3D normal = mesh->mNormals[v];
+		tempVertices.push_back(ThreeDimension::Vertex(
+			glm::vec3(vertex.x, vertex.y, vertex.z),
+			glm::vec3(normal.x, normal.y, normal.z),
+			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
+			quadCount)
+		);
+	}
+
+	//Indices
+	for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
+	{
+		aiFace face = mesh->mFaces[f];
+		for (unsigned int i = 0; i < face.mNumIndices; i++)
+		{
+			tempIndices.push_back(static_cast<uint32_t>(face.mIndices[i]));
+		}
+	}
+
+	//Material
+	if (mesh->mMaterialIndex >= 0)
+	{
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+	}
+}
+
+void RenderManager::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
+{
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)
+	{
+		aiString str;
+		mat->GetTexture(type, i, &str);
+		//bool skip{ false };
+		//for (unsigned int j = 0; j < textures_loaded.size(); ++j)
+		//{
+		//	if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
+		//	{
+		//		textures.push_back(textures_loaded[j]);
+		//		skip = true;
+		//		break;
+		//	}
+		//}
+
+		//if (!skip)
+		//{
+		//	Texture texture;
+		//	texture.id = TextureFromFile(str.C_Str(), directory);
+		//	texture.type = typeName;
+		//	texture.path = str.C_Str();
+		//	textures.push_back(texture);
+		//	textures_loaded.push_back(texture);
+		//}
+	}
+
+	//return textures;
 }

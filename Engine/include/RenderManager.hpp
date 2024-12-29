@@ -144,4 +144,8 @@ protected:
 	bool skyboxEnabled{ false };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
+	//Assimp
+	void ProcessNode(aiNode* node, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices);
+	void ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices);
+	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
