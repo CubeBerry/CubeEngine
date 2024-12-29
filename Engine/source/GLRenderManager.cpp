@@ -4,6 +4,7 @@
 //File: GLRenderManager.cpp
 #include "Engine.hpp"
 //#include <glm/gtx/transform.hpp>
+#include <span>
 
 GLRenderManager::~GLRenderManager()
 {
@@ -157,10 +158,18 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 	if (skyboxEnabled)
 	{
 		skyboxShader.Use(true);
-		if (vertexUniform3D != nullptr)
-		{
-			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
-		}
+		//if (vertexUniform3D != nullptr)
+		//{
+		//	vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
+		//}
+		GLint viewLoc = glGetUniformLocation(skyboxShader.GetProgramHandle(), "view");
+		GLint projectionLoc = glGetUniformLocation(skyboxShader.GetProgramHandle(), "projection");
+
+		std::span<const float, 16> spanView(&vertexUniforms3D[0].view[0][0], 16);
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, spanView.data());
+		std::span<const float, 16> spanProjection(&vertexUniforms3D[0].projection[0][0], 16);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
+
 		skyboxVertexArray.Use(true);
 		auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
 		glCheck(glUniform1i(skyboxLocation, 0));

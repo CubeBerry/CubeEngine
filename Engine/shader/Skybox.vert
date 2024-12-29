@@ -14,27 +14,27 @@ layout(location = 0) out vec3 tex_coords;
 out vec3 tex_coords;
 #endif
 
-struct vMatrix
+#if VULKAN
+layout(push_constant) uniform WorldToNDC
 {
-    mat4 model;
     mat4 view;
     mat4 projection;
-    vec4 color;
-};
-
-#if VULKAN
-layout(set = 0, binding = 0) uniform vUniformMatrix
+} worldToNDC;
 #else
-layout(std140, binding = 2) uniform vUniformMatrix
+uniform mat4 view;
+uniform mat4 projection;
 #endif
-{
-    vMatrix matrix[MAX_MATRICES];
-};
 
 void main()
 {
     tex_coords = i_pos;
-    mat4 view = mat4(mat3(matrix[0].view));
-    vec4 pos = matrix[0].projection * view * vec4(i_pos, 1.0);
+#if VULKAN
+    mat4 view = mat4(mat3(worldToNDC.view));
+    vec4 pos = worldToNDC.projection * view * vec4(i_pos, 1.0);
+#else
+    mat4 view = mat4(mat3(view));
+    vec4 pos = projection * view * vec4(i_pos, 1.0);
+#endif
+
     gl_Position = pos.xyww;
 }

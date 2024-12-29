@@ -498,7 +498,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(TwoDimension::Vertex, index);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
+	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
 
 	//3D Pipeline
 	position_layout.vertex_layout_location = 0;
@@ -520,9 +520,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(ThreeDimension::Vertex, index);
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, false);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -538,7 +538,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(ThreeDimension::NormalVertex, index);
 
 	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL);
+	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
 #endif
 
 	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, 500);
@@ -1323,14 +1323,10 @@ void VKRenderManager::LoadSkyBox(
 	};
 	skyboxVertexBuffer = new VKVertexBuffer<glm::vec3>(vkInit, &skyboxVertices);
 
-	VKDescriptorLayout vertexLayout;
-	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
-	vertexLayout.descriptorCount = 1;
-
 	VKDescriptorLayout fragmentLayout;
 	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
 	fragmentLayout.descriptorCount = 1;
-	skyboxDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout });
+	skyboxDescriptor = new VKDescriptor(vkInit, {}, { fragmentLayout });
 
 	VKAttributeLayout position_layout;
 	position_layout.vertex_layout_location = 0;
@@ -1338,7 +1334,7 @@ void VKRenderManager::LoadSkyBox(
 	position_layout.offset = 0;
 
 	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL);
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKTexture(vkInit, &vkCommandPool);
 	skybox->LoadSkyBox(right, left, top, bottom, front, back);
@@ -1558,28 +1554,28 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 		if (skyboxEnabled)
 		{
 			//Skybox Vertex Descriptor
-			currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
-			{
-				//Create Vertex Material DescriptorBuffer Info
-				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
-				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
+			//currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			//{
+			//	//Create Vertex Material DescriptorBuffer Info
+			//	VkDescriptorBufferInfo bufferInfo;
+			//	bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
+			//	bufferInfo.offset = 0;
+			//	bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
 
-				//Define which resource descriptor set will point
-				VkWriteDescriptorSet descriptorWrite{};
-				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
-				descriptorWrite.dstBinding = 0;
-				descriptorWrite.descriptorCount = 1;
-				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite.pBufferInfo = &bufferInfo;
+			//	//Define which resource descriptor set will point
+			//	VkWriteDescriptorSet descriptorWrite{};
+			//	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			//	descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
+			//	descriptorWrite.dstBinding = 0;
+			//	descriptorWrite.descriptorCount = 1;
+			//	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			//	descriptorWrite.pBufferInfo = &bufferInfo;
 
-				//Update DescriptorSet
-				//DescriptorSet does not have to update every frame since it points same uniform buffer
-				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-			}
-			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
+			//	//Update DescriptorSet
+			//	//DescriptorSet does not have to update every frame since it points same uniform buffer
+			//	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			//}
+			//vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
 
 			//Skybox Fragment Descriptor
 			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
@@ -1786,12 +1782,13 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			//Dynamic Viewport & Scissor
 			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-			//Bind Material DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentVertexSkyboxDescriptorSet, 0, nullptr);
 			//Bind Texture DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 1, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
 			//Change Primitive Topology
 			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			//Push Constant World-To_NDC
+			glm::mat4 transform[2] = { vertexUniforms3D[0].view, vertexUniforms3D[0].projection };
+			vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
 			//Draw
 			//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 			vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);

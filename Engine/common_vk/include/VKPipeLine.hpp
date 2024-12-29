@@ -37,14 +37,17 @@ public:
 		VkSampleCountFlagBits samples,
 		VkPrimitiveTopology primitiveTopology,
 		VkCullModeFlags cull_,
-		POLYGON_MODE mode_
+		POLYGON_MODE mode_,
+		bool isPushConstant,
+		uint32_t pushConstantSize = 0,
+		VkShaderStageFlagBits pushConstantShaderBit = VK_SHADER_STAGE_VERTEX_BIT
 	);
 
 	VkPipeline* GetPipeLine() { return &vkPipeline; };
 	VkPipelineLayout* GetPipeLineLayout() { return &vkPipelineLayout; };
 private:
 	VkDevice* device;
-	void InitPipeLineLayout();
+	void InitPipeLineLayout(bool isPushConstant, uint32_t size, VkShaderStageFlagBits bit);
 
 	VkPipeline vkPipeline{ VK_NULL_HANDLE };
 	VkPipelineLayout vkPipelineLayout{ VK_NULL_HANDLE };

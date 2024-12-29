@@ -27,26 +27,25 @@ VKDescriptor::~VKDescriptor()
 
 void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLayout> vertexLayout, std::initializer_list<VKDescriptorLayout> fragmentLayout)
 {
+	std::vector<VkDescriptorSetLayoutBinding> vertexBindings;
+	if (vertexLayout.size())
 	{
-		std::vector<VkDescriptorSetLayoutBinding> vertexBindings;
-		if (vertexLayout.size())
+		int count{ 0 };
+		for (const auto& l : vertexLayout)
 		{
-			int count{ 0 };
-			for (const auto& l : vertexLayout)
-			{
-				//Create Binding for Vertex Uniform Block
-				VkDescriptorSetLayoutBinding binding;
-				binding.binding = count;
-				binding.descriptorType = static_cast<VkDescriptorType>(l.descriptorType);
-				binding.descriptorCount = l.descriptorCount;
-				//Only vertex shader accesses
-				binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			//Create Binding for Vertex Uniform Block
+			VkDescriptorSetLayoutBinding binding;
+			binding.binding = count;
+			binding.descriptorType = static_cast<VkDescriptorType>(l.descriptorType);
+			binding.descriptorCount = l.descriptorCount;
+			//Only vertex shader accesses
+			binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-				vertexDescriptorCount += l.descriptorCount;
-				vertexBindings.push_back(binding);
-				count++;
-			}
+			vertexDescriptorCount += l.descriptorCount;
+			vertexBindings.push_back(binding);
+			count++;
 		}
+
 
 		//Create Descriptor Set Layout Info
 		VkDescriptorSetLayoutCreateInfo createInfo{};
@@ -87,37 +86,36 @@ void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLa
 		vkDescriptorSetLayouts.push_back(vkVertexMaterialDescriptorSetLayout);
 	}
 
+	std::vector<VkDescriptorSetLayoutBinding> fragmentBindings;
+	if (fragmentLayout.size())
 	{
-		std::vector<VkDescriptorSetLayoutBinding> fragmentBindings;
-		if (fragmentLayout.size())
+		int count{ 0 };
+		for (const auto& l : fragmentLayout)
 		{
-			int count{ 0 };
-			for (const auto& l : fragmentLayout)
-			{
-				//Create Binding for Vertex Uniform Block
-				VkDescriptorSetLayoutBinding binding;
-				binding.binding = count;
-				binding.descriptorType = static_cast<VkDescriptorType>(l.descriptorType);
-				binding.descriptorCount = l.descriptorCount;
-				//Only fragment shader accesses
-				binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-				binding.pImmutableSamplers = nullptr;
+			//Create Binding for Vertex Uniform Block
+			VkDescriptorSetLayoutBinding binding;
+			binding.binding = count;
+			binding.descriptorType = static_cast<VkDescriptorType>(l.descriptorType);
+			binding.descriptorCount = l.descriptorCount;
+			//Only fragment shader accesses
+			binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			binding.pImmutableSamplers = nullptr;
 
-				switch (static_cast<VkDescriptorType>(l.descriptorType))
-				{
-				case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-					fragmentDescriptorCount += l.descriptorCount;
-					break;
-				case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-					samplerDescriptorCount += l.descriptorCount;
-					break;
-				default:
-					break;
-				}
-				fragmentBindings.push_back(binding);
-				count++;
+			switch (static_cast<VkDescriptorType>(l.descriptorType))
+			{
+			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+				fragmentDescriptorCount += l.descriptorCount;
+				break;
+			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+				samplerDescriptorCount += l.descriptorCount;
+				break;
+			default:
+				break;
 			}
+			fragmentBindings.push_back(binding);
+			count++;
 		}
+
 
 		VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo{};
 		bindingFlagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
@@ -252,6 +250,7 @@ void VKDescriptor::InitDescriptorSets()
 {
 	for (auto i = 0; i != 2; ++i)
 	{
+		if (vertexDescriptorCount)
 		{
 			//Create Vertex Material DescriptorSet Allocation Info
 			VkDescriptorSetAllocateInfo allocateInfo{};
@@ -294,6 +293,7 @@ void VKDescriptor::InitDescriptorSets()
 			}
 		}
 
+		if (fragmentDescriptorCount || samplerDescriptorCount)
 		{
 			//Create Fragment Material DescriptorSet Allocation Info
 			VkDescriptorSetAllocateInfo allocateInfo{};

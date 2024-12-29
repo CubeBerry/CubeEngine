@@ -29,7 +29,11 @@ void VKPipeLine::InitPipeLine(
 	VkSampleCountFlagBits samples,
 	VkPrimitiveTopology primitiveTopology,
 	VkCullModeFlags cull_,
-	POLYGON_MODE mode_)
+	POLYGON_MODE mode_,
+	bool isPushConstant,
+	uint32_t pushConstantSize,
+	VkShaderStageFlagBits pushConstantShaderBit
+)
 {
 	//Create Pipeline Shader Stage Info
 	std::array<VkPipelineShaderStageCreateInfo, 2> stageCreateInfos;
@@ -198,7 +202,7 @@ void VKPipeLine::InitPipeLine(
 	dynamicStateInfo.pDynamicStates = dynamicStates;
 
 	//Create Pipeline Layout
-	InitPipeLineLayout();
+	InitPipeLineLayout(isPushConstant, pushConstantSize, pushConstantShaderBit);
 
 	//Create Graphics Pipeline Info
 	VkGraphicsPipelineCreateInfo createInfo{};
@@ -247,7 +251,7 @@ void VKPipeLine::InitPipeLine(
 	}
 }
 
-void VKPipeLine::InitPipeLineLayout()
+void VKPipeLine::InitPipeLineLayout(bool isPushConstant, uint32_t size, VkShaderStageFlagBits bit)
 {
 	//Create Pipeline Layout Info
 	VkPipelineLayoutCreateInfo createInfo{};
@@ -255,6 +259,16 @@ void VKPipeLine::InitPipeLineLayout()
 	createInfo.setLayoutCount = static_cast<uint32_t>(vkDescriptorSetLayout->size());
 	//createInfo.pSetLayouts = &(*vkDescriptorSetLayout)[0];
 	createInfo.pSetLayouts = vkDescriptorSetLayout->data();
+	//Push Constant World-To-NDC
+	if (isPushConstant)
+	{
+		VkPushConstantRange pushConstantRange{};
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = size;
+		pushConstantRange.stageFlags = bit;
+		createInfo.pPushConstantRanges = &pushConstantRange;
+		createInfo.pushConstantRangeCount = 1;
+	}
 
 	//Create Pipeline Layout
 	try
