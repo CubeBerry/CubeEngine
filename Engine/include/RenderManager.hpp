@@ -142,4 +142,6 @@ protected:
 
 	//Skybox
 	bool skyboxEnabled{ false };
+private:
+	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
 };

@@ -172,7 +172,21 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 				currentMesh = MeshType::SPHERE;
 				isRecreate = true;
 			}
-			if (ImGui::MenuItem("Cone", "3"))
+			if (ImGui::MenuItem("Torus", "3"))
+			{
+				stacks = 15;
+				slices = 15;
+				currentMesh = MeshType::TORUS;
+				isRecreate = true;
+			}
+			if (ImGui::MenuItem("Cylinder", "4"))
+			{
+				stacks = 10;
+				slices = 10;
+				currentMesh = MeshType::CYLINDER;
+				isRecreate = true;
+			}
+			if (ImGui::MenuItem("Cone", "5"))
 			{
 				stacks = 10;
 				slices = 10;
@@ -210,6 +224,36 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 				isRecreate = true;
 			}
 			if (ImGui::SliderInt("slices", &slices, 5, 35))
+			{
+				isRecreate = true;
+			}
+			break;
+		case MeshType::TORUS:
+			if (ImGui::SliderInt("stacks", &stacks, 10, 35))
+			{
+				isRecreate = true;
+			}
+			if (ImGui::SliderInt("slices", &slices, 10, 35))
+			{
+				isRecreate = true;
+			}
+			break;
+		case MeshType::CYLINDER:
+			if (ImGui::SliderInt("stacks", &stacks, 5, 35))
+			{
+				isRecreate = true;
+			}
+			if (ImGui::SliderInt("slices", &slices, 5, 35))
+			{
+				isRecreate = true;
+			}
+			break;
+		case MeshType::CONE:
+			if (ImGui::SliderInt("stacks", &stacks, 3, 35))
+			{
+				isRecreate = true;
+			}
+			if (ImGui::SliderInt("slices", &slices, 3, 35))
 			{
 				isRecreate = true;
 			}
