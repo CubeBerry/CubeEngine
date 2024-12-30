@@ -202,10 +202,6 @@ void main()
 #endif
     {
         fDirectionalLight currentLight = directionalLightList[l];
-#if VULKAN
-        if (currentLight.lightDirection == vec3(0.0f)) continue;
-#endif
-
         resultColor += clamp(CalculateDirectionalLight(currentLight, l), 0.0, 1.0);
     }
 
@@ -217,10 +213,6 @@ void main()
 #endif
     {
         fPointLight currentLight = pointLightList[l];
-#if VULKAN
-        if (currentLight.lightPosition == vec3(0.0f)) continue;
-#endif
-
         resultColor += clamp(CalculatePointLight(currentLight, l), 0.0, 1.0);
     }
 
