@@ -28,7 +28,7 @@ struct fMaterial
 
 struct fDirectionalLight
 {
-    vec3 lightPosition;
+    vec3 lightDirection;
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
@@ -130,7 +130,7 @@ vec3 CalculateDirectionalLight(fDirectionalLight current, int i)
 
     //Diffuse Lighting
     vec3 normal = normalize(i_normal);
-    vec3 light_direction = normalize(-current.lightPosition);
+    vec3 light_direction = normalize(-current.lightDirection);
     float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diff * current.lightColor;
 
@@ -196,6 +196,10 @@ void main()
 #endif
     {
         fDirectionalLight currentLight = directionalLightList[l];
+#if VULKAN
+        if (currentLight.lightDirection == vec3(0.0f)) continue;
+#endif
+
         resultColor += CalculateDirectionalLight(currentLight, l);
     }
 
@@ -207,6 +211,10 @@ void main()
 #endif
     {
         fPointLight currentLight = pointLightList[l];
+#if VULKAN
+        if (currentLight.lightPosition == vec3(0.0f)) continue;
+#endif
+
         resultColor += CalculatePointLight(currentLight, l);
     }
 

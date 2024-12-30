@@ -202,6 +202,7 @@ private:
 #endif
 
 	//Lighting
+	VKUniformBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
 	VKUniformBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
 
 	//Skyobx
