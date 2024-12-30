@@ -1553,30 +1553,6 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 		if (skyboxEnabled)
 		{
-			//Skybox Vertex Descriptor
-			//currentVertexSkyboxDescriptorSet = &(*skyboxDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
-			//{
-			//	//Create Vertex Material DescriptorBuffer Info
-			//	VkDescriptorBufferInfo bufferInfo;
-			//	bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
-			//	bufferInfo.offset = 0;
-			//	bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
-
-			//	//Define which resource descriptor set will point
-			//	VkWriteDescriptorSet descriptorWrite{};
-			//	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			//	descriptorWrite.dstSet = *currentVertexSkyboxDescriptorSet;
-			//	descriptorWrite.dstBinding = 0;
-			//	descriptorWrite.descriptorCount = 1;
-			//	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			//	descriptorWrite.pBufferInfo = &bufferInfo;
-
-			//	//Update DescriptorSet
-			//	//DescriptorSet does not have to update every frame since it points same uniform buffer
-			//	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-			//}
-			//vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
-
 			//Skybox Fragment Descriptor
 			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
@@ -1761,8 +1737,6 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 				//Bind Material DescriptorSet
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-				//Bind Texture DescriptorSet
-				//vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Draw
