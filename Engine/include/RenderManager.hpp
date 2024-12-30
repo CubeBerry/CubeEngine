@@ -63,17 +63,26 @@ public:
 
 	//--------------------3D Render--------------------//
 	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) = 0;
-	//void EnableLighting(bool isEnabled) { isLighting = isEnabled; };
-	void AddLight(const ThreeDimension::FragmentLightingUniform& light)
+	void AddDirectionalLight(const ThreeDimension::DirectionalLightUniform& light)
 	{
-		fragmentLightingUniforms.push_back(light);
+		directionalLightUniforms.push_back(light);
 	}
-	void DeleteLights()
+	void DeleteDirectionalLights()
 	{
-		fragmentLightingUniforms.clear();
-		fragmentLightingUniforms.shrink_to_fit();
+		directionalLightUniforms.clear();
+		directionalLightUniforms.shrink_to_fit();
 	}
-	std::vector<ThreeDimension::FragmentLightingUniform>& GetLightingUniforms() { return fragmentLightingUniforms; };
+	void AddPointLight(const ThreeDimension::PointLightUniform& light)
+	{
+		pointLightUniforms.push_back(light);
+	}
+	void DeletePointLights()
+	{
+		pointLightUniforms.clear();
+		pointLightUniforms.shrink_to_fit();
+	}
+	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; };
+	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; };
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
 	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
@@ -119,9 +128,8 @@ protected:
 	void CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices);
 
 	//Lighting
-	//bool isLighting{ false };
-	//ThreeDimension::VertexLightingUniform vertexLightingUniform{};
-	std::vector<ThreeDimension::FragmentLightingUniform> fragmentLightingUniforms;
+	std::vector<ThreeDimension::DirectionalLightUniform> directionalLightUniforms;
+	std::vector<ThreeDimension::PointLightUniform> pointLightUniforms;
 
 	std::vector<ThreeDimension::Vertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;

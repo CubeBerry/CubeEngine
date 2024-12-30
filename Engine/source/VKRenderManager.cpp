@@ -39,7 +39,7 @@ VKRenderManager::~VKRenderManager()
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
 	delete fragmentMaterialUniformBuffer;
-	delete fragmentLightingUniformBuffer;
+	delete pointLightUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -547,7 +547,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, 500);
 	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, 500);
 	fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, 500);
-	fragmentLightingUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentLightingUniform>(vkInit, 10);
+	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, 10);
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
@@ -1531,9 +1531,9 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				descriptorWrite[2].pBufferInfo = &materialBufferInfo;
 
 				VkDescriptorBufferInfo lightingBufferInfo;
-				lightingBufferInfo.buffer = (*(fragmentLightingUniformBuffer->GetUniformBuffers()))[frameIndex];
+				lightingBufferInfo.buffer = (*(pointLightUniformBuffer->GetUniformBuffers()))[frameIndex];
 				lightingBufferInfo.offset = 0;
-				lightingBufferInfo.range = sizeof(ThreeDimension::FragmentLightingUniform) * fragmentLightingUniforms.size();
+				lightingBufferInfo.range = sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size();
 
 				descriptorWrite[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorWrite[3].dstSet = *currentTextureDescriptorSet;
@@ -1548,7 +1548,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
-			fragmentLightingUniformBuffer->UpdateUniform(fragmentLightingUniforms.size(), fragmentLightingUniforms.data(), frameIndex);
+			pointLightUniformBuffer->UpdateUniform(pointLightUniforms.size(), pointLightUniforms.data(), frameIndex);
 		}
 
 		if (skyboxEnabled)

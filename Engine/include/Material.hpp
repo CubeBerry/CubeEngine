@@ -75,9 +75,22 @@ namespace ThreeDimension
 	};
 
 	//Lighting
-	struct alignas(16) FragmentLightingUniform
+	struct alignas(16) PointLightUniform
 	{
 		glm::vec3 lightPosition;
+		float ambientStrength;
+		glm::vec3 lightColor;
+		float specularStrength;
+		glm::vec3 viewPosition;
+
+		float constant = 1.0f;
+		float linear = 0.09f;
+		float quadratic = 0.032f;
+	};
+
+	struct alignas(16) DirectionalLightUniform
+	{
+		glm::vec3 lightDirection;
 		float ambientStrength;
 		glm::vec3 lightColor;
 		float specularStrength;

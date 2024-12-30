@@ -19,7 +19,7 @@ GLRenderManager::~GLRenderManager()
 	delete vertexUniform3D;
 	delete fragmentUniform3D;
 	delete fragmentMaterialUniformBuffer;
-	delete fragmentLightingUniformBuffer;
+	delete pointLightUniformBuffer;
 
 	//Destroy Texture
 	for (const auto t : textures)
@@ -61,8 +61,10 @@ void GLRenderManager::Initialize(
 	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", 0, nullptr);
 
 	//Lighting
-	fragmentLightingUniformBuffer = new GLUniformBuffer<ThreeDimension::FragmentLightingUniform>();
-	fragmentLightingUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 5, "fLightingMatrix", 0, nullptr);
+	directionalLightUniformBuffer = new GLUniformBuffer<ThreeDimension::DirectionalLightUniform>();
+	directionalLightUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 5, "fDirectionalLightList", 0, nullptr);
+	pointLightUniformBuffer = new GLUniformBuffer<ThreeDimension::PointLightUniform>();
+	pointLightUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 6, "fPointLightList", 0, nullptr);
 
 	imguiManager = new GLImGuiManager(window_, context_);
 }
@@ -121,10 +123,15 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 			fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
 		}
-		if (fragmentLightingUniformBuffer != nullptr)
+		if (pointLightUniformBuffer != nullptr)
 		{
-			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activeLights"), static_cast<GLint>(fragmentLightingUniforms.size())));
-			fragmentLightingUniformBuffer->UpdateUniform(fragmentLightingUniforms.size() * sizeof(ThreeDimension::FragmentLightingUniform), fragmentLightingUniforms.data());
+			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activePointLights"), static_cast<GLint>(pointLightUniforms.size())));
+			pointLightUniformBuffer->UpdateUniform(pointLightUniforms.size() * sizeof(ThreeDimension::PointLightUniform), pointLightUniforms.data());
+		}
+		if (directionalLightUniformBuffer != nullptr)
+		{
+			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activeDirectionalLights"), static_cast<GLint>(directionalLightUniforms.size())));
+			directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size() * sizeof(ThreeDimension::DirectionalLightUniform), directionalLightUniforms.data());
 		}
 		break;
 	}

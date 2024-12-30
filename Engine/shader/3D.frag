@@ -26,13 +26,26 @@ struct fMaterial
     float shininess;
 };
 
-struct fLighting
+struct fDirectionalLight
 {
     vec3 lightPosition;
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
     vec3 viewPosition;
+};
+
+struct fPointLight
+{
+    vec3 lightPosition;
+    float ambientStrength;
+    vec3 lightColor;
+    float specularStrength;
+    vec3 viewPosition;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 #if VULKAN
@@ -60,16 +73,26 @@ layout(std140, binding = 4) uniform fUniformMaterial
 };
 
 #if VULKAN
-layout(set = 1, binding = 3) uniform fLightingMatrix
+layout(set = 1, binding = 3) uniform fDirectionalLightList
 #else
-layout(std140, binding = 5) uniform fLightingMatrix
+layout(std140, binding = 5) uniform fDirectionalLightList
 #endif
 {
-    fLighting lightingMatrix[MAX_LIGHTS];
+    fDirectionalLight directionalLightList[MAX_LIGHTS];
+};
+
+#if VULKAN
+layout(set = 1, binding = 4) uniform fPointLightList
+#else
+layout(std140, binding = 6) uniform fPointLightList
+#endif
+{
+    fPointLight pointLightList[MAX_LIGHTS];
 };
 
 #if !VULKAN
-layout(location = 4) uniform int activeLights;
+uniform int activePointLights;
+uniform int activeDirectionalLights;
 #endif
 
 // vec3 BlinnPhong(fLighting current, int i)
@@ -100,7 +123,7 @@ layout(location = 4) uniform int activeLights;
 //     return vec3(ambient + diffuse + specular);
 // }
 
-vec3 CalculateDirectionalLight(fLighting current, int i)
+vec3 CalculateDirectionalLight(fDirectionalLight current, int i)
 {
     //Ambient Lighting
     vec3 ambient = current.ambientStrength * current.lightColor;
@@ -127,15 +150,11 @@ vec3 CalculateDirectionalLight(fLighting current, int i)
     return ambient + diffuse + specular;
 }
 
-vec3 CalculatePointLight(fLighting current, int i)
+vec3 CalculatePointLight(fPointLight current, int i)
 {
     vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
     float distance = length(current.lightPosition - i_fragment_position);
-
-    float constant = 1.0;
-    float linear = 0.09;
-    float quadratic = 0.032;
-    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+    float attenuation = 1.0 / (current.constant + current.linear * distance + current.quadratic * (distance * distance));
 
     //Ambient Lighting
     vec3 ambient = current.ambientStrength * current.lightColor;
@@ -168,15 +187,26 @@ vec3 CalculatePointLight(fLighting current, int i)
 void main()
 {
     vec3 resultColor = vec3(0.0);
+
+    //Calculate Directional Lights
 #if VULKAN
     for (int l = 0; l < MAX_LIGHTS; ++l)
 #else
-    for (int l = 0; l < activeLights; ++l)
+    for (int l = 0; l < activeDirectionalLights; ++l)
 #endif
     {
-        fLighting currentLight = lightingMatrix[l];
-        // if (currentLight.lightPosition == vec3(0.0)) continue;
+        fDirectionalLight currentLight = directionalLightList[l];
+        resultColor += CalculateDirectionalLight(currentLight, l);
+    }
 
+    //Calculate Point Lights
+#if VULKAN
+    for (int l = 0; l < MAX_LIGHTS; ++l)
+#else
+    for (int l = 0; l < activePointLights; ++l)
+#endif
+    {
+        fPointLight currentLight = pointLightList[l];
         resultColor += CalculatePointLight(currentLight, l);
     }
 
