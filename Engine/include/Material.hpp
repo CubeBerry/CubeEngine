@@ -74,6 +74,7 @@ namespace ThreeDimension
 		float shininess;
 	};
 
+	//Lighting
 	struct alignas(16) FragmentLightingUniform
 	{
 		glm::vec3 lightPosition;

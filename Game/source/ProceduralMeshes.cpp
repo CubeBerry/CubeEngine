@@ -32,7 +32,7 @@ void ProceduralMeshes::Init()
 	l2.specularStrength = 0.5f;
 	Engine::GetRenderManager()->AddLight(l2);
 
-	l3.lightPosition = glm::vec4(0.f, 10.f, 0.f, 1.f);
+	l3.lightPosition = glm::vec4(0.f, -1.f, 0.f, 1.f);
 	l3.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	l3.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l3.ambientStrength = 0.1f;

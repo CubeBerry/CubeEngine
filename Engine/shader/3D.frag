@@ -72,15 +72,42 @@ layout(std140, binding = 5) uniform fLightingMatrix
 layout(location = 4) uniform int activeLights;
 #endif
 
-vec3 BlinnPhong(fLighting current, int i)
+// vec3 BlinnPhong(fLighting current, int i)
+// {
+//     //Ambient Lighting
+//     vec3 ambient = current.ambientStrength * current.lightColor;
+
+//     //Diffuse Lighting
+//     vec3 normal = normalize(i_normal);
+//     vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
+
+//     float diff = max(dot(normal, light_direction), 0.0);
+//     vec3 diffuse = diff * current.lightColor;
+
+//     //Specular Lighting
+//     vec3 specular = vec3(0.0);
+//     if (diff > 0.0)
+//     {
+//         vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
+//         // vec3 reflect_direction = reflect(-light_direction, normal);
+//         vec3 halfway_vector = normalize(view_direction + light_direction);
+
+//         // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+//         float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
+//         specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
+//     }
+
+//     return vec3(ambient + diffuse + specular);
+// }
+
+vec3 CalculateDirectionalLight(fLighting current, int i)
 {
     //Ambient Lighting
     vec3 ambient = current.ambientStrength * current.lightColor;
 
     //Diffuse Lighting
     vec3 normal = normalize(i_normal);
-    vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
-
+    vec3 light_direction = normalize(-current.lightPosition);
     float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diff * current.lightColor;
 
@@ -97,7 +124,45 @@ vec3 BlinnPhong(fLighting current, int i)
         specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
     }
 
-    return vec3(ambient + diffuse + specular);
+    return ambient + diffuse + specular;
+}
+
+vec3 CalculatePointLight(fLighting current, int i)
+{
+    vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
+    float distance = length(current.lightPosition - i_fragment_position);
+
+    float constant = 1.0;
+    float linear = 0.09;
+    float quadratic = 0.032;
+    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+
+    //Ambient Lighting
+    vec3 ambient = current.ambientStrength * current.lightColor;
+
+    //Diffuse Lighting
+    vec3 normal = normalize(i_normal);
+    float diff = max(dot(normal, light_direction), 0.0);
+    vec3 diffuse = diff * current.lightColor;
+
+    //Specular Lighting
+    vec3 specular = vec3(0.0);
+    if (diff > 0.0)
+    {
+        vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
+        // vec3 reflect_direction = reflect(-light_direction, normal);
+        vec3 halfway_vector = normalize(view_direction + light_direction);
+
+        // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+        float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
+        specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
+    }
+
+    ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+
+    return ambient + diffuse + specular;
 }
 
 void main()
@@ -112,7 +177,7 @@ void main()
         fLighting currentLight = lightingMatrix[l];
         // if (currentLight.lightPosition == vec3(0.0)) continue;
 
-        resultColor += BlinnPhong(currentLight, l);
+        resultColor += CalculatePointLight(currentLight, l);
     }
 
     fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
