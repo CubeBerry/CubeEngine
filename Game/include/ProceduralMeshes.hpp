@@ -23,9 +23,9 @@ private:
 	bool isFill{ true };
 	std::array<float, 4> color = { 1.f, 0.f, 0.f, 1.f };
 
-	ThreeDimension::FragmentLightingUniform l;
-	ThreeDimension::FragmentLightingUniform l2;
-	ThreeDimension::FragmentLightingUniform l3;
+	ThreeDimension::PointLightUniform l;
+	ThreeDimension::PointLightUniform l2;
+	ThreeDimension::DirectionalLightUniform l3;
 
 	MeshType currentMesh{ MeshType::PLANE };
 

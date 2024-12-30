@@ -260,9 +260,9 @@ void VKPipeLine::InitPipeLineLayout(bool isPushConstant, uint32_t size, VkShader
 	//createInfo.pSetLayouts = &(*vkDescriptorSetLayout)[0];
 	createInfo.pSetLayouts = vkDescriptorSetLayout->data();
 	//Push Constant World-To-NDC
+	VkPushConstantRange pushConstantRange{};
 	if (isPushConstant)
 	{
-		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.offset = 0;
 		pushConstantRange.size = size;
 		pushConstantRange.stageFlags = bit;

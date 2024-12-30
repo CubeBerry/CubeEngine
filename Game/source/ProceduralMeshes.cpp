@@ -23,21 +23,21 @@ void ProceduralMeshes::Init()
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l.ambientStrength = 0.1f;
 	l.specularStrength = 0.5f;
-	Engine::GetRenderManager()->AddLight(l);
+	Engine::GetRenderManager()->AddPointLight(l);
 
 	l2.lightPosition = glm::vec4(0.f, 0.f, 1.f, 1.f);
 	l2.lightColor = glm::vec4(0.f, 1.f, 0.f, 1.f);
 	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l2.ambientStrength = 0.1f;
 	l2.specularStrength = 0.5f;
-	Engine::GetRenderManager()->AddLight(l2);
+	Engine::GetRenderManager()->AddPointLight(l2);
 
-	l3.lightPosition = glm::vec4(0.f, 10.f, 0.f, 1.f);
+	l3.lightDirection = glm::vec4(0.f, -1.f, 0.f, 1.f);
 	l3.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	l3.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l3.ambientStrength = 0.1f;
 	l3.specularStrength = 0.5f;
-	Engine::GetRenderManager()->AddLight(l3);
+	Engine::GetRenderManager()->AddDirectionalLight(l3);
 
 	//Debug Lighting
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light", ObjectType::NONE);
@@ -45,10 +45,6 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l2.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light2", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
-
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l3.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light3", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
 
@@ -82,7 +78,7 @@ void ProceduralMeshes::Update(float dt)
 #endif
 
 	//Update Color
-	(*Engine::GetRenderManager()->GetVertexUniforms3D())[3].color = glm::vec4{ color[0], color[1], color[2], color[3] };
+	(*Engine::GetRenderManager()->GetVertexUniforms3D())[2].color = glm::vec4{ color[0], color[1], color[2], color[3] };
 
 	//Update Lighting Variables
 	angle[0] += 50.f * dt;
@@ -108,10 +104,10 @@ void ProceduralMeshes::Update(float dt)
 	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 
-	Engine::GetRenderManager()->GetLightingUniforms()[0].lightPosition = l.lightPosition;
-	Engine::GetRenderManager()->GetLightingUniforms()[0].viewPosition = l.viewPosition;
-	Engine::GetRenderManager()->GetLightingUniforms()[1].lightPosition = l2.lightPosition;
-	Engine::GetRenderManager()->GetLightingUniforms()[1].viewPosition = l2.viewPosition;
+	Engine::GetRenderManager()->GetPointLightUniforms()[0].lightPosition = l.lightPosition;
+	Engine::GetRenderManager()->GetPointLightUniforms()[0].viewPosition = l.viewPosition;
+	Engine::GetRenderManager()->GetPointLightUniforms()[1].lightPosition = l2.lightPosition;
+	Engine::GetRenderManager()->GetPointLightUniforms()[1].viewPosition = l2.viewPosition;
 
 	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
 	Engine::GetObjectManager().FindObjectWithName("Light2")->SetPosition(l2.lightPosition);
@@ -349,7 +345,7 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 	{
 		if (ImGui::BeginMenu("Select Light"))
 		{
-			auto& lights = Engine::GetRenderManager()->GetLightingUniforms();
+			auto& lights = Engine::GetRenderManager()->GetPointLightUniforms();
 			for (size_t i = 0; i < lights.size(); ++i)
 			{
 				if (ImGui::Selectable(("Light " + std::to_string(i)).c_str(), selectedLightIndex == i))
@@ -360,9 +356,9 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			ImGui::EndMenu();
 		}
 
-		if (selectedLightIndex >= 0 && selectedLightIndex < Engine::GetRenderManager()->GetLightingUniforms().size())
+		if (selectedLightIndex >= 0 && selectedLightIndex < Engine::GetRenderManager()->GetPointLightUniforms().size())
 		{
-			auto& light = Engine::GetRenderManager()->GetLightingUniforms()[selectedLightIndex];
+			auto& light = Engine::GetRenderManager()->GetPointLightUniforms()[selectedLightIndex];
 
 			float color_[3] = { light.lightColor.x, light.lightColor.y, light.lightColor.z };
 			if (ImGui::ColorEdit3("Light Color", color_))
@@ -398,7 +394,8 @@ void ProceduralMeshes::End()
 	angle[1] = 0;
 
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
-	Engine::GetRenderManager()->DeleteLights();
+	Engine::GetRenderManager()->DeletePointLights();
+	Engine::GetRenderManager()->DeleteDirectionalLights();
 	Engine::GetRenderManager()->DeleteSkyBox();
 
 	Engine::GetCameraManager().Reset();

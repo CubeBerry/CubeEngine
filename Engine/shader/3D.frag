@@ -26,13 +26,26 @@ struct fMaterial
     float shininess;
 };
 
-struct fLighting
+struct fDirectionalLight
+{
+    vec3 lightDirection;
+    float ambientStrength;
+    vec3 lightColor;
+    float specularStrength;
+    vec3 viewPosition;
+};
+
+struct fPointLight
 {
     vec3 lightPosition;
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
     vec3 viewPosition;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 #if VULKAN
@@ -60,27 +73,70 @@ layout(std140, binding = 4) uniform fUniformMaterial
 };
 
 #if VULKAN
-layout(set = 1, binding = 3) uniform fLightingMatrix
+layout(set = 1, binding = 3) uniform fDirectionalLightList
 #else
-layout(std140, binding = 5) uniform fLightingMatrix
+layout(std140, binding = 5) uniform fDirectionalLightList
 #endif
 {
-    fLighting lightingMatrix[MAX_LIGHTS];
+    fDirectionalLight directionalLightList[MAX_LIGHTS];
 };
 
-#if !VULKAN
-layout(location = 4) uniform int activeLights;
+#if VULKAN
+layout(set = 1, binding = 4) uniform fPointLightList
+#else
+layout(std140, binding = 6) uniform fPointLightList
+#endif
+{
+    fPointLight pointLightList[MAX_LIGHTS];
+};
+
+#if VULKAN
+layout(push_constant) uniform ActiveLights
+{
+    int activePointLights;
+    int activeDirectionalLights;
+} activeLights;
+#else
+uniform int activePointLights;
+uniform int activeDirectionalLights;
 #endif
 
-vec3 BlinnPhong(fLighting current, int i)
+// vec3 BlinnPhong(fLighting current, int i)
+// {
+//     //Ambient Lighting
+//     vec3 ambient = current.ambientStrength * current.lightColor;
+
+//     //Diffuse Lighting
+//     vec3 normal = normalize(i_normal);
+//     vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
+
+//     float diff = max(dot(normal, light_direction), 0.0);
+//     vec3 diffuse = diff * current.lightColor;
+
+//     //Specular Lighting
+//     vec3 specular = vec3(0.0);
+//     if (diff > 0.0)
+//     {
+//         vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
+//         // vec3 reflect_direction = reflect(-light_direction, normal);
+//         vec3 halfway_vector = normalize(view_direction + light_direction);
+
+//         // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+//         float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
+//         specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
+//     }
+
+//     return vec3(ambient + diffuse + specular);
+// }
+
+vec3 CalculateDirectionalLight(fDirectionalLight current, int i)
 {
     //Ambient Lighting
     vec3 ambient = current.ambientStrength * current.lightColor;
 
     //Diffuse Lighting
     vec3 normal = normalize(i_normal);
-    vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
-
+    vec3 light_direction = normalize(-current.lightDirection);
     float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diff * current.lightColor;
 
@@ -97,22 +153,67 @@ vec3 BlinnPhong(fLighting current, int i)
         specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
     }
 
-    return vec3(ambient + diffuse + specular);
+    return ambient + diffuse + specular;
+}
+
+vec3 CalculatePointLight(fPointLight current, int i)
+{
+    vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
+    float distance = length(current.lightPosition - i_fragment_position);
+    float attenuation = 1.0 / (current.constant + current.linear * distance + current.quadratic * (distance * distance));
+
+    //Ambient Lighting
+    vec3 ambient = current.ambientStrength * current.lightColor;
+
+    //Diffuse Lighting
+    vec3 normal = normalize(i_normal);
+    float diff = max(dot(normal, light_direction), 0.0);
+    vec3 diffuse = diff * current.lightColor;
+
+    //Specular Lighting
+    vec3 specular = vec3(0.0);
+    if (diff > 0.0)
+    {
+        vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
+        // vec3 reflect_direction = reflect(-light_direction, normal);
+        vec3 halfway_vector = normalize(view_direction + light_direction);
+
+        // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
+        float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
+        specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
+    }
+
+    ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+
+    return ambient + diffuse + specular;
 }
 
 void main()
 {
     vec3 resultColor = vec3(0.0);
+
+    //Calculate Directional Lights
 #if VULKAN
-    for (int l = 0; l < MAX_LIGHTS; ++l)
+    for (int l = 0; l < activeLights.activeDirectionalLights; ++l)
 #else
-    for (int l = 0; l < activeLights; ++l)
+    for (int l = 0; l < activeDirectionalLights; ++l)
 #endif
     {
-        fLighting currentLight = lightingMatrix[l];
-        // if (currentLight.lightPosition == vec3(0.0)) continue;
+        fDirectionalLight currentLight = directionalLightList[l];
+        resultColor += clamp(CalculateDirectionalLight(currentLight, l), 0.0, 1.0);
+    }
 
-        resultColor += BlinnPhong(currentLight, l);
+    //Calculate Point Lights
+#if VULKAN
+    for (int l = 0; l < activeLights.activePointLights; ++l)
+#else
+    for (int l = 0; l < activePointLights; ++l)
+#endif
+    {
+        fPointLight currentLight = pointLightList[l];
+        resultColor += clamp(CalculatePointLight(currentLight, l), 0.0, 1.0);
     }
 
     fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);

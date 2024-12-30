@@ -21,5 +21,5 @@ public:
 	void Restart() override;
 	void End() override;
 private:
-	ThreeDimension::FragmentLightingUniform l;
+	ThreeDimension::PointLightUniform l;
 };
