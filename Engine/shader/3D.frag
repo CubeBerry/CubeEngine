@@ -90,7 +90,13 @@ layout(std140, binding = 6) uniform fPointLightList
     fPointLight pointLightList[MAX_LIGHTS];
 };
 
-#if !VULKAN
+#if VULKAN
+layout(push_constant) uniform ActiveLights
+{
+    int activePointLights;
+    int activeDirectionalLights;
+} activeLights;
+#else
 uniform int activePointLights;
 uniform int activeDirectionalLights;
 #endif
@@ -190,7 +196,7 @@ void main()
 
     //Calculate Directional Lights
 #if VULKAN
-    for (int l = 0; l < MAX_LIGHTS; ++l)
+    for (int l = 0; l < activeLights.activeDirectionalLights; ++l)
 #else
     for (int l = 0; l < activeDirectionalLights; ++l)
 #endif
@@ -200,12 +206,12 @@ void main()
         if (currentLight.lightDirection == vec3(0.0f)) continue;
 #endif
 
-        resultColor += CalculateDirectionalLight(currentLight, l);
+        resultColor += clamp(CalculateDirectionalLight(currentLight, l), 0.0, 1.0);
     }
 
     //Calculate Point Lights
 #if VULKAN
-    for (int l = 0; l < MAX_LIGHTS; ++l)
+    for (int l = 0; l < activeLights.activePointLights; ++l)
 #else
     for (int l = 0; l < activePointLights; ++l)
 #endif
@@ -215,7 +221,7 @@ void main()
         if (currentLight.lightPosition == vec3(0.0f)) continue;
 #endif
 
-        resultColor += CalculatePointLight(currentLight, l);
+        resultColor += clamp(CalculatePointLight(currentLight, l), 0.0, 1.0);
     }
 
     fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
