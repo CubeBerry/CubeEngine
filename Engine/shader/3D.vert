@@ -44,8 +44,8 @@ void main()
     o_col = matrix[object_index].color;
     o_object_index = object_index;
     //Lighting
-    o_normal = mat3(transpose(inverse(matrix[object_index].model))) * i_normal;
-    o_fragment_position = mat3(matrix[object_index].model) * i_pos;
+    o_normal = vec3(transpose(inverse(matrix[object_index].model)) * vec4(i_normal, 0.0));
+    o_fragment_position = vec3(matrix[object_index].model * vec4(i_pos, 1.0));
 
     gl_Position = matrix[object_index].projection * matrix[object_index].view * matrix[object_index].model * vec4(i_pos, 1.0);
 }
