@@ -1222,7 +1222,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess, glm::vec3 specularColor)
+void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic, float roughness)
 {
 	CreateMesh(type, path, stacks, slices);
 
@@ -1253,8 +1253,8 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragUniforms3D.push_back(tIndex);
 
 	ThreeDimension::Material material;
-	material.shininess = shininess;
-	material.specularColor = specularColor;
+	material.metallic = metallic;
+	material.roughness = roughness;
 	fragMaterialUniforms3D.push_back(material);
 
 	//if (vertexUniform3D != nullptr)
@@ -1280,6 +1280,7 @@ void VKRenderManager::LoadSkyBox(
 )
 {
 	skyboxShader = new VKShader(vkInit->GetDevice());
+	std::cout << '\n';
 	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
 
 	std::vector<glm::vec3> skyboxVertices = {

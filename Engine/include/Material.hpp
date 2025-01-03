@@ -70,8 +70,8 @@ namespace ThreeDimension
 
 	struct alignas(16) Material
 	{
-		glm::vec3 specularColor;
-		float shininess;
+		glm::vec3 specularColor = glm::vec3(1.f);
+		float shininess = 32.f;
 
 		float metallic = 0.3f;
 		float roughness = 0.3f;
