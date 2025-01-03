@@ -129,63 +129,46 @@ uniform int activeDirectionalLights;
 //     return vec3(ambient + diffuse + specular);
 // }
 
-vec3 CalculateDirectionalLight(fDirectionalLight current, int i)
+vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, vec3 viewPosition, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
 {
+    vec3 light_direction = vec3(0.0);
+    float attenuation = 0.0;
+    if (isPointLight)
+    {
+        light_direction = normalize(lightPosition - i_fragment_position);
+        float distance = length(lightPosition - i_fragment_position);
+        attenuation = 1.0 / (pointLightList[lightIndex].constant + pointLightList[lightIndex].linear * distance + pointLightList[lightIndex].quadratic * (distance * distance));
+    }
+    else
+        light_direction = normalize(-lightPosition);
+
     //Ambient Lighting
-    vec3 ambient = current.ambientStrength * current.lightColor;
+    vec3 ambient = ambientStrength * lightColor;
 
     //Diffuse Lighting
     vec3 normal = normalize(i_normal);
-    vec3 light_direction = normalize(-current.lightDirection);
     float diff = max(dot(normal, light_direction), 0.0);
-    vec3 diffuse = diff * current.lightColor;
+    vec3 diffuse = diff * lightColor;
 
     //Specular Lighting
     vec3 specular = vec3(0.0);
     if (diff > 0.0)
     {
-        vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
+        vec3 view_direction = normalize(viewPosition - i_fragment_position);
         // vec3 reflect_direction = reflect(-light_direction, normal);
         vec3 halfway_vector = normalize(view_direction + light_direction);
 
         // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
         float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
-        specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
+        specular = specularStrength * spec * lightColor * f_material[i_object_index].specularColor;
     }
 
-    return ambient + diffuse + specular;
-}
-
-vec3 CalculatePointLight(fPointLight current, int i)
-{
-    vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
-    float distance = length(current.lightPosition - i_fragment_position);
-    float attenuation = 1.0 / (current.constant + current.linear * distance + current.quadratic * (distance * distance));
-
-    //Ambient Lighting
-    vec3 ambient = current.ambientStrength * current.lightColor;
-
-    //Diffuse Lighting
-    vec3 normal = normalize(i_normal);
-    float diff = max(dot(normal, light_direction), 0.0);
-    vec3 diffuse = diff * current.lightColor;
-
-    //Specular Lighting
-    vec3 specular = vec3(0.0);
-    if (diff > 0.0)
+    if (isPointLight)
     {
-        vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
-        // vec3 reflect_direction = reflect(-light_direction, normal);
-        vec3 halfway_vector = normalize(view_direction + light_direction);
-
-        // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
-        float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
-        specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
+        ambient *= attenuation;
+        diffuse *= attenuation;
+        specular *= attenuation;
     }
-
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
 
     return ambient + diffuse + specular;
 }
@@ -202,7 +185,7 @@ void main()
 #endif
     {
         fDirectionalLight currentLight = directionalLightList[l];
-        resultColor += clamp(CalculateDirectionalLight(currentLight, l), 0.0, 1.0);
+        resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.viewPosition, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
     }
 
     //Calculate Point Lights
@@ -213,7 +196,7 @@ void main()
 #endif
     {
         fPointLight currentLight = pointLightList[l];
-        resultColor += clamp(CalculatePointLight(currentLight, l), 0.0, 1.0);
+        resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.viewPosition, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
     }
 
     fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
