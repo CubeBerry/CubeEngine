@@ -72,6 +72,9 @@ namespace ThreeDimension
 	{
 		glm::vec3 specularColor;
 		float shininess;
+
+		float metallic = 0.3f;
+		float roughness = 0.3f;
 	};
 
 	//Lighting
