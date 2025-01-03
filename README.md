@@ -39,7 +39,7 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/36c003b4-65c5-413f-9faf-e71366a791f3)
 
-![image](https://github.com/user-attachments/assets/a59986d5-f250-4307-ac20-722a742bbfb5)
+![image](https://github.com/user-attachments/assets/f70d174e-eb44-43a3-a9b9-3809532a576e)
 
 ![image](https://github.com/user-attachments/assets/19805592-0426-426d-831f-10b0d83ad1d9)
 
