@@ -11,8 +11,9 @@ layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
 layout(location = 2) in flat int i_object_index;
 //Lighting
-layout(location = 6) in vec3 i_normal;
-layout(location = 7) in vec3 i_fragment_position;
+layout(location = 3) in vec3 i_normal;
+layout(location = 4) in vec3 i_fragment_position;
+layout(location = 5) in vec3 i_view_position;
 
 layout(location = 0) out vec4 fragmentColor;
 
@@ -38,7 +39,6 @@ struct fDirectionalLight
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
-    vec3 viewPosition;
 };
 
 struct fPointLight
@@ -47,7 +47,6 @@ struct fPointLight
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
-    vec3 viewPosition;
 
     float constant;
     float linear;
@@ -107,35 +106,7 @@ uniform int activePointLights;
 uniform int activeDirectionalLights;
 #endif
 
-// vec3 BlinnPhong(fLighting current, int i)
-// {
-//     //Ambient Lighting
-//     vec3 ambient = current.ambientStrength * current.lightColor;
-
-//     //Diffuse Lighting
-//     vec3 normal = normalize(i_normal);
-//     vec3 light_direction = normalize(current.lightPosition - i_fragment_position);
-
-//     float diff = max(dot(normal, light_direction), 0.0);
-//     vec3 diffuse = diff * current.lightColor;
-
-//     //Specular Lighting
-//     vec3 specular = vec3(0.0);
-//     if (diff > 0.0)
-//     {
-//         vec3 view_direction = normalize(current.viewPosition - i_fragment_position);
-//         // vec3 reflect_direction = reflect(-light_direction, normal);
-//         vec3 halfway_vector = normalize(view_direction + light_direction);
-
-//         // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
-//         float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
-//         specular = current.specularStrength * spec * current.lightColor * f_material[i_object_index].specularColor;
-//     }
-
-//     return vec3(ambient + diffuse + specular);
-// }
-
-vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, vec3 viewPosition, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
+vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
 {
     vec3 light_direction = vec3(0.0);
     float attenuation = 0.0;
@@ -160,7 +131,7 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, vec3 viewPosition, float am
     vec3 specular = vec3(0.0);
     if (diff > 0.0)
     {
-        vec3 view_direction = normalize(viewPosition - i_fragment_position);
+        vec3 view_direction = normalize(i_view_position - i_fragment_position);
         // vec3 reflect_direction = reflect(-light_direction, normal);
         vec3 halfway_vector = normalize(view_direction + light_direction);
 
@@ -215,26 +186,8 @@ vec3 F(vec3 F0, vec3 V, vec3 H)
     return F0 + (vec3(1.0) - F0) * pow(1 - max(dot(V, H), 0.0), 5.0);
 }
 
-// vec3 PBR()
-// {
-//     vec3 Ks = F(F0, V, H);
-//     vec3 Kd = vec3(1.0) - Ks;
-
-//     vec3 lambert = albedoMesh / PI;
-
-//     vec3 cookTorranceNumerator = D(alpha, N, H) * G(alpha, N, V, L) * F(F0, V, H);
-//     float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0);
-//     cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
-//     vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
-
-//     vec3 BRDF = Kd * lambert + cookTorrance;
-//     vec3 outgoingLight = emissivityMesh + BRDF * lightColor * max(dot(L, N), 0.0);
-
-//     return outgoingLight;
-// }
-
 // Rendering Equation for one light source
-vec3 PBR(vec3 objectColor, vec3 lightPosition, vec3 lightColor, vec3 viewPosition, bool isPointLight, int lightIndex)
+vec3 PBR(vec3 objectColor, vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
     fMaterial material = f_material[i_object_index];
 
@@ -244,7 +197,7 @@ vec3 PBR(vec3 objectColor, vec3 lightPosition, vec3 lightColor, vec3 viewPositio
 
     // Main Vectors
     vec3 N = normalize(i_normal);
-    vec3 V = normalize(viewPosition - i_fragment_position);
+    vec3 V = normalize(i_view_position - i_fragment_position);
 
     vec3 F0 = mix(vec3(0.04), albedo, material.metallic);
     
@@ -273,8 +226,8 @@ vec3 PBR(vec3 objectColor, vec3 lightPosition, vec3 lightColor, vec3 viewPositio
     // Cook-Torrance BRDF
     float alpha = material.roughness * material.roughness;
     vec3 cookTorranceNumerator = D(alpha, N, H) * G(alpha, N, V, L) * F(F0, V, H);
-    float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0);
-    cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
+    float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.0001;
+    // cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
     vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
 
     vec3 BRDF = Kd * lambert + cookTorrance;
@@ -295,8 +248,8 @@ void main()
 #endif
     {
         fDirectionalLight currentLight = directionalLightList[l];
-        // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.viewPosition, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += clamp(PBR(i_col.rgb, currentLight.lightDirection, currentLight.lightColor, currentLight.viewPosition, false, l), 0.0, 1.0);
+        // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
+        resultColor += clamp(PBR(i_col.rgb, currentLight.lightDirection, currentLight.lightColor, false, l), 0.0, 1.0);
     }
 
     //Calculate Point Lights
@@ -307,10 +260,17 @@ void main()
 #endif
     {
         fPointLight currentLight = pointLightList[l];
-        // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.viewPosition, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += clamp(PBR(i_col.rgb, currentLight.lightPosition, currentLight.lightColor, currentLight.viewPosition, true, l), 0.0, 1.0);
+        // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
+        resultColor += clamp(PBR(i_col.rgb, currentLight.lightPosition, currentLight.lightColor, true, l), 0.0, 1.0);
     }
 
+    // PBR Gamma Correction
+    resultColor = resultColor / (resultColor + vec3(1.0));
+    resultColor = pow(resultColor, vec3(1.0 / 2.2));  
+
+    // Blinn-Phong Result Color
     // fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
+
+    // PBR Result Color
     fragmentColor = vec4(resultColor, 1.0);
 }

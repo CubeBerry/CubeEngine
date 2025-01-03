@@ -84,7 +84,6 @@ namespace ThreeDimension
 		float ambientStrength;
 		glm::vec3 lightColor;
 		float specularStrength;
-		glm::vec3 viewPosition;
 
 		float constant = 1.0f;
 		float linear = 0.09f;
@@ -97,6 +96,5 @@ namespace ThreeDimension
 		float ambientStrength;
 		glm::vec3 lightColor;
 		float specularStrength;
-		glm::vec3 viewPosition;
 	};
 }
