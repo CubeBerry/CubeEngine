@@ -461,7 +461,7 @@ GLTexture* GLRenderManager::GetTexture(std::string name)
 	return nullptr;
 }
 
-void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess, glm::vec3 specularColor)
+void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic, float roughness)
 {
 	CreateMesh(type, path, stacks, slices);
 
@@ -563,8 +563,8 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	fragUniforms3D.push_back(tIndex);
 
 	ThreeDimension::Material material;
-	material.shininess = shininess;
-	material.specularColor = specularColor;
+	material.metallic = metallic;
+	material.roughness = roughness;
 	fragMaterialUniforms3D.push_back(material);
 
 	//if (vertexUniform3D != nullptr)

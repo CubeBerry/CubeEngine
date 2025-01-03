@@ -19,22 +19,18 @@ void ProceduralMeshes::Init()
 
 	l.lightPosition = glm::vec4(0.f, 0.f, 1.f, 1.f);
 	l.lightColor = glm::vec4(0.f, 0.f, 1.f, 1.f);
-	//viewPosition == cameraPosition
-	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l.ambientStrength = 0.1f;
 	l.specularStrength = 0.5f;
 	Engine::GetRenderManager()->AddPointLight(l);
 
 	l2.lightPosition = glm::vec4(0.f, 0.f, 1.f, 1.f);
 	l2.lightColor = glm::vec4(0.f, 1.f, 0.f, 1.f);
-	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l2.ambientStrength = 0.1f;
 	l2.specularStrength = 0.5f;
 	Engine::GetRenderManager()->AddPointLight(l2);
 
-	l3.lightDirection = glm::vec4(0.f, -1.f, 0.f, 1.f);
-	l3.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	l3.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
+	l3.lightDirection = glm::vec3(0.f, -1.f, 0.f);
+	l3.lightColor = glm::vec3(1.f, 1.f, 1.f);
 	l3.ambientStrength = 0.1f;
 	l3.specularStrength = 0.5f;
 	Engine::GetRenderManager()->AddDirectionalLight(l3);
@@ -101,13 +97,8 @@ void ProceduralMeshes::Update(float dt)
 	l2.lightPosition.y = rotatedPosition.y;
 	l2.lightPosition.z = rotatedPosition.z;
 
-	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
-	l2.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
-
 	Engine::GetRenderManager()->GetPointLightUniforms()[0].lightPosition = l.lightPosition;
-	Engine::GetRenderManager()->GetPointLightUniforms()[0].viewPosition = l.viewPosition;
 	Engine::GetRenderManager()->GetPointLightUniforms()[1].lightPosition = l2.lightPosition;
-	Engine::GetRenderManager()->GetPointLightUniforms()[1].viewPosition = l2.viewPosition;
 
 	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
 	Engine::GetObjectManager().FindObjectWithName("Light2")->SetPosition(l2.lightPosition);

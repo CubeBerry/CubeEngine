@@ -47,7 +47,7 @@ public:
 	GLTexture* GetTexture(std::string name);
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) override;
+	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) override;
 	void LoadSkyBox(
 		const std::filesystem::path& right,
 		const std::filesystem::path& left,

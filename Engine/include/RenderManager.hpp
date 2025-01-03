@@ -62,7 +62,7 @@ public:
 	std::vector<TwoDimension::FragmentUniform>* GetFragmentUniforms2D() { return &fragUniforms2D; };
 
 	//--------------------3D Render--------------------//
-	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float shininess = 32.f, glm::vec3 specularColor = glm::vec3(1.f)) = 0;
+	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) = 0;
 	void AddDirectionalLight(const ThreeDimension::DirectionalLightUniform& light)
 	{
 		directionalLightUniforms.push_back(light);

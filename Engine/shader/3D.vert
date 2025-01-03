@@ -18,8 +18,9 @@ layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
 layout(location = 2) out int o_object_index;
 //Lighting
-layout(location = 6) out vec3 o_normal;
-layout(location = 7) out vec3 o_fragment_position;
+layout(location = 3) out vec3 o_normal;
+layout(location = 4) out vec3 o_fragment_position;
+layout(location = 5) out vec3 o_view_position;
 
 struct vMatrix
 {
@@ -44,8 +45,10 @@ void main()
     o_col = matrix[object_index].color;
     o_object_index = object_index;
     //Lighting
-    o_normal = vec3(transpose(inverse(matrix[object_index].model)) * vec4(i_normal, 0.0));
+    // o_normal = vec3(transpose(inverse(matrix[object_index].model)) * vec4(i_normal, 0.0));
+    o_normal = mat3(matrix[object_index].model) * i_normal;
     o_fragment_position = vec3(matrix[object_index].model * vec4(i_pos, 1.0));
+    o_view_position = inverse(matrix[object_index].projection * matrix[object_index].view)[3].xyz;
 
     gl_Position = matrix[object_index].projection * matrix[object_index].view * matrix[object_index].model * vec4(i_pos, 1.0);
 }

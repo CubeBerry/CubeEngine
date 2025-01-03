@@ -56,8 +56,6 @@ void PhysicsDemo::Init()
 
 	l.lightPosition = glm::vec4(0.f, 1.f, 0.f, 1.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	//viewPosition == cameraPosition
-	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	l.ambientStrength = 0.1f;
 	l.specularStrength = 0.5f;
 	Engine::GetRenderManager()->AddPointLight(l);
@@ -124,7 +122,6 @@ void PhysicsDemo::Update(float dt)
 	}
 
 	//Update Lighting Variables
-	l.viewPosition = glm::vec4(Engine::GetCameraManager().GetCameraPosition(), 1.f);
 	Engine::GetRenderManager()->GetPointLightUniforms()[0] = l;
 
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
