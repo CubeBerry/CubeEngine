@@ -28,7 +28,7 @@ All required APIs and Libraries are integrated in Project.
 5. Basic 2D Game Engine Features
 6. 3D Plane, Cube(3D Collision Applied), Sphere, Tours, Cylinder, Cone Meshes + Normal Debugger
 7. Assimp Model Loading
-8. Blinn-Phong Lighting
+8. Blinn-Phong Lighting, Physically Based Rendering
 9. Skybox
 10. MSAA
 
@@ -45,9 +45,8 @@ All required APIs and Libraries are integrated in Project.
 
 
 ## Future Plans
-1. PBR
-2. 3D Mesh Texture
-4. C++ Code Optimization
+1. 3D Mesh Texture
+2. C++ Code Optimization
 
 ## License
 Licensed under the [MIT License](https://github.com/minjae-yu/CubeEngine/blob/main/LICENSE).
