@@ -44,6 +44,7 @@ public:
 	void AddMeshWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
 	void AddMeshWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
+	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness);
 
 
 	//Animation

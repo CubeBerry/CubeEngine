@@ -251,6 +251,15 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 	AddSpriteToManager();
 }
 
+void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness)
+{
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	renderManager->LoadMesh(type, path, color, stacks, slices, metallic, roughness);
+	materialId = Engine::GetSpriteManager().GetSpritesAmount();
+	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
+	AddSpriteToManager();
+}
+
 void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
 {
 	hotSpotList.clear();
