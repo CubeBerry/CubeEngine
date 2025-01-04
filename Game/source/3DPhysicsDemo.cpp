@@ -35,29 +35,38 @@ void PhysicsDemo::Init()
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE1", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 1.f, 1.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,1.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE2", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.f, 1.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,-1.f }, glm::vec3{ 0.5f,0.5f,0.5f }, "CUBE3", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 1.f, 0.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 0.5f,0.5f,0.5f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
-	l.lightPosition = glm::vec4(0.f, 1.f, 0.f, 1.f);
+	l.lightPosition = glm::vec3(0.f, 4.f, 2.f);
 	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	l.ambientStrength = 0.1f;
 	l.specularStrength = 0.5f;
+
+	float radians = glm::radians(45.f);
+
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1), radians, glm::vec3(1.f, 1.f, 1.f));
+	glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
+	l.lightPosition.x = rotatedPosition.x;
+	l.lightPosition.y = rotatedPosition.y;
+	l.lightPosition.z = rotatedPosition.z;
+
 	Engine::GetRenderManager()->AddPointLight(l);
 
 	Engine::GetRenderManager()->LoadSkyBox(
