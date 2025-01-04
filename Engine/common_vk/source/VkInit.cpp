@@ -505,13 +505,14 @@ void VKInit::PrintPhysicalDevices()
 	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
 
 	//Get physical devices properties
-	std::cout << "--------------------Physical Device Information--------------------" << std::endl;
-	for (auto& device : physicalDevices)
+	std::cout << "--------------------Physical Device Information--------------------" << '\n';
+	for (size_t i = 0; i < physicalDevices.size(); ++i)
 	{
 		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(device, &properties);
+		vkGetPhysicalDeviceProperties(physicalDevices[i], &properties);
 
-		std::cout << "Device Name : " << properties.deviceName << '\n' << std::endl;
+		std::cout << i << ". " << properties.deviceName << '\n' << '\n';
+		//std::cout << "Device Name : " << properties.deviceName << '\n' << '\n';
 	}
 }
 
