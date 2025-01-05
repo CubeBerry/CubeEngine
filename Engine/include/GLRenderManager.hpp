@@ -41,7 +41,7 @@ public:
 	void DeleteWithIndex(int id) override;
 
 	//--------------------2D Render--------------------//
-	void LoadTexture(const std::filesystem::path& path_, std::string name_) override;
+	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
 	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
 
 	GLTexture* GetTexture(std::string name);

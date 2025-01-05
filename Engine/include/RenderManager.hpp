@@ -55,7 +55,7 @@ public:
 	RenderType GetRenderType() { return rMode; };
 
 	//--------------------2D Render--------------------//
-	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_) = 0;
+	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
 	virtual void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) = 0;
 
 	std::vector<TwoDimension::VertexUniform>* GetVertexUniforms2D() { return &vertexUniforms2D; };

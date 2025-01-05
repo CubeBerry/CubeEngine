@@ -12,7 +12,7 @@ public:
     GLTexture() = default;
     ~GLTexture();
 
-    void LoadTexture(const std::filesystem::path& path_, std::string name_, int id);
+    void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip, int id);
     void LoadSkyBox(
         const std::filesystem::path& right,
         const std::filesystem::path& left,

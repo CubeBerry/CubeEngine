@@ -48,11 +48,11 @@ uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_
 	return UINT32_MAX;
 }
 
-void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name_)
+void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	name = name_;
 
-	stbi_set_flip_vertically_on_load(true);
+	if (flip) stbi_set_flip_vertically_on_load(true);
 
 	auto path = path_;
 	int color;
