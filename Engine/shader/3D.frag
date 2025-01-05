@@ -273,7 +273,12 @@ void main()
     resultColor = pow(resultColor, vec3(1.0 / 2.2));  
 
     // Blinn-Phong Result Color
-    // fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
+    // if (f_matrix[i_object_index].isTex)
+    // {
+    //     vec4 textureColor = texture(tex[f_matrix[i_object_index].texIndex], i_uv);
+    //     fragmentColor = vec4(resultColor, 1.0) * textureColor;
+    // }
+    // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 
     // PBR Result Color
     fragmentColor = vec4(resultColor, 1.0);
