@@ -350,7 +350,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			std::exit(EXIT_FAILURE);
 		}
 
-		ProcessNode(scene->mRootNode, scene, tempVertices, tempIndices);
+		ProcessNode(scene->mRootNode, scene, verticesCount);
 
 		//for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 		//{
@@ -380,29 +380,32 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		//	}
 		//}
 
-		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-		for (const auto& vertex : tempVertices)
+		if (type != MeshType::OBJ)
 		{
-			minPos = glm::min(minPos, glm::vec3(vertex.position));
-			maxPos = glm::max(maxPos, glm::vec3(vertex.position));
+			glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+			for (const auto& vertex : tempVertices)
+			{
+				minPos = glm::min(minPos, glm::vec3(vertex.position));
+				maxPos = glm::max(maxPos, glm::vec3(vertex.position));
+			}
+
+			glm::vec3 center;
+			float unitScale;
+
+			center = (minPos + maxPos) / 2.f;
+			glm::vec3 size = maxPos - minPos;
+			float extent = glm::max(size.x, glm::max(size.y, size.z));
+			unitScale = 1.f / extent;
+
+			for (auto& vertex : tempVertices)
+			{
+				vertex.position -= center;
+				vertex.position *= glm::vec3(unitScale, unitScale, unitScale);
+			}
+
+			for (auto& i : tempIndices)
+				i += static_cast<uint32_t>(verticesCount);
 		}
-
-		glm::vec3 center;
-		float unitScale;
-
-		center = (minPos + maxPos) / 2.f;
-		glm::vec3 size = maxPos - minPos;
-		float extent = glm::max(size.x, glm::max(size.y, size.z));
-		unitScale = 1.f / extent;
-
-		for (auto& vertex : tempVertices)
-		{
-			vertex.position -= center;
-			vertex.position *= glm::vec3(unitScale, unitScale, unitScale);
-		}
-
-		for (auto& i : tempIndices)
-			i += static_cast<uint32_t>(verticesCount);
 
 		//Custom Model Load
 		//std::ifstream file(path);
@@ -519,10 +522,13 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
 #endif
 
-	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
-	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
-	vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
-	indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+	if (type != MeshType::OBJ)
+	{
+		verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
+		indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
+		vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
+		indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+	}
 }
 
 void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices)
@@ -567,22 +573,25 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 	}
 }
 
-void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices)
+void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(mesh, scene, tempVertices, tempIndices);
+		ProcessMesh(mesh, scene, verticesCount);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(node->mChildren[i], scene, tempVertices, tempIndices);
+		ProcessNode(node->mChildren[i], scene, verticesCount);
 	}
 }
 
-void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices)
+void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount)
 {
+	std::vector<ThreeDimension::Vertex> tempVertices;
+	std::vector<uint32_t> tempIndices;
+
 	//Vertices
 	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
 	{
@@ -612,6 +621,37 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	}
+
+	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+	for (const auto& vertex : tempVertices)
+	{
+		minPos = glm::min(minPos, glm::vec3(vertex.position));
+		maxPos = glm::max(maxPos, glm::vec3(vertex.position));
+	}
+
+	glm::vec3 center;
+	float unitScale;
+
+	center = (minPos + maxPos) / 2.f;
+	glm::vec3 size = maxPos - minPos;
+	float extent = glm::max(size.x, glm::max(size.y, size.z));
+	unitScale = 1.f / extent;
+
+	//for (auto& vertex : tempVertices)
+	//{
+	//	vertex.position -= center;
+	//	vertex.position *= glm::vec3(unitScale, unitScale, unitScale);
+	//}
+
+	for (auto& i : tempIndices)
+		i += static_cast<uint32_t>(verticesCount);
+
+	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
+	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
+	vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
+	indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+
+	verticesCount += static_cast<unsigned int>(tempVertices.size());
 }
 
 //@TODO This function is incomplete.

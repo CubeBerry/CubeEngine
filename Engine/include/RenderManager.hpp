@@ -153,7 +153,19 @@ protected:
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
 	//Assimp
-	void ProcessNode(aiNode* node, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices);
-	void ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices);
+	void ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount);
+	void ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
+
+inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
+{
+	glm::mat4 result;
+
+	result[0][0] = static_cast<float>(mat->a1); result[0][1] = static_cast<float>(mat->b1);  result[0][2] = static_cast<float>(mat->c1); result[0][3] = static_cast<float>(mat->d1);
+	result[1][0] = static_cast<float>(mat->a2); result[1][1] = static_cast<float>(mat->b2);  result[1][2] = static_cast<float>(mat->c2); result[1][3] = static_cast<float>(mat->d2);
+	result[2][0] = static_cast<float>(mat->a3); result[2][1] = static_cast<float>(mat->b3);  result[2][2] = static_cast<float>(mat->c3); result[2][3] = static_cast<float>(mat->d3);
+	result[3][0] = static_cast<float>(mat->a4); result[3][1] = static_cast<float>(mat->b4);  result[3][2] = static_cast<float>(mat->c4); result[3][3] = static_cast<float>(mat->d4);
+
+	return result;
+}
