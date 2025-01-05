@@ -49,6 +49,8 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "sample", false);
+
 	Engine::GetRenderManager()->LoadSkyBox(
 		"../Game/assets/Skybox/right.jpg",
 		"../Game/assets/Skybox/left.jpg",

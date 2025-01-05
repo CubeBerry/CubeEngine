@@ -11,9 +11,9 @@ GLTexture::~GLTexture()
 	DeleteTexture();
 }
 
-void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name_, int id)
+void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip, int id)
 {
-	stbi_set_flip_vertically_on_load(true);
+	if (flip) stbi_set_flip_vertically_on_load(true);
 	int color;
 	//STBI_rgb_alpha == 4
 	unsigned char* data = stbi_load(path_.string().c_str(), &width, &height, &color, STBI_rgb_alpha);

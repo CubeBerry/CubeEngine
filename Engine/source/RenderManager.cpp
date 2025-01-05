@@ -346,7 +346,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
 			std::exit(EXIT_FAILURE);
 		}
 
@@ -614,6 +614,7 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<
 	}
 }
 
+//@TODO This function is incomplete.
 void RenderManager::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
 {
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)

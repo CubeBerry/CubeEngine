@@ -281,7 +281,7 @@ void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::str
 	inFile >> text;
 	//texturePtr = Engine::GetTextureManager().Load(text, true);
 	//frameSize = texturePtr->GetSize();
-	Engine::Instance().GetRenderManager()->LoadTexture(text, name);
+	Engine::Instance().GetRenderManager()->LoadTexture(text, name, true);
 	AddMeshWithTexel(name);
 
 	inFile >> text;

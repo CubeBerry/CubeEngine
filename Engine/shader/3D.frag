@@ -19,6 +19,7 @@ layout(location = 0) out vec4 fragmentColor;
 
 struct fMatrix
 {
+    bool isTex;
     int texIndex;
 };
 
@@ -187,11 +188,14 @@ vec3 F(vec3 F0, vec3 V, vec3 H)
 }
 
 // Rendering Equation for one light source
-vec3 PBR(vec3 objectColor, vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
+vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
     fMaterial material = f_material[i_object_index];
 
-    vec3 albedo = objectColor;
+    vec3 albedo = vec3(0.0);
+    if (f_matrix[i_object_index].isTex) albedo = texture(tex[f_matrix[i_object_index].texIndex], i_uv).rgb;
+    else albedo = i_col.rgb;
+
     float ao = 1.0;
     float distance = isPointLight ? length(lightPosition - i_fragment_position) : 1.0;
 
@@ -226,8 +230,8 @@ vec3 PBR(vec3 objectColor, vec3 lightPosition, vec3 lightColor, bool isPointLigh
     // Cook-Torrance BRDF
     float alpha = material.roughness * material.roughness;
     vec3 cookTorranceNumerator = D(alpha, N, H) * G(alpha, N, V, L) * F(F0, V, H);
-    float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0) + 0.0001;
-    // cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
+    float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0);
+    cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
     vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
 
     vec3 BRDF = Kd * lambert + cookTorrance;
@@ -249,7 +253,7 @@ void main()
     {
         fDirectionalLight currentLight = directionalLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += clamp(PBR(i_col.rgb, currentLight.lightDirection, currentLight.lightColor, false, l), 0.0, 1.0);
+        resultColor += clamp(PBR(currentLight.lightDirection, currentLight.lightColor, false, l), 0.0, 1.0);
     }
 
     //Calculate Point Lights
@@ -261,7 +265,7 @@ void main()
     {
         fPointLight currentLight = pointLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += clamp(PBR(i_col.rgb, currentLight.lightPosition, currentLight.lightColor, true, l), 0.0, 1.0);
+        resultColor += clamp(PBR(currentLight.lightPosition, currentLight.lightColor, true, l), 0.0, 1.0);
     }
 
     // PBR Gamma Correction
@@ -269,7 +273,12 @@ void main()
     resultColor = pow(resultColor, vec3(1.0 / 2.2));  
 
     // Blinn-Phong Result Color
-    // fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
+    // if (f_matrix[i_object_index].isTex)
+    // {
+    //     vec4 textureColor = texture(tex[f_matrix[i_object_index].texIndex], i_uv);
+    //     fragmentColor = vec4(resultColor, 1.0) * textureColor;
+    // }
+    // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 
     // PBR Result Color
     fragmentColor = vec4(resultColor, 1.0);

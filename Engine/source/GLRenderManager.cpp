@@ -114,6 +114,13 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 
 		gl3DShader.Use(true);
 
+		//For Texture Array
+		if (!samplers.empty())
+		{
+			auto texLocation = glCheck(glGetUniformLocation(gl3DShader.GetProgramHandle(), "tex"));
+			glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
+		}
+
 		if (vertexUniform3D != nullptr)
 		{
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
@@ -197,10 +204,10 @@ void GLRenderManager::EndRender()
 	SDL_GL_SwapWindow(Engine::Instance().GetWindow().GetWindow());
 }
 
-void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_)
+void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	GLTexture* texture = new GLTexture;
-	texture->LoadTexture(path_, name_, static_cast<int>(textures.size()));
+	texture->LoadTexture(path_, name_, flip, static_cast<int>(textures.size()));
 
 	textures.push_back(texture);
 	samplers.push_back(texture->GetTextrueId());

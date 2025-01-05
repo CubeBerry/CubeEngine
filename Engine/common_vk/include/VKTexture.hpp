@@ -14,7 +14,7 @@ public:
 	VKTexture(VKInit* init_, VkCommandPool* pool_);
 	~VKTexture();
 
-	void LoadTexture(const std::filesystem::path& path_, std::string name_);
+	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip);
 	void LoadSkyBox(
 		const std::filesystem::path& right,
 		const std::filesystem::path& left,

@@ -24,15 +24,15 @@ void BeatEmUpDemo::Init()
 	Engine::GetCameraManager().SetCameraPosition({ 0.f,10.f, 30.f });
 	Engine::GetCameraManager().UpdaetCameraDirectrion({ 0.f, 10.f });
 
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/road.png", "road");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/road1.png", "road1");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/hpbar.png", "hpbar");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/1.png", "1");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/2.png", "2");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/3.png", "3");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/4.png", "4");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/4_1.png", "4_1");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/4_2.png", "4_2");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/road.png", "road", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/road1.png", "road1", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/hpbar.png", "hpbar", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/1.png", "1", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/2.png", "2", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/3.png", "3", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/4.png", "4", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/4_1.png", "4_1", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/BeatEmUpDemo/4_2.png", "4_2", true);
 
 	beatEmUpDemoSystem = new BeatEmUpDemoSystem();
 

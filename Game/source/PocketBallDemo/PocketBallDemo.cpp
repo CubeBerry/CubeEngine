@@ -17,15 +17,15 @@ void PocketBallDemo::Init()
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
 	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
 
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/1.png", "1");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/2.png", "2");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/3.png", "3");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/4.png", "4");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/5.png", "5");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/6.png", "6");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/Table.png", "Table");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/Arrow.png", "Arrow");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/White.png", "White", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/1.png", "1", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/2.png", "2", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/3.png", "3", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/4.png", "4", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/5.png", "5", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/6.png", "6", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/Table.png", "Table", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PocketBall/Arrow.png", "Arrow", true);
 
 	ballAmount = 7;
 	pocketBallSystem = new PocketBallSystem();

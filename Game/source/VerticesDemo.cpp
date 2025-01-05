@@ -15,9 +15,9 @@ void VerticesDemo::Init()
 	Engine::GetCameraManager().SetBaseFov(22.5f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
 
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/texture_sample.jpg", "2");
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/playerFPS.png", "FPS");
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/texture_sample.jpg", "2", true);
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/PlatformDemo/playerFPS.png", "FPS", true);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,4.f,-9.f }, glm::vec3{ 16.f,9.f,0.f }, "0", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
