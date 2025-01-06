@@ -5,9 +5,9 @@
 
 #include <iostream>
 
-
 #include "Engine.hpp"
 #include "BasicComponents/Physics3D.hpp"
+#include "BasicComponents/Light.hpp"
 #include "imgui.h"
 
 void ObjectManager::Update(float dt)
@@ -97,58 +97,121 @@ void ObjectManager::ObjectControllerForImGui()
         obj->SetRotate(rotation);
     }
 
-    if (obj->HasComponent<Physics3D>())
+    for (auto* comp : obj->GetComponentList())
     {
-        Physics3D* physics = obj->GetComponent<Physics3D>();
-
-        if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
+        ComponentTypes type = comp->GetType();
+        switch (type)
         {
-            if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType3D::RIGID))
-            {
-                physics->SetBodyType(BodyType3D::RIGID);
-            }
-            ImGui::SameLine();
-            if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType3D::BLOCK))
-            {
-                physics->SetBodyType(BodyType3D::BLOCK);
-            }
-
-            //bool isGhostCollisionOn = physics->GetIsGhostCollision();
-            //ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
-            //physics->SetIsGhostCollision(isGhostCollisionOn);
-
-            bool isGravityOn = physics->GetIsGravityOn();
-            ImGui::Checkbox("Use Gravity", &isGravityOn);
-            physics->SetGravity(physics->GetGravity(), isGravityOn);
-
-            glm::vec3 velocity = physics->GetVelocity();
-            ImGui::DragFloat3("Velocity", &velocity.x, 0.01f);
-            physics->SetVelocity(velocity);
-
-            glm::vec3 minVelocity = physics->GetMinVelocity();
-            ImGui::DragFloat3("Min Velocity", &minVelocity.x, 0.01f);
-            physics->SetMinVelocity(minVelocity);
-
-            glm::vec3 maxVelocity = physics->GetMaxVelocity();
-            ImGui::DragFloat3("Max Velocity", &maxVelocity.x, 0.01f);
-            physics->SetMaxVelocity(maxVelocity);
-
-            float gravity = physics->GetGravity();
-            ImGui::DragFloat("Gravity", &gravity, 0.01f);
-            physics->SetGravity(gravity, isGravityOn);
-
-            float friction = physics->GetFriction();
-            ImGui::DragFloat("Friction", &friction, 0.01f);
-            physics->SetFriction(friction);
-            
-            float mass = physics->GetMass();
-            ImGui::DragFloat("Mass", &mass, 0.01f);
-            physics->SetMass(mass);
+        case ComponentTypes::PHYSICS3D:
+            Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
+            break;
+        case ComponentTypes::LIGHT:
+            LightControllerForImGui(reinterpret_cast<Light*>(comp));
+            break;
         }
     }
+
     obj = nullptr;
     ImGui::End();
 
+    SelectObjectWithMouse();
+}
+
+void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
+{
+    Physics3D* physics = phy;
+    if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType3D::RIGID))
+        {
+            physics->SetBodyType(BodyType3D::RIGID);
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType3D::BLOCK))
+        {
+            physics->SetBodyType(BodyType3D::BLOCK);
+        }
+
+        //bool isGhostCollisionOn = physics->GetIsGhostCollision();
+        //ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
+        //physics->SetIsGhostCollision(isGhostCollisionOn);
+
+        bool isGravityOn = physics->GetIsGravityOn();
+        ImGui::Checkbox("Use Gravity", &isGravityOn);
+        physics->SetGravity(physics->GetGravity(), isGravityOn);
+
+        glm::vec3 velocity = physics->GetVelocity();
+        ImGui::DragFloat3("Velocity", &velocity.x, 0.01f);
+        physics->SetVelocity(velocity);
+
+        glm::vec3 minVelocity = physics->GetMinVelocity();
+        ImGui::DragFloat3("Min Velocity", &minVelocity.x, 0.01f);
+        physics->SetMinVelocity(minVelocity);
+
+        glm::vec3 maxVelocity = physics->GetMaxVelocity();
+        ImGui::DragFloat3("Max Velocity", &maxVelocity.x, 0.01f);
+        physics->SetMaxVelocity(maxVelocity);
+
+        float gravity = physics->GetGravity();
+        ImGui::DragFloat("Gravity", &gravity, 0.01f);
+        physics->SetGravity(gravity, isGravityOn);
+
+        float friction = physics->GetFriction();
+        ImGui::DragFloat("Friction", &friction, 0.01f);
+        physics->SetFriction(friction);
+
+        float mass = physics->GetMass();
+        ImGui::DragFloat("Mass", &mass, 0.01f);
+        physics->SetMass(mass);
+    }
+    physics = nullptr;
+}
+
+void ObjectManager::LightControllerForImGui(Light* light)
+{
+    glm::vec3 position = light->GetPosition();
+    glm::vec4 rotation = light->GetRotate();
+    glm::vec4 color = light->GetColor();
+
+    float ambient = light->GetAmbientStrength();
+    float specular = light->GetSpecularStrength();
+
+    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if(light->GetLightType() == LightType::Point)
+        {
+            ImGui::DragFloat3("Light Position", &position.x, 0.01f);
+            ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
+
+            light->SetXPosition(position.x);
+            light->SetYPosition(position.y);
+            light->SetZPosition(position.z);
+            if(light->GetRotate() != rotation)
+            {
+                light->SetRotate(rotation);
+            }
+        }
+        else if (light->GetLightType() == LightType::Direct)
+        {
+            ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
+            if (light->GetRotate() != rotation)
+            {
+                light->SetRotate(rotation);
+            }
+        }
+
+        ImGui::ColorPicker3("Light Color", &color.r);
+        ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
+        ImGui::SliderFloat("Specular Strength", &specular, 0.f, 1.f);
+
+        light->SetColor(color);
+        light->SetAmbientStrength(ambient);
+        light->SetSpecularStrength(specular);
+    }
+}
+
+void ObjectManager::SelectObjectWithMouse()
+{
     //SelectObject
     if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
     {
@@ -190,7 +253,7 @@ void ObjectManager::ObjectControllerForImGui()
             {
                 Object* objT = FindObjectWithId(closestObjectId);
 
-                if(isObjGravityOn == false && objT->HasComponent<Physics3D>() && objT->GetComponent<Physics3D>()->GetIsGravityOn() == true)
+                if (isObjGravityOn == false && objT->HasComponent<Physics3D>() && objT->GetComponent<Physics3D>()->GetIsGravityOn() == true)
                 {
                     objT->GetComponent<Physics3D>()->SetIsGravityOn(false);
                     isObjGravityOn = true;
@@ -215,7 +278,7 @@ void ObjectManager::ObjectControllerForImGui()
         if (isObjGravityOn == true)
         {
             Object* objT = FindObjectWithId(closestObjectId);
-            if(objT->HasComponent<Physics3D>())
+            if (objT->HasComponent<Physics3D>())
             {
                 objT->GetComponent<Physics3D>()->SetIsGravityOn(true);
                 isObjGravityOn = false;

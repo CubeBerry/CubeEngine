@@ -10,6 +10,8 @@
 #include <vector>
 #include <iostream>
 
+class Physics3D;
+class Light;
 class ObjectManager
 {
 public:
@@ -51,6 +53,9 @@ public:
     }
     void ObjectControllerForImGui();
 private:
+    void Physics3DControllerForImGui(Physics3D* phy);
+    void LightControllerForImGui(Light* light);
+    void SelectObjectWithMouse();
     int                                    lastObjectID = 0;
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
