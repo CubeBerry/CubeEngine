@@ -10,7 +10,6 @@
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -153,8 +152,8 @@ protected:
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
 	//Assimp
-	void ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount);
-	void ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount);
+	void ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount);
+	void ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
 

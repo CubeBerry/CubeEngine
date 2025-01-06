@@ -10,10 +10,11 @@ const float PI = 3.14159265359;
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
 layout(location = 2) in flat int i_object_index;
+layout(location = 3) in flat int i_tex_sub_index;
 //Lighting
-layout(location = 3) in vec3 i_normal;
-layout(location = 4) in vec3 i_fragment_position;
-layout(location = 5) in vec3 i_view_position;
+layout(location = 4) in vec3 i_normal;
+layout(location = 5) in vec3 i_fragment_position;
+layout(location = 6) in vec3 i_view_position;
 
 layout(location = 0) out vec4 fragmentColor;
 
@@ -193,7 +194,7 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     fMaterial material = f_material[i_object_index];
 
     vec3 albedo = vec3(0.0);
-    if (f_matrix[i_object_index].isTex) albedo = texture(tex[f_matrix[i_object_index].texIndex], i_uv).rgb;
+    if (f_matrix[i_object_index].isTex) albedo = texture(tex[f_matrix[i_object_index].texIndex  + i_tex_sub_index], i_uv).rgb;
     else albedo = i_col.rgb;
 
     float ao = 1.0;
@@ -275,7 +276,7 @@ void main()
     // Blinn-Phong Result Color
     // if (f_matrix[i_object_index].isTex)
     // {
-    //     vec4 textureColor = texture(tex[f_matrix[i_object_index].texIndex], i_uv);
+    //     vec4 textureColor = texture(tex[f_matrix[i_object_index].texIndex  + i_tex_sub_index], i_uv);
     //     fragmentColor = vec4(resultColor, 1.0) * textureColor;
     // }
     // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);

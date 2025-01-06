@@ -44,6 +44,7 @@ namespace ThreeDimension
 		glm::vec3 normal;
 		glm::vec2 uv;
 		int index;
+		int texSubIndex{ 0 };
 	};
 
 #ifdef _DEBUG

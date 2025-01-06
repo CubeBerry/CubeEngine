@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <glm/gtx/transform.hpp>
+#include <assimp/postprocess.h>
 
 #include "Engine.hpp"
 
@@ -350,7 +351,8 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			std::exit(EXIT_FAILURE);
 		}
 
-		ProcessNode(scene->mRootNode, scene, verticesCount);
+		unsigned int initialVerticesCount{ verticesCount };
+		ProcessNode(scene->mRootNode, scene, verticesCount, 0);
 
 		//for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 		//{
@@ -380,31 +382,25 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		//	}
 		//}
 
-		if (type != MeshType::OBJ)
+		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+		for (auto it = vertices3D.begin() + initialVerticesCount; it != vertices3D.end(); ++it)
 		{
-			glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-			for (const auto& vertex : tempVertices)
-			{
-				minPos = glm::min(minPos, glm::vec3(vertex.position));
-				maxPos = glm::max(maxPos, glm::vec3(vertex.position));
-			}
+			minPos = glm::min(minPos, glm::vec3(it->position));
+			maxPos = glm::max(maxPos, glm::vec3(it->position));
+		}
 
-			glm::vec3 center;
-			float unitScale;
+		glm::vec3 center;
+		float unitScale;
 
-			center = (minPos + maxPos) / 2.f;
-			glm::vec3 size = maxPos - minPos;
-			float extent = glm::max(size.x, glm::max(size.y, size.z));
-			unitScale = 1.f / extent;
+		center = (minPos + maxPos) / 2.f;
+		glm::vec3 size = maxPos - minPos;
+		float extent = glm::max(size.x, glm::max(size.y, size.z));
+		unitScale = 1.f / extent;
 
-			for (auto& vertex : tempVertices)
-			{
-				vertex.position -= center;
-				vertex.position *= glm::vec3(unitScale, unitScale, unitScale);
-			}
-
-			for (auto& i : tempIndices)
-				i += static_cast<uint32_t>(verticesCount);
+		for (auto it = vertices3D.begin() + initialVerticesCount; it != vertices3D.end(); ++it)
+		{
+			it->position -= center;
+			it->position *= glm::vec3(unitScale, unitScale, unitScale);
 		}
 
 		//Custom Model Load
@@ -573,21 +569,21 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 	}
 }
 
-void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount)
+void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(mesh, scene, verticesCount);
+		ProcessMesh(mesh, scene, verticesCount, childCount);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(node->mChildren[i], scene, verticesCount);
+		ProcessNode(node->mChildren[i], scene, verticesCount, i);
 	}
 }
 
-void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount)
+void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount)
 {
 	std::vector<ThreeDimension::Vertex> tempVertices;
 	std::vector<uint32_t> tempIndices;
@@ -601,7 +597,8 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int
 			glm::vec3(vertex.x, vertex.y, vertex.z),
 			glm::vec3(normal.x, normal.y, normal.z),
 			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
-			quadCount)
+			quadCount,
+			childCount)
 		);
 	}
 
@@ -621,27 +618,6 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	}
-
-	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-	for (const auto& vertex : tempVertices)
-	{
-		minPos = glm::min(minPos, glm::vec3(vertex.position));
-		maxPos = glm::max(maxPos, glm::vec3(vertex.position));
-	}
-
-	glm::vec3 center;
-	float unitScale;
-
-	center = (minPos + maxPos) / 2.f;
-	glm::vec3 size = maxPos - minPos;
-	float extent = glm::max(size.x, glm::max(size.y, size.z));
-	unitScale = 1.f / extent;
-
-	//for (auto& vertex : tempVertices)
-	//{
-	//	vertex.position -= center;
-	//	vertex.position *= glm::vec3(unitScale, unitScale, unitScale);
-	//}
 
 	for (auto& i : tempIndices)
 		i += static_cast<uint32_t>(verticesCount);

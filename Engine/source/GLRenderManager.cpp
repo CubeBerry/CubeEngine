@@ -524,7 +524,16 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	index_layout.offset = 0;
 	index_layout.relative_offset = offsetof(ThreeDimension::Vertex, index);
 
-	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout });
+	GLAttributeLayout tex_sub_index_layout;
+	tex_sub_index_layout.component_type = GLAttributeLayout::Int;
+	tex_sub_index_layout.component_dimension = GLAttributeLayout::_1;
+	tex_sub_index_layout.normalized = false;
+	tex_sub_index_layout.vertex_layout_location = 4;
+	tex_sub_index_layout.stride = sizeof(ThreeDimension::Vertex);
+	tex_sub_index_layout.offset = 0;
+	tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+
+	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout });
 	vertexArray.SetIndexBuffer(std::move(*indexBuffer));
 #ifdef _DEBUG
 	//Attributes
