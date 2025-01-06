@@ -50,7 +50,7 @@ public:
 	LightType GetLightType() { return lightType; }
 private:
 	glm::vec3 pos = { 0.f,0.f,0.f };
-	glm::vec4 color = { 0.f,0.f,0.f,1.f };
+	glm::vec4 color = { 1.f, 1.f, 1.f, 1.f };
 	glm::vec4 rotate = { 0.f,0.f,0.f,1.f  };
 	float ambient = 0.1f;
 	float specular = 0.5f;

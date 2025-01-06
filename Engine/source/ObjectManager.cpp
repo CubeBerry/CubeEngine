@@ -181,15 +181,15 @@ void ObjectManager::LightControllerForImGui(Light* light)
         if(light->GetLightType() == LightType::Point)
         {
             ImGui::DragFloat3("Light Position", &position.x, 0.01f);
-            ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
+            //ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
 
             light->SetXPosition(position.x);
             light->SetYPosition(position.y);
             light->SetZPosition(position.z);
-            if(light->GetRotate() != rotation)
+            /*if(light->GetRotate() != rotation)
             {
                 light->SetRotate(rotation);
-            }
+            }*/
         }
         else if (light->GetLightType() == LightType::Direct)
         {

@@ -125,12 +125,6 @@ void Light::SetPosition(glm::vec3 pos_)
 
 void Light::SetXRotate(float x)
 {
-	//rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
-	//	glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-	//	glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
-	//pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-	//modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
-
 	if (x > 360.f)
 	{
 		rotate.x = x - 360.f;
@@ -152,16 +146,6 @@ void Light::SetXRotate(float x)
 	}
 	else if (lightType == LightType::Point) 
 	{
-		glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1), glm::radians(-rotate.x), glm::vec3(1.f, 0.f, 0.f));
-		glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
-		
-		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition 
-			= glm::vec3{ rotatedPosition.x, rotatedPosition.y, rotatedPosition.z};
-		pos.x = rotatedPosition.x;
-		pos.y = rotatedPosition.y;
-		pos.y = rotatedPosition.z;
-
-		pLight.lightPosition = pos;
 	}
 }
 
@@ -188,16 +172,6 @@ void Light::SetYRotate(float y)
 	}
 	else if (lightType == LightType::Point) 
 	{
-		glm::mat4 rotationMatriy = glm::rotate(glm::mat4(1), glm::radians(-rotate.y), glm::vec3(0.f, 1.f, 0.f));
-		glm::vec4 rotatedPosition = rotationMatriy * glm::vec4(0.f, 0.f, 1.f, 1.f);
-
-		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition
-			= glm::vec3{ rotatedPosition.x, rotatedPosition.y, rotatedPosition.z };
-		pos.x = rotatedPosition.x;
-		pos.y = rotatedPosition.y;
-		pos.y = rotatedPosition.z;
-
-		pLight.lightPosition = pos;
 	}
 }
 
@@ -224,16 +198,6 @@ void Light::SetZRotate(float z)
 	}
 	else if (lightType == LightType::Point) 
 	{
-		glm::mat4 rotationMatriz = glm::rotate(glm::mat4(1), glm::radians(-rotate.z), glm::vec3(0.f, 0.f, 1.f));
-		glm::vec4 rotatedPosition = rotationMatriz * glm::vec4(0.f, 0.f, 1.f, 1.f);
-
-		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition
-			= glm::vec3{ rotatedPosition.x, rotatedPosition.y, rotatedPosition.z };
-		pos.x = rotatedPosition.x;
-		pos.y = rotatedPosition.y;
-		pos.y = rotatedPosition.z;
-
-		pLight.lightPosition = pos;
 	}
 }
 
@@ -245,19 +209,6 @@ void Light::SetRotate(glm::vec3 rotate_)
 
 	if (lightType == LightType::Point) 
 	{
-		glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-rotate.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(-rotate.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(-rotate.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(1.f, 1.f, 1.f, 1.f);
-
-		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition
-			= glm::vec3{ rotatedPosition.x, rotatedPosition.y, rotatedPosition.z };
-
-		pos.x = rotatedPosition.x;
-		pos.y = rotatedPosition.y;
-		pos.y = rotatedPosition.z;
-
-		pLight.lightPosition = pos;
 	}
 }
 
