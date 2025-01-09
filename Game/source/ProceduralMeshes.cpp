@@ -118,8 +118,6 @@ void ProceduralMeshes::Update(float dt)
 
 void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 {
-	Engine::GetGameStateManager().StateChanger();
-
 	ImGui::Begin("Procedural Meshes", nullptr);
 
 	//Projection

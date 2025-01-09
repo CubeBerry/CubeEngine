@@ -159,7 +159,6 @@ void PhysicsDemo::Update(float dt)
 
 void PhysicsDemo::ImGuiDraw(float /*dt*/)
 {
-	Engine::GetGameStateManager().StateChanger();
 	Engine::GetCameraManager().CameraControllerImGui();
 	Engine::GetObjectManager().ObjectControllerForImGui();
 }

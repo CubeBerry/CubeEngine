@@ -58,7 +58,6 @@ void PlatformDemo::Update(float dt)
 
 void PlatformDemo::ImGuiDraw(float /*dt*/)
 {
-	Engine::GetGameStateManager().StateChanger();
 	Engine::GetSoundManager().MusicPlayerForImGui(0);
 	//platformDemoSystem->UpdateMapEditorImGui();
 }

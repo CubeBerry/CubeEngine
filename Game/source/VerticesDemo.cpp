@@ -54,7 +54,7 @@ void VerticesDemo::Update(float dt)
 
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	Engine::GetGameStateManager().StateChanger();	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
 	{
 		if (SDL_GetRelativeMouseMode() == SDL_FALSE)
 		{
