@@ -207,7 +207,7 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     vec3 F0 = mix(vec3(0.04), albedo, material.metallic);
     
     vec3 L = vec3(0.0);
-    float attenuation = 0;
+    float attenuation = 0.0;
     if (isPointLight)
     {
         L = normalize(lightPosition - i_fragment_position);

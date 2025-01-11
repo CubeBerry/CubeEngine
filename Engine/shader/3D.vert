@@ -51,7 +51,7 @@ void main()
     // o_normal = vec3(transpose(inverse(matrix[object_index].model)) * vec4(i_normal, 0.0));
     o_normal = mat3(matrix[object_index].model) * i_normal;
     o_fragment_position = vec3(matrix[object_index].model * vec4(i_pos, 1.0));
-    o_view_position = inverse(matrix[object_index].projection * matrix[object_index].view)[3].xyz;
+    o_view_position = inverse(matrix[object_index].view)[3].xyz;
 
     gl_Position = matrix[object_index].projection * matrix[object_index].view * matrix[object_index].model * vec4(i_pos, 1.0);
 }
