@@ -58,7 +58,7 @@ void Light::Update(float /*dt*/)
 {
 	if(lightPoint != nullptr)
 	{
-		lightPoint->UpdateModel(pos, { 0.1f,0.1f,0.1f }, { rotate.x, rotate.y, rotate.z });
+		lightPoint->UpdateModel(GetOwner()->GetPosition() + pos, { 0.1f,0.1f,0.1f }, { rotate.x, rotate.y, rotate.z });
 		lightPoint->UpdateProjection();
 		lightPoint->UpdateView();
 		//lightPoint->SetColor(color);
@@ -71,6 +71,8 @@ void Light::Update(float /*dt*/)
 		else if (lightType == LightType::Point) 
 		{
 			Engine::GetRenderManager()->GetPointLightUniforms()[lightlId] = pLight;
+			Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition = GetOwner()->GetPosition() + pos;
+
 		}
 	}
 }
