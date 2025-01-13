@@ -56,11 +56,15 @@ private:
     void Physics3DControllerForImGui(Physics3D* phy);
     void LightControllerForImGui(Light* light);
     void SelectObjectWithMouse();
+    void AddComponentPopUpForImGui();
     int                                    lastObjectID = 0;
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
 
     //For ObjectController
+    bool isShowPopup = false;
+    int selectedItem = -1;
+
     int currentIndex = 0;
 	int closestObjectId = 0;
     bool isDragObject = false;

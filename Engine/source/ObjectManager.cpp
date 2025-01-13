@@ -63,6 +63,15 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 void ObjectManager::ObjectControllerForImGui()
 {
     ImGui::Begin("ObjectController");
+    if (ImGui::Button("Add New Object"))
+    {
+        AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "NEW OBJECT", ObjectType::NONE);
+        GetLastObject()->AddComponent<Sprite>();
+        GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+    }
+    ImGui::Separator();
+    ImGui::Spacing();
+
     ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
     ImGui::BeginChild("Scolling");
     int index = 0;
@@ -77,6 +86,8 @@ void ObjectManager::ObjectControllerForImGui()
         index++;
     }
     ImGui::EndChild();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     Object* obj = FindObjectWithId(currentIndex);
 
@@ -111,10 +122,24 @@ void ObjectManager::ObjectControllerForImGui()
         }
     }
 
+    ImGui::Separator();
+    ImGui::Spacing();
+    if (ImGui::Button("Add Component"))
+    {
+        isShowPopup = true;
+        ImGui::OpenPopup("Select Component");
+    }
+
     obj = nullptr;
+
+    if (ImGui::IsPopupOpen("Select Component"))
+    {
+        AddComponentPopUpForImGui();
+    }
     ImGui::End();
 
     SelectObjectWithMouse();
+
 }
 
 void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
@@ -169,51 +194,97 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 
 void ObjectManager::LightControllerForImGui(Light* light)
 {
-    glm::vec3 position = light->GetPosition();
-    glm::vec4 rotation = light->GetRotate();
-    glm::vec4 color = light->GetColor();
-
-    float ambient = light->GetAmbientStrength();
-    float specular = light->GetSpecularStrength();
-
-    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+    if(light->GetLightType() != LightType::None)
     {
-        if(light->GetLightType() == LightType::Point)
-        {
-            ImGui::DragFloat3("Light Position", &position.x, 0.01f);
-            //ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
+        glm::vec3 position = light->GetPosition();
+        glm::vec4 rotation = light->GetRotate();
+        glm::vec4 color = light->GetColor();
 
-            light->SetXPosition(position.x);
-            light->SetYPosition(position.y);
-            light->SetZPosition(position.z);
-            /*if(light->GetRotate() != rotation)
-            {
-                light->SetRotate(rotation);
-            }*/
-        }
-        else if (light->GetLightType() == LightType::Direct)
+        float ambient = light->GetAmbientStrength();
+        float specular = light->GetSpecularStrength();
+
+        if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
-            if (light->GetRotate() != rotation)
+            if (light->GetLightType() == LightType::Point)
             {
-                light->SetRotate(rotation);
+                ImGui::DragFloat3("Light Position", &position.x, 0.01f);
+                //ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
+
+                light->SetXPosition(position.x);
+                light->SetYPosition(position.y);
+                light->SetZPosition(position.z);
+                /*if(light->GetRotate() != rotation)
+                {
+                    light->SetRotate(rotation);
+                }*/
             }
+            else if (light->GetLightType() == LightType::Direct)
+            {
+                ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
+                if (light->GetRotate() != rotation)
+                {
+                    light->SetRotate(rotation);
+                }
+            }
+
+            ImGui::ColorPicker3("Light Color", &color.r);
+            ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
+            ImGui::SliderFloat("Specular Strength", &specular, 0.f, 1.f);
+
+            light->SetColor(color);
+            light->SetAmbientStrength(ambient);
+            light->SetSpecularStrength(specular);
+        }
+    }
+    else 
+    {
+        ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+        ImVec2 popupSize = ImVec2(200, 300);
+        ImVec2 popupPos = ImVec2((displaySize.x - popupSize.x) / 2.0f, (displaySize.y - popupSize.y) / 2.0f);
+
+        ImGui::SetNextWindowPos(popupPos, ImGuiCond_Appearing);
+        ImGui::SetNextWindowSize(popupSize);
+
+        if (!ImGui::IsPopupOpen("Select Light Type"))
+        {
+            isShowPopup = true;
+            ImGui::OpenPopup("Select Light Type");
         }
 
-        ImGui::ColorPicker3("Light Color", &color.r);
-        ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
-        ImGui::SliderFloat("Specular Strength", &specular, 0.f, 1.f);
+        if (ImGui::BeginPopupModal("Select Light Type", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+        {
+            ImGui::Separator();
+            ImGui::Spacing();
 
-        light->SetColor(color);
-        light->SetAmbientStrength(ambient);
-        light->SetSpecularStrength(specular);
+            if (ImGui::Button("Direct"))
+            {
+                isShowPopup = false;
+                light->AddLight(LightType::Direct);
+                ImGui::CloseCurrentPopup();
+            }
+            if (ImGui::Button("Point"))
+            {
+                isShowPopup = false;
+                light->AddLight(LightType::Point);
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::Separator();
+            ImGui::EndPopup();
+        }
+
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+        ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+        ImGui::End();
     }
 }
 
 void ObjectManager::SelectObjectWithMouse()
 {
     //SelectObject
-    if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT) && isShowPopup == false)
     {
         Ray ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
         if (isDragObject == false)
@@ -264,7 +335,7 @@ void ObjectManager::SelectObjectWithMouse()
                 float distanceToPlane = glm::dot(planeNormal, objectPosition - ray.origin) / glm::dot(planeNormal, ray.direction);
                 glm::vec3 intersectionPoint = ray.origin + distanceToPlane * ray.direction;
 
-                objT->SetPosition(intersectionPoint);
+                //objT->SetPosition(intersectionPoint);
                 objT = nullptr;
             }
             else
@@ -273,7 +344,7 @@ void ObjectManager::SelectObjectWithMouse()
             }
         }
     }
-    else if (isDragObject == true && !Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    else if (isDragObject == true && !Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT) && isShowPopup == false)
     {
         if (isObjGravityOn == true)
         {
@@ -289,6 +360,80 @@ void ObjectManager::SelectObjectWithMouse()
         isDragObject = false;
     }
     //SelectObject
+}
+
+void ObjectManager::AddComponentPopUpForImGui()
+{
+    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+    ImVec2 popupSize = ImVec2(400, 300);
+    ImVec2 popupPos = ImVec2((displaySize.x - popupSize.x) / 2.0f, (displaySize.y - popupSize.y) / 2.0f );
+
+    ImGui::SetNextWindowPos(popupPos, ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(popupSize);
+
+    if (ImGui::BeginPopupModal("Select Component", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
+        ImGui::BeginChild("Scolling");
+        Object* currentObj = FindObjectWithId(currentIndex);
+
+        for (int i = 0; i < static_cast<int>(ComponentTypes::INVALID); i++)
+        {
+            if (ImGui::Selectable(ComponentToString(static_cast<ComponentTypes>(i)).c_str(), selectedItem == i))
+            {
+                selectedItem = i;
+
+                switch (static_cast<ComponentTypes>(i))
+                {
+                case ComponentTypes::SPRITE:
+                    if(currentObj->HasComponent<Sprite>() == false)
+                    {
+                        currentObj->AddComponent<Sprite>();
+                    }
+                    break;
+                case ComponentTypes::PHYSICS2D:
+                    if (currentObj->HasComponent<Physics2D>() == false)
+                    {
+                        currentObj->AddComponent<Physics2D>();
+                    }
+                    break;
+                case ComponentTypes::PHYSICS3D:
+                    if (currentObj->HasComponent<Physics3D>() == false)
+                    {
+                        currentObj->AddComponent<Physics3D>();
+                    }
+                    break;
+                case ComponentTypes::LIGHT:
+                    if (currentObj->HasComponent<Light>() == false)
+                    {
+                        currentObj->AddComponent<Light>();
+                    }
+                    break;
+                }
+                isShowPopup = false;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        currentObj = nullptr;
+        ImGui::EndChild();
+
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Close"))
+        {
+            isShowPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::SetNextWindowBgAlpha(0.5f);
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+    ImGui::End();
 }
 
 
