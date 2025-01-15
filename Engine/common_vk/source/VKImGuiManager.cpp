@@ -50,6 +50,7 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_, VkSampleCoun
 	initInfo.CheckVkResultFn = nullptr;
 
 	ImGui_ImplVulkan_Init(&initInfo);
+	ImGui_ImplVulkan_CreateFontsTexture();
 	//ImGui_ImplVulkan_Init(&initInfo, renderPass);
 
 	////Create command buffer begin info
@@ -99,7 +100,6 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_, VkSampleCoun
 
 	//	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 	//	ImGui_ImplVulkan_CreateFontsTexture();
-	//	//ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 	//	//End Command Buffer
 	//	vkEndCommandBuffer(commandBuffer);
 
