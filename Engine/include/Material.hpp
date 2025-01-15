@@ -65,7 +65,7 @@ namespace ThreeDimension
 
 	struct alignas(16) FragmentUniform
 	{
-		bool isTex{ true };
+		int isTex{ 0 };
 		int texIndex;
 	};
 
