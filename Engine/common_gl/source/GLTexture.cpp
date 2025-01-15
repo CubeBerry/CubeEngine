@@ -19,7 +19,7 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	unsigned char* data = stbi_load(path_.string().c_str(), &width, &height, &color, STBI_rgb_alpha);
 	
 	//DeleteTexture();
-
+	
 	glCheck(glCreateTextures(GL_TEXTURE_2D, 1, &textureHandle));
 	// Create immutable storage of widthxheight RGBA8 GPU memory with only one texture level
 	constexpr GLsizei ONE_TEXTURE_LEVEL = 1;
@@ -27,7 +27,7 @@ void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	// Send `colors` data to GPU memory
 	constexpr GLint   FIRST_LEVEL = 0;
 	constexpr GLsizei OFFSET_X = 0, OFFSET_Y = 0;
-	glCheck(glTextureSubImage2D(textureHandle, FIRST_LEVEL, OFFSET_X, OFFSET_Y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, reinterpret_cast<unsigned int*>(data)));
+	glCheck(glTextureSubImage2D(textureHandle, FIRST_LEVEL, OFFSET_X, OFFSET_Y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data));
 
 	//Set Filtering
 	// invoke glTextureParameteri to set minification filter

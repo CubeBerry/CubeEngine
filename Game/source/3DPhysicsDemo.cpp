@@ -3,6 +3,7 @@
 //File: 3DPhysicsDemo.cpp
 #include "3DPhysicsDemo.hpp"
 #include "BasicComponents/Physics3D.hpp"
+#include "BasicComponents/Light.hpp"
 #include "Engine.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -54,20 +55,10 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 0.5f,0.5f,0.5f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 
-	l.lightPosition = glm::vec3(0.f, 4.f, 2.f);
-	l.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	l.ambientStrength = 0.1f;
-	l.specularStrength = 0.5f;
-
-	float radians = glm::radians(45.f);
-
-	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1), radians, glm::vec3(1.f, 1.f, 1.f));
-	glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
-	l.lightPosition.x = rotatedPosition.x;
-	l.lightPosition.y = rotatedPosition.y;
-	l.lightPosition.z = rotatedPosition.z;
-
-	Engine::GetRenderManager()->AddPointLight(l);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.5f, 0.f), glm::vec3{ 0.1f,0.1f,0.1f }, "LIGHT", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Point, 0.1f, 0.5f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
 	Engine::GetRenderManager()->LoadSkyBox(
 		"../Game/assets/Skybox/right.jpg",
@@ -82,7 +73,6 @@ void PhysicsDemo::Init()
 void PhysicsDemo::Update(float dt)
 {
 	//Engine::GetRenderManager()->SetPolygonType(PolygonType::LINE);
-
 	for (auto& target : Engine::GetObjectManager().GetObjectMap())
 	{
 		for (auto& object : Engine::GetObjectManager().GetObjectMap())
@@ -130,28 +120,9 @@ void PhysicsDemo::Update(float dt)
 		}
 	}
 
-	//Update Lighting Variables
-	Engine::GetRenderManager()->GetPointLightUniforms()[0] = l;
-
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
-	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
-	{
-		if (Engine::GetObjectManager().FindObjectWithName("TEMP") == nullptr)
-		{
-			Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "TEMP", ObjectType::NONE);
-			Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
-			Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
-		}
-	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_2))
-	{
-		Engine::GetObjectManager().Destroy(Engine::GetObjectManager().FindObjectWithName("TEMP")->GetId());
 	}
 
 	Engine::GetCameraManager().ControlCamera(dt);
@@ -165,14 +136,14 @@ void PhysicsDemo::ImGuiDraw(float /*dt*/)
 
 void PhysicsDemo::Restart()
 {
-	Engine::GetObjectManager().DestroyAllObjects();
+	End();
 }
 
 void PhysicsDemo::End()
 {
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
-	Engine::GetObjectManager().DestroyAllObjects();
+	Engine::GetObjectManager().End();
 	Engine::GetRenderManager()->DeletePointLights();
 	Engine::GetRenderManager()->DeleteDirectionalLights();
 	Engine::GetRenderManager()->DeleteSkyBox();

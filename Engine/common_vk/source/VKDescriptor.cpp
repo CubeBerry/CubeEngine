@@ -204,6 +204,9 @@ void VKDescriptor::InitDescriptorPool()
 		poolSize.push_back(size);
 	}
 
+	//For ImGui
+	poolSize.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER , 1});
+
 	//Create DescriptorPool Info
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

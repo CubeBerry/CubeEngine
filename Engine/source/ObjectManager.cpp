@@ -5,9 +5,9 @@
 
 #include <iostream>
 
-
 #include "Engine.hpp"
 #include "BasicComponents/Physics3D.hpp"
+#include "BasicComponents/Light.hpp"
 #include "imgui.h"
 
 void ObjectManager::Update(float dt)
@@ -20,6 +20,7 @@ void ObjectManager::Update(float dt)
 void ObjectManager::End()
 {
 	DestroyAllObjects();
+    currentIndex = 0;
 }
 
 void ObjectManager::Draw(float dt)
@@ -63,94 +64,249 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 void ObjectManager::ObjectControllerForImGui()
 {
     ImGui::Begin("ObjectController");
-    ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-    ImGui::BeginChild("Scolling");
-    int index = 0;
-    for (auto& object : GetObjectMap())
-    {
-        ImGui::PushStyleColor(ImGuiCol_Text, (currentIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
-        if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
+    //if (ImGui::Button("Add New Object"))
+    //{
+    //    AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "NEW OBJECT", ObjectType::NONE);
+    //    GetLastObject()->AddComponent<Sprite>();
+    //    GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+    //}
+    ImGui::Separator();
+    ImGui::Spacing();
+
+        ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
+        ImGui::BeginChild("Scolling");
+        int index = 0;
+        for (auto& object : GetObjectMap())
         {
-            currentIndex = index;
+            ImGui::PushStyleColor(ImGuiCol_Text, (currentIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
+            if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
+            {
+                currentIndex = index;
+            }
+            ImGui::PopStyleColor();
+            index++;
         }
-        ImGui::PopStyleColor();
-        index++;
-    }
-    ImGui::EndChild();
+        ImGui::EndChild();
+        ImGui::Separator();
+        ImGui::Spacing();
 
-    Object* obj = FindObjectWithId(currentIndex);
-
-    glm::vec3 position = obj->GetPosition();
-    glm::vec3 size = obj->GetSize();
-    glm::vec3 rotation = obj->GetRotate3D();
-
-    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    if(!objectMap.empty())
     {
-        ImGui::DragFloat3("Position", &position.x, 0.01f);
-        ImGui::DragFloat3("Size", &size.x, 0.5f);
-        ImGui::DragFloat3("Rotation", &rotation.x, 0.5f);
+        Object* obj = FindObjectWithId(currentIndex);
 
-        obj->SetPosition(position);
-        obj->SetXSize(size.x);
-        obj->SetYSize(size.y);
-        obj->SetZSize(size.z);
-        obj->SetRotate(rotation);
-    }
+        glm::vec3 position = obj->GetPosition();
+        glm::vec3 size = obj->GetSize();
+        glm::vec3 rotation = obj->GetRotate3D();
 
-    if (obj->HasComponent<Physics3D>())
-    {
-        Physics3D* physics = obj->GetComponent<Physics3D>();
-
-        if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
+        if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType3D::RIGID))
+            ImGui::DragFloat3("Position", &position.x, 0.01f);
+            ImGui::DragFloat3("Size", &size.x, 0.5f);
+            ImGui::DragFloat3("Rotation", &rotation.x, 0.5f);
+
+            obj->SetPosition(position);
+            obj->SetXSize(size.x);
+            obj->SetYSize(size.y);
+            obj->SetZSize(size.z);
+            obj->SetRotate(rotation);
+        }
+
+        for (auto* comp : obj->GetComponentList())
+        {
+            ComponentTypes type = comp->GetType();
+            switch (type)
             {
-                physics->SetBodyType(BodyType3D::RIGID);
+            case ComponentTypes::PHYSICS3D:
+                Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
+                break;
+            case ComponentTypes::LIGHT:
+                LightControllerForImGui(reinterpret_cast<Light*>(comp));
+                break;
             }
-            ImGui::SameLine();
-            if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType3D::BLOCK))
-            {
-                physics->SetBodyType(BodyType3D::BLOCK);
-            }
+        }
 
-            //bool isGhostCollisionOn = physics->GetIsGhostCollision();
-            //ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
-            //physics->SetIsGhostCollision(isGhostCollisionOn);
+        ImGui::Separator();
+        ImGui::Spacing();
+        /*if (ImGui::Button("Add Component"))
+        {
+            isShowPopup = true;
+            ImGui::OpenPopup("Select Component");
+        }*/
 
-            bool isGravityOn = physics->GetIsGravityOn();
-            ImGui::Checkbox("Use Gravity", &isGravityOn);
-            physics->SetGravity(physics->GetGravity(), isGravityOn);
+        obj = nullptr;
 
-            glm::vec3 velocity = physics->GetVelocity();
-            ImGui::DragFloat3("Velocity", &velocity.x, 0.01f);
-            physics->SetVelocity(velocity);
-
-            glm::vec3 minVelocity = physics->GetMinVelocity();
-            ImGui::DragFloat3("Min Velocity", &minVelocity.x, 0.01f);
-            physics->SetMinVelocity(minVelocity);
-
-            glm::vec3 maxVelocity = physics->GetMaxVelocity();
-            ImGui::DragFloat3("Max Velocity", &maxVelocity.x, 0.01f);
-            physics->SetMaxVelocity(maxVelocity);
-
-            float gravity = physics->GetGravity();
-            ImGui::DragFloat("Gravity", &gravity, 0.01f);
-            physics->SetGravity(gravity, isGravityOn);
-
-            float friction = physics->GetFriction();
-            ImGui::DragFloat("Friction", &friction, 0.01f);
-            physics->SetFriction(friction);
-            
-            float mass = physics->GetMass();
-            ImGui::DragFloat("Mass", &mass, 0.01f);
-            physics->SetMass(mass);
+        if (ImGui::IsPopupOpen("Select Component"))
+        {
+            AddComponentPopUpForImGui();
         }
     }
-    obj = nullptr;
+
     ImGui::End();
+    SelectObjectWithMouse();
 
+
+}
+
+void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
+{
+    Physics3D* physics = phy;
+    if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType3D::RIGID))
+        {
+            physics->SetBodyType(BodyType3D::RIGID);
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType3D::BLOCK))
+        {
+            physics->SetBodyType(BodyType3D::BLOCK);
+        }
+
+        //bool isGhostCollisionOn = physics->GetIsGhostCollision();
+        //ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
+        //physics->SetIsGhostCollision(isGhostCollisionOn);
+
+        bool isGravityOn = physics->GetIsGravityOn();
+        ImGui::Checkbox("Use Gravity", &isGravityOn);
+        physics->SetGravity(physics->GetGravity(), isGravityOn);
+
+        glm::vec3 velocity = physics->GetVelocity();
+        ImGui::DragFloat3("Velocity", &velocity.x, 0.01f);
+        physics->SetVelocity(velocity);
+
+        glm::vec3 minVelocity = physics->GetMinVelocity();
+        ImGui::DragFloat3("Min Velocity", &minVelocity.x, 0.01f);
+        physics->SetMinVelocity(minVelocity);
+
+        glm::vec3 maxVelocity = physics->GetMaxVelocity();
+        ImGui::DragFloat3("Max Velocity", &maxVelocity.x, 0.01f);
+        physics->SetMaxVelocity(maxVelocity);
+
+        float gravity = physics->GetGravity();
+        ImGui::DragFloat("Gravity", &gravity, 0.01f);
+        physics->SetGravity(gravity, isGravityOn);
+
+        float friction = physics->GetFriction();
+        ImGui::DragFloat("Friction", &friction, 0.01f);
+        physics->SetFriction(friction);
+
+        float mass = physics->GetMass();
+        ImGui::DragFloat("Mass", &mass, 0.01f);
+        physics->SetMass(mass);
+    }
+    physics = nullptr;
+}
+
+void ObjectManager::LightControllerForImGui(Light* light)
+{
+    if(light->GetLightType() != LightType::None)
+    {
+        glm::vec3 position = light->GetPosition();
+        glm::vec4 rotation = light->GetRotate();
+        glm::vec4 color = light->GetColor();
+
+        float ambient = light->GetAmbientStrength();
+        float specular = light->GetSpecularStrength();
+
+
+        if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::ColorPicker3("Light Color", &color.r);
+            ImGui::Spacing();
+
+            if (light->GetLightType() == LightType::Point)
+            {
+                float constant = light->GetConstant();
+                float linear = light->GetLinear();
+                float quadratic = light->GetQuadratic();
+
+                ImGui::DragFloat3("Light Position", &position.x, 0.01f);
+                ImGui::Spacing();
+                //ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
+
+                ImGui::SliderFloat("Constant Strength", &constant, 0.f, 1.f);
+                ImGui::SliderFloat("Linear Strength", &linear, 0.f, 1.f);
+                ImGui::SliderFloat("Quadratic Strength", &quadratic, 0.f, 1.f);
+
+                light->SetXPosition(position.x);
+                light->SetYPosition(position.y);
+                light->SetZPosition(position.z);
+                /*if(light->GetRotate() != rotation)
+                {
+                    light->SetRotate(rotation);
+                }*/
+
+                light->SetConstant(constant);
+                light->SetLinear(linear);
+                light->SetQuadratic(quadratic);
+            }
+            else if (light->GetLightType() == LightType::Direct)
+            {
+                ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
+                ImGui::Spacing();
+                if (light->GetRotate() != rotation)
+                {
+                    light->SetRotate(rotation);
+                }
+            }
+
+            ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
+            ImGui::SliderFloat("Specular Strength", &specular, 0.f, 1.f);
+
+            light->SetColor(color);
+            light->SetAmbientStrength(ambient);
+            light->SetSpecularStrength(specular);
+        }
+    }
+    else 
+    {
+        ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+        ImVec2 popupSize = ImVec2(200, 300);
+        ImVec2 popupPos = ImVec2((displaySize.x - popupSize.x) / 2.0f, (displaySize.y - popupSize.y) / 2.0f);
+
+        ImGui::SetNextWindowPos(popupPos, ImGuiCond_Appearing);
+        ImGui::SetNextWindowSize(popupSize);
+
+        if (!ImGui::IsPopupOpen("Select Light Type"))
+        {
+            isShowPopup = true;
+            ImGui::OpenPopup("Select Light Type");
+        }
+
+        if (ImGui::BeginPopupModal("Select Light Type", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+        {
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            if (ImGui::Button("Direct"))
+            {
+                isShowPopup = false;
+                light->AddLight(LightType::Direct);
+                ImGui::CloseCurrentPopup();
+            }
+            if (ImGui::Button("Point"))
+            {
+                isShowPopup = false;
+                light->AddLight(LightType::Point);
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::Separator();
+            ImGui::EndPopup();
+        }
+
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+        ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+        ImGui::End();
+    }
+}
+
+void ObjectManager::SelectObjectWithMouse()
+{
     //SelectObject
-    if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT) && isShowPopup == false)
     {
         Ray ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
         if (isDragObject == false)
@@ -190,7 +346,7 @@ void ObjectManager::ObjectControllerForImGui()
             {
                 Object* objT = FindObjectWithId(closestObjectId);
 
-                if(isObjGravityOn == false && objT->HasComponent<Physics3D>() && objT->GetComponent<Physics3D>()->GetIsGravityOn() == true)
+                if (isObjGravityOn == false && objT->HasComponent<Physics3D>() && objT->GetComponent<Physics3D>()->GetIsGravityOn() == true)
                 {
                     objT->GetComponent<Physics3D>()->SetIsGravityOn(false);
                     isObjGravityOn = true;
@@ -201,7 +357,7 @@ void ObjectManager::ObjectControllerForImGui()
                 float distanceToPlane = glm::dot(planeNormal, objectPosition - ray.origin) / glm::dot(planeNormal, ray.direction);
                 glm::vec3 intersectionPoint = ray.origin + distanceToPlane * ray.direction;
 
-                objT->SetPosition(intersectionPoint);
+                //objT->SetPosition(intersectionPoint);
                 objT = nullptr;
             }
             else
@@ -210,12 +366,12 @@ void ObjectManager::ObjectControllerForImGui()
             }
         }
     }
-    else if (isDragObject == true && !Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT))
+    else if (isDragObject == true && !Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT) && isShowPopup == false)
     {
         if (isObjGravityOn == true)
         {
             Object* objT = FindObjectWithId(closestObjectId);
-            if(objT->HasComponent<Physics3D>())
+            if (objT->HasComponent<Physics3D>())
             {
                 objT->GetComponent<Physics3D>()->SetIsGravityOn(true);
                 isObjGravityOn = false;
@@ -226,6 +382,80 @@ void ObjectManager::ObjectControllerForImGui()
         isDragObject = false;
     }
     //SelectObject
+}
+
+void ObjectManager::AddComponentPopUpForImGui()
+{
+    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+    ImVec2 popupSize = ImVec2(400, 300);
+    ImVec2 popupPos = ImVec2((displaySize.x - popupSize.x) / 2.0f, (displaySize.y - popupSize.y) / 2.0f );
+
+    ImGui::SetNextWindowPos(popupPos, ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize(popupSize);
+
+    if (ImGui::BeginPopupModal("Select Component", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
+        ImGui::BeginChild("Scolling");
+        Object* currentObj = FindObjectWithId(currentIndex);
+
+        for (int i = 0; i < static_cast<int>(ComponentTypes::INVALID); i++)
+        {
+            if (ImGui::Selectable(ComponentToString(static_cast<ComponentTypes>(i)).c_str(), selectedItem == i))
+            {
+                selectedItem = i;
+
+                switch (static_cast<ComponentTypes>(i))
+                {
+                case ComponentTypes::SPRITE:
+                    if(currentObj->HasComponent<Sprite>() == false)
+                    {
+                        currentObj->AddComponent<Sprite>();
+                    }
+                    break;
+                case ComponentTypes::PHYSICS2D:
+                    if (currentObj->HasComponent<Physics2D>() == false)
+                    {
+                        currentObj->AddComponent<Physics2D>();
+                    }
+                    break;
+                case ComponentTypes::PHYSICS3D:
+                    if (currentObj->HasComponent<Physics3D>() == false)
+                    {
+                        currentObj->AddComponent<Physics3D>();
+                    }
+                    break;
+                case ComponentTypes::LIGHT:
+                    if (currentObj->HasComponent<Light>() == false)
+                    {
+                        currentObj->AddComponent<Light>();
+                    }
+                    break;
+                }
+                isShowPopup = false;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        currentObj = nullptr;
+        ImGui::EndChild();
+
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Close"))
+        {
+            isShowPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::SetNextWindowBgAlpha(0.5f);
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+    ImGui::End();
 }
 
 

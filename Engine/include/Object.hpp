@@ -84,6 +84,8 @@ public:
 		return nullptr;
 	}
 
+	std::vector<Component*> GetComponentList() { return componentList; }
+
 	//template <typename T> bool HasComponent()
 	//{
 	//	for (auto list : componentList)

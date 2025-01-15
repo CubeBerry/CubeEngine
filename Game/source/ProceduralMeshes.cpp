@@ -366,11 +366,14 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 	}
 
 	ImGui::End();
+
+	Engine::GetCameraManager().CameraControllerImGui();
+	Engine::GetObjectManager().ObjectControllerForImGui();
 }
 
 void ProceduralMeshes::Restart()
 {
-	Engine::GetObjectManager().DestroyAllObjects();
+	End();
 }
 
 void ProceduralMeshes::End()
@@ -391,7 +394,7 @@ void ProceduralMeshes::End()
 
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
-	Engine::GetObjectManager().DestroyAllObjects();
+	Engine::GetObjectManager().End();
 }
 
 void ProceduralMeshes::RecreateMesh()
