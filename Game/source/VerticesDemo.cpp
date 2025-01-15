@@ -54,27 +54,19 @@ void VerticesDemo::Update(float dt)
 
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	Engine::GetGameStateManager().StateChanger();	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
-	{
-		if (SDL_GetRelativeMouseMode() == SDL_FALSE)
-		{
-			Engine::Instance().GetInputManager().SetRelativeMouseMode(true);
-		}
-		else
-		{
-			Engine::Instance().GetInputManager().SetRelativeMouseMode(false);
-		}
-	}
+	Engine::GetGameStateManager().StateChanger();
+	Engine::GetCameraManager().CameraControllerImGui();
+	Engine::GetObjectManager().ObjectControllerForImGui();
 }
 
 void VerticesDemo::Restart()
 {
-	Engine::GetObjectManager().DestroyAllObjects();
+	End();
 }
 
 void VerticesDemo::End()
 {
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
-	Engine::GetObjectManager().DestroyAllObjects();
+	Engine::GetObjectManager().End();
 }

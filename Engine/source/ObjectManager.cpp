@@ -20,6 +20,7 @@ void ObjectManager::Update(float dt)
 void ObjectManager::End()
 {
 	DestroyAllObjects();
+    currentIndex = 0;
 }
 
 void ObjectManager::Draw(float dt)
@@ -63,82 +64,86 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 void ObjectManager::ObjectControllerForImGui()
 {
     ImGui::Begin("ObjectController");
-    if (ImGui::Button("Add New Object"))
-    {
-        AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "NEW OBJECT", ObjectType::NONE);
-        GetLastObject()->AddComponent<Sprite>();
-        GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
-    }
+    //if (ImGui::Button("Add New Object"))
+    //{
+    //    AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "NEW OBJECT", ObjectType::NONE);
+    //    GetLastObject()->AddComponent<Sprite>();
+    //    GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+    //}
     ImGui::Separator();
     ImGui::Spacing();
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-    ImGui::BeginChild("Scolling");
-    int index = 0;
-    for (auto& object : GetObjectMap())
-    {
-        ImGui::PushStyleColor(ImGuiCol_Text, (currentIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
-        if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
+        ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
+        ImGui::BeginChild("Scolling");
+        int index = 0;
+        for (auto& object : GetObjectMap())
         {
-            currentIndex = index;
+            ImGui::PushStyleColor(ImGuiCol_Text, (currentIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
+            if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
+            {
+                currentIndex = index;
+            }
+            ImGui::PopStyleColor();
+            index++;
         }
-        ImGui::PopStyleColor();
-        index++;
-    }
-    ImGui::EndChild();
-    ImGui::Separator();
-    ImGui::Spacing();
+        ImGui::EndChild();
+        ImGui::Separator();
+        ImGui::Spacing();
 
-    Object* obj = FindObjectWithId(currentIndex);
-
-    glm::vec3 position = obj->GetPosition();
-    glm::vec3 size = obj->GetSize();
-    glm::vec3 rotation = obj->GetRotate3D();
-
-    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    if(!objectMap.empty())
     {
-        ImGui::DragFloat3("Position", &position.x, 0.01f);
-        ImGui::DragFloat3("Size", &size.x, 0.5f);
-        ImGui::DragFloat3("Rotation", &rotation.x, 0.5f);
+        Object* obj = FindObjectWithId(currentIndex);
 
-        obj->SetPosition(position);
-        obj->SetXSize(size.x);
-        obj->SetYSize(size.y);
-        obj->SetZSize(size.z);
-        obj->SetRotate(rotation);
-    }
+        glm::vec3 position = obj->GetPosition();
+        glm::vec3 size = obj->GetSize();
+        glm::vec3 rotation = obj->GetRotate3D();
 
-    for (auto* comp : obj->GetComponentList())
-    {
-        ComponentTypes type = comp->GetType();
-        switch (type)
+        if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
         {
-        case ComponentTypes::PHYSICS3D:
-            Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
-            break;
-        case ComponentTypes::LIGHT:
-            LightControllerForImGui(reinterpret_cast<Light*>(comp));
-            break;
+            ImGui::DragFloat3("Position", &position.x, 0.01f);
+            ImGui::DragFloat3("Size", &size.x, 0.5f);
+            ImGui::DragFloat3("Rotation", &rotation.x, 0.5f);
+
+            obj->SetPosition(position);
+            obj->SetXSize(size.x);
+            obj->SetYSize(size.y);
+            obj->SetZSize(size.z);
+            obj->SetRotate(rotation);
+        }
+
+        for (auto* comp : obj->GetComponentList())
+        {
+            ComponentTypes type = comp->GetType();
+            switch (type)
+            {
+            case ComponentTypes::PHYSICS3D:
+                Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
+                break;
+            case ComponentTypes::LIGHT:
+                LightControllerForImGui(reinterpret_cast<Light*>(comp));
+                break;
+            }
+        }
+
+        ImGui::Separator();
+        ImGui::Spacing();
+        /*if (ImGui::Button("Add Component"))
+        {
+            isShowPopup = true;
+            ImGui::OpenPopup("Select Component");
+        }*/
+
+        obj = nullptr;
+
+        if (ImGui::IsPopupOpen("Select Component"))
+        {
+            AddComponentPopUpForImGui();
         }
     }
 
-    ImGui::Separator();
-    ImGui::Spacing();
-    if (ImGui::Button("Add Component"))
-    {
-        isShowPopup = true;
-        ImGui::OpenPopup("Select Component");
-    }
-
-    obj = nullptr;
-
-    if (ImGui::IsPopupOpen("Select Component"))
-    {
-        AddComponentPopUpForImGui();
-    }
     ImGui::End();
-
     SelectObjectWithMouse();
+
 
 }
 
@@ -203,12 +208,25 @@ void ObjectManager::LightControllerForImGui(Light* light)
         float ambient = light->GetAmbientStrength();
         float specular = light->GetSpecularStrength();
 
+
         if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
+            ImGui::ColorPicker3("Light Color", &color.r);
+            ImGui::Spacing();
+
             if (light->GetLightType() == LightType::Point)
             {
+                float constant = light->GetConstant();
+                float linear = light->GetLinear();
+                float quadratic = light->GetQuadratic();
+
                 ImGui::DragFloat3("Light Position", &position.x, 0.01f);
+                ImGui::Spacing();
                 //ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
+
+                ImGui::SliderFloat("Constant Strength", &constant, 0.f, 1.f);
+                ImGui::SliderFloat("Linear Strength", &linear, 0.f, 1.f);
+                ImGui::SliderFloat("Quadratic Strength", &quadratic, 0.f, 1.f);
 
                 light->SetXPosition(position.x);
                 light->SetYPosition(position.y);
@@ -217,17 +235,21 @@ void ObjectManager::LightControllerForImGui(Light* light)
                 {
                     light->SetRotate(rotation);
                 }*/
+
+                light->SetConstant(constant);
+                light->SetLinear(linear);
+                light->SetQuadratic(quadratic);
             }
             else if (light->GetLightType() == LightType::Direct)
             {
                 ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
+                ImGui::Spacing();
                 if (light->GetRotate() != rotation)
                 {
                     light->SetRotate(rotation);
                 }
             }
 
-            ImGui::ColorPicker3("Light Color", &color.r);
             ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
             ImGui::SliderFloat("Specular Strength", &specular, 0.f, 1.f);
 

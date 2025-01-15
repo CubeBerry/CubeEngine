@@ -42,11 +42,20 @@ public:
 	void SetAmbientStrength(float amount);
 	void SetSpecularStrength(float amount);
 
+	void SetConstant(float amount);
+	void SetLinear(float amount);
+	void SetQuadratic(float amount);
+
 	glm::vec3 GetPosition() { return pos; }
 	glm::vec4 GetColor() { return color; }
 	glm::vec4 GetRotate() { return rotate; }
 	float GetAmbientStrength() { return ambient; }
 	float GetSpecularStrength() { return specular; }
+
+	float GetConstant() { return constant; }
+	float GetLinear() { return linear; }
+	float GetQuadratic() { return quadratic; }
+
 	LightType GetLightType() { return lightType; }
 private:
 	glm::vec3 pos = { 0.f,0.f,0.f };
@@ -54,6 +63,10 @@ private:
 	glm::vec4 rotate = { 0.f,0.f,0.f,1.f  };
 	float ambient = 0.1f;
 	float specular = 0.5f;
+
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
 
 	LightType lightType = LightType::None;
 	int lightlId = 0;

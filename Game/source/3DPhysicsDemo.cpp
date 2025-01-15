@@ -137,14 +137,14 @@ void PhysicsDemo::ImGuiDraw(float /*dt*/)
 
 void PhysicsDemo::Restart()
 {
-	Engine::GetObjectManager().DestroyAllObjects();
+	End();
 }
 
 void PhysicsDemo::End()
 {
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
-	Engine::GetObjectManager().DestroyAllObjects();
+	Engine::GetObjectManager().End();
 	Engine::GetRenderManager()->DeletePointLights();
 	Engine::GetRenderManager()->DeleteDirectionalLights();
 	Engine::GetRenderManager()->DeleteSkyBox();

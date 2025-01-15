@@ -39,10 +39,6 @@ void Light::AddLight(LightType lightType_, float ambient_, float specular_)
 		}
 		else if (lightType == LightType::Point)
 		{
-			pLight.lightPosition.x = pos.x;
-			pLight.lightPosition.y = pos.y;
-			pLight.lightPosition.z = pos.z;
-
 			pLight.ambientStrength = ambient_;
 			pLight.specularStrength = specular_;
 			Engine::GetRenderManager()->AddPointLight(pLight);
@@ -58,7 +54,7 @@ void Light::Update(float /*dt*/)
 {
 	if(lightPoint != nullptr)
 	{
-		lightPoint->UpdateModel(GetOwner()->GetPosition() + pos, { 0.1f,0.1f,0.1f }, { rotate.x, rotate.y, rotate.z });
+		lightPoint->UpdateModel(GetOwner()->GetPosition() + pos, { 0.05f,0.05f,0.05f }, { rotate.x, rotate.y, rotate.z });
 		lightPoint->UpdateProjection();
 		lightPoint->UpdateView();
 		//lightPoint->SetColor(color);
@@ -256,5 +252,35 @@ void Light::SetSpecularStrength(float amount)
 	{
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].specularStrength = specular;
 		pLight.specularStrength = specular;
+	}
+}
+
+void Light::SetConstant(float amount)
+{
+	constant = amount;
+	if (lightType == LightType::Point)
+	{
+		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].constant = constant;
+		pLight.constant = constant;
+	}
+}
+
+void Light::SetLinear(float amount)
+{
+	linear = amount;
+	if (lightType == LightType::Point)
+	{
+		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].linear = linear;
+		pLight.linear = linear;
+	}
+}
+
+void Light::SetQuadratic(float amount)
+{
+	quadratic = amount;
+	if (lightType == LightType::Point)
+	{
+		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].quadratic = quadratic;
+		pLight.quadratic = quadratic;
 	}
 }
