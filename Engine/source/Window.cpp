@@ -103,9 +103,10 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	SDL_GL_MakeCurrent(window.get(), context);
 
 	//Init GLEW
+	glewExperimental = true;
 	GLenum result = glewInit();
 	if (result != GLEW_OK)
-		std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << std::endl;
+		std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
 
 	//VSYNC
 	//constexpr int ADAPTIVE_VSYNC = -1;
