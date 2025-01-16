@@ -3,7 +3,11 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 #endif
 
+#if VULKAN
 #define MAX_TEXTURES 500
+#else
+#define MAX_TEXTURES 32
+#endif
 #define MAX_LIGHTS 10
 const float PI = 3.14159265359;
 
