@@ -3,6 +3,7 @@
 //File: ProceduralMeshes.cpp
 #include "ProceduralMeshes.hpp"
 #include "Engine.hpp"
+#include "BasicComponents/Light.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -17,32 +18,21 @@ void ProceduralMeshes::Init()
 	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
-	l.lightPosition = glm::vec4(0.f, 0.f, 1.f, 1.f);
-	l.lightColor = glm::vec4(0.f, 0.f, 1.f, 1.f);
-	l.ambientStrength = 0.1f;
-	l.specularStrength = 0.5f;
-	Engine::GetRenderManager()->AddPointLight(l);
-
-	l2.lightPosition = glm::vec4(0.f, 0.f, 1.f, 1.f);
-	l2.lightColor = glm::vec4(0.f, 1.f, 0.f, 1.f);
-	l2.ambientStrength = 0.1f;
-	l2.specularStrength = 0.5f;
-	Engine::GetRenderManager()->AddPointLight(l2);
-
-	l3.lightDirection = glm::vec3(0.f, -1.f, 0.f);
-	l3.lightColor = glm::vec3(1.f, 1.f, 1.f);
-	l3.ambientStrength = 0.1f;
-	l3.specularStrength = 0.5f;
-	Engine::GetRenderManager()->AddDirectionalLight(l3);
-
 	//Debug Lighting
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "LightPoint", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Point);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 0.f, 1.f, 1.f));
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(l2.lightPosition), glm::vec3{ 0.05f,0.05f,0.05f }, "Light2", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0, 1.0, 1.0, 1.0 });
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "LightPoint2", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Point);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "LightDirect", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Direct);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
 	currentMesh = MeshType::PLANE;
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
@@ -85,8 +75,8 @@ void ProceduralMeshes::Update(float dt)
 
 	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1), radians1, glm::vec3(0.f, 1.f, 0.f));
 	glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
-	l.lightPosition.x = rotatedPosition.x;
-	l.lightPosition.z = rotatedPosition.z;
+	Engine::GetObjectManager().FindObjectWithName("LightPoint")->SetXPosition(rotatedPosition.x);
+	Engine::GetObjectManager().FindObjectWithName("LightPoint")->SetZPosition(rotatedPosition.z);
 
 	//Update Lighting Variables 2
 	angle[1] += 25.f * dt;
@@ -95,15 +85,9 @@ void ProceduralMeshes::Update(float dt)
 
 	rotationMatrix = glm::rotate(glm::mat4(1), radians2, glm::vec3(1.f, 1.f, 0.f));
 	rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
-	l2.lightPosition.x = rotatedPosition.x;
-	l2.lightPosition.y = rotatedPosition.y;
-	l2.lightPosition.z = rotatedPosition.z;
-
-	Engine::GetRenderManager()->GetPointLightUniforms()[0].lightPosition = l.lightPosition;
-	Engine::GetRenderManager()->GetPointLightUniforms()[1].lightPosition = l2.lightPosition;
-
-	Engine::GetObjectManager().FindObjectWithName("Light")->SetPosition(l.lightPosition);
-	Engine::GetObjectManager().FindObjectWithName("Light2")->SetPosition(l2.lightPosition);
+	Engine::GetObjectManager().FindObjectWithName("LightPoint2")->SetXPosition(rotatedPosition.x);
+	Engine::GetObjectManager().FindObjectWithName("LightPoint2")->SetYPosition(rotatedPosition.y);
+	Engine::GetObjectManager().FindObjectWithName("LightPoint2")->SetZPosition(rotatedPosition.z);
 
 	//Camera Update
 	Engine::GetCameraManager().SetNear(cNear);
@@ -331,7 +315,7 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 	}
 
 	//Lighting
-	static int selectedLightIndex = 0;
+	/*static int selectedLightIndex = 0;
 	if (ImGui::CollapsingHeader("Lights"))
 	{
 		if (ImGui::BeginMenu("Select Light"))
@@ -363,7 +347,7 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 
 			ImGui::SliderFloat("Specular Strength", &light.specularStrength, 0.f, 1.f);
 		}
-	}
+	}*/
 
 	ImGui::End();
 

@@ -54,7 +54,6 @@ void VerticesDemo::Update(float dt)
 
 void VerticesDemo::ImGuiDraw(float /*dt*/)
 {
-	Engine::GetGameStateManager().StateChanger();
 	Engine::GetCameraManager().CameraControllerImGui();
 	Engine::GetObjectManager().ObjectControllerForImGui();
 }

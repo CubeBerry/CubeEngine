@@ -211,7 +211,10 @@ void ObjectManager::LightControllerForImGui(Light* light)
 
         if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::ColorPicker3("Light Color", &color.r);
+            if (ImGui::ColorEdit4("Light Color", &color.r))
+            {
+                light->SetColor(color);
+            }
             ImGui::Spacing();
 
             if (light->GetLightType() == LightType::Point)
@@ -253,7 +256,6 @@ void ObjectManager::LightControllerForImGui(Light* light)
             ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
             ImGui::SliderFloat("Specular Strength", &specular, 0.f, 1.f);
 
-            light->SetColor(color);
             light->SetAmbientStrength(ambient);
             light->SetSpecularStrength(specular);
         }
