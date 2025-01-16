@@ -1,4 +1,5 @@
 //Author: JEYOON YU
+//Second Author: DOYEONG LEE
 //Project: CubeEngine
 //File: ProceduralMeshes.cpp
 #include "ProceduralMeshes.hpp"
@@ -34,12 +35,28 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Direct);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
+	//Test Texture
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(2.f, 2.f, 0.f), glm::vec3{ 1.f,1.f,1.f }, "TestTexture", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f });
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(-2.f, 2.f, 0.f), glm::vec3{ 1.f,1.f,1.f }, "TestTexture1", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f });
+	//Test Texture
+
 	currentMesh = MeshType::PLANE;
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 
+
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "sample", false);
+
+	//Test Texture
+	Engine::GetObjectManager().FindObjectWithName("TestTexture")->GetComponent<Sprite>()->ChangeTexture("Sample");
+	Engine::GetObjectManager().FindObjectWithName("TestTexture1")->GetComponent<Sprite>()->ChangeTexture("sample");
+	//Test Texture
 
 	Engine::GetRenderManager()->LoadSkyBox(
 		"../Game/assets/Skybox/right.jpg",
@@ -66,7 +83,7 @@ void ProceduralMeshes::Update(float dt)
 #endif
 
 	//Update Color
-	(*Engine::GetRenderManager()->GetVertexUniforms3D())[2].color = glm::vec4{ color[0], color[1], color[2], color[3] };
+	//(*Engine::GetRenderManager()->GetVertexUniforms3D())[2].color = glm::vec4{ color[0], color[1], color[2], color[3] };
 
 	//Update Lighting Variables
 	angle[0] += 50.f * dt;

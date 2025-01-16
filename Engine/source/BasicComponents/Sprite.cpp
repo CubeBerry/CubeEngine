@@ -246,7 +246,8 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadMesh(type, path, color, stacks, slices);
-	materialId = Engine::GetSpriteManager().GetSpritesAmount();
+	//materialId = Engine::GetSpriteManager().GetSpritesAmount();
+	materialId = static_cast<int>(Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->size() - 1);
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
 }
@@ -255,7 +256,8 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadMesh(type, path, color, stacks, slices, metallic, roughness);
-	materialId = Engine::GetSpriteManager().GetSpritesAmount();
+	//materialId = Engine::GetSpriteManager().GetSpritesAmount();
+	materialId = static_cast<int>(Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->size() - 1);
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
 }
@@ -407,28 +409,58 @@ void Sprite::ChangeTexture(std::string name)
 	case GraphicsMode::GL:
 	{
 		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-		if (renderManagerGL->GetTexture(name) != nullptr)
+		if(spriteDrawType == SpriteDrawType::TwoDimension)
 		{
-			renderManagerGL->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-			renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = true;
+			if (renderManagerGL->GetTexture(name) != nullptr)
+			{
+				renderManagerGL->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = true;
+			}
+			else
+			{
+				renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = false;
+			}
 		}
 		else
 		{
-			renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = false;
+			if (renderManagerGL->GetTexture(name) != nullptr)
+			{
+				renderManagerGL->GetFragmentUniforms3D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = true;
+			}
+			else
+			{
+				renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = false;
+			}
 		}
 		break;
 	}
 	case GraphicsMode::VK:
 	{
 		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
-		if (renderManagerVK->GetTexture(name) != nullptr)
+		if (spriteDrawType == SpriteDrawType::TwoDimension)
 		{
-			renderManagerVK->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-			renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = true;
+			if (renderManagerVK->GetTexture(name) != nullptr)
+			{
+				renderManagerVK->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = true;
+			}
+			else
+			{
+				renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = false;
+			}
 		}
-		else
+		else 
 		{
-			renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = false;
+			if (renderManagerVK->GetTexture(name) != nullptr)
+			{
+				renderManagerVK->GetFragmentUniforms3D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = true;
+			}
+			else
+			{
+				renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = false;
+			}
 		}
 		break;
 	}
@@ -444,12 +476,26 @@ void Sprite::AddSpriteToManager()
 
 void Sprite::SetColor(glm::vec4 color)
 {
-	Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color = color;
+	if(spriteDrawType == SpriteDrawType::TwoDimension)
+	{
+		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color = color;
+	}
+	else
+	{
+		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).color = color;
+	}
 }
 
 glm::vec4 Sprite::GetColor()
 {
-	return Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color;
+	if (spriteDrawType == SpriteDrawType::TwoDimension)
+	{
+		return Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color;
+	}
+	else
+	{
+		return Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).color;
+	}
 }
 
 glm::vec2 Sprite::GetFrameTexel(int frameNum) const
