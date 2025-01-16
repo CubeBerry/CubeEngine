@@ -194,7 +194,7 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     fMaterial material = f_material[i_object_index];
 
     vec3 albedo = vec3(0.0);
-    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex], i_uv).rgb;
+    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
     else albedo = i_col.rgb;
 
     float ao = 1.0;
