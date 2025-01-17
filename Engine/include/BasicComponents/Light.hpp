@@ -11,9 +11,9 @@
 
 enum class LightType
 {
-	Direct,
-	Point,
-	None
+	DIRECTIONAL,
+	POINT,
+	NONE
 };
 
 class Sprite;
@@ -68,10 +68,10 @@ private:
 	float linear = 0.09f;
 	float quadratic = 0.032f;
 
-	LightType lightType = LightType::None;
+	LightType lightType = LightType::NONE;
 	int lightlId = 0;
 
-	Sprite* lightPoint = nullptr;
+	Sprite* pointLight = nullptr;
 
 	ThreeDimension::PointLightUniform pLight;
 	ThreeDimension::DirectionalLightUniform dLight;

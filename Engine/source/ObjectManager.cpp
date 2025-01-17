@@ -199,7 +199,7 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 
 void ObjectManager::LightControllerForImGui(Light* light)
 {
-    if(light->GetLightType() != LightType::None)
+    if(light->GetLightType() != LightType::NONE)
     {
         glm::vec3 position = light->GetPosition();
         glm::vec4 rotation = light->GetRotate();
@@ -217,7 +217,7 @@ void ObjectManager::LightControllerForImGui(Light* light)
             }
             ImGui::Spacing();
 
-            if (light->GetLightType() == LightType::Point)
+            if (light->GetLightType() == LightType::POINT)
             {
                 float constant = light->GetConstant();
                 float linear = light->GetLinear();
@@ -227,9 +227,9 @@ void ObjectManager::LightControllerForImGui(Light* light)
                 ImGui::Spacing();
                 //ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
 
-                ImGui::SliderFloat("Constant Strength", &constant, 0.f, 1.f);
-                ImGui::SliderFloat("Linear Strength", &linear, 0.f, 1.f);
-                ImGui::SliderFloat("Quadratic Strength", &quadratic, 0.f, 1.f);
+                ImGui::SliderFloat("constant", &constant, 0.f, 1.f);
+                ImGui::SliderFloat("linear", &linear, 0.f, 1.f);
+                ImGui::SliderFloat("quadratic", &quadratic, 0.f, 1.f);
 
                 light->SetXPosition(position.x);
                 light->SetYPosition(position.y);
@@ -243,7 +243,7 @@ void ObjectManager::LightControllerForImGui(Light* light)
                 light->SetLinear(linear);
                 light->SetQuadratic(quadratic);
             }
-            else if (light->GetLightType() == LightType::Direct)
+            else if (light->GetLightType() == LightType::DIRECTIONAL)
             {
                 ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
                 ImGui::Spacing();
@@ -283,13 +283,13 @@ void ObjectManager::LightControllerForImGui(Light* light)
             if (ImGui::Button("Direct"))
             {
                 isShowPopup = false;
-                light->AddLight(LightType::Direct);
+                light->AddLight(LightType::DIRECTIONAL);
                 ImGui::CloseCurrentPopup();
             }
             if (ImGui::Button("Point"))
             {
                 isShowPopup = false;
-                light->AddLight(LightType::Point);
+                light->AddLight(LightType::POINT);
                 ImGui::CloseCurrentPopup();
             }
 

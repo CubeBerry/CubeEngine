@@ -20,43 +20,27 @@ void ProceduralMeshes::Init()
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
 	//Debug Lighting
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "LightPoint", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Point);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 0.f, 1.f, 1.f));
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "LightPoint2", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight2", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Point);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "LightDirect", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "DirectionalLight", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::Direct);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::DIRECTIONAL);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-	//Test Texture
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(2.f, 2.f, 0.f), glm::vec3{ 1.f,1.f,1.f }, "TestTexture", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f });
-
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(-2.f, 2.f, 0.f), glm::vec3{ 1.f,1.f,1.f }, "TestTexture1", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f });
-	//Test Texture
 
 	currentMesh = MeshType::PLANE;
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 
-
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "sample", false);
-
-	//Test Texture
-	Engine::GetObjectManager().FindObjectWithName("TestTexture")->GetComponent<Sprite>()->ChangeTexture("Sample");
-	Engine::GetObjectManager().FindObjectWithName("TestTexture1")->GetComponent<Sprite>()->ChangeTexture("sample");
-	//Test Texture
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 
 	Engine::GetRenderManager()->LoadSkyBox(
 		"../Game/assets/Skybox/right.jpg",
@@ -92,8 +76,8 @@ void ProceduralMeshes::Update(float dt)
 
 	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1), radians1, glm::vec3(0.f, 1.f, 0.f));
 	glm::vec4 rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
-	Engine::GetObjectManager().FindObjectWithName("LightPoint")->SetXPosition(rotatedPosition.x);
-	Engine::GetObjectManager().FindObjectWithName("LightPoint")->SetZPosition(rotatedPosition.z);
+	Engine::GetObjectManager().FindObjectWithName("PointLight")->SetXPosition(rotatedPosition.x);
+	Engine::GetObjectManager().FindObjectWithName("PointLight")->SetZPosition(rotatedPosition.z);
 
 	//Update Lighting Variables 2
 	angle[1] += 25.f * dt;
@@ -102,9 +86,9 @@ void ProceduralMeshes::Update(float dt)
 
 	rotationMatrix = glm::rotate(glm::mat4(1), radians2, glm::vec3(1.f, 1.f, 0.f));
 	rotatedPosition = rotationMatrix * glm::vec4(0.f, 0.f, 1.f, 1.f);
-	Engine::GetObjectManager().FindObjectWithName("LightPoint2")->SetXPosition(rotatedPosition.x);
-	Engine::GetObjectManager().FindObjectWithName("LightPoint2")->SetYPosition(rotatedPosition.y);
-	Engine::GetObjectManager().FindObjectWithName("LightPoint2")->SetZPosition(rotatedPosition.z);
+	Engine::GetObjectManager().FindObjectWithName("PointLight2")->SetXPosition(rotatedPosition.x);
+	Engine::GetObjectManager().FindObjectWithName("PointLight2")->SetYPosition(rotatedPosition.y);
+	Engine::GetObjectManager().FindObjectWithName("PointLight2")->SetZPosition(rotatedPosition.z);
 
 	//Camera Update
 	Engine::GetCameraManager().SetNear(cNear);
@@ -417,5 +401,9 @@ void ProceduralMeshes::RecreateMesh()
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, objPath, stacks, slices, { color[0], color[1], color[2], color[3] });
+
+		if (objPath == "../Game/assets/Models/monkey.obj")
+			Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->ChangeTexture("monkey");
+
 	}
 }
