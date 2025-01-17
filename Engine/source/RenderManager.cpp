@@ -397,11 +397,27 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		float extent = glm::max(size.x, glm::max(size.y, size.z));
 		unitScale = 1.f / extent;
 
+#ifdef _DEBUG
+		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
+#endif
 		for (auto it = vertices3D.begin() + initialVerticesCount; it != vertices3D.end(); ++it)
 		{
 			it->position -= center;
 			it->position *= glm::vec3(unitScale, unitScale, unitScale);
+
+#ifdef _DEBUG
+			glm::vec3 start = it->position;
+			glm::vec3 end = it->position + it->normal * 0.1f;
+
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
+#endif
 		}
+
+#ifdef _DEBUG
+		normalVerticesPerMesh.push_back(static_cast<unsigned int>(tempNormalVertices.size()));
+		normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
+#endif
 
 		//Custom Model Load
 		//std::ifstream file(path);
@@ -503,23 +519,23 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	break;
 	}
 
-#ifdef _DEBUG
-	std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
-	for (size_t v = 0; v < tempVertices.size(); ++v)
-	{
-		glm::vec3 start = tempVertices[v].position;
-		glm::vec3 end = tempVertices[v].position + tempVertices[v].normal * 0.1f;
-
-		tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
-		tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
-	}
-
-	normalVerticesPerMesh.push_back(static_cast<unsigned int>(tempNormalVertices.size()));
-	normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
-#endif
-
 	if (type != MeshType::OBJ)
 	{
+#ifdef _DEBUG
+		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
+		for (size_t v = 0; v < tempVertices.size(); ++v)
+		{
+			glm::vec3 start = tempVertices[v].position;
+			glm::vec3 end = tempVertices[v].position + tempVertices[v].normal * 0.1f;
+
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
+		}
+
+		normalVerticesPerMesh.push_back(static_cast<unsigned int>(tempNormalVertices.size()));
+		normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
+#endif
+
 		verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
 		indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
 		vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());

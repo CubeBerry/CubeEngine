@@ -402,8 +402,8 @@ void ProceduralMeshes::RecreateMesh()
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, objPath, stacks, slices, { color[0], color[1], color[2], color[3] });
 
-		if (objPath == "../Game/assets/Models/monkey.obj")
-			Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->ChangeTexture("monkey");
+		//if (objPath == "../Game/assets/Models/monkey.obj")
+		//	Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->ChangeTexture("monkey");
 
 	}
 }
