@@ -1,4 +1,5 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: ObjectManager.cpp
 #include "ObjectManager.hpp"
@@ -217,6 +218,15 @@ void ObjectManager::LightControllerForImGui(Light* light)
             }
             ImGui::Spacing();
 
+            if (light->GetLightType() == LightType::DIRECTIONAL)
+            {
+                ImGui::DragFloat3("Light Direction", &position.x, 0.01f);
+                ImGui::Spacing();
+
+                light->SetXPosition(position.x);
+                light->SetYPosition(position.y);
+                light->SetZPosition(position.z);
+            }
             if (light->GetLightType() == LightType::POINT)
             {
                 float constant = light->GetConstant();
@@ -242,15 +252,6 @@ void ObjectManager::LightControllerForImGui(Light* light)
                 light->SetConstant(constant);
                 light->SetLinear(linear);
                 light->SetQuadratic(quadratic);
-            }
-            else if (light->GetLightType() == LightType::DIRECTIONAL)
-            {
-                ImGui::DragFloat3("Light Direction", &rotation.x, 0.5f);
-                ImGui::Spacing();
-                if (light->GetRotate() != rotation)
-                {
-                    light->SetRotate(rotation);
-                }
             }
 
             ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
