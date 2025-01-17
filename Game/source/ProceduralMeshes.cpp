@@ -42,6 +42,11 @@ void ProceduralMeshes::Init()
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.f,1.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mo", ObjectType::NONE);
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
+	//Engine::GetObjectManager().FindObjectWithName("Mo")->GetComponent<Sprite>()->ChangeTexture("monkey");
+
 	Engine::GetRenderManager()->LoadSkyBox(
 		"../Game/assets/Skybox/right.jpg",
 		"../Game/assets/Skybox/left.jpg",
@@ -386,8 +391,8 @@ void ProceduralMeshes::RecreateMesh()
 {
 	if (currentMesh != MeshType::OBJ)
 	{
-		if (Engine::GetObjectManager().GetLastObject() != nullptr)
-			Engine::GetObjectManager().Destroy(Engine::GetObjectManager().GetLastObject()->GetId());
+		if (Engine::GetObjectManager().FindObjectWithName("Mesh") != nullptr)
+			Engine::GetObjectManager().Destroy(Engine::GetObjectManager().FindObjectWithName("Mesh")->GetId());
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
@@ -395,15 +400,16 @@ void ProceduralMeshes::RecreateMesh()
 	}
 	else
 	{
-		if (Engine::GetObjectManager().GetLastObject() != nullptr)
-			Engine::GetObjectManager().Destroy(Engine::GetObjectManager().GetLastObject()->GetId());
+		if (Engine::GetObjectManager().FindObjectWithName("Mesh") != nullptr)
+			Engine::GetObjectManager().Destroy(Engine::GetObjectManager().FindObjectWithName("Mesh")->GetId());
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, objPath, stacks, slices, { color[0], color[1], color[2], color[3] });
+		if (objPath == "../Game/assets/Models/monkey.obj")
+			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->ChangeTexture("monkey");
 
 		//if (objPath == "../Game/assets/Models/monkey.obj")
 		//	Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->ChangeTexture("monkey");
-
 	}
 }
