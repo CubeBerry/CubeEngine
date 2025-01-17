@@ -55,7 +55,7 @@ void Light::Update(float /*dt*/)
 {
 	if (pointLight != nullptr)
 	{
-		pointLight->UpdateModel(GetOwner()->GetPosition(), { 0.05f,0.05f,0.05f }, { rotate.x, rotate.y, rotate.z });
+		pointLight->UpdateModel(GetOwner()->GetPosition() + pos, { 0.05f,0.05f,0.05f }, { rotate.x, rotate.y, rotate.z });
 		pointLight->UpdateProjection();
 		pointLight->UpdateView();
 		//pointLight->SetColor(color);
@@ -64,12 +64,12 @@ void Light::Update(float /*dt*/)
 	if (lightType == LightType::DIRECTIONAL)
 	{
 		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId] = dLight;
-		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection = GetOwner()->GetPosition();
+		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection = pos;
 	}
 	if (lightType == LightType::POINT)
 	{
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId] = pLight;
-		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition = GetOwner()->GetPosition();
+		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition = GetOwner()->GetPosition() + pos;
 
 	}
 }
@@ -86,6 +86,11 @@ void Light::SetXPosition(float x)
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition.x = x;
 		pLight.lightPosition.x = x;
 	}
+	else if (lightType == LightType::DIRECTIONAL)
+	{
+		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection.x = x;
+		dLight.lightDirection.x = x;
+	}
 }
 
 void Light::SetYPosition(float y)
@@ -96,6 +101,11 @@ void Light::SetYPosition(float y)
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition.y = y;
 		pLight.lightPosition.y = y;
 	}
+	else if (lightType == LightType::DIRECTIONAL)
+	{
+		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection.y = y;
+		dLight.lightDirection.y = y;
+	}
 }
 
 void Light::SetZPosition(float z)
@@ -105,6 +115,11 @@ void Light::SetZPosition(float z)
 	{
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].lightPosition.z = z;
 		pLight.lightPosition.z = z;
+	}
+	else if (lightType == LightType::DIRECTIONAL)
+	{
+		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection.z = z;
+		dLight.lightDirection.z = z;
 	}
 }
 
@@ -171,8 +186,6 @@ void Light::SetYRotate(float y)
 
 	if (lightType == LightType::DIRECTIONAL) 
 	{
-		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection.y = glm::radians(-rotate.y);
-		dLight.lightDirection.y = glm::radians(-rotate.y);
 	}
 	else if (lightType == LightType::POINT) 
 	{
@@ -197,8 +210,6 @@ void Light::SetZRotate(float z)
 
 	if (lightType == LightType::DIRECTIONAL)
 	{
-		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].lightDirection.z = glm::radians(-rotate.z);
-		dLight.lightDirection.z = glm::radians(-rotate.z);
 	}
 	else if (lightType == LightType::POINT) 
 	{

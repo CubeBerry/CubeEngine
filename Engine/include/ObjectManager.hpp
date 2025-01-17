@@ -38,7 +38,7 @@ public:
     void  Destroy(int id);
     void  DestroyAllObjects();
 
-    int   GetLastObjectID() { return (lastObjectID - 1); }
+    int   GetLastObjectID() { return (GetLastObject()->GetId()); }
     std::map<int, std::unique_ptr<Object>>& GetObjectMap() { return objectMap; }
 
     Object* FindObjectWithName(std::string name);
@@ -65,6 +65,7 @@ private:
     bool isShowPopup = false;
     int selectedItem = -1;
 
+    int objectListForImguiIndex = 0;
     int currentIndex = 0;
 	int closestObjectId = 0;
     bool isDragObject = false;

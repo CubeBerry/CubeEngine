@@ -70,10 +70,6 @@ void ProceduralMeshes::Update(float dt)
 #ifdef _DEBUG
 	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
 #endif
-
-	//Update Color
-	//(*Engine::GetRenderManager()->GetVertexUniforms3D())[2].color = glm::vec4{ color[0], color[1], color[2], color[3] };
-
 	//Update Lighting Variables
 	angle[0] += 50.f * dt;
 	if (angle[0] >= 360.f) angle[0] -= 360.f;
@@ -317,6 +313,7 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 
 		ImGui::ColorPicker3("Mesh Color", color.data());
 
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetColor(glm::vec4(color.data()[0], color.data()[1], color.data()[2], color.data()[3]));
 		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
 
