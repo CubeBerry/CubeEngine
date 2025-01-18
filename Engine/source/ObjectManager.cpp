@@ -76,7 +76,7 @@ void ObjectManager::ObjectControllerForImGui()
 	ImGui::Spacing();
 
 	ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-	ImGui::BeginChild("Scolling");
+	ImGui::BeginChild("Scrolling");
 	int index = 0;
 	for (auto& object : GetObjectMap())
 	{
@@ -102,17 +102,21 @@ void ObjectManager::ObjectControllerForImGui()
 		glm::vec3 size = obj->GetSize();
 		glm::vec3 rotation = obj->GetRotate3D();
 
-		if (ImGui::CollapsingHeader("Object Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		auto* isCurrentLight = obj->GetComponent<Light>();
+		if (!isCurrentLight || (isCurrentLight && isCurrentLight->GetLightType() != LightType::DIRECTIONAL))
 		{
-			ImGui::DragFloat3("Object Position", &position.x, 0.01f);
-			ImGui::DragFloat3("Object Size", &size.x, 0.5f);
-			ImGui::DragFloat3("Object Rotation", &rotation.x, 0.5f);
+			if (ImGui::CollapsingHeader("Object Transform", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::DragFloat3("Object Position", &position.x, 0.01f);
+				ImGui::DragFloat3("Object Size", &size.x, 0.5f);
+				ImGui::DragFloat3("Object Rotation", &rotation.x, 0.5f);
 
-			obj->SetPosition(position);
-			obj->SetXSize(size.x);
-			obj->SetYSize(size.y);
-			obj->SetZSize(size.z);
-			obj->SetRotate(rotation);
+				obj->SetPosition(position);
+				obj->SetXSize(size.x);
+				obj->SetYSize(size.y);
+				obj->SetZSize(size.z);
+				obj->SetRotate(rotation);
+			}
 		}
 
 		for (auto* comp : obj->GetComponentList())

@@ -32,6 +32,7 @@ void Light::AddLight(LightType lightType_, float ambient_, float specular_)
 		pos = GetOwner()->GetPosition();
 		if (lightType == LightType::DIRECTIONAL)
 		{
+			GetOwner()->SetPosition(glm::vec3(0.f));
 			dLight.lightDirection = { 0.f,0.f,0.f };
 			dLight.ambientStrength = ambient_;
 			dLight.specularStrength = specular_;

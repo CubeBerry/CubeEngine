@@ -312,8 +312,8 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		}
 
 		ImGui::ColorPicker3("Mesh Color", color.data());
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetColor(glm::vec4(color[0], color[1], color[2], color[3]));
 
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetColor(glm::vec4(color.data()[0], color.data()[1], color.data()[2], color.data()[3]));
 		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
 
