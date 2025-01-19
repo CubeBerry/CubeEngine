@@ -3,10 +3,17 @@
 //File: VKTexture.cpp
 #include "VKTexture.hpp"
 #include "VKInit.hpp"
+#include "VKDescriptor.hpp"
+#include "VKPipeLine.hpp"
+#include "VKShader.hpp"
+#include "VKVertexBuffer.hpp"
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #pragma warning(push, 0)
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
 #include "stb-master/stb_image.h"
 #pragma warning(pop)
 
@@ -18,12 +25,31 @@ VKTexture::~VKTexture()
 {
 	//Destroy Sampler
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSampler, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerIBL, nullptr);
 	//Destroy ImageView
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageView, nullptr);
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewIBL, nullptr);
 	//Free Memory
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemory, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryIBL, nullptr);
 	//Destroy Image
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImage, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageIBL, nullptr);
+
+	if (isIBL)
+	{
+		for (auto& view : cubeFaceViews)
+		{
+			vkDestroyImageView(*vkInit->GetDevice(), view, nullptr);
+		}
+
+		vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
+
+		for (auto& fb : cubeFaceFramebuffers)
+		{
+			vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
+		}
+	}
 }
 
 uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
@@ -48,23 +74,31 @@ uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_
 	return UINT32_MAX;
 }
 
-void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
+void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	name = name_;
 
 	if (flip) stbi_set_flip_vertically_on_load(true);
 
 	auto path = path_;
-	int color;
+	int texChannels;
 	//Read in image file
-	auto data = stbi_load(path.string().c_str(), &width, &height, &color, STBI_rgb_alpha);
+	void* data{ nullptr };
+	if (isHDR)
+	{
+		data = stbi_loadf(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		faceSize = height;
+	}
+	else
+		data = stbi_load(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 
 	{
 		//Define an image to create
 		VkImageCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		if (isHDR) createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		else  createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
 		createInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;
@@ -185,11 +219,14 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 
 	VkBuffer vkStagingBuffer;
 	VkDeviceMemory vkStagingDeviceMemory;
+	VkDeviceSize imageSize{ 0 };
+	if (isHDR) imageSize = width * height * STBI_rgb_alpha * sizeof(float);
+	else imageSize = width * height * STBI_rgb_alpha;
 	{
 		//Create Staging Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = width * height * STBI_rgb_alpha;
+		createInfo.size = imageSize;
 		createInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		//Create Staging Buffer
@@ -302,7 +339,7 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, width * height * STBI_rgb_alpha, 0, &contents);
+			result = vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, imageSize, 0, &contents);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -332,7 +369,7 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 		}
 
 		//Copy Bitmap Info to Memory
-		memcpy(contents, data, width * height * STBI_rgb_alpha);
+		memcpy(contents, data, imageSize);
 
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory);
@@ -444,7 +481,8 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		createInfo.image = vkTextureImage;
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		if (isHDR) createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		else  createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
 		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.layerCount = 1;
@@ -485,10 +523,19 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 		//Create Sampler Info
 		VkSamplerCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		createInfo.magFilter = VK_FILTER_NEAREST;
-		createInfo.minFilter = VK_FILTER_NEAREST;
+		if (isHDR)
+		{
+			createInfo.magFilter = VK_FILTER_LINEAR;
+			createInfo.minFilter = VK_FILTER_LINEAR;
+		}
+		else
+		{
+			createInfo.magFilter = VK_FILTER_NEAREST;
+			createInfo.minFilter = VK_FILTER_NEAREST;
+		}
 		createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
@@ -526,13 +573,497 @@ void VKTexture::LoadTexture(const std::filesystem::path& path_, std::string name
 	}
 }
 
+void VKTexture::EquirectangularToCube(VkCommandBuffer* commandBuffer)
+{
+	isIBL = true;
+
+	{
+		//Define an image to create
+		VkImageCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		createInfo.imageType = VK_IMAGE_TYPE_2D;
+		createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		createInfo.extent = { faceSize, faceSize, 1 };
+		createInfo.mipLevels = 1;
+		createInfo.arrayLayers = 6; //6 Layers for CubeMap
+		createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		//Use Optimal Tiling to make GPU effectively process image
+		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		//Usage for copying, shader, and renderpass
+		createInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		createInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+		//Create image
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageIBL);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Image Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKTexture::~VKTexture();
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	//Declare a variable which will take memory requirements
+	VkMemoryRequirements requirements{};
+	//Get Memory Requirements for Image
+	vkGetImageMemoryRequirements(*vkInit->GetDevice(), vkTextureImageIBL, &requirements);
+
+	//Create Memory Allocation Info
+	VkMemoryAllocateInfo allocateInfo{};
+	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocateInfo.allocationSize = requirements.size;
+	//Select memory type which has fast access from GPU
+	allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	//Allocate Memory
+	try
+	{
+		VkResult result{ VK_SUCCESS };
+		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryIBL);
+		if (result != VK_SUCCESS)
+		{
+			switch (result)
+			{
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_TOO_MANY_OBJECTS:
+				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+				break;
+			default:
+				break;
+			}
+			std::cout << std::endl;
+
+			throw std::runtime_error{ "Texture Memory Allocation Failed" };
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		VKTexture::~VKTexture();
+		std::exit(EXIT_FAILURE);
+	}
+
+	//Bind Image and Memory
+	try
+	{
+		VkResult result{ VK_SUCCESS };
+		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageIBL, vkTextureDeviceMemoryIBL, 0);
+		if (result != VK_SUCCESS)
+		{
+			switch (result)
+			{
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				break;
+			default:
+				break;
+			}
+			std::cout << std::endl;
+
+			throw std::runtime_error{ "Memory Bind Failed" };
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		VKTexture::~VKTexture();
+		std::exit(EXIT_FAILURE);
+	}
+
+	{
+		//To access image from graphics pipeline, Image View is needed
+		//Create ImageView Info
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = vkTextureImageIBL;
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+		createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.layerCount = 6;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+
+		//Create ImageView
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewIBL);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Image View Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKTexture::~VKTexture();
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	{
+		//Sampler is needed for shader to read image
+		//Create Sampler Info
+		VkSamplerCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		createInfo.magFilter = VK_FILTER_LINEAR;
+		createInfo.minFilter = VK_FILTER_LINEAR;
+		createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		//createInfo.anisotropyEnable = VK_TRUE;
+		//createInfo.maxAnisotropy = 16.f;
+		//createInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+		createInfo.unnormalizedCoordinates = VK_FALSE;
+
+		//Create Sampler
+		try
+		{
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerIBL);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_TOO_MANY_OBJECTS:
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Image Sampler Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKTexture::~VKTexture();
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	//Prepare RenderPass
+	//Create Attachment Description
+	VkAttachmentDescription colorAattachmentDescription{};
+	colorAattachmentDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	colorAattachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAattachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAattachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAattachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAattachmentDescription.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	//Define which attachment should subpass refernece of renderpass
+	VkAttachmentReference colorAttachmentReference{};
+	//attachment == Index of VkAttachmentDescription array
+	colorAttachmentReference.attachment = 0;
+	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	//Create Subpass Description
+	VkSubpassDescription subpassDescription{};
+	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDescription.colorAttachmentCount = 1;
+	subpassDescription.pColorAttachments = &colorAttachmentReference;
+
+	VkRenderPassCreateInfo rpCreateInfo{};
+	rpCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	rpCreateInfo.attachmentCount = 1;
+	rpCreateInfo.pAttachments = &colorAattachmentDescription;
+	rpCreateInfo.subpassCount = 1;
+	rpCreateInfo.pSubpasses = &subpassDescription;
+
+	//Create Renderpass
+	try
+	{
+		VkResult result{ VK_SUCCESS };
+		result = vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL);
+		if (result != VK_SUCCESS)
+		{
+			switch (result)
+			{
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				break;
+			default:
+				break;
+			}
+			std::cout << std::endl;
+
+			throw std::runtime_error{ "RenderPass Creation Failed" };
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		VKTexture::~VKTexture();
+		std::exit(EXIT_FAILURE);
+	}
+
+	for (uint32_t f = 0; f < 6; ++f)
+	{
+		//Create ImageView
+		try
+		{
+			//To access image from graphics pipeline, Image View is needed
+			//Create ImageView Info
+			VkImageViewCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = vkTextureImageIBL;
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.layerCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = f;
+
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Image View Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKTexture::~VKTexture();
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	for (uint32_t f = 0; f < 6; ++f)
+	{
+		VkImageView attachments[] = { cubeFaceViews[f] };
+
+		//Create framebuffer info
+		VkFramebufferCreateInfo fbCreateInfo{};
+		fbCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		fbCreateInfo.renderPass = renderPassIBL;
+		fbCreateInfo.attachmentCount = 1;
+		fbCreateInfo.pAttachments = attachments;
+		fbCreateInfo.width = faceSize;
+		fbCreateInfo.height = faceSize;
+		fbCreateInfo.layers = 1;
+
+		try
+		{
+			//Create framebuffer
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]);
+			if (result != VK_SUCCESS)
+			{
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					break;
+				default:
+					break;
+				}
+				std::cout << std::endl;
+
+				throw std::runtime_error{ "Framebuffer Creation Failed" };
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			VKTexture::~VKTexture();
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
+	//Render Images to Cube
+	VKShader shaderIBL{ vkInit->GetDevice() };
+	shaderIBL.LoadShader("../Engine/shader/Equirectangular.vert", "../Engine/shader/Equirectangular.frag");
+
+	VKDescriptorLayout fragmentLayout;
+	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout.descriptorCount = 1;
+	VKDescriptor descriptorIBL{ vkInit, {}, { fragmentLayout } };
+
+	VKAttributeLayout position_layout;
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = 0;
+
+	VKPipeLine pipelineIBL{ vkInit->GetDevice(), descriptorIBL.GetDescriptorSetLayout() };
+	VkExtent2D extentIBL{ faceSize, faceSize };
+	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+
+	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
+
+	VkWriteDescriptorSet descriptorWrite{};
+	VkDescriptorImageInfo skyboxDescriptorImageInfo{};
+	skyboxDescriptorImageInfo.sampler = vkTextureSampler;
+	skyboxDescriptorImageInfo.imageView = vkTextureImageView;
+	skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	//Define which resource descriptor set will point
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = (*descriptorIBL.GetFragmentMaterialDescriptorSets())[0];
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.pImageInfo = &skyboxDescriptorImageInfo;
+
+	//Update DescriptorSet
+	//DescriptorSet does not have to update every frame since it points same uniform buffer
+	vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+
+	//Create Viewport and Scissor for Dynamic State
+	VkViewport viewport{};
+	viewport.x = 0.f;
+	viewport.y = static_cast<float>(faceSize);
+	viewport.width = static_cast<float>(faceSize);
+	viewport.height = -static_cast<float>(faceSize);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = { faceSize, faceSize };
+
+	//Create command buffer begin info
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	//Begin command buffer
+	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
+
+	VkClearValue clearColor = { 0.f,0.f,0.f,1.f };
+	glm::mat4 projection = glm::perspective(glm::radians(90.f), 1.f, 0.1f, 10.f);
+	glm::mat4 views[] = {
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f)),
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(-1.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f)),
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f), glm::vec3(0.f,0.f, -1.f)),
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f,0.f, 1.f)),
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, -1.f, 0.f)),
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, -1.f, 0.f))
+	};
+	for (int f = 0; f < 6; ++f)
+	{
+		//Create renderpass begin info
+		VkRenderPassBeginInfo renderpassBeginInfo{};
+		renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderpassBeginInfo.renderPass = renderPassIBL;
+		renderpassBeginInfo.framebuffer = cubeFaceFramebuffers[f];
+		renderpassBeginInfo.renderArea.offset = { 0, 0 };
+		renderpassBeginInfo.renderArea.extent = { faceSize, faceSize };
+		renderpassBeginInfo.clearValueCount = 1;
+		renderpassBeginInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(*commandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		//Bind Vertex Buffer
+		VkDeviceSize vertexBufferOffset{ 0 };
+		vkCmdBindVertexBuffers(*commandBuffer, 0, 1, vertexBufferIBL.GetVertexBuffer(), &vertexBufferOffset);
+		vkCmdBindPipeline(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLine());
+		//Dynamic Viewport & Scissor
+		vkCmdSetViewport(*commandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
+		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentMaterialDescriptorSets())[0], 0, nullptr);
+		//Push Constant World-To_NDC
+		glm::mat4 transform[2] = { views[f], projection};
+		vkCmdPushConstants(*commandBuffer, *pipelineIBL.GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
+
+		vkCmdDraw(*commandBuffer, 36, 1, 0, 0);
+
+		vkCmdEndRenderPass(*commandBuffer);
+	}
+
+	vkEndCommandBuffer(*commandBuffer);
+
+	//Create submit info
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = commandBuffer;
+
+	//Submit queue to command buffer
+	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+
+	//Wait until all submitted command buffers are handled
+	vkDeviceWaitIdle(*vkInit->GetDevice());
+}
+
 void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
 {
 	name = "Skybox";
 	stbi_set_flip_vertically_on_load(false);
 
 	//unsigned char* data[6];
-	std::array<stbi_uc*, 6> data;
+	std::array<unsigned char*, 6> data;
 	int texChannels;
 	data[0] = stbi_load(right.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 	data[1] = stbi_load(left.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
@@ -824,7 +1355,7 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 		//Copy Bitmap Info to Memory
 		for (int i = 0; i < 6; ++i)
 		{
-			memcpy(static_cast<stbi_uc*>(contents) + i * imageSize, data[i], imageSize);
+			memcpy(static_cast<unsigned char*>(contents) + i * imageSize, data[i], imageSize);
 		}
 
 		//End Accessing Memory from CPU

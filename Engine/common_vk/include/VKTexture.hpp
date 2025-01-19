@@ -4,6 +4,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include <filesystem>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 
 class VKInit;
@@ -14,7 +15,7 @@ public:
 	VKTexture(VKInit* init_, VkCommandPool* pool_);
 	~VKTexture();
 
-	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip);
+	void LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip);
 	void LoadSkyBox(
 		const std::filesystem::path& right,
 		const std::filesystem::path& left,
@@ -23,15 +24,23 @@ public:
 		const std::filesystem::path& front,
 		const std::filesystem::path& back
 	);
+	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
 	void SetTextureID(int id) { texID = id; };
 
 	VkSampler* GetSampler() { return &vkTextureSampler; };
 	VkImageView* GetImageView() { return &vkTextureImageView; };
+	std::array<VkFramebuffer, 6> GetFrameBuffersIBL() { return cubeFaceFramebuffers; };
+	VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
+	VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
+	VkRenderPass GetRenderPassIBL() { return renderPassIBL; };
+
+	bool GetIsIBL() { return isIBL; };
+
 	int GetWidth() const { return width; };
 	int GetHeight() const { return height; };
 	glm::vec2 GetSize() const { return glm::vec2(width, height); };
 	std::string GetName() const { return name; };
-	int GetTextrueId() { return texID; }
+	int GetTextrueId() { return texID; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
@@ -41,6 +50,60 @@ private:
 	VkDeviceMemory vkTextureDeviceMemory{ VK_NULL_HANDLE };
 	VkImageView vkTextureImageView{ VK_NULL_HANDLE };
 	VkSampler vkTextureSampler{ VK_NULL_HANDLE };
+
+	VkImage vkTextureImageIBL{ VK_NULL_HANDLE };
+	VkDeviceMemory vkTextureDeviceMemoryIBL{ VK_NULL_HANDLE };
+	VkImageView vkTextureImageViewIBL{ VK_NULL_HANDLE };
+	VkSampler vkTextureSamplerIBL{ VK_NULL_HANDLE };
+	std::array<VkImageView, 6> cubeFaceViews;
+	VkRenderPass renderPassIBL;
+	std::array<VkFramebuffer, 6> cubeFaceFramebuffers;
+	uint32_t faceSize{ 0 };
+	bool isIBL{ false };
+
+	std::vector<glm::vec3> skyboxVertices = {
+	{-1.0f,  1.0f, -1.0f},
+{-1.0f, -1.0f, -1.0f},
+ {1.0f, -1.0f, -1.0f },
+ {1.0f, -1.0f, -1.0f},
+ {1.0f,  1.0f, -1.0f},
+{-1.0f,  1.0f, -1.0f},
+
+{-1.0f, -1.0f,  1.0f},
+{-1.0f, -1.0f, -1.0f},
+{-1.0f,  1.0f, -1.0f},
+{-1.0f,  1.0f, -1.0f},
+{-1.0f,  1.0f,  1.0f},
+{-1.0f, -1.0f,  1.0f},
+
+ {1.0f, -1.0f, -1.0f},
+ {1.0f, -1.0f,  1.0f},
+ {1.0f,  1.0f,  1.0f},
+ {1.0f,  1.0f,  1.0f},
+ {1.0f,  1.0f, -1.0f},
+ {1.0f, -1.0f, -1.0f},
+
+{-1.0f, -1.0f,  1.0f},
+{-1.0f,  1.0f,  1.0f},
+{ 1.0f,  1.0f,  1.0f},
+{ 1.0f,  1.0f,  1.0f},
+{ 1.0f, -1.0f,  1.0f},
+{-1.0f, -1.0f,  1.0f},
+
+{-1.0f,  1.0f, -1.0f},
+{ 1.0f,  1.0f, -1.0f},
+{ 1.0f,  1.0f,  1.0f},
+{ 1.0f,  1.0f,  1.0f},
+{-1.0f,  1.0f,  1.0f},
+{-1.0f,  1.0f, -1.0f},
+
+{-1.0f, -1.0f, -1.0f},
+{-1.0f, -1.0f,  1.0f},
+{ 1.0f, -1.0f, -1.0f},
+{ 1.0f, -1.0f, -1.0f},
+{-1.0f, -1.0f,  1.0f},
+{ 1.0f, -1.0f,  1.0f}
+	};
 
 	int width, height;
 	int texID;

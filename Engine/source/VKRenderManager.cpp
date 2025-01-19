@@ -895,7 +895,7 @@ void VKRenderManager::RecreateSwapChain()
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
-	texture->LoadTexture(path_, name_, flip);
+	texture->LoadTexture(false, path_, name_, flip);
 
 	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);
@@ -1276,12 +1276,12 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 }
 
 void VKRenderManager::LoadSkyBox(
-	const std::filesystem::path& right,
-	const std::filesystem::path& left,
-	const std::filesystem::path& top,
-	const std::filesystem::path& bottom,
-	const std::filesystem::path& front,
-	const std::filesystem::path& back
+	const std::filesystem::path& /*right*/,
+	const std::filesystem::path& /*left*/,
+	const std::filesystem::path& /*top*/,
+	const std::filesystem::path& /*bottom*/,
+	const std::filesystem::path& /*front*/,
+	const std::filesystem::path& /*back*/
 )
 {
 	skyboxShader = new VKShader(vkInit->GetDevice());
@@ -1347,7 +1347,11 @@ void VKRenderManager::LoadSkyBox(
 	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKTexture(vkInit, &vkCommandPool);
-	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	//skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skybox->LoadTexture(true, "../Game/assets/Skybox/HDR/billiard_hall_4k.hdr", "skybox", false);
+	//skybox->LoadTexture(true, "../Game/assets/Skybox/ibl_hdr_radiance.png", "skybox", false);
+	skybox->EquirectangularToCube(&vkCommandBuffers[0]);
+
 	skyboxEnabled = true;
 }
 
@@ -1600,8 +1604,8 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet descriptorWrite{};
 
 				VkDescriptorImageInfo skyboxDescriptorImageInfo{};
-				skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
-				skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
+				skyboxDescriptorImageInfo.sampler = *skybox->GetSamplerIBL();
+				skyboxDescriptorImageInfo.imageView = *skybox->GetImageViewIBL();
 				skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 				//Define which resource descriptor set will point
