@@ -409,7 +409,7 @@ void Sprite::ChangeTexture(std::string name)
 	case GraphicsMode::GL:
 	{
 		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-		if(spriteDrawType == SpriteDrawType::TwoDimension)
+		if(spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
@@ -438,7 +438,7 @@ void Sprite::ChangeTexture(std::string name)
 	case GraphicsMode::VK:
 	{
 		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension)
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
@@ -476,7 +476,7 @@ void Sprite::AddSpriteToManager()
 
 void Sprite::SetColor(glm::vec4 color)
 {
-	if(spriteDrawType == SpriteDrawType::TwoDimension)
+	if(spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
 		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color = color;
 	}
@@ -488,7 +488,7 @@ void Sprite::SetColor(glm::vec4 color)
 
 glm::vec4 Sprite::GetColor()
 {
-	if (spriteDrawType == SpriteDrawType::TwoDimension)
+	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
 		return Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color;
 	}
