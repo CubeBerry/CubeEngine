@@ -61,6 +61,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
 	Engine::GetRenderManager()->LoadSkyBox(
+		false,
 		"../Game/assets/Skybox/right.jpg",
 		"../Game/assets/Skybox/left.jpg",
 		"../Game/assets/Skybox/top.jpg",

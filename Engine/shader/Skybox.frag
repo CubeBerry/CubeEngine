@@ -19,7 +19,7 @@ void main()
     vec3 color = texture(skybox, i_pos).rgb;
 
     color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0 / 2.2)); 
+    color = pow(color, vec3(1.0 / 2.2));
 
     fragmentColor = vec4(color, 1.0);
 }

@@ -600,6 +600,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 }
 
 void GLRenderManager::LoadSkyBox(
+	bool /*isHDR*/,
 	const std::filesystem::path& right,
 	const std::filesystem::path& left,
 	const std::filesystem::path& top,
@@ -672,6 +673,12 @@ void GLRenderManager::LoadSkyBox(
 	skybox = new GLTexture;
 	skybox->LoadSkyBox(right, left, top, bottom, front, back);
 	skyboxEnabled = true;
+}
+
+void GLRenderManager::LoadEquirectangularToSkyBox(bool isHDR, const std::filesystem::path& path)
+{
+	isHDR;
+	path;
 }
 
 void GLRenderManager::DeleteSkyBox()

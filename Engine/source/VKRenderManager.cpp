@@ -1276,14 +1276,17 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 }
 
 void VKRenderManager::LoadSkyBox(
-	const std::filesystem::path& /*right*/,
-	const std::filesystem::path& /*left*/,
-	const std::filesystem::path& /*top*/,
-	const std::filesystem::path& /*bottom*/,
-	const std::filesystem::path& /*front*/,
-	const std::filesystem::path& /*back*/
+	bool isHDR,
+	const std::filesystem::path& right,
+	const std::filesystem::path& left,
+	const std::filesystem::path& top,
+	const std::filesystem::path& bottom,
+	const std::filesystem::path& front,
+	const std::filesystem::path& back
 )
 {
+	if (skyboxEnabled) return;
+
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	std::cout << '\n';
 	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
@@ -1347,9 +1350,81 @@ void VKRenderManager::LoadSkyBox(
 	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKTexture(vkInit, &vkCommandPool);
-	//skybox->LoadSkyBox(right, left, top, bottom, front, back);
-	skybox->LoadTexture(true, "../Game/assets/Skybox/HDR/billiard_hall_4k.hdr", "skybox", false);
-	//skybox->LoadTexture(true, "../Game/assets/Skybox/ibl_hdr_radiance.png", "skybox", false);
+	skybox->LoadSkyBox(isHDR, right, left, top, bottom, front, back);
+
+	skyboxEnabled = true;
+}
+
+void VKRenderManager::LoadEquirectangularToSkyBox(bool isHDR, const std::filesystem::path& path)
+{
+	if (skyboxEnabled) return;
+
+	skyboxShader = new VKShader(vkInit->GetDevice());
+	std::cout << '\n';
+	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
+
+	std::vector<glm::vec3> skyboxVertices = {
+		{-1.0f,  1.0f, -1.0f},
+	{-1.0f, -1.0f, -1.0f},
+	 {1.0f, -1.0f, -1.0f },
+	 {1.0f, -1.0f, -1.0f},
+	 {1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+
+	{-1.0f, -1.0f,  1.0f},
+	{-1.0f, -1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f, -1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{-1.0f, -1.0f,  1.0f},
+
+	 {1.0f, -1.0f, -1.0f},
+	 {1.0f, -1.0f,  1.0f},
+	 {1.0f,  1.0f,  1.0f},
+	 {1.0f,  1.0f,  1.0f},
+	 {1.0f,  1.0f, -1.0f},
+	 {1.0f, -1.0f, -1.0f},
+
+	{-1.0f, -1.0f,  1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f, -1.0f,  1.0f},
+	{-1.0f, -1.0f,  1.0f},
+
+	{-1.0f,  1.0f, -1.0f},
+	{ 1.0f,  1.0f, -1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{ 1.0f,  1.0f,  1.0f},
+	{-1.0f,  1.0f,  1.0f},
+	{-1.0f,  1.0f, -1.0f},
+
+	{-1.0f, -1.0f, -1.0f},
+	{-1.0f, -1.0f,  1.0f},
+	{ 1.0f, -1.0f, -1.0f},
+	{ 1.0f, -1.0f, -1.0f},
+	{-1.0f, -1.0f,  1.0f},
+	{ 1.0f, -1.0f,  1.0f}
+	};
+	skyboxVertexBuffer = new VKVertexBuffer<glm::vec3>(vkInit, &skyboxVertices);
+
+	VKDescriptorLayout fragmentLayout[2];
+	fragmentLayout[0].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[0].descriptorCount = 1;
+	fragmentLayout[1].descriptorType = VKDescriptorLayout::UNIFORM;
+	fragmentLayout[1].descriptorCount = 1;
+	skyboxDescriptor = new VKDescriptor(vkInit, {}, { fragmentLayout[0], fragmentLayout[1] });
+
+	VKAttributeLayout position_layout;
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = 0;
+
+	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+
+	skybox = new VKTexture(vkInit, &vkCommandPool);
+	skybox->LoadTexture(isHDR, path, "skybox", false);
 	skybox->EquirectangularToCube(&vkCommandBuffers[0]);
 
 	skyboxEnabled = true;
@@ -1604,8 +1679,8 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet descriptorWrite{};
 
 				VkDescriptorImageInfo skyboxDescriptorImageInfo{};
-				skyboxDescriptorImageInfo.sampler = *skybox->GetSamplerIBL();
-				skyboxDescriptorImageInfo.imageView = *skybox->GetImageViewIBL();
+				skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
+				skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
 				skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 				//Define which resource descriptor set will point

@@ -92,6 +92,7 @@ public:
 
 	//Skybox
 	virtual void LoadSkyBox(
+		bool isHDR,
 		const std::filesystem::path& right,
 		const std::filesystem::path& left,
 		const std::filesystem::path& top,
@@ -99,6 +100,7 @@ public:
 		const std::filesystem::path& front,
 		const std::filesystem::path& back
 	) = 0;
+	virtual void LoadEquirectangularToSkyBox(bool isHDR, const std::filesystem::path& path) = 0;
 	virtual void DeleteSkyBox() = 0;
 protected:
 	//--------------------Common--------------------//

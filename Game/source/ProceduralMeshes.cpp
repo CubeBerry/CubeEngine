@@ -47,14 +47,16 @@ void ProceduralMeshes::Init()
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 	//Engine::GetObjectManager().FindObjectWithName("Mo")->GetComponent<Sprite>()->ChangeTexture("monkey");
 
-	Engine::GetRenderManager()->LoadSkyBox(
-		"../Game/assets/Skybox/right.jpg",
-		"../Game/assets/Skybox/left.jpg",
-		"../Game/assets/Skybox/top.jpg",
-		"../Game/assets/Skybox/bottom.jpg",
-		"../Game/assets/Skybox/back.jpg",
-		"../Game/assets/Skybox/front.jpg"
-	);
+	//Engine::GetRenderManager()->LoadSkyBox(
+	//	"../Game/assets/Skybox/right.jpg",
+	//	"../Game/assets/Skybox/left.jpg",
+	//	"../Game/assets/Skybox/top.jpg",
+	//	"../Game/assets/Skybox/bottom.jpg",
+	//	"../Game/assets/Skybox/back.jpg",
+	//	"../Game/assets/Skybox/front.jpg"
+	//);
+
+	Engine::GetRenderManager()->LoadEquirectangularToSkyBox(true, "../Game/assets/Skybox/HDR/Equirectangular/billiard_hall_4k.hdr");
 }
 
 void ProceduralMeshes::Update(float dt)

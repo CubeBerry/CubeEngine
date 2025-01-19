@@ -17,6 +17,7 @@ public:
 
 	void LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip);
 	void LoadSkyBox(
+		bool isHDR,
 		const std::filesystem::path& right,
 		const std::filesystem::path& left,
 		const std::filesystem::path& top,
@@ -27,12 +28,18 @@ public:
 	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
 	void SetTextureID(int id) { texID = id; };
 
-	VkSampler* GetSampler() { return &vkTextureSampler; };
-	VkImageView* GetImageView() { return &vkTextureImageView; };
-	std::array<VkFramebuffer, 6> GetFrameBuffersIBL() { return cubeFaceFramebuffers; };
-	VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
-	VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
-	VkRenderPass GetRenderPassIBL() { return renderPassIBL; };
+	VkSampler* GetSampler()
+	{
+		if (isIBL) return &vkTextureSamplerIBL;
+		return &vkTextureSampler;
+	};
+	VkImageView* GetImageView()
+	{
+		if (isIBL) return &vkTextureImageViewIBL;
+		return &vkTextureImageView;
+	};
+	//VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
+	//VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
 
 	bool GetIsIBL() { return isIBL; };
 

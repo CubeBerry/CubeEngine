@@ -1057,20 +1057,32 @@ void VKTexture::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 }
 
-void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
+void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
 {
 	name = "Skybox";
 	stbi_set_flip_vertically_on_load(false);
 
 	//unsigned char* data[6];
-	std::array<unsigned char*, 6> data;
+	std::array<void*, 6> data;
 	int texChannels;
-	data[0] = stbi_load(right.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	data[1] = stbi_load(left.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	data[2] = stbi_load(top.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	data[3] = stbi_load(bottom.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	data[4] = stbi_load(back.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	data[5] = stbi_load(front.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	if (isHDR)
+	{
+		data[0] = stbi_loadf(right.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[1] = stbi_loadf(left.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[2] = stbi_loadf(top.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[3] = stbi_loadf(bottom.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[4] = stbi_loadf(back.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[5] = stbi_loadf(front.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	}
+	else
+	{
+		data[0] = stbi_load(right.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[1] = stbi_load(left.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[2] = stbi_load(top.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[3] = stbi_load(bottom.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[4] = stbi_load(back.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+		data[5] = stbi_load(front.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	}
 
 	//FlipTextureHorizontally(data[0], width, height, STBI_rgb_alpha);
 	//FlipTextureHorizontally(data[1], width, height, STBI_rgb_alpha);
@@ -1082,7 +1094,8 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 		VkImageCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		if (isHDR) createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		else createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
 		createInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 6; //6 Layers for CubeMap
@@ -1203,7 +1216,9 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 	//--------------------Staging Buffer--------------------//
 
 	VkBuffer vkStagingBuffer;
-	VkDeviceSize imageSize = width * height * STBI_rgb_alpha;
+	VkDeviceSize imageSize{ 0 };
+	if (isHDR) imageSize = width * height * STBI_rgb_alpha * sizeof(float);
+	else imageSize = width * height * STBI_rgb_alpha;
 	VkDeviceSize totalSize = imageSize * 6;
 	VkDeviceMemory vkStagingDeviceMemory;
 	{
@@ -1477,7 +1492,8 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		createInfo.image = vkTextureImage;
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-		createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		if (isHDR) createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		else createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
 		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.layerCount = 6;
@@ -1519,8 +1535,16 @@ void VKTexture::LoadSkyBox(const std::filesystem::path& right, const std::filesy
 		//Create Sampler Info
 		VkSamplerCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		createInfo.magFilter = VK_FILTER_LINEAR;
-		createInfo.minFilter = VK_FILTER_LINEAR;
+		if (isHDR)
+		{
+			createInfo.magFilter = VK_FILTER_LINEAR;
+			createInfo.minFilter = VK_FILTER_LINEAR;
+		}
+		else
+		{
+			createInfo.magFilter = VK_FILTER_NEAREST;
+			createInfo.minFilter = VK_FILTER_NEAREST;
+		}
 		createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
