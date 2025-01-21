@@ -19,20 +19,15 @@ void PBR::Init()
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
 	//Debug Lighting
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 0.f, 3.f, 1.f));
-
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight2", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
-
-	//Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, -1.f), glm::vec3{ 0.05f,0.05f,0.05f }, "DirectionalLight", ObjectType::NONE);
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 4.f), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight", ObjectType::NONE);
 	//Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	//Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::DIRECTIONAL);
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, -1.f), glm::vec3{ 0.05f,0.05f,0.05f }, "DirectionalLight", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::DIRECTIONAL);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
 	for (int r = 0; r < 6; ++r)
 	{
@@ -55,6 +50,7 @@ void PBR::Init()
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 }, 0.f, 0.01f);
 
 	Engine::GetRenderManager()->LoadEquirectangularToSkyBox(true, "../Game/assets/Skybox/HDR/Equirectangular/billiard_hall_4k.hdr");
+	//Engine::GetRenderManager()->LoadEquirectangularToSkyBox(true, "../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
 }
 
 void PBR::Update(float dt)

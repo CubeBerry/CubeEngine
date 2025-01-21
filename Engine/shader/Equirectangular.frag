@@ -29,5 +29,8 @@ void main()
     vec2 uv = SampleSphericalMap(normalize(i_pos));
     vec3 color = texture(equirectangularMap, uv).rgb;
 
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0 / 2.2));
+
     fragmentColor = vec4(color, 1.0);
 }

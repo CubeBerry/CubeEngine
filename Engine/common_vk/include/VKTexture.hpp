@@ -28,6 +28,7 @@ public:
 	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
 	void CalculateIrradiance(VkCommandBuffer* commandBuffer);
 	void PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer);
+	void BRDFLUT(VkCommandBuffer* commandBuffer);
 	void SetTextureID(int id) { texID = id; };
 
 	VkSampler* GetSampler()
@@ -42,6 +43,7 @@ public:
 	};
 	std::pair<VkSampler*, VkImageView*> GetIrradiance() { return { &vkTextureSamplerIrradiance, &vkTextureImageViewIrradiance }; };
 	std::pair<VkSampler*, VkImageView*> GetPrefilter() { return { &vkTextureSamplerPrefilter, &vkTextureImageViewPrefilter }; };
+	std::pair<VkSampler*, VkImageView*> GetBRDF() { return { &vkTextureSamplerBRDFLUT, &vkTextureImageViewBRDFLUT }; };
 	//VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
 	//VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
 
@@ -81,6 +83,12 @@ private:
 	VkImageView vkTextureImageViewPrefilter{ VK_NULL_HANDLE };
 	VkSampler vkTextureSamplerPrefilter{ VK_NULL_HANDLE };
 
+	//BRDF LUT Texture
+	VkImage vkTextureImageBRDFLUT{ VK_NULL_HANDLE };
+	VkDeviceMemory vkTextureDeviceMemoryBRDFLUT{ VK_NULL_HANDLE };
+	VkImageView vkTextureImageViewBRDFLUT{ VK_NULL_HANDLE };
+	VkSampler vkTextureSamplerBRDFLUT{ VK_NULL_HANDLE };
+
 	std::array<VkImageView, 6> cubeFaceViews;
 	VkRenderPass renderPassIBL;
 	std::array<VkFramebuffer, 6> cubeFaceFramebuffers;
@@ -88,47 +96,59 @@ private:
 	bool isEquirectangular{ false };
 
 	std::vector<glm::vec3> skyboxVertices = {
-	{-1.0f,  1.0f, -1.0f},
-{-1.0f, -1.0f, -1.0f},
- {1.0f, -1.0f, -1.0f },
- {1.0f, -1.0f, -1.0f},
- {1.0f,  1.0f, -1.0f},
-{-1.0f,  1.0f, -1.0f},
-
-{-1.0f, -1.0f,  1.0f},
-{-1.0f, -1.0f, -1.0f},
-{-1.0f,  1.0f, -1.0f},
-{-1.0f,  1.0f, -1.0f},
-{-1.0f,  1.0f,  1.0f},
-{-1.0f, -1.0f,  1.0f},
-
- {1.0f, -1.0f, -1.0f},
- {1.0f, -1.0f,  1.0f},
- {1.0f,  1.0f,  1.0f},
- {1.0f,  1.0f,  1.0f},
- {1.0f,  1.0f, -1.0f},
- {1.0f, -1.0f, -1.0f},
-
-{-1.0f, -1.0f,  1.0f},
-{-1.0f,  1.0f,  1.0f},
-{ 1.0f,  1.0f,  1.0f},
-{ 1.0f,  1.0f,  1.0f},
-{ 1.0f, -1.0f,  1.0f},
-{-1.0f, -1.0f,  1.0f},
-
-{-1.0f,  1.0f, -1.0f},
-{ 1.0f,  1.0f, -1.0f},
-{ 1.0f,  1.0f,  1.0f},
-{ 1.0f,  1.0f,  1.0f},
-{-1.0f,  1.0f,  1.0f},
-{-1.0f,  1.0f, -1.0f},
-
-{-1.0f, -1.0f, -1.0f},
-{-1.0f, -1.0f,  1.0f},
-{ 1.0f, -1.0f, -1.0f},
-{ 1.0f, -1.0f, -1.0f},
-{-1.0f, -1.0f,  1.0f},
-{ 1.0f, -1.0f,  1.0f}
+		{-1.0f,  1.0f, -1.0f},
+		{-1.0f, -1.0f, -1.0f},
+		{1.0f, -1.0f, -1.0f },
+		{1.0f, -1.0f, -1.0f},
+		{1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		
+		{-1.0f, -1.0f,  1.0f},
+		{-1.0f, -1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f,  1.0f},
+		{-1.0f, -1.0f,  1.0f},
+	
+		{1.0f, -1.0f, -1.0f},
+		{1.0f, -1.0f,  1.0f},
+		{1.0f,  1.0f,  1.0f},
+		{1.0f,  1.0f,  1.0f},
+		{1.0f,  1.0f, -1.0f},
+		{1.0f, -1.0f, -1.0f},
+		
+		{-1.0f, -1.0f,  1.0f},
+		{-1.0f,  1.0f,  1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{ 1.0f, -1.0f,  1.0f},
+		{-1.0f, -1.0f,  1.0f},
+		
+		{-1.0f,  1.0f, -1.0f},
+		{ 1.0f,  1.0f, -1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{-1.0f,  1.0f,  1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		
+		{-1.0f, -1.0f, -1.0f},
+		{-1.0f, -1.0f,  1.0f},	
+		{ 1.0f, -1.0f, -1.0f},
+		{ 1.0f, -1.0f, -1.0f},
+		{-1.0f, -1.0f,  1.0f},
+		{ 1.0f, -1.0f,  1.0f}
+	};
+	std::vector<glm::vec3> fullscreenQuad = {
+		glm::vec3(-1.0f, 1.0f, 0.0f),
+		glm::vec3(-1.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, 1.0f, 0.0f),
+		glm::vec3(1.0f, -1.0f, 0.0f),
+	};
+	std::vector<glm::vec2> fullscreenQuadTexCoords = {
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(0.0f, 0.0f),
+		glm::vec2(1.0f, 1.0f),
+		glm::vec2(1.0f, 0.0f),
 	};
 
 	int width, height;

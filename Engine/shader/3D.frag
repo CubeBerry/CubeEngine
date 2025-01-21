@@ -104,9 +104,11 @@ layout(std140, binding = 6) uniform fPointLightList
 #if VULKAN
 layout(set = 1, binding = 5) uniform samplerCube irradianceMap;
 layout(set = 1, binding = 6) uniform samplerCube prefilterMap;
+layout(set = 1, binding = 7) uniform sampler2D brdfLUT;
 #else
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
 #endif
 
 #if VULKAN
@@ -200,6 +202,11 @@ vec3 F(vec3 F0, vec3 V, vec3 H)
     return F0 + (vec3(1.0) - F0) * pow(1 - max(dot(V, H), 0.0), 5.0);
 }
 
+vec3 Froughness(vec3 F0, vec3 V, vec3 H, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - max(dot(H, V), 0.0), 0.0, 1.0), 5.0);
+}
+
 // Rendering Equation for one light source
 vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
@@ -286,16 +293,20 @@ void main()
     vec3 V = normalize(i_view_position - i_fragment_position);
     vec3 N = normalize(i_normal);
     vec3 R = reflect(-V, N);
+    vec3 F = Froughness(F0, V, N, f_material[i_object_index].roughness);
 
-    vec3 Ks = F(F0, V, N);
+    vec3 Ks = F;
     vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * i_col.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material[i_object_index].roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
-    vec3 ambient = (Kd * diffuse) * 1.0;
+    //1.0 == ao
+    vec3 ambient = (Kd * diffuse + specular) * 1.0;
     resultColor = ambient + resultColor;
 
     // PBR Gamma Correction
