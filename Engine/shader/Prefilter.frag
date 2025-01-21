@@ -26,7 +26,7 @@ uniform float roughness;
 #endif
 
 // GGX/Trowbridge-Reitz Normal Distribution Function
-float D(float alpha, vec3 N, vec3 H)
+float DistributionGGX(float alpha, vec3 N, vec3 H)
 {
     float numerator = pow(alpha, 2.0);
 
@@ -73,7 +73,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float alpha)
 
 void main()
 {
-    vec3 N = normalize(i_pos);
+    vec3 N = normalize(vec3(i_pos.x, -i_pos.y, i_pos.z));
     vec3 R = N;
     vec3 V = R;
 
@@ -90,7 +90,7 @@ void main()
         float NdotL = max(dot(N, L), 0.0);
         if (NdotL > 0.0)
         {
-            float D = D(roughness * roughness, N, H);
+            float D = DistributionGGX(roughness * roughness, N, H);
             float NdotH = max(dot(N, H), 0.0);
             float HdotV = max(dot(H, V), 0.0);
             float pdf = D * NdotH / (4.0 * HdotV) + 0.0001;

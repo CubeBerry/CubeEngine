@@ -41,7 +41,7 @@ void PBR::Init()
 
 			Engine::GetObjectManager().AddObject<Object>(glm::vec3{ x, y, 0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 			Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 }, metallic, roughness);
+			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 1.f, 1.f, 1.f, 1.f }, metallic, roughness);
 		}
 	}
 

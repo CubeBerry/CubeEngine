@@ -1892,19 +1892,19 @@ void VKTexture::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, -1.f, 0.f))
 	};
 
-	//Create command buffer begin info
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	//Begin command buffer
-	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
-
 	for (uint32_t mip = 0; mip < mipLevels; ++mip)
 	{
 		uint32_t dim = baseSize >> mip;
 		float roughness = static_cast<float>(mip) / static_cast<float>(mipLevels - 1);
 		prefilterUniform.UpdateUniform(1, &roughness, 0);
+
+		//Create command buffer begin info
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		//Begin command buffer
+		vkBeginCommandBuffer(*commandBuffer, &beginInfo);
 
 		for (uint32_t f = 0; f < 6; ++f)
 		{
@@ -2033,21 +2033,21 @@ void VKTexture::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 
 			vkCmdEndRenderPass(*commandBuffer);
 		}
+
+		vkEndCommandBuffer(*commandBuffer);
+
+		//Create submit info
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = commandBuffer;
+
+		//Submit queue to command buffer
+		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+
+		//Wait until all submitted command buffers are handled
+		vkDeviceWaitIdle(*vkInit->GetDevice());
 	}
-
-	vkEndCommandBuffer(*commandBuffer);
-
-	//Create submit info
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = commandBuffer;
-
-	//Submit queue to command buffer
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-
-	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
 }
 
 void VKTexture::BRDFLUT(VkCommandBuffer* commandBuffer)
