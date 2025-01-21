@@ -24,13 +24,31 @@ vec2 SampleSphericalMap(vec3 v)
     return uv;
 }
 
+//Reinhard Tone Mapping
+vec3 ReinhardToneMapping(vec3 color)
+{
+    return color / (color + vec3(1.0));
+}
+
+//Filimic/ACES TOne Mapping
+vec3 FilmicToneMapping(vec3 color) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
 void main()
 {
     vec2 uv = SampleSphericalMap(normalize(i_pos));
     vec3 color = texture(equirectangularMap, uv).rgb;
 
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0 / 2.2));
+    color = ReinhardToneMapping(color);
+
+    //Gamma Correction
+    // color = pow(color, vec3(1.0 / 2.2));
 
     fragmentColor = vec4(color, 1.0);
 }
