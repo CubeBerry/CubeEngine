@@ -1544,7 +1544,7 @@ void VKTexture::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 
 void VKTexture::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 {
-	uint32_t baseSize{ 128 };
+	uint32_t baseSize{ 512 };
 	uint32_t mipLevels{ 5 };
 
 	{
