@@ -235,9 +235,6 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 
     vec3 Ks = F(F0, V, H);
     vec3 Kd = (1.0 - material.metallic) * (vec3(1.0) - Ks);
-    vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse = irradiance * albedo;
-    vec3 ambient = (Kd * diffuse) * ao;
 
     vec3 lambert = albedo / PI;
 
@@ -245,13 +242,13 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     float alpha = material.roughness * material.roughness;
     vec3 cookTorranceNumerator = D(alpha, N, H) * G(alpha, N, V, L) * F(F0, V, H);
     float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0);
-    cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
+    cookTorranceDenominator = max(cookTorranceDenominator, 0.1);
     vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
 
     vec3 BRDF = Kd * lambert + cookTorrance;
     vec3 outgoingLight = ao * BRDF * radiance * max(dot(L, N), 0.0);
 
-    return ambient + outgoingLight;
+    return outgoingLight;
 }
 
 void main()
@@ -267,7 +264,7 @@ void main()
     {
         fDirectionalLight currentLight = directionalLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += clamp(PBR(currentLight.lightDirection, currentLight.lightColor, false, l), 0.0, 1.0);
+        resultColor += PBR(currentLight.lightDirection, currentLight.lightColor, false, l);
     }
 
     //Calculate Point Lights
@@ -279,8 +276,20 @@ void main()
     {
         fPointLight currentLight = pointLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += clamp(PBR(currentLight.lightPosition, currentLight.lightColor, true, l), 0.0, 1.0);
+        resultColor += PBR(currentLight.lightPosition, currentLight.lightColor, true, l);
     }
+
+    //PBR IBL Ambient Lighting
+    // vec3 F0 = mix(vec3(0.04), i_col.rgb, f_material[i_object_index].metallic);
+    // vec3 V = normalize(i_view_position - i_fragment_position);
+    // vec3 N = normalize(i_normal);
+
+    // vec3 Ks = F(F0, V, N);
+    // vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
+    // vec3 irradiance = texture(irradianceMap, N).rgb;
+    // vec3 diffuse = irradiance * i_col.rgb;
+    // vec3 ambient = (Kd * diffuse) * 1.0;
+    // resultColor = ambient + resultColor;
 
     // PBR Gamma Correction
     resultColor = resultColor / (resultColor + vec3(1.0));
