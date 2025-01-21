@@ -26,18 +26,20 @@ public:
 		const std::filesystem::path& back
 	);
 	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
+	void CalculateIrradiance(VkCommandBuffer* commandBuffer);
 	void SetTextureID(int id) { texID = id; };
 
 	VkSampler* GetSampler()
 	{
-		if (isIBL) return &vkTextureSamplerIBL;
+		if (isIBL) return &vkTextureSamplerEquirectangular;
 		return &vkTextureSampler;
 	};
 	VkImageView* GetImageView()
 	{
-		if (isIBL) return &vkTextureImageViewIBL;
+		if (isIBL) return &vkTextureImageViewEquirectangular;
 		return &vkTextureImageView;
 	};
+	std::pair<VkSampler*, VkImageView*> GetIrradiance() { return { &vkTextureSamplerIrradiance, &vkTextureImageViewIrradiance }; };
 	//VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
 	//VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
 
@@ -53,15 +55,24 @@ private:
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool{ VK_NULL_HANDLE };
 
+	//2D Texture & CubeMap for Rendering
 	VkImage vkTextureImage{ VK_NULL_HANDLE };
 	VkDeviceMemory vkTextureDeviceMemory{ VK_NULL_HANDLE };
 	VkImageView vkTextureImageView{ VK_NULL_HANDLE };
 	VkSampler vkTextureSampler{ VK_NULL_HANDLE };
 
-	VkImage vkTextureImageIBL{ VK_NULL_HANDLE };
-	VkDeviceMemory vkTextureDeviceMemoryIBL{ VK_NULL_HANDLE };
-	VkImageView vkTextureImageViewIBL{ VK_NULL_HANDLE };
-	VkSampler vkTextureSamplerIBL{ VK_NULL_HANDLE };
+	//CubeMap converted from Equirectangular
+	VkImage vkTextureImageEquirectangular{ VK_NULL_HANDLE };
+	VkDeviceMemory vkTextureDeviceMemoryEquirectangular{ VK_NULL_HANDLE };
+	VkImageView vkTextureImageViewEquirectangular{ VK_NULL_HANDLE };
+	VkSampler vkTextureSamplerEquirectangular{ VK_NULL_HANDLE };
+
+	//Irradiance Texture
+	VkImage vkTextureImageIrradiance{ VK_NULL_HANDLE };
+	VkDeviceMemory vkTextureDeviceMemoryIrradiance{ VK_NULL_HANDLE };
+	VkImageView vkTextureImageViewIrradiance{ VK_NULL_HANDLE };
+	VkSampler vkTextureSamplerIrradiance{ VK_NULL_HANDLE };
+
 	std::array<VkImageView, 6> cubeFaceViews;
 	VkRenderPass renderPassIBL;
 	std::array<VkFramebuffer, 6> cubeFaceFramebuffers;

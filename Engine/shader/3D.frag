@@ -102,6 +102,12 @@ layout(std140, binding = 6) uniform fPointLightList
 };
 
 #if VULKAN
+layout(set = 1, binding = 5) uniform samplerCube irradianceMap;
+#else
+uniform samplerCube irradianceMap;
+#endif
+
+#if VULKAN
 layout(push_constant) uniform ActiveLights
 {
     int activePointLights;
@@ -229,6 +235,9 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 
     vec3 Ks = F(F0, V, H);
     vec3 Kd = (1.0 - material.metallic) * (vec3(1.0) - Ks);
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
+    vec3 ambient = (Kd * diffuse) * ao;
 
     vec3 lambert = albedo / PI;
 
@@ -242,7 +251,7 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     vec3 BRDF = Kd * lambert + cookTorrance;
     vec3 outgoingLight = ao * BRDF * radiance * max(dot(L, N), 0.0);
 
-    return outgoingLight;
+    return ambient + outgoingLight;
 }
 
 void main()

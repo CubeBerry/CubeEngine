@@ -462,7 +462,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
 	vertexLayout.descriptorCount = 1;
 
-	VKDescriptorLayout fragmentLayout[5];
+	VKDescriptorLayout fragmentLayout[6];
 	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[0].descriptorCount = 1;
 	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
@@ -473,7 +473,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	fragmentLayout[3].descriptorCount = 1;
 	fragmentLayout[4].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[4].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4] });
+	fragmentLayout[5].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[5].descriptorCount = 1;
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
@@ -1426,6 +1428,7 @@ void VKRenderManager::LoadEquirectangularToSkyBox(bool isHDR, const std::filesys
 	skybox = new VKTexture(vkInit, &vkCommandPool);
 	skybox->LoadTexture(isHDR, path, "skybox", false);
 	skybox->EquirectangularToCube(&vkCommandBuffers[0]);
+	skybox->CalculateIrradiance(&vkCommandBuffers[0]);
 
 	skyboxEnabled = true;
 }
@@ -1658,6 +1661,20 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 					pointLightDescriptorWrite.pBufferInfo = &pointLightBufferInfo;
 					descriptorWrites.push_back(pointLightDescriptorWrite);
 				}
+
+				VkDescriptorImageInfo irradianceImageInfo{};
+				irradianceImageInfo.sampler = *skybox->GetIrradiance().first;
+				irradianceImageInfo.imageView = *skybox->GetIrradiance().second;
+				irradianceImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet irradianceDescriptorWrite{};
+				irradianceDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				irradianceDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				irradianceDescriptorWrite.dstBinding = 5;
+				irradianceDescriptorWrite.descriptorCount = 1;
+				irradianceDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				irradianceDescriptorWrite.pImageInfo = &irradianceImageInfo;
+				descriptorWrites.push_back(irradianceDescriptorWrite);
 
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
