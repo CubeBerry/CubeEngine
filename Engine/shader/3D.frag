@@ -280,16 +280,16 @@ void main()
     }
 
     //PBR IBL Ambient Lighting
-    // vec3 F0 = mix(vec3(0.04), i_col.rgb, f_material[i_object_index].metallic);
-    // vec3 V = normalize(i_view_position - i_fragment_position);
-    // vec3 N = normalize(i_normal);
+    vec3 F0 = mix(vec3(0.04), i_col.rgb, f_material[i_object_index].metallic);
+    vec3 V = normalize(i_view_position - i_fragment_position);
+    vec3 N = normalize(i_normal);
 
-    // vec3 Ks = F(F0, V, N);
-    // vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
-    // vec3 irradiance = texture(irradianceMap, N).rgb;
-    // vec3 diffuse = irradiance * i_col.rgb;
-    // vec3 ambient = (Kd * diffuse) * 1.0;
-    // resultColor = ambient + resultColor;
+    vec3 Ks = F(F0, V, N);
+    vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * i_col.rgb;
+    vec3 ambient = (Kd * diffuse) * 1.0;
+    resultColor = ambient + resultColor;
 
     // PBR Gamma Correction
     resultColor = resultColor / (resultColor + vec3(1.0));

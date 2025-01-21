@@ -29,10 +29,10 @@ void PBR::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, -1.f), glm::vec3{ 0.05f,0.05f,0.05f }, "DirectionalLight", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::DIRECTIONAL);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, -1.f), glm::vec3{ 0.05f,0.05f,0.05f }, "DirectionalLight", ObjectType::NONE);
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::DIRECTIONAL);
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
 	for (int r = 0; r < 6; ++r)
 	{
