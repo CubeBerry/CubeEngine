@@ -462,7 +462,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
 	vertexLayout.descriptorCount = 1;
 
-	VKDescriptorLayout fragmentLayout[6];
+	VKDescriptorLayout fragmentLayout[7];
 	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[0].descriptorCount = 1;
 	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
@@ -475,7 +475,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	fragmentLayout[4].descriptorCount = 1;
 	fragmentLayout[5].descriptorType = VKDescriptorLayout::SAMPLER;
 	fragmentLayout[5].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5] });
+	fragmentLayout[6].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[6].descriptorCount = 1;
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
@@ -1429,6 +1431,7 @@ void VKRenderManager::LoadEquirectangularToSkyBox(bool isHDR, const std::filesys
 	skybox->LoadTexture(isHDR, path, "skybox", false);
 	skybox->EquirectangularToCube(&vkCommandBuffers[0]);
 	skybox->CalculateIrradiance(&vkCommandBuffers[0]);
+	skybox->PrefilteredEnvironmentMap(&vkCommandBuffers[0]);
 
 	skyboxEnabled = true;
 }
@@ -1675,6 +1678,20 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				irradianceDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				irradianceDescriptorWrite.pImageInfo = &irradianceImageInfo;
 				descriptorWrites.push_back(irradianceDescriptorWrite);
+
+				VkDescriptorImageInfo prefilterImageInfo{};
+				prefilterImageInfo.sampler = *skybox->GetPrefilter().first;
+				prefilterImageInfo.imageView = *skybox->GetPrefilter().second;
+				prefilterImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet prefilterDescriptorWrite{};
+				prefilterDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				prefilterDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				prefilterDescriptorWrite.dstBinding = 6;
+				prefilterDescriptorWrite.descriptorCount = 1;
+				prefilterDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				prefilterDescriptorWrite.pImageInfo = &prefilterImageInfo;
+				descriptorWrites.push_back(prefilterDescriptorWrite);
 
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer

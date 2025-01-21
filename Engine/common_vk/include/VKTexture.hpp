@@ -27,23 +27,25 @@ public:
 	);
 	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
 	void CalculateIrradiance(VkCommandBuffer* commandBuffer);
+	void PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer);
 	void SetTextureID(int id) { texID = id; };
 
 	VkSampler* GetSampler()
 	{
-		if (isIBL) return &vkTextureSamplerEquirectangular;
+		if (isEquirectangular) return &vkTextureSamplerEquirectangular;
 		return &vkTextureSampler;
 	};
 	VkImageView* GetImageView()
 	{
-		if (isIBL) return &vkTextureImageViewEquirectangular;
+		if (isEquirectangular) return &vkTextureImageViewEquirectangular;
 		return &vkTextureImageView;
 	};
 	std::pair<VkSampler*, VkImageView*> GetIrradiance() { return { &vkTextureSamplerIrradiance, &vkTextureImageViewIrradiance }; };
+	std::pair<VkSampler*, VkImageView*> GetPrefilter() { return { &vkTextureSamplerPrefilter, &vkTextureImageViewPrefilter }; };
 	//VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
 	//VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
 
-	bool GetIsIBL() { return isIBL; };
+	bool GetIsEquirectangular() { return isEquirectangular; };
 
 	int GetWidth() const { return width; };
 	int GetHeight() const { return height; };
@@ -73,11 +75,17 @@ private:
 	VkImageView vkTextureImageViewIrradiance{ VK_NULL_HANDLE };
 	VkSampler vkTextureSamplerIrradiance{ VK_NULL_HANDLE };
 
+	//Prefilter Texture
+	VkImage vkTextureImagePrefilter{ VK_NULL_HANDLE };
+	VkDeviceMemory vkTextureDeviceMemoryPrefilter{ VK_NULL_HANDLE };
+	VkImageView vkTextureImageViewPrefilter{ VK_NULL_HANDLE };
+	VkSampler vkTextureSamplerPrefilter{ VK_NULL_HANDLE };
+
 	std::array<VkImageView, 6> cubeFaceViews;
 	VkRenderPass renderPassIBL;
 	std::array<VkFramebuffer, 6> cubeFaceFramebuffers;
 	uint32_t faceSize{ 0 };
-	bool isIBL{ false };
+	bool isEquirectangular{ false };
 
 	std::vector<glm::vec3> skyboxVertices = {
 	{-1.0f,  1.0f, -1.0f},
