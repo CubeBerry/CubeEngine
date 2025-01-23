@@ -487,7 +487,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 
 	//Render Images to Cube
 	VKShader shaderIBL{ vkInit->GetDevice() };
-	shaderIBL.LoadShader("../Engine/shader/Equirectangular.vert", "../Engine/shader/Equirectangular.frag");
+	shaderIBL.LoadShader("../Engine/shader/Cubemap.vert", "../Engine/shader/Equirectangular.frag");
 
 	VKDescriptorLayout fragmentLayout;
 	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
@@ -959,7 +959,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 
 	//Render Images to Cube
 	VKShader shaderIBL{ vkInit->GetDevice() };
-	shaderIBL.LoadShader("../Engine/shader/Irradiance.vert", "../Engine/shader/Irradiance.frag");
+	shaderIBL.LoadShader("../Engine/shader/Cubemap.vert", "../Engine/shader/Irradiance.frag");
 
 	VKDescriptorLayout fragmentLayout;
 	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
@@ -1345,7 +1345,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 
 	//Render Images to Cube
 	VKShader shaderIBL{ vkInit->GetDevice() };
-	shaderIBL.LoadShader("../Engine/shader/Prefilter.vert", "../Engine/shader/Prefilter.frag");
+	shaderIBL.LoadShader("../Engine/shader/Cubemap.vert", "../Engine/shader/Prefilter.frag");
 
 	VKDescriptorLayout fragmentLayout[2];
 	fragmentLayout[0].descriptorType = VKDescriptorLayout::SAMPLER;
