@@ -25,29 +25,10 @@ public:
 		const std::filesystem::path& front,
 		const std::filesystem::path& back
 	);
-	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
-	void CalculateIrradiance(VkCommandBuffer* commandBuffer);
-	void PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer);
-	void BRDFLUT(VkCommandBuffer* commandBuffer);
 	void SetTextureID(int id) { texID = id; };
 
-	VkSampler* GetSampler()
-	{
-		if (isEquirectangular) return &vkTextureSamplerEquirectangular;
-		return &vkTextureSampler;
-	};
-	VkImageView* GetImageView()
-	{
-		if (isEquirectangular) return &vkTextureImageViewEquirectangular;
-		return &vkTextureImageView;
-	};
-	std::pair<VkSampler*, VkImageView*> GetIrradiance() { return { &vkTextureSamplerIrradiance, &vkTextureImageViewIrradiance }; };
-	std::pair<VkSampler*, VkImageView*> GetPrefilter() { return { &vkTextureSamplerPrefilter, &vkTextureImageViewPrefilter }; };
-	std::pair<VkSampler*, VkImageView*> GetBRDF() { return { &vkTextureSamplerBRDFLUT, &vkTextureImageViewBRDFLUT }; };
-	//VkSampler* GetSamplerIBL() { return &vkTextureSamplerIBL; };
-	//VkImageView* GetImageViewIBL() { return &vkTextureImageViewIBL; };
-
-	bool GetIsEquirectangular() { return isEquirectangular; };
+	VkSampler* GetSampler() { return &vkTextureSampler; };
+	VkImageView* GetImageView() { return &vkTextureImageView; };
 
 	int GetWidth() const { return width; };
 	int GetHeight() const { return height; };
@@ -64,92 +45,6 @@ private:
 	VkDeviceMemory vkTextureDeviceMemory{ VK_NULL_HANDLE };
 	VkImageView vkTextureImageView{ VK_NULL_HANDLE };
 	VkSampler vkTextureSampler{ VK_NULL_HANDLE };
-
-	//CubeMap converted from Equirectangular
-	VkImage vkTextureImageEquirectangular{ VK_NULL_HANDLE };
-	VkDeviceMemory vkTextureDeviceMemoryEquirectangular{ VK_NULL_HANDLE };
-	VkImageView vkTextureImageViewEquirectangular{ VK_NULL_HANDLE };
-	VkSampler vkTextureSamplerEquirectangular{ VK_NULL_HANDLE };
-
-	//Irradiance Texture
-	VkImage vkTextureImageIrradiance{ VK_NULL_HANDLE };
-	VkDeviceMemory vkTextureDeviceMemoryIrradiance{ VK_NULL_HANDLE };
-	VkImageView vkTextureImageViewIrradiance{ VK_NULL_HANDLE };
-	VkSampler vkTextureSamplerIrradiance{ VK_NULL_HANDLE };
-
-	//Prefilter Texture
-	VkImage vkTextureImagePrefilter{ VK_NULL_HANDLE };
-	VkDeviceMemory vkTextureDeviceMemoryPrefilter{ VK_NULL_HANDLE };
-	VkImageView vkTextureImageViewPrefilter{ VK_NULL_HANDLE };
-	VkSampler vkTextureSamplerPrefilter{ VK_NULL_HANDLE };
-
-	//BRDF LUT Texture
-	VkImage vkTextureImageBRDFLUT{ VK_NULL_HANDLE };
-	VkDeviceMemory vkTextureDeviceMemoryBRDFLUT{ VK_NULL_HANDLE };
-	VkImageView vkTextureImageViewBRDFLUT{ VK_NULL_HANDLE };
-	VkSampler vkTextureSamplerBRDFLUT{ VK_NULL_HANDLE };
-
-	std::array<VkImageView, 6> cubeFaceViews;
-	VkRenderPass renderPassIBL;
-	std::array<VkFramebuffer, 6> cubeFaceFramebuffers;
-	uint32_t faceSize{ 0 };
-	bool isEquirectangular{ false };
-
-	std::vector<glm::vec3> skyboxVertices = {
-		{-1.0f,  1.0f, -1.0f},
-		{-1.0f, -1.0f, -1.0f},
-		{1.0f, -1.0f, -1.0f },
-		{1.0f, -1.0f, -1.0f},
-		{1.0f,  1.0f, -1.0f},
-		{-1.0f,  1.0f, -1.0f},
-		
-		{-1.0f, -1.0f,  1.0f},
-		{-1.0f, -1.0f, -1.0f},
-		{-1.0f,  1.0f, -1.0f},
-		{-1.0f,  1.0f, -1.0f},
-		{-1.0f,  1.0f,  1.0f},
-		{-1.0f, -1.0f,  1.0f},
-	
-		{1.0f, -1.0f, -1.0f},
-		{1.0f, -1.0f,  1.0f},
-		{1.0f,  1.0f,  1.0f},
-		{1.0f,  1.0f,  1.0f},
-		{1.0f,  1.0f, -1.0f},
-		{1.0f, -1.0f, -1.0f},
-		
-		{-1.0f, -1.0f,  1.0f},
-		{-1.0f,  1.0f,  1.0f},
-		{ 1.0f,  1.0f,  1.0f},
-		{ 1.0f,  1.0f,  1.0f},
-		{ 1.0f, -1.0f,  1.0f},
-		{-1.0f, -1.0f,  1.0f},
-		
-		{-1.0f,  1.0f, -1.0f},
-		{ 1.0f,  1.0f, -1.0f},
-		{ 1.0f,  1.0f,  1.0f},
-		{ 1.0f,  1.0f,  1.0f},
-		{-1.0f,  1.0f,  1.0f},
-		{-1.0f,  1.0f, -1.0f},
-		
-		{-1.0f, -1.0f, -1.0f},
-		{-1.0f, -1.0f,  1.0f},	
-		{ 1.0f, -1.0f, -1.0f},
-		{ 1.0f, -1.0f, -1.0f},
-		{-1.0f, -1.0f,  1.0f},
-		{ 1.0f, -1.0f,  1.0f}
-	};
-	std::vector<glm::vec3> fullscreenQuad = {
-		glm::vec3(-1.0f, 1.0f, 0.0f),
-		glm::vec3(-1.0f, -1.0f, 0.0f),
-		glm::vec3(1.0f, 1.0f, 0.0f),
-		glm::vec3(1.0f, -1.0f, 0.0f),
-	};
-	std::vector<glm::vec2> fullscreenQuadTexCoords = {
-		glm::vec2(0.0f, 1.0f),
-		glm::vec2(0.0f, 0.0f),
-		glm::vec2(1.0f, 1.0f),
-		glm::vec2(1.0f, 0.0f),
-	};
 
 	int width, height;
 	int texID;

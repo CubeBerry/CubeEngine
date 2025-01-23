@@ -49,8 +49,8 @@ void PBR::Init()
 	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 }, 0.f, 0.01f);
 
-	Engine::GetRenderManager()->LoadEquirectangularToSkyBox(true, "../Game/assets/Skybox/HDR/Equirectangular/billiard_hall_4k.hdr");
-	//Engine::GetRenderManager()->LoadEquirectangularToSkyBox(true, "../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/billiard_hall_4k.hdr");
+	//Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
 }
 
 void PBR::Update(float dt)
@@ -77,9 +77,9 @@ void PBR::End()
 	isDrawNormals = false;
 
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
-	//Engine::GetRenderManager()->DeletePointLights();
-	//Engine::GetRenderManager()->DeleteDirectionalLights();
-	Engine::GetRenderManager()->DeleteSkyBox();
+	Engine::GetRenderManager()->DeletePointLights();
+	Engine::GetRenderManager()->DeleteDirectionalLights();
+	Engine::GetRenderManager()->DeleteSkybox();
 
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();

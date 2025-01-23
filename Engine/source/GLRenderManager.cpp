@@ -599,15 +599,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	//fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
 }
 
-void GLRenderManager::LoadSkyBox(
-	bool /*isHDR*/,
-	const std::filesystem::path& right,
-	const std::filesystem::path& left,
-	const std::filesystem::path& top,
-	const std::filesystem::path& bottom,
-	const std::filesystem::path& front,
-	const std::filesystem::path& back
-)
+void GLRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
 	skyboxVertexArray.Initialize();
 
@@ -671,17 +663,12 @@ void GLRenderManager::LoadSkyBox(
 
 	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
 	skybox = new GLTexture;
-	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	path;
+	//skybox->LoadSkyBox(right, left, top, bottom, front, back);
 	skyboxEnabled = true;
 }
 
-void GLRenderManager::LoadEquirectangularToSkyBox(bool isHDR, const std::filesystem::path& path)
-{
-	isHDR;
-	path;
-}
-
-void GLRenderManager::DeleteSkyBox()
+void GLRenderManager::DeleteSkybox()
 {
 	delete skyboxVertexBuffer;
 	delete skybox;

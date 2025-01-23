@@ -56,7 +56,7 @@ void ProceduralMeshes::Init()
 	//	"../Game/assets/Skybox/front.jpg"
 	//);
 
-	Engine::GetRenderManager()->LoadEquirectangularToSkyBox(true, "../Game/assets/Skybox/HDR/Equirectangular/billiard_hall_4k.hdr");
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
 }
 
 void ProceduralMeshes::Update(float dt)
@@ -379,7 +379,7 @@ void ProceduralMeshes::End()
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
 	Engine::GetRenderManager()->DeletePointLights();
 	Engine::GetRenderManager()->DeleteDirectionalLights();
-	Engine::GetRenderManager()->DeleteSkyBox();
+	Engine::GetRenderManager()->DeleteSkybox();
 
 	Engine::GetCameraManager().Reset();
 	Engine::GetParticleManager().Clear();
