@@ -207,7 +207,6 @@ vec3 Froughness(vec3 F0, vec3 V, vec3 H, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - max(dot(H, V), 0.0), 0.0, 1.0), 5.0);
 }
 
-// Rendering Equation for one light source
 struct MainVectors
 {
     vec3 albedo;
@@ -216,6 +215,7 @@ struct MainVectors
     vec3 F0;
 };
 
+// Rendering Equation for one light source
 vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
     fMaterial material = f_material[i_object_index];
