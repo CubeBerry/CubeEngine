@@ -208,22 +208,20 @@ vec3 Froughness(vec3 F0, vec3 V, vec3 H, float roughness)
 }
 
 // Rendering Equation for one light source
-vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
+struct MainVectors
+{
+    vec3 albedo;
+    vec3 V;
+    vec3 N;
+    vec3 F0;
+};
+
+vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
     fMaterial material = f_material[i_object_index];
 
-    vec3 albedo = vec3(0.0);
-    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
-    else albedo = i_col.rgb;
-
     float ao = 1.0;
     float distance = isPointLight ? length(lightPosition - i_fragment_position) : 1.0;
-
-    // Main Vectors
-    vec3 N = normalize(i_normal);
-    vec3 V = normalize(i_view_position - i_fragment_position);
-
-    vec3 F0 = mix(vec3(0.04), albedo, material.metallic);
     
     vec3 L = vec3(0.0);
     float attenuation = 0.0;
@@ -239,23 +237,23 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     }
 
     // Half Vector
-    vec3 H = normalize(V + L);
+    vec3 H = normalize(mainVectors.V + L);
     vec3 radiance = lightColor * attenuation;
 
-    vec3 Ks = F(F0, V, H);
+    vec3 Ks = F(mainVectors.F0, mainVectors.V, H);
     vec3 Kd = (1.0 - material.metallic) * (vec3(1.0) - Ks);
 
-    vec3 lambert = albedo / PI;
+    vec3 lambert = mainVectors.albedo / PI;
 
     // Cook-Torrance BRDF
     float alpha = material.roughness * material.roughness;
-    vec3 cookTorranceNumerator = D(alpha, N, H) * G(alpha, N, V, L) * F(F0, V, H);
-    float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0);
+    vec3 cookTorranceNumerator = D(alpha, mainVectors.N, H) * G(alpha, mainVectors.N, mainVectors.V, L) * F(mainVectors.F0, mainVectors.V, H);
+    float cookTorranceDenominator = 4.0 * max(dot(mainVectors.V, mainVectors.N), 0.0) * max(dot(L, mainVectors.N), 0.0);
     cookTorranceDenominator = max(cookTorranceDenominator, 0.1);
     vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
 
     vec3 BRDF = Kd * lambert + cookTorrance;
-    vec3 outgoingLight = ao * BRDF * radiance * max(dot(L, N), 0.0);
+    vec3 outgoingLight = ao * BRDF * radiance * max(dot(L, mainVectors.N), 0.0);
 
     return outgoingLight;
 }
@@ -263,6 +261,15 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 void main()
 {
     vec3 resultColor = vec3(0.0);
+
+    vec3 albedo = vec3(0.0);
+    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
+    else albedo = i_col.rgb;
+
+    vec3 F0 = mix(vec3(0.04), albedo, f_material[i_object_index].metallic);
+    vec3 V = normalize(i_view_position - i_fragment_position);
+    vec3 N = normalize(i_normal);
+    MainVectors mainVectors = { albedo, V, N, F0 };
 
     //Calculate Directional Lights
 #if VULKAN
@@ -273,7 +280,7 @@ void main()
     {
         fDirectionalLight currentLight = directionalLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(currentLight.lightDirection, currentLight.lightColor, false, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
     }
 
     //Calculate Point Lights
@@ -285,13 +292,10 @@ void main()
     {
         fPointLight currentLight = pointLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(currentLight.lightPosition, currentLight.lightColor, true, l);
+        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
     }
 
     //PBR IBL Ambient Lighting
-    vec3 F0 = mix(vec3(0.04), i_col.rgb, f_material[i_object_index].metallic);
-    vec3 V = normalize(i_view_position - i_fragment_position);
-    vec3 N = normalize(i_normal);
     vec3 R = reflect(-V, N);
     vec3 F = Froughness(F0, V, N, f_material[i_object_index].roughness);
 
