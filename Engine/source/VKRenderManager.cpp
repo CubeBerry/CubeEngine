@@ -567,21 +567,34 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
-	for (int i = 0; i < 500; ++i)
+	//for (int i = 0; i < 500; ++i)
+	//{
+	//	VkSamplerCreateInfo samplerInfo{};
+	//	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+	//	VkSampler immutableSampler;
+	//	VkResult result{ VK_SUCCESS };
+	//	result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
+
+	//	VkDescriptorImageInfo imageInfo{};
+	//	imageInfo.sampler = immutableSampler;
+	//	imageInfo.imageView = VK_NULL_HANDLE;
+	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	//	imageInfos.push_back(imageInfo);
+	//}
+
+	VkSampler immutableSampler;
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	VkResult result{ VK_SUCCESS };
+	result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
+	const VkDescriptorImageInfo imageInfo
 	{
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-		VkSampler immutableSampler;
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler = immutableSampler;
-		imageInfo.imageView = VK_NULL_HANDLE;
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfos.push_back(imageInfo);
-	}
+		.sampler = immutableSampler,
+		.imageView = VK_NULL_HANDLE,
+		.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+	};
+	imageInfos.resize(500, imageInfo);
 }
 
 void VKRenderManager::InitCommandPool()
