@@ -172,6 +172,7 @@ public:
 private:
 	//--------------------Common--------------------//
 	VKIndexBuffer* indexBuffer{ nullptr };
+	VkSampler immutableSampler;
 
 	//--------------------2D Render--------------------//
 	std::vector<VKTexture*> textures;

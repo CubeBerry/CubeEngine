@@ -47,6 +47,8 @@ VKRenderManager::~VKRenderManager()
 	for (const auto t : textures)
 		delete t;
 
+	vkDestroySampler(*vkInit->GetDevice(), immutableSampler, nullptr);
+
 	//Destroy Batch ImageInfo
 	size_t texSize{ textures.size() };
 	for (size_t i = texSize; i < imageInfos.size(); ++i)
@@ -583,7 +585,6 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	//	imageInfos.push_back(imageInfo);
 	//}
 
-	VkSampler immutableSampler;
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	VkResult result{ VK_SUCCESS };
@@ -917,7 +918,7 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
 	texture->LoadTexture(false, path_, name_, flip);
 
-	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
+	//vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);
 
 	int texId = static_cast<int>(textures.size() - 1);
@@ -1056,28 +1057,16 @@ void VKRenderManager::DeleteWithIndex(int id)
 			delete t;
 
 		//Destroy Batch ImageInfo
-		size_t texSize{ textures.size() };
-		for (size_t i = texSize; i < imageInfos.size(); ++i)
-			vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
-
 		textures.erase(textures.begin(), textures.end());
 		imageInfos.erase(imageInfos.begin(), imageInfos.end());
 
-		for (int i = 0; i < 500; ++i)
+		const VkDescriptorImageInfo imageInfo
 		{
-			VkSamplerCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-			VkSampler immutableSampler;
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
-
-			VkDescriptorImageInfo imageInfo{};
-			imageInfo.sampler = immutableSampler;
-			imageInfo.imageView = VK_NULL_HANDLE;
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageInfos.push_back(imageInfo);
-		}
+			.sampler = immutableSampler,
+			.imageView = VK_NULL_HANDLE,
+			.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+		};
+		imageInfos.resize(500, imageInfo);
 
 		return;
 	}
