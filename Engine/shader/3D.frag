@@ -302,7 +302,7 @@ void main()
     vec3 Ks = F;
     vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
     vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse = irradiance * i_col.rgb;
+    vec3 diffuse = irradiance * albedo;
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;
