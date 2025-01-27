@@ -1,4 +1,4 @@
-#version 460
+#version 460 core
 
 const vec2 invAtan = vec2(0.1591, 0.3183);
 
