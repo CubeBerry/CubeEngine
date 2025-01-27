@@ -47,12 +47,11 @@ VKRenderManager::~VKRenderManager()
 	for (const auto t : textures)
 		delete t;
 
-	vkDestroySampler(*vkInit->GetDevice(), immutableSampler, nullptr);
-
 	//Destroy Batch ImageInfo
-	size_t texSize{ textures.size() };
-	for (size_t i = texSize; i < imageInfos.size(); ++i)
-		vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), immutableSampler, nullptr);
+	//size_t texSize{ textures.size() };
+	//for (size_t i = texSize; i < imageInfos.size(); ++i)
+	//	vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
 
 	textures.erase(textures.begin(), textures.end());
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
