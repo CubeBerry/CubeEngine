@@ -2,12 +2,7 @@
 
 const float PI = 3.14159265359;
 
-#if VULKAN
 layout(location = 0) in vec2 i_tex;
-#else
-in vec3 i_pos;
-in vec2 i_tex;
-#endif
 
 layout(location = 0) out vec4 fragmentColor;
 

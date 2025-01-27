@@ -119,8 +119,8 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		//For Texture Array
 		if (!samplers.empty())
 		{
-			auto texLocation = glCheck(glGetUniformLocation(gl3DShader.GetProgramHandle(), "tex"));
-			glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
+			auto texLoc = glCheck(glGetUniformLocation(gl3DShader.GetProgramHandle(), "tex"));
+			glCheck(glUniform1iv(texLoc, static_cast<GLsizei>(samplers.size()), samplers.data()));
 		}
 
 		if (vertexUniform3D != nullptr)
@@ -142,6 +142,23 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activeDirectionalLights"), static_cast<GLint>(directionalLightUniforms.size())));
 			directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size() * sizeof(ThreeDimension::DirectionalLightUniform), directionalLightUniforms.data());
 		}
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetIrradiance());
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetPrefilter());
+
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, skybox->GetBRDF());
+
+		GLint locIrr = glGetUniformLocation(gl3DShader.GetProgramHandle(), "irradianceMap");
+		GLint locPref = glGetUniformLocation(gl3DShader.GetProgramHandle(), "prefilterMap");
+		GLint locBRDF = glGetUniformLocation(gl3DShader.GetProgramHandle(), "brdfLUT");
+		glUniform1i(locIrr, 1);
+		glUniform1i(locPref, 2);
+		glUniform1i(locBRDF, 3);
+
 		break;
 	}
 
@@ -186,11 +203,11 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		std::span<const float, 16> spanProjection(&vertexUniforms3D[0].projection[0][0], 16);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
 
+		GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+		glCheck(glUniform1i(skyboxLoc, 0));
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubeMap());
-
-		//GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
-		//glCheck(glUniform1i(skyboxLoc, 0));
 
 		skyboxVertexArray.Use(true);
 		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));

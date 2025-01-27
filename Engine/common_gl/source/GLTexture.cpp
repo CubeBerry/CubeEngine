@@ -67,7 +67,7 @@ void GLTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
 	SetTextureID(id);
-	UseForSlot(texID);
+	UseForSlot(0);
 
 	name = name_;
 

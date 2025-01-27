@@ -24,7 +24,7 @@ GLSkybox::GLSkybox(const std::filesystem::path& path)
 	EquirectangularToCube();
 	CalculateIrradiance();
 	PrefilteredEnvironmentMap();
-	//BRDFLUT();
+	BRDFLUT();
 }
 
 GLSkybox::~GLSkybox()
@@ -168,7 +168,7 @@ void GLSkybox::PrefilteredEnvironmentMap()
 	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
-	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
 	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	glCheck(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 
@@ -204,16 +204,17 @@ void GLSkybox::PrefilteredEnvironmentMap()
 	for (GLuint mip = 0; mip < mipLevels; ++mip)
 	{
 		uint32_t dim = baseSize >> mip;
-		float roughness = static_cast<float>(mip) / static_cast<float>(mipLevels - 1);
 		glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, dim, dim);
-		glUniform1f(glGetUniformLocation(shaderIBL.GetProgramHandle(), "roughness"), roughness);
 		glViewport(0, 0, dim, dim);
+
+		float roughness = static_cast<float>(mip) / static_cast<float>(mipLevels - 1);
+		glUniform1f(glGetUniformLocation(shaderIBL.GetProgramHandle(), "roughness"), roughness);
 
 		for (GLuint i = 0; i < 6; ++i)
 		{
 			glCheck(glUniformMatrix4fv(glGetUniformLocation(shaderIBL.GetProgramHandle(), "view"), 1, GL_FALSE, &views[i][0][0]));
-			glCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter, 0));
+			glCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter, mip));
 
 			glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -221,5 +222,76 @@ void GLSkybox::PrefilteredEnvironmentMap()
 		}
 	}
 	glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+	vertexArray.Use(false);
+}
+
+void GLSkybox::BRDFLUT()
+{
+	glCheck(glCreateTextures(GL_TEXTURE_2D, 1, &brdflut));
+	glCheck(glBindTexture(GL_TEXTURE_2D, brdflut));
+	glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, lutSize, lutSize, 0, GL_RG, GL_FLOAT, nullptr));
+
+	glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+	glCheck(glBindFramebuffer(GL_FRAMEBUFFER, captureFBO));
+	glCheck(glBindRenderbuffer(GL_RENDERBUFFER, captureRBO));
+	glCheck(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, lutSize, lutSize));
+	glCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdflut, 0));
+
+	GLShader shaderIBL;
+	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shader/BRDF.vert" }, { GLShader::FRAGMENT, "../Engine/shader/BRDF.frag" } });
+	shaderIBL.Use(true);
+
+	GLVertexArray vertexArray;
+	vertexArray.Initialize();
+
+	struct VA
+	{
+		glm::vec3 position;
+		glm::vec2 texCoord;
+	};
+
+	std::vector<VA> vas;
+	for (int i = 0; i < 4; ++i)
+	{
+		vas.push_back({ fullscreenQuad[i], fullscreenQuadTexCoords[i] });
+	}
+
+	GLVertexBuffer vertexBuffer;
+	vertexBuffer.SetData(sizeof(VA) * static_cast<GLsizei>(vas.size()), vas.data());
+
+	GLAttributeLayout position_layout;
+	position_layout.component_type = GLAttributeLayout::Float;
+	position_layout.component_dimension = GLAttributeLayout::_3;
+	position_layout.normalized = false;
+	position_layout.vertex_layout_location = 0;
+	position_layout.stride = sizeof(VA);
+	position_layout.offset = 0;
+	position_layout.relative_offset = offsetof(VA, position);
+
+	GLAttributeLayout texture_layout;
+	texture_layout.component_type = GLAttributeLayout::Float;
+	texture_layout.component_dimension = GLAttributeLayout::_2;
+	texture_layout.normalized = false;
+	texture_layout.vertex_layout_location = 1;
+	texture_layout.stride = sizeof(VA);
+	texture_layout.offset = 0;
+	texture_layout.relative_offset = offsetof(VA, texCoord);
+
+	vertexArray.AddVertexBuffer(std::move(vertexBuffer), sizeof(VA), { position_layout, texture_layout });
+
+	vertexArray.Use(true);
+
+	glViewport(0, 0, lutSize, lutSize);
+	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+
+	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+	glCheck(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	vertexArray.Use(false);
 }

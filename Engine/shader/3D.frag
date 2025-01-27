@@ -106,9 +106,9 @@ layout(set = 1, binding = 5) uniform samplerCube irradianceMap;
 layout(set = 1, binding = 6) uniform samplerCube prefilterMap;
 layout(set = 1, binding = 7) uniform sampler2D brdfLUT;
 #else
-// uniform samplerCube irradianceMap;
-// uniform samplerCube prefilterMap;
-// uniform sampler2D brdfLUT;
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
 #endif
 
 #if VULKAN
@@ -296,22 +296,22 @@ void main()
     }
 
     //PBR IBL Ambient Lighting
-    // vec3 R = reflect(-V, N);
-    // vec3 F = Froughness(F0, V, N, f_material[i_object_index].roughness);
+    vec3 R = reflect(-V, N);
+    vec3 F = Froughness(F0, V, N, f_material[i_object_index].roughness);
 
-    // vec3 Ks = F;
-    // vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
-    // vec3 irradiance = texture(irradianceMap, N).rgb;
-    // vec3 diffuse = irradiance * albedo;
+    vec3 Ks = F;
+    vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
 
-    // const float MAX_REFLECTION_LOD = 4.0;
-    // vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;
-    // vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material[i_object_index].roughness)).rg;
-    // vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material[i_object_index].roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     //1.0 == ao
-    // vec3 ambient = (Kd * diffuse + specular) * 1.0;
-    // resultColor = ambient + resultColor;
+    vec3 ambient = (Kd * diffuse + specular) * 1.0;
+    resultColor = ambient + resultColor;
 
     // PBR Gamma Correction
     resultColor = resultColor / (resultColor + vec3(1.0));
