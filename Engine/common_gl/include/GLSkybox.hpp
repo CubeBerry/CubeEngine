@@ -22,6 +22,7 @@ public:
     void BRDFLUT();
 
 	GLuint GetCubeMap() { return equirectangular; };
+	GLuint GetIrradiance() { return irradiance; };
 private:
     GLTexture* skyboxTexture;
 
@@ -30,6 +31,10 @@ private:
 	//CubeMap converted from Equirectangular
 	uint32_t faceSize{ 0 };
 	GLuint equirectangular;
+
+	//Irradiance
+	uint32_t irradianceSize{ 64 };
+	GLuint irradiance;
 
 	std::vector<glm::vec3> skyboxVertices = {
 	{-1.0f,  1.0f, -1.0f},
