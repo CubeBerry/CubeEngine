@@ -47,7 +47,7 @@ All required APIs and Libraries are integrated in Project.
 ## Future Plans
 1. Deferred Shading
 2. SSAO
-3. Normal / Parallex Mapping
+3. Normal / Parallax Mapping
 4. C++ Code Optimization
 
 ## License
