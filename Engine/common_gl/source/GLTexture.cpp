@@ -36,7 +36,7 @@ void GLTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 	{
 		glCheck(glTextureStorage2D(textureHandle, ONE_TEXTURE_LEVEL, GL_RGBA8, width, height));
 	}
-		// Send `colors` data to GPU memory
+	// Send `colors` data to GPU memory
 	constexpr GLint   FIRST_LEVEL = 0;
 	constexpr GLsizei OFFSET_X = 0, OFFSET_Y = 0;
 	if (isHDR)
@@ -67,7 +67,7 @@ void GLTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
 	SetTextureID(id);
-	UseForSlot(0);
+	if (!isHDR) UseForSlot(texID);
 
 	name = name_;
 

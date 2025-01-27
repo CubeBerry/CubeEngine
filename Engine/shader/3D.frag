@@ -6,7 +6,7 @@
 #if VULKAN
 #define MAX_TEXTURES 500
 #else
-#define MAX_TEXTURES 32
+#define MAX_TEXTURES 29
 #endif
 #define MAX_LIGHTS 10
 const float PI = 3.14159265359;
@@ -71,6 +71,7 @@ layout(std140, binding = 3) uniform fUniformMatrix
 #if VULKAN
 layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 #else
+//Unit 0 ~ 28
 uniform sampler2D tex[MAX_TEXTURES];
 #endif
 
@@ -106,8 +107,11 @@ layout(set = 1, binding = 5) uniform samplerCube irradianceMap;
 layout(set = 1, binding = 6) uniform samplerCube prefilterMap;
 layout(set = 1, binding = 7) uniform sampler2D brdfLUT;
 #else
+//Unit 29
 uniform samplerCube irradianceMap;
+//Unit 30
 uniform samplerCube prefilterMap;
+//Unit 31
 uniform sampler2D brdfLUT;
 #endif
 

@@ -42,20 +42,6 @@ void ProceduralMeshes::Init()
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 
-	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.f,1.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mo", ObjectType::NONE);
-	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
-	//Engine::GetObjectManager().FindObjectWithName("Mo")->GetComponent<Sprite>()->ChangeTexture("monkey");
-
-	//Engine::GetRenderManager()->LoadSkyBox(
-	//	"../Game/assets/Skybox/right.jpg",
-	//	"../Game/assets/Skybox/left.jpg",
-	//	"../Game/assets/Skybox/top.jpg",
-	//	"../Game/assets/Skybox/bottom.jpg",
-	//	"../Game/assets/Skybox/back.jpg",
-	//	"../Game/assets/Skybox/front.jpg"
-	//);
-
 	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
 }
 

@@ -3,8 +3,18 @@
 //File: Window.cpp
 #include "Window.hpp"
 #include "glew/glew.h"
+#include <Windows.h>
 
 #include <iostream>
+
+//Debugging
+void APIENTRY OpenGLDebugMessageCallback(GLenum /*source*/, GLenum /*type*/, GLuint id, GLenum severity,
+	GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
+{
+	if (severity == GL_DEBUG_SEVERITY_HIGH) {
+		std::cerr << "OpenGL Debug Message [" << id << "]: " << message << '\n';
+	}
+}
 
 void Window::Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode)
 {
@@ -76,6 +86,9 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
 
+	//Enable Debug
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+
 	switch (wMode)
 	{
 	case WindowMode::NORMAL:
@@ -107,6 +120,12 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	GLenum result = glewInit();
 	if (result != GLEW_OK)
 		std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
+
+	//Debugging
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(OpenGLDebugMessageCallback, nullptr);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 	//VSYNC
 	//constexpr int ADAPTIVE_VSYNC = -1;
