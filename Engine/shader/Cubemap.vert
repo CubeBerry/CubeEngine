@@ -2,11 +2,7 @@
 
 layout(location = 0) in vec3 i_pos;
 
-#if VULKAN
 layout(location = 0) out vec3 o_pos;
-#else
-out vec3 o_pos;
-#endif
 
 #if VULKAN
 layout(push_constant) uniform WorldToNDC
@@ -23,5 +19,9 @@ void main()
 {
     o_pos = i_pos;
 
+#if VULKAN
     gl_Position = worldToNDC.projection * worldToNDC.view * vec4(i_pos, 1.0);
+#else
+    gl_Position = projection * view * vec4(i_pos, 1.0);
+#endif
 }

@@ -2,11 +2,7 @@
 
 layout(location = 0) in vec3 i_pos;
 
-#if VULKAN
 layout(location = 0) out vec3 o_pos;
-#else
-out vec3 o_pos;
-#endif
 
 #if VULKAN
 layout(push_constant) uniform WorldToNDC

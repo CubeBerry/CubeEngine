@@ -10,6 +10,8 @@
 #include "GLUniformBuffer.hpp"
 #include "GLImGuiManager.hpp"
 
+class GLSkybox;
+
 class GLRenderManager : public RenderManager
 {
 public:
@@ -81,5 +83,5 @@ private:
 	GLVertexArray skyboxVertexArray;
 	GLVertexBuffer* skyboxVertexBuffer{ nullptr };
 	GLShader skyboxShader;
-	GLTexture* skybox;
+	GLSkybox* skybox;
 };

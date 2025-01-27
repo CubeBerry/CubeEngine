@@ -2,11 +2,7 @@
 
 const vec2 invAtan = vec2(0.1591, 0.3183);
 
-#if VULKAN
 layout(location = 0) in vec3 i_pos;
-#else
-in vec3 i_pos;
-#endif
 
 layout(location = 0) out vec4 fragmentColor;
 

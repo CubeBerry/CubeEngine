@@ -4,14 +4,8 @@
 #include "VKTexture.hpp"
 #include "VKInit.hpp"
 #include "VKDescriptor.hpp"
-#include "VKPipeLine.hpp"
 #include "VKShader.hpp"
-#include "VKVertexBuffer.hpp"
-#include "VKUniformBuffer.hpp"
 #include <iostream>
-
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #pragma warning(push, 0)

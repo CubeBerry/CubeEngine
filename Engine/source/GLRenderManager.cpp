@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: GLRenderManager.cpp
 #include "Engine.hpp"
-//#include <glm/gtx/transform.hpp>
+#include "GLSkybox.hpp"
 #include <span>
 
 GLRenderManager::~GLRenderManager()
@@ -73,6 +73,8 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
+	glm::vec2 windowSize = Engine::GetWindow().GetWindowSize();
+	glViewport(0, 0, static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
 	switch (pMode)
 	{
 	case PolygonType::FILL:
@@ -184,13 +186,17 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		std::span<const float, 16> spanProjection(&vertexUniforms3D[0].projection[0][0], 16);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
 
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubeMap());
+
+		//GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+		//glCheck(glUniform1i(skyboxLoc, 0));
+
 		skyboxVertexArray.Use(true);
-		auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
-		glCheck(glUniform1i(skyboxLocation, 0));
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetTextureHandle());
 		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
 		skyboxVertexArray.Use(false);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		skyboxShader.Use(false);
 	}
 
@@ -207,7 +213,7 @@ void GLRenderManager::EndRender()
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	GLTexture* texture = new GLTexture;
-	texture->LoadTexture(path_, name_, flip, static_cast<int>(textures.size()));
+	texture->LoadTexture(false, path_, name_, flip, static_cast<int>(textures.size()));
 
 	textures.push_back(texture);
 	samplers.push_back(texture->GetTextrueId());
@@ -662,9 +668,8 @@ void GLRenderManager::LoadSkybox(const std::filesystem::path& path)
 	skyboxVertexArray.AddVertexBuffer(std::move(*skyboxVertexBuffer), sizeof(float) * 3, { position_layout });
 
 	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
-	skybox = new GLTexture;
-	path;
-	//skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skybox = new GLSkybox(path);
+
 	skyboxEnabled = true;
 }
 

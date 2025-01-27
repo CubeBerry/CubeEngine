@@ -18,15 +18,6 @@ public:
 	VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPool* pool_);
 	~VKSkybox();
 
-	void LoadSkyBox(
-		bool isHDR,
-		const std::filesystem::path& right,
-		const std::filesystem::path& left,
-		const std::filesystem::path& top,
-		const std::filesystem::path& bottom,
-		const std::filesystem::path& front,
-		const std::filesystem::path& back
-	);
 	void EquirectangularToCube(VkCommandBuffer* commandBuffer);
 	void CalculateIrradiance(VkCommandBuffer* commandBuffer);
 	void PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer);
