@@ -91,15 +91,8 @@ public:
 #endif
 
 	//Skybox
-	virtual void LoadSkyBox(
-		const std::filesystem::path& right,
-		const std::filesystem::path& left,
-		const std::filesystem::path& top,
-		const std::filesystem::path& bottom,
-		const std::filesystem::path& front,
-		const std::filesystem::path& back
-	) = 0;
-	virtual void DeleteSkyBox() = 0;
+	virtual void LoadSkybox(const std::filesystem::path& path) = 0;
+	virtual void DeleteSkybox() = 0;
 protected:
 	//--------------------Common--------------------//
 	GraphicsMode gMode{ GraphicsMode::GL };

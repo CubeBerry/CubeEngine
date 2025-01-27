@@ -1,18 +1,8 @@
-#version 460
-
-#if VULKAN
-#define MAX_MATRICES 500
-#else
-#define MAX_MATRICES 20
-#endif
+#version 460 core
 
 layout(location = 0) in vec3 i_pos;
 
-#if VULKAN
-layout(location = 0) out vec3 tex_coords;
-#else
-out vec3 tex_coords;
-#endif
+layout(location = 0) out vec3 o_pos;
 
 #if VULKAN
 layout(push_constant) uniform WorldToNDC
@@ -27,7 +17,7 @@ uniform mat4 projection;
 
 void main()
 {
-    tex_coords = i_pos;
+    o_pos = i_pos;
 #if VULKAN
     mat4 view = mat4(mat3(worldToNDC.view));
     vec4 pos = worldToNDC.projection * view * vec4(i_pos, 1.0);

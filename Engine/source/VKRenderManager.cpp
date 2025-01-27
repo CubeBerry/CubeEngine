@@ -8,6 +8,7 @@
 #include "VKShader.hpp"
 #include "VKPipeLine.hpp"
 #include "VKUniformBuffer.hpp"
+#include "VKSkybox.hpp"
 
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
@@ -45,6 +46,8 @@ VKRenderManager::~VKRenderManager()
 	//Destroy Texture
 	for (const auto t : textures)
 		delete t;
+
+	vkDestroySampler(*vkInit->GetDevice(), immutableSampler, nullptr);
 
 	//Destroy Batch ImageInfo
 	size_t texSize{ textures.size() };
@@ -462,7 +465,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
 	vertexLayout.descriptorCount = 1;
 
-	VKDescriptorLayout fragmentLayout[5];
+	VKDescriptorLayout fragmentLayout[8];
 	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[0].descriptorCount = 1;
 	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
@@ -473,7 +476,13 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	fragmentLayout[3].descriptorCount = 1;
 	fragmentLayout[4].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[4].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4] });
+	fragmentLayout[5].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[5].descriptorCount = 1;
+	fragmentLayout[6].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[6].descriptorCount = 1;
+	fragmentLayout[7].descriptorType = VKDescriptorLayout::SAMPLER;
+	fragmentLayout[7].descriptorCount = 1;
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7]});
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
@@ -560,21 +569,33 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
-	for (int i = 0; i < 500; ++i)
+	//for (int i = 0; i < 500; ++i)
+	//{
+	//	VkSamplerCreateInfo samplerInfo{};
+	//	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+	//	VkSampler immutableSampler;
+	//	VkResult result{ VK_SUCCESS };
+	//	result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
+
+	//	VkDescriptorImageInfo imageInfo{};
+	//	imageInfo.sampler = immutableSampler;
+	//	imageInfo.imageView = VK_NULL_HANDLE;
+	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	//	imageInfos.push_back(imageInfo);
+	//}
+
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	VkResult result{ VK_SUCCESS };
+	result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
+	const VkDescriptorImageInfo imageInfo
 	{
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-		VkSampler immutableSampler;
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler = immutableSampler;
-		imageInfo.imageView = VK_NULL_HANDLE;
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfos.push_back(imageInfo);
-	}
+		.sampler = immutableSampler,
+		.imageView = VK_NULL_HANDLE,
+		.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+	};
+	imageInfos.resize(500, imageInfo);
 }
 
 void VKRenderManager::InitCommandPool()
@@ -895,9 +916,9 @@ void VKRenderManager::RecreateSwapChain()
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
-	texture->LoadTexture(path_, name_, flip);
+	texture->LoadTexture(false, path_, name_, flip);
 
-	vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
+	//vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
 	textures.push_back(texture);
 
 	int texId = static_cast<int>(textures.size() - 1);
@@ -1036,28 +1057,16 @@ void VKRenderManager::DeleteWithIndex(int id)
 			delete t;
 
 		//Destroy Batch ImageInfo
-		size_t texSize{ textures.size() };
-		for (size_t i = texSize; i < imageInfos.size(); ++i)
-			vkDestroySampler(*vkInit->GetDevice(), imageInfos[i].sampler, nullptr);
-
 		textures.erase(textures.begin(), textures.end());
 		imageInfos.erase(imageInfos.begin(), imageInfos.end());
 
-		for (int i = 0; i < 500; ++i)
+		const VkDescriptorImageInfo imageInfo
 		{
-			VkSamplerCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-			VkSampler immutableSampler;
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &immutableSampler);
-
-			VkDescriptorImageInfo imageInfo{};
-			imageInfo.sampler = immutableSampler;
-			imageInfo.imageView = VK_NULL_HANDLE;
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageInfos.push_back(imageInfo);
-		}
+			.sampler = immutableSampler,
+			.imageView = VK_NULL_HANDLE,
+			.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+		};
+		imageInfos.resize(500, imageInfo);
 
 		return;
 	}
@@ -1275,61 +1284,56 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	//fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, quadCount);
 }
 
-void VKRenderManager::LoadSkyBox(
-	const std::filesystem::path& right,
-	const std::filesystem::path& left,
-	const std::filesystem::path& top,
-	const std::filesystem::path& bottom,
-	const std::filesystem::path& front,
-	const std::filesystem::path& back
-)
+void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
+	if (skyboxEnabled) return;
+
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	std::cout << '\n';
 	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
 
 	std::vector<glm::vec3> skyboxVertices = {
 		{-1.0f,  1.0f, -1.0f},
-	{-1.0f, -1.0f, -1.0f},
-	 {1.0f, -1.0f, -1.0f },
-	 {1.0f, -1.0f, -1.0f},
-	 {1.0f,  1.0f, -1.0f},
-	{-1.0f,  1.0f, -1.0f},
+		{-1.0f, -1.0f, -1.0f},
+		{1.0f, -1.0f, -1.0f },
+		{1.0f, -1.0f, -1.0f},
+		{1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
 
-	{-1.0f, -1.0f,  1.0f},
-	{-1.0f, -1.0f, -1.0f},
-	{-1.0f,  1.0f, -1.0f},
-	{-1.0f,  1.0f, -1.0f},
-	{-1.0f,  1.0f,  1.0f},
-	{-1.0f, -1.0f,  1.0f},
+		{-1.0f, -1.0f,  1.0f},
+		{-1.0f, -1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f,  1.0f},
+		{-1.0f, -1.0f,  1.0f},
 
-	 {1.0f, -1.0f, -1.0f},
-	 {1.0f, -1.0f,  1.0f},
-	 {1.0f,  1.0f,  1.0f},
-	 {1.0f,  1.0f,  1.0f},
-	 {1.0f,  1.0f, -1.0f},
-	 {1.0f, -1.0f, -1.0f},
+		{1.0f, -1.0f, -1.0f},
+		{1.0f, -1.0f,  1.0f},
+		{1.0f,  1.0f,  1.0f},
+		{1.0f,  1.0f,  1.0f},
+		{1.0f,  1.0f, -1.0f},
+		{1.0f, -1.0f, -1.0f},
 
-	{-1.0f, -1.0f,  1.0f},
-	{-1.0f,  1.0f,  1.0f},
-	{ 1.0f,  1.0f,  1.0f},
-	{ 1.0f,  1.0f,  1.0f},
-	{ 1.0f, -1.0f,  1.0f},
-	{-1.0f, -1.0f,  1.0f},
+		{-1.0f, -1.0f,  1.0f},
+		{-1.0f,  1.0f,  1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{ 1.0f, -1.0f,  1.0f},
+		{-1.0f, -1.0f,  1.0f},
 
-	{-1.0f,  1.0f, -1.0f},
-	{ 1.0f,  1.0f, -1.0f},
-	{ 1.0f,  1.0f,  1.0f},
-	{ 1.0f,  1.0f,  1.0f},
-	{-1.0f,  1.0f,  1.0f},
-	{-1.0f,  1.0f, -1.0f},
+		{-1.0f,  1.0f, -1.0f},
+		{ 1.0f,  1.0f, -1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{ 1.0f,  1.0f,  1.0f},
+		{-1.0f,  1.0f,  1.0f},
+		{-1.0f,  1.0f, -1.0f},
 
-	{-1.0f, -1.0f, -1.0f},
-	{-1.0f, -1.0f,  1.0f},
-	{ 1.0f, -1.0f, -1.0f},
-	{ 1.0f, -1.0f, -1.0f},
-	{-1.0f, -1.0f,  1.0f},
-	{ 1.0f, -1.0f,  1.0f}
+		{-1.0f, -1.0f, -1.0f},
+		{-1.0f, -1.0f,  1.0f},
+		{ 1.0f, -1.0f, -1.0f},
+		{ 1.0f, -1.0f, -1.0f},
+		{-1.0f, -1.0f,  1.0f},
+		{ 1.0f, -1.0f,  1.0f}
 	};
 	skyboxVertexBuffer = new VKVertexBuffer<glm::vec3>(vkInit, &skyboxVertices);
 
@@ -1346,12 +1350,12 @@ void VKRenderManager::LoadSkyBox(
 	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
 	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
-	skybox = new VKTexture(vkInit, &vkCommandPool);
-	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skybox = new VKSkybox(path, vkInit, &vkCommandPool);
+
 	skyboxEnabled = true;
 }
 
-void VKRenderManager::DeleteSkyBox()
+void VKRenderManager::DeleteSkybox()
 {
 	delete skybox;
 	delete skyboxShader;
@@ -1580,6 +1584,48 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 					descriptorWrites.push_back(pointLightDescriptorWrite);
 				}
 
+				VkDescriptorImageInfo irradianceImageInfo{};
+				irradianceImageInfo.sampler = *skybox->GetIrradiance().first;
+				irradianceImageInfo.imageView = *skybox->GetIrradiance().second;
+				irradianceImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet irradianceDescriptorWrite{};
+				irradianceDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				irradianceDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				irradianceDescriptorWrite.dstBinding = 5;
+				irradianceDescriptorWrite.descriptorCount = 1;
+				irradianceDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				irradianceDescriptorWrite.pImageInfo = &irradianceImageInfo;
+				descriptorWrites.push_back(irradianceDescriptorWrite);
+
+				VkDescriptorImageInfo prefilterImageInfo{};
+				prefilterImageInfo.sampler = *skybox->GetPrefilter().first;
+				prefilterImageInfo.imageView = *skybox->GetPrefilter().second;
+				prefilterImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet prefilterDescriptorWrite{};
+				prefilterDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				prefilterDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				prefilterDescriptorWrite.dstBinding = 6;
+				prefilterDescriptorWrite.descriptorCount = 1;
+				prefilterDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				prefilterDescriptorWrite.pImageInfo = &prefilterImageInfo;
+				descriptorWrites.push_back(prefilterDescriptorWrite);
+
+				VkDescriptorImageInfo brdfImageInfo{};
+				brdfImageInfo.sampler = *skybox->GetBRDF().first;
+				brdfImageInfo.imageView = *skybox->GetBRDF().second;
+				brdfImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet brdfDescriptorWrite{};
+				brdfDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				brdfDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				brdfDescriptorWrite.dstBinding = 7;
+				brdfDescriptorWrite.descriptorCount = 1;
+				brdfDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				brdfDescriptorWrite.pImageInfo = &brdfImageInfo;
+				descriptorWrites.push_back(brdfDescriptorWrite);
+
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -1600,8 +1646,8 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet descriptorWrite{};
 
 				VkDescriptorImageInfo skyboxDescriptorImageInfo{};
-				skyboxDescriptorImageInfo.sampler = *skybox->GetSampler();
-				skyboxDescriptorImageInfo.imageView = *skybox->GetImageView();
+				skyboxDescriptorImageInfo.sampler = *skybox->GetCubeMap().first;
+				skyboxDescriptorImageInfo.imageView = *skybox->GetCubeMap().second;
 				skyboxDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 				//Define which resource descriptor set will point

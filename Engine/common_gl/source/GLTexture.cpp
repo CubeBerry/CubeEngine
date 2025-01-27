@@ -11,36 +11,63 @@ GLTexture::~GLTexture()
 	DeleteTexture();
 }
 
-void GLTexture::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip, int id)
+void GLTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip, int id)
 {
 	if (flip) stbi_set_flip_vertically_on_load(true);
-	int color;
+
+	int texChannels;
 	//STBI_rgb_alpha == 4
-	unsigned char* data = stbi_load(path_.string().c_str(), &width, &height, &color, STBI_rgb_alpha);
-	
+	void* data{ nullptr };
+	if (isHDR)
+		data = stbi_loadf(path_.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	else
+		data = stbi_load(path_.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+
 	//DeleteTexture();
 	
 	glCheck(glCreateTextures(GL_TEXTURE_2D, 1, &textureHandle));
 	// Create immutable storage of widthxheight RGBA8 GPU memory with only one texture level
 	constexpr GLsizei ONE_TEXTURE_LEVEL = 1;
-	glCheck(glTextureStorage2D(textureHandle, ONE_TEXTURE_LEVEL, GL_RGBA8, width, height));
+	if (isHDR)
+	{
+		glCheck(glTextureStorage2D(textureHandle, ONE_TEXTURE_LEVEL, GL_RGBA32F, width, height));
+	}
+	else
+	{
+		glCheck(glTextureStorage2D(textureHandle, ONE_TEXTURE_LEVEL, GL_RGBA8, width, height));
+	}
 	// Send `colors` data to GPU memory
 	constexpr GLint   FIRST_LEVEL = 0;
 	constexpr GLsizei OFFSET_X = 0, OFFSET_Y = 0;
-	glCheck(glTextureSubImage2D(textureHandle, FIRST_LEVEL, OFFSET_X, OFFSET_Y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data));
+	if (isHDR)
+	{
+		glCheck(glTextureSubImage2D(textureHandle, FIRST_LEVEL, OFFSET_X, OFFSET_Y, width, height, GL_RGBA, GL_FLOAT, data));
+	}
+	else
+	{
+		glCheck(glTextureSubImage2D(textureHandle, FIRST_LEVEL, OFFSET_X, OFFSET_Y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data));
+	}
 
 	//Set Filtering
-	// invoke glTextureParameteri to set minification filter
-	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-	// invoke glTextureParameteri to set magnification filter
-	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+	if (isHDR)
+	{
+		glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	}
+	else
+	{
+		// invoke glTextureParameteri to set minification filter
+		glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		// invoke glTextureParameteri to set magnification filter
+		glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+	}
 
 	//Set Wrapping
 	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	glCheck(glTextureParameteri(textureHandle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
 	SetTextureID(id);
-	UseForSlot(texID);
+	if (!isHDR) UseForSlot(texID);
 
 	name = name_;
 

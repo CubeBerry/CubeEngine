@@ -1,10 +1,6 @@
-#version 460
+#version 460 core
 
-#if VULKAN
-layout(location = 0) in vec3 tex_coords;
-#else
-in vec3 tex_coords;
-#endif
+layout(location = 0) in vec3 i_pos;
 
 layout(location = 0) out vec4 fragmentColor;
 
@@ -16,5 +12,7 @@ uniform samplerCube skybox;
 
 void main()
 {
-    fragmentColor = texture(skybox, tex_coords);
+    vec3 color = texture(skybox, i_pos).rgb;
+
+    fragmentColor = vec4(color, 1.0);
 }

@@ -10,6 +10,8 @@
 #include "GLUniformBuffer.hpp"
 #include "GLImGuiManager.hpp"
 
+class GLSkybox;
+
 class GLRenderManager : public RenderManager
 {
 public:
@@ -48,15 +50,8 @@ public:
 
 	//--------------------3D Render--------------------//
 	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) override;
-	void LoadSkyBox(
-		const std::filesystem::path& right,
-		const std::filesystem::path& left,
-		const std::filesystem::path& top,
-		const std::filesystem::path& bottom,
-		const std::filesystem::path& front,
-		const std::filesystem::path& back
-	) override;
-	void DeleteSkyBox() override;
+	void LoadSkybox(const std::filesystem::path& path) override;
+	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
 	GLVertexBuffer* vertexBuffer{ nullptr };
@@ -88,5 +83,5 @@ private:
 	GLVertexArray skyboxVertexArray;
 	GLVertexBuffer* skyboxVertexBuffer{ nullptr };
 	GLShader skyboxShader;
-	GLTexture* skybox;
+	GLSkybox* skybox;
 };

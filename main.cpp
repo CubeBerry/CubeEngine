@@ -10,6 +10,7 @@
 #include "PocketBallDemo/PocketBallDemo.hpp"
 #include "PlatformDemo/PlatformDemo.hpp"
 #include "BeatEmUpDemo/BeatEmUpDemo.hpp"
+#include "PBR.hpp"
 
 #if _DEBUG
 #define _CRTDBG_MAP_ALLOC
@@ -49,6 +50,7 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new PocketBallDemo);
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
     engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);
+    engine.GetGameStateManager().AddLevel(new PBR);
     engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
 
     engine.Update();

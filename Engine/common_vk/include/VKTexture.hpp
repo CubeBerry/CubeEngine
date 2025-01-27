@@ -4,6 +4,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include <filesystem>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 
 class VKInit;
@@ -14,8 +15,9 @@ public:
 	VKTexture(VKInit* init_, VkCommandPool* pool_);
 	~VKTexture();
 
-	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip);
+	void LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip);
 	void LoadSkyBox(
+		bool isHDR,
 		const std::filesystem::path& right,
 		const std::filesystem::path& left,
 		const std::filesystem::path& top,
@@ -27,16 +29,18 @@ public:
 
 	VkSampler* GetSampler() { return &vkTextureSampler; };
 	VkImageView* GetImageView() { return &vkTextureImageView; };
+
 	int GetWidth() const { return width; };
 	int GetHeight() const { return height; };
 	glm::vec2 GetSize() const { return glm::vec2(width, height); };
 	std::string GetName() const { return name; };
-	int GetTextrueId() { return texID; }
+	int GetTextrueId() { return texID; };
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool{ VK_NULL_HANDLE };
 
+	//2D Texture & CubeMap for Rendering
 	VkImage vkTextureImage{ VK_NULL_HANDLE };
 	VkDeviceMemory vkTextureDeviceMemory{ VK_NULL_HANDLE };
 	VkImageView vkTextureImageView{ VK_NULL_HANDLE };

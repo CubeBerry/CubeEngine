@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: GLRenderManager.cpp
 #include "Engine.hpp"
-//#include <glm/gtx/transform.hpp>
+#include "GLSkybox.hpp"
 #include <span>
 
 GLRenderManager::~GLRenderManager()
@@ -73,6 +73,8 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
+	glm::vec2 windowSize = Engine::GetWindow().GetWindowSize();
+	glViewport(0, 0, static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
 	switch (pMode)
 	{
 	case PolygonType::FILL:
@@ -117,9 +119,26 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		//For Texture Array
 		if (!samplers.empty())
 		{
-			auto texLocation = glCheck(glGetUniformLocation(gl3DShader.GetProgramHandle(), "tex"));
-			glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
+			auto texLoc = glCheck(glGetUniformLocation(gl3DShader.GetProgramHandle(), "tex"));
+			glCheck(glUniform1iv(texLoc, static_cast<GLsizei>(samplers.size()), samplers.data()));
 		}
+
+		GLint irradianceLoc = glGetUniformLocation(gl3DShader.GetProgramHandle(), "irradianceMap");
+		GLint prefilterLoc = glGetUniformLocation(gl3DShader.GetProgramHandle(), "prefilterMap");
+		GLint brdfLoc = glGetUniformLocation(gl3DShader.GetProgramHandle(), "brdfLUT");
+		glUniform1i(irradianceLoc, 29);
+		glUniform1i(prefilterLoc, 30);
+		glUniform1i(brdfLoc, 31);
+
+		//glActiveTexture(GL_TEXTURE9);
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetIrradiance());
+		glCheck(glBindTextureUnit(29, skybox->GetIrradiance()));
+		//glActiveTexture(GL_TEXTURE10);
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetPrefilter());
+		glCheck(glBindTextureUnit(30, skybox->GetPrefilter()));
+		//glActiveTexture(GL_TEXTURE11);
+		//glBindTexture(GL_TEXTURE_2D, skybox->GetBRDF());
+		glCheck(glBindTextureUnit(31, skybox->GetBRDF()));
 
 		if (vertexUniform3D != nullptr)
 		{
@@ -140,6 +159,7 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activeDirectionalLights"), static_cast<GLint>(directionalLightUniforms.size())));
 			directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size() * sizeof(ThreeDimension::DirectionalLightUniform), directionalLightUniforms.data());
 		}
+
 		break;
 	}
 
@@ -184,13 +204,17 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 		std::span<const float, 16> spanProjection(&vertexUniforms3D[0].projection[0][0], 16);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
 
+		GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+		glCheck(glUniform1i(skyboxLoc, 0));
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubeMap());
+
 		skyboxVertexArray.Use(true);
-		auto skyboxLocation = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
-		glCheck(glUniform1i(skyboxLocation, 0));
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetTextureHandle());
 		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
 		skyboxVertexArray.Use(false);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		skyboxShader.Use(false);
 	}
 
@@ -207,7 +231,7 @@ void GLRenderManager::EndRender()
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	GLTexture* texture = new GLTexture;
-	texture->LoadTexture(path_, name_, flip, static_cast<int>(textures.size()));
+	texture->LoadTexture(false, path_, name_, flip, static_cast<int>(textures.size()));
 
 	textures.push_back(texture);
 	samplers.push_back(texture->GetTextrueId());
@@ -599,14 +623,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	//fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "fUniformMaterial", fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data());
 }
 
-void GLRenderManager::LoadSkyBox(
-	const std::filesystem::path& right,
-	const std::filesystem::path& left,
-	const std::filesystem::path& top,
-	const std::filesystem::path& bottom,
-	const std::filesystem::path& front,
-	const std::filesystem::path& back
-)
+void GLRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
 	skyboxVertexArray.Initialize();
 
@@ -669,12 +686,19 @@ void GLRenderManager::LoadSkyBox(
 	skyboxVertexArray.AddVertexBuffer(std::move(*skyboxVertexBuffer), sizeof(float) * 3, { position_layout });
 
 	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
-	skybox = new GLTexture;
-	skybox->LoadSkyBox(right, left, top, bottom, front, back);
+	skybox = new GLSkybox(path);
+
+	//Revert GL_TEXTURE0 which is binded(covered) by BRDFLUT's texture when loading skybox to first loaded texture
+	if (!textures.empty())
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textures[0]->GetTextureHandle());
+	}
+
 	skyboxEnabled = true;
 }
 
-void GLRenderManager::DeleteSkyBox()
+void GLRenderManager::DeleteSkybox()
 {
 	delete skyboxVertexBuffer;
 	delete skybox;

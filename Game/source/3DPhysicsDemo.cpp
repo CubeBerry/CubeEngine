@@ -60,14 +60,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 0.1f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-	Engine::GetRenderManager()->LoadSkyBox(
-		"../Game/assets/Skybox/right.jpg",
-		"../Game/assets/Skybox/left.jpg",
-		"../Game/assets/Skybox/top.jpg",
-		"../Game/assets/Skybox/bottom.jpg",
-		"../Game/assets/Skybox/back.jpg",
-		"../Game/assets/Skybox/front.jpg"
-	);
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/studio_small_09_4k.hdr");
 }
 
 void PhysicsDemo::Update(float dt)
@@ -146,5 +139,5 @@ void PhysicsDemo::End()
 	Engine::GetObjectManager().End();
 	Engine::GetRenderManager()->DeletePointLights();
 	Engine::GetRenderManager()->DeleteDirectionalLights();
-	Engine::GetRenderManager()->DeleteSkyBox();
+	Engine::GetRenderManager()->DeleteSkybox();
 }

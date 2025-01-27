@@ -11,5 +11,6 @@ enum class GameLevel
 	POCKETBALL,
 	PLATFORMDEMO,
 	BEATEMUPDEMO,
+	PBR,
 	NONE
 };

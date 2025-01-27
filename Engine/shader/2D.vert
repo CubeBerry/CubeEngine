@@ -1,4 +1,4 @@
-#version 460
+#version 460 core
 #if VULKAN
 #extension GL_EXT_nonuniform_qualifier : enable
 #endif

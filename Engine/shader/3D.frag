@@ -1,4 +1,4 @@
-#version 460
+#version 460 core
 #if VULKAN
 #extension GL_EXT_nonuniform_qualifier : enable
 #endif
@@ -6,7 +6,7 @@
 #if VULKAN
 #define MAX_TEXTURES 500
 #else
-#define MAX_TEXTURES 32
+#define MAX_TEXTURES 29
 #endif
 #define MAX_LIGHTS 10
 const float PI = 3.14159265359;
@@ -71,6 +71,7 @@ layout(std140, binding = 3) uniform fUniformMatrix
 #if VULKAN
 layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 #else
+//Unit 0 ~ 28
 uniform sampler2D tex[MAX_TEXTURES];
 #endif
 
@@ -100,6 +101,19 @@ layout(std140, binding = 6) uniform fPointLightList
 {
     fPointLight pointLightList[MAX_LIGHTS];
 };
+
+#if VULKAN
+layout(set = 1, binding = 5) uniform samplerCube irradianceMap;
+layout(set = 1, binding = 6) uniform samplerCube prefilterMap;
+layout(set = 1, binding = 7) uniform sampler2D brdfLUT;
+#else
+//Unit 29
+uniform samplerCube irradianceMap;
+//Unit 30
+uniform samplerCube prefilterMap;
+//Unit 31
+uniform sampler2D brdfLUT;
+#endif
 
 #if VULKAN
 layout(push_constant) uniform ActiveLights
@@ -192,23 +206,26 @@ vec3 F(vec3 F0, vec3 V, vec3 H)
     return F0 + (vec3(1.0) - F0) * pow(1 - max(dot(V, H), 0.0), 5.0);
 }
 
+vec3 Froughness(vec3 F0, vec3 V, vec3 H, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - max(dot(H, V), 0.0), 0.0, 1.0), 5.0);
+}
+
+struct MainVectors
+{
+    vec3 albedo;
+    vec3 V;
+    vec3 N;
+    vec3 F0;
+};
+
 // Rendering Equation for one light source
-vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
+vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
     fMaterial material = f_material[i_object_index];
 
-    vec3 albedo = vec3(0.0);
-    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
-    else albedo = i_col.rgb;
-
     float ao = 1.0;
     float distance = isPointLight ? length(lightPosition - i_fragment_position) : 1.0;
-
-    // Main Vectors
-    vec3 N = normalize(i_normal);
-    vec3 V = normalize(i_view_position - i_fragment_position);
-
-    vec3 F0 = mix(vec3(0.04), albedo, material.metallic);
     
     vec3 L = vec3(0.0);
     float attenuation = 0.0;
@@ -224,23 +241,23 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
     }
 
     // Half Vector
-    vec3 H = normalize(V + L);
+    vec3 H = normalize(mainVectors.V + L);
     vec3 radiance = lightColor * attenuation;
 
-    vec3 Ks = F(F0, V, H);
+    vec3 Ks = F(mainVectors.F0, mainVectors.V, H);
     vec3 Kd = (1.0 - material.metallic) * (vec3(1.0) - Ks);
 
-    vec3 lambert = albedo / PI;
+    vec3 lambert = mainVectors.albedo / PI;
 
     // Cook-Torrance BRDF
     float alpha = material.roughness * material.roughness;
-    vec3 cookTorranceNumerator = D(alpha, N, H) * G(alpha, N, V, L) * F(F0, V, H);
-    float cookTorranceDenominator = 4.0 * max(dot(V, N), 0.0) * max(dot(L, N), 0.0);
-    cookTorranceDenominator = max(cookTorranceDenominator, 0.000001);
+    vec3 cookTorranceNumerator = D(alpha, mainVectors.N, H) * G(alpha, mainVectors.N, mainVectors.V, L) * F(mainVectors.F0, mainVectors.V, H);
+    float cookTorranceDenominator = 4.0 * max(dot(mainVectors.V, mainVectors.N), 0.0) * max(dot(L, mainVectors.N), 0.0);
+    cookTorranceDenominator = max(cookTorranceDenominator, 0.1);
     vec3 cookTorrance = cookTorranceNumerator / cookTorranceDenominator;
 
     vec3 BRDF = Kd * lambert + cookTorrance;
-    vec3 outgoingLight = ao * BRDF * radiance * max(dot(L, N), 0.0);
+    vec3 outgoingLight = ao * BRDF * radiance * max(dot(L, mainVectors.N), 0.0);
 
     return outgoingLight;
 }
@@ -248,6 +265,15 @@ vec3 PBR(vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 void main()
 {
     vec3 resultColor = vec3(0.0);
+
+    vec3 albedo = vec3(0.0);
+    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
+    else albedo = i_col.rgb;
+
+    vec3 F0 = mix(vec3(0.04), albedo, f_material[i_object_index].metallic);
+    vec3 V = normalize(i_view_position - i_fragment_position);
+    vec3 N = normalize(i_normal);
+    MainVectors mainVectors = { albedo, V, N, F0 };
 
     //Calculate Directional Lights
 #if VULKAN
@@ -258,7 +284,7 @@ void main()
     {
         fDirectionalLight currentLight = directionalLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += clamp(PBR(currentLight.lightDirection, currentLight.lightColor, false, l), 0.0, 1.0);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
     }
 
     //Calculate Point Lights
@@ -270,8 +296,26 @@ void main()
     {
         fPointLight currentLight = pointLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += clamp(PBR(currentLight.lightPosition, currentLight.lightColor, true, l), 0.0, 1.0);
+        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
     }
+
+    //PBR IBL Ambient Lighting
+    vec3 R = reflect(-V, N);
+    vec3 F = Froughness(F0, V, N, f_material[i_object_index].roughness);
+
+    vec3 Ks = F;
+    vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material[i_object_index].roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+    //1.0 == ao
+    vec3 ambient = (Kd * diffuse + specular) * 1.0;
+    resultColor = ambient + resultColor;
 
     // PBR Gamma Correction
     resultColor = resultColor / (resultColor + vec3(1.0));
