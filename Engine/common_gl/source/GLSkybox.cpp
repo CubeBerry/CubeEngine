@@ -23,7 +23,7 @@ GLSkybox::GLSkybox(const std::filesystem::path& path)
 
 	EquirectangularToCube();
 	CalculateIrradiance();
-	//PrefilteredEnvironmentMap();
+	PrefilteredEnvironmentMap();
 	//BRDFLUT();
 }
 
@@ -151,6 +151,74 @@ void GLSkybox::CalculateIrradiance()
 		glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
+	}
+	glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+	vertexArray.Use(false);
+}
+
+void GLSkybox::PrefilteredEnvironmentMap()
+{
+	glCheck(glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &prefilter));
+	glCheck(glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter));
+	for (GLuint i = 0; i < 6; ++i)
+	{
+		glCheck(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA32F, baseSize, baseSize, 0, GL_RGBA, GL_FLOAT, nullptr));
+	}
+
+	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	glCheck(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
+
+	GLShader shaderIBL;
+	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Prefilter.frag" } });
+	shaderIBL.Use(true);
+
+	glCheck(glUniform1i(glGetUniformLocation(shaderIBL.GetProgramHandle(), "environmentMap"), 0));
+	glCheck(glUniformMatrix4fv(glGetUniformLocation(shaderIBL.GetProgramHandle(), "projection"), 1, GL_FALSE, &projection[0][0]));
+
+	glCheck(glActiveTexture(GL_TEXTURE0));
+	glCheck(glBindTexture(GL_TEXTURE_CUBE_MAP, equirectangular));
+
+	GLVertexArray vertexArray;
+	vertexArray.Initialize();
+
+	GLVertexBuffer vertexBuffer;
+	vertexBuffer.SetData(sizeof(glm::vec3) * static_cast<GLsizei>(skyboxVertices.size()), skyboxVertices.data());
+
+	GLAttributeLayout position_layout;
+	position_layout.component_type = GLAttributeLayout::Float;
+	position_layout.component_dimension = GLAttributeLayout::_3;
+	position_layout.normalized = false;
+	position_layout.vertex_layout_location = 0;
+	position_layout.stride = sizeof(float) * 3;
+	position_layout.offset = 0;
+	position_layout.relative_offset = 0;
+	vertexArray.AddVertexBuffer(std::move(vertexBuffer), sizeof(float) * 3, { position_layout });
+
+	vertexArray.Use(true);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+	for (GLuint mip = 0; mip < mipLevels; ++mip)
+	{
+		uint32_t dim = baseSize >> mip;
+		float roughness = static_cast<float>(mip) / static_cast<float>(mipLevels - 1);
+		glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, dim, dim);
+		glUniform1f(glGetUniformLocation(shaderIBL.GetProgramHandle(), "roughness"), roughness);
+		glViewport(0, 0, dim, dim);
+
+		for (GLuint i = 0; i < 6; ++i)
+		{
+			glCheck(glUniformMatrix4fv(glGetUniformLocation(shaderIBL.GetProgramHandle(), "view"), 1, GL_FALSE, &views[i][0][0]));
+			glCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter, 0));
+
+			glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+			glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
+		}
 	}
 	glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 	vertexArray.Use(false);

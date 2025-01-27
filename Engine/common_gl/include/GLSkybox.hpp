@@ -23,6 +23,7 @@ public:
 
 	GLuint GetCubeMap() { return equirectangular; };
 	GLuint GetIrradiance() { return irradiance; };
+	GLuint GetPrefilter() { return prefilter; };
 private:
     GLTexture* skyboxTexture;
 
@@ -35,6 +36,11 @@ private:
 	//Irradiance
 	uint32_t irradianceSize{ 64 };
 	GLuint irradiance;
+
+	//Prefilter
+	uint32_t baseSize{ 512 };
+	uint32_t mipLevels{ 5 };
+	GLuint prefilter;
 
 	std::vector<glm::vec3> skyboxVertices = {
 	{-1.0f,  1.0f, -1.0f},
