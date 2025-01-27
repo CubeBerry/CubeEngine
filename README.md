@@ -29,12 +29,11 @@ All required APIs and Libraries are integrated in Project.
 6. 3D Plane, Cube(3D Collision Applied), Sphere, Tours, Cylinder, Cone Meshes + Normal Debugger
 7. Assimp Model Loading
 8. Blinn-Phong Lighting, Physically Based Rendering
-9. Skybox
-10. MSAA
+9. PBR Image Based Lighting
+10. Skybox
+11. MSAA
 
 ## Screenshots
-![image](https://github.com/user-attachments/assets/3b158449-7532-4848-8766-957e6d7c58ba)
-
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
 
 ![image](https://github.com/user-attachments/assets/36c003b4-65c5-413f-9faf-e71366a791f3)
@@ -43,10 +42,13 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/e6fcf266-553b-406f-bdfe-0f13853b3c65)
 
+![image](https://github.com/user-attachments/assets/e7221576-5010-48b5-8a58-78bd5f197625)
 
 ## Future Plans
-1. 3D Mesh Texture
-2. C++ Code Optimization
+1. Deferred Shading
+2. SSAO
+3. Normal / Parallex Mapping
+4. C++ Code Optimization
 
 ## License
 Licensed under the [MIT License](https://github.com/minjae-yu/CubeEngine/blob/main/LICENSE).
