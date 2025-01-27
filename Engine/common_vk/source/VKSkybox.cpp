@@ -63,32 +63,37 @@ VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPo
 
 VKSkybox::~VKSkybox()
 {
-	////Destroy Sampler
-	//vkDestroySampler(*vkInit->GetDevice(), vkTextureSampler, nullptr);
-	//vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerEquirectangular, nullptr);
-	////Destroy ImageView
-	//vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageView, nullptr);
-	//vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewEquirectangular, nullptr);
-	////Free Memory
-	//vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemory, nullptr);
-	//vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryEquirectangular, nullptr);
-	////Destroy Image
-	//vkDestroyImage(*vkInit->GetDevice(), vkTextureImage, nullptr);
-	//vkDestroyImage(*vkInit->GetDevice(), vkTextureImageEquirectangular, nullptr);
+	//Destroy Sampler
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerEquirectangular, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerIrradiance, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerPrefilter, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerBRDFLUT, nullptr);
+	//Destroy ImageView
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewEquirectangular, nullptr);
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewIrradiance, nullptr);
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewPrefilter, nullptr);
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewBRDFLUT, nullptr);
+	//Free Memory
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryEquirectangular, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryIrradiance, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryPrefilter, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryBRDFLUT, nullptr);
+	//Destroy Image
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageEquirectangular, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageIrradiance, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImagePrefilter, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageBRDFLUT, nullptr);
 
-	//if (isEquirectangular)
+	//for (auto& view : cubeFaceViews)
 	//{
-	//	for (auto& view : cubeFaceViews)
-	//	{
-	//		vkDestroyImageView(*vkInit->GetDevice(), view, nullptr);
-	//	}
+	//	vkDestroyImageView(*vkInit->GetDevice(), view, nullptr);
+	//}
 
-	//	vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
+	//vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
 
-	//	for (auto& fb : cubeFaceFramebuffers)
-	//	{
-	//		vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
-	//	}
+	//for (auto& fb : cubeFaceFramebuffers)
+	//{
+	//	vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
 	//}
 
 	delete skyboxTexture;
@@ -588,6 +593,19 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//Deallocate Resources
+	for (auto& view : cubeFaceViews)
+	{
+		vkDestroyImageView(*vkInit->GetDevice(), view, nullptr);
+	}
+
+	vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
+
+	for (auto& fb : cubeFaceFramebuffers)
+	{
+		vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
+	}
 }
 
 void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
@@ -1060,6 +1078,19 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//Deallocate Resources
+	for (auto& view : cubeFaceViews)
+	{
+		vkDestroyImageView(*vkInit->GetDevice(), view, nullptr);
+	}
+
+	vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
+
+	for (auto& fb : cubeFaceFramebuffers)
+	{
+		vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
+	}
 }
 
 void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
@@ -1553,7 +1584,20 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 
 		//Wait until all submitted command buffers are handled
 		vkDeviceWaitIdle(*vkInit->GetDevice());
+
+		//Deallocate Resources
+		for (auto& view : cubeFaceViews)
+		{
+			vkDestroyImageView(*vkInit->GetDevice(), view, nullptr);
+		}
+
+		for (auto& fb : cubeFaceFramebuffers)
+		{
+			vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
+		}
 	}
+
+	vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
 }
 
 void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
@@ -1968,4 +2012,8 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 
 	//Wait until all submitted command buffers are handled
 	vkDeviceWaitIdle(*vkInit->GetDevice());
+
+	//Deallocate Resources
+	vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);
+	vkDestroyFramebuffer(*vkInit->GetDevice(), fb, nullptr);
 }

@@ -34,9 +34,9 @@ private:
 	VkCommandBuffer skyboxCommandBuffer{ VK_NULL_HANDLE };
 	VKTexture* skyboxTexture;
 	VkRenderPass renderPassIBL;
-
 	std::array<VkImageView, 6> cubeFaceViews;
 	std::array<VkFramebuffer, 6> cubeFaceFramebuffers;
+
 	//Equirectangular to Cube
 	uint32_t faceSize{ 0 };
 	//Irradiance
