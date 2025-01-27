@@ -40,9 +40,9 @@ All required APIs and Libraries are integrated in Project.
 
 ![image](https://github.com/user-attachments/assets/f70d174e-eb44-43a3-a9b9-3809532a576e)
 
-![image](https://github.com/user-attachments/assets/e6fcf266-553b-406f-bdfe-0f13853b3c65)
+![image](https://github.com/user-attachments/assets/e3aa5861-2c04-4480-bbf2-f7154a8ae50d)
 
-![image]("https://github.com/user-attachments/assets/e3aa5861-2c04-4480-bbf2-f7154a8ae50d")
+![image](https://github.com/user-attachments/assets/e7221576-5010-48b5-8a58-78bd5f197625)
 
 ## Future Plans
 1. Deferred Shading
