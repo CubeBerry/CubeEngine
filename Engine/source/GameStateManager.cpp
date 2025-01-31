@@ -55,13 +55,13 @@ void GameStateManager::Update(float dt)
 		break;
 	case State::LOAD:
 		LevelInit();
+		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #ifdef _DEBUG
 		std::cout << "Load Complete" << std::endl;
 #endif
 		state = State::UPDATE;
 #ifdef _DEBUG
 		std::cout << "Update" << std::endl;
-		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #endif
 		break;
 	case State::UPDATE:
