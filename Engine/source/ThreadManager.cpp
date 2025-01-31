@@ -134,6 +134,8 @@ void ThreadManager::ProcessSDLEventsMainThread()
 				(event.window.event == SDL_WINDOWEVENT_MINIMIZED))
 			{
 				Engine::Instance().ResetDeltaTime();
+				if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+					Engine::Instance().GetWindow().SetWindowSize({ static_cast<float>(event.window.data1), static_cast<float>(event.window.data2) });
 			}
 			break;
 		default:

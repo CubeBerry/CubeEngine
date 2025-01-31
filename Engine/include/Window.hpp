@@ -35,6 +35,8 @@ public:
 
 	glm::vec2 GetWindowSize() { return wSize; }
 	std::string GetWindowTitle() { return titleName; }
+
+	void SetWindowSize(glm::vec2 wSize);
 	void SetMainWindowTitle(std::string title);
 	void SetSubWindowTitle(std::string subTitle);
 private:

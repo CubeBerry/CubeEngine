@@ -157,6 +157,11 @@ void Window::UpdateWindowGL(SDL_Event& event)
 	//SDL_GL_SwapWindow(window.get());
 }
 
+void Window::SetWindowSize(glm::vec2 size)
+{
+	wSize = size;
+}
+
 void Window::SetMainWindowTitle(std::string title)
 {
 	titleName = title;
