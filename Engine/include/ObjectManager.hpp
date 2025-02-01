@@ -19,6 +19,7 @@ public:
     ~ObjectManager() = default;
 
 	void Update(float dt);
+    void DeleteObjectsFromList();
     void End();
 
     template <typename T, typename... Args>
@@ -49,7 +50,7 @@ public:
         {
             return nullptr;
         }
-        return objectMap.at(lastObjectID - 1).get();
+        return objectMap.rbegin()->second.get();
     }
     void ObjectControllerForImGui();
 private:

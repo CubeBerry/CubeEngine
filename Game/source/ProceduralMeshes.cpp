@@ -300,7 +300,10 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		}
 
 		ImGui::ColorPicker3("Mesh Color", color.data());
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetColor(glm::vec4(color[0], color[1], color[2], color[3]));
+		if(Engine::GetObjectManager().FindObjectWithName("Mesh") != nullptr)
+		{
+			Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->SetColor(glm::vec4(color[0], color[1], color[2], color[3]));
+		}
 
 		ImGui::Checkbox("DrawNormals", &isDrawNormals);
 	}
@@ -391,10 +394,10 @@ void ProceduralMeshes::RecreateMesh()
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, objPath, stacks, slices, { color[0], color[1], color[2], color[3] });
-		if (objPath == "../Game/assets/Models/monkey.obj")
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->ChangeTexture("monkey");
-
 		//if (objPath == "../Game/assets/Models/monkey.obj")
-		//	Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->ChangeTexture("monkey");
+		//	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->ChangeTexture("monkey");
+
+		if (objPath == "../Game/assets/Models/monkey.obj")
+			Engine::GetObjectManager().FindObjectWithName("Mesh")->GetComponent<Sprite>()->ChangeTexture("monkey");
 	}
 }

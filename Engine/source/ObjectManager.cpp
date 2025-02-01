@@ -14,8 +14,13 @@
 void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
-	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
+	//DeleteObjectsFromList();
 	objectsToBeDeleted.clear();
+}
+
+void ObjectManager::DeleteObjectsFromList()
+{
+	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
 }
 
 void ObjectManager::End()
@@ -66,36 +71,49 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 void ObjectManager::ObjectControllerForImGui()
 {
 	ImGui::Begin("ObjectController");
-	//if (ImGui::Button("Add New Object"))
-	//{
-	//    AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "NEW OBJECT", ObjectType::NONE);
-	//    GetLastObject()->AddComponent<Sprite>();
-	//    GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
-	//}
-	ImGui::Separator();
-	ImGui::Spacing();
-
-	ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-	ImGui::BeginChild("Scrolling");
-	int index = 0;
-	for (auto& object : GetObjectMap())
+	if (ImGui::Button("Add New Object"))
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, (objectListForImguiIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
-		if((ImGui::Selectable(object.second.get()->GetName().c_str(), index)) || index == objectListForImguiIndex)
-		{
-			objectListForImguiIndex = index;
-			currentIndex = object.second.get()->GetId();
-		}
-		ImGui::PopStyleColor();
-		index++;
+		AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "OBJECT" + std::to_string(GetLastObjectID()), ObjectType::NONE);
+		GetLastObject()->AddComponent<Sprite>();
+		GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
 	}
 
-	ImGui::EndChild();
-	ImGui::Separator();
-	ImGui::Spacing();
-
+	ImGui::SameLine();
 	if (!objectMap.empty())
 	{
+		if (ImGui::Button("Delete"))
+		{
+			Destroy(currentIndex);
+		}
+
+		if (currentIndex > GetLastObjectID())
+		{
+			objectListForImguiIndex--;
+			currentIndex = GetLastObjectID();
+		}
+
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
+		ImGui::BeginChild("Scrolling");
+		int index = 0;
+		for (auto& object : GetObjectMap())
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, (objectListForImguiIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
+			if ((ImGui::Selectable(object.second.get()->GetName().c_str(), index)) || index == objectListForImguiIndex)
+			{
+				objectListForImguiIndex = index;
+				currentIndex = object.second.get()->GetId();
+			}
+			ImGui::PopStyleColor();
+			index++;
+		}
+
+		ImGui::EndChild();
+		ImGui::Separator();
+		ImGui::Spacing();
+
 		Object* obj = FindObjectWithId(currentIndex);
 
 		glm::vec3 position = obj->GetPosition();
@@ -135,11 +153,11 @@ void ObjectManager::ObjectControllerForImGui()
 
 		ImGui::Separator();
 		ImGui::Spacing();
-		/*if (ImGui::Button("Add Component"))
+		if (ImGui::Button("Add Component"))
 		{
 			isShowPopup = true;
 			ImGui::OpenPopup("Select Component");
-		}*/
+		}
 
 		obj = nullptr;
 
@@ -421,6 +439,8 @@ void ObjectManager::AddComponentPopUpForImGui()
 					if (currentObj->HasComponent<Sprite>() == false)
 					{
 						currentObj->AddComponent<Sprite>();
+						currentObj->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+						//TBD
 					}
 					break;
 				case ComponentTypes::PHYSICS2D:

@@ -67,6 +67,7 @@ void GameStateManager::Update(float dt)
 	case State::UPDATE:
 		UpdateGameLogic(dt);
 		UpdateDraw(dt);
+		Engine::GetObjectManager().DeleteObjectsFromList();
 		//Mouse Input X if order is opposite
 		break;
 	case State::CHANGE:
