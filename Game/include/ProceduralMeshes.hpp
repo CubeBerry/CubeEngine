@@ -25,7 +25,7 @@ private:
 
 	MeshType currentMesh{ MeshType::PLANE };
 
-	bool isRecreate{ false };
+	//bool isRecreate{ false };
 	void RecreateMesh();
 	bool isDrawNormals{ false };
 

@@ -49,11 +49,11 @@ void ProceduralMeshes::Update(float dt)
 {
 	Engine::GetCameraManager().ControlCamera(dt);
 
-	if (isRecreate)
-	{
-		RecreateMesh();
-		isRecreate = false;
-	}
+	//if (isRecreate)
+	//{
+	//	RecreateMesh();
+	//	isRecreate = false;
+	//}
 
 #ifdef _DEBUG
 	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
@@ -117,42 +117,48 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 				stacks = 2;
 				slices = 2;
 				currentMesh = MeshType::PLANE;
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Cube", "1"))
 			{
 				stacks = 2;
 				slices = 2;
 				currentMesh = MeshType::CUBE;
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Sphere", "2"))
 			{
 				stacks = 30;
 				slices = 30;
 				currentMesh = MeshType::SPHERE;
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Torus", "3"))
 			{
 				stacks = 15;
 				slices = 15;
 				currentMesh = MeshType::TORUS;
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Cylinder", "4"))
 			{
 				stacks = 10;
 				slices = 10;
 				currentMesh = MeshType::CYLINDER;
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("Cone", "5"))
 			{
 				stacks = 10;
 				slices = 10;
 				currentMesh = MeshType::CONE;
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			ImGui::EndMenu();
 		}
@@ -162,61 +168,73 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 		case MeshType::PLANE:
 			if (ImGui::SliderInt("stacks", &stacks, 1, 30))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 1, 30))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			break;
 		case MeshType::CUBE:
 			if (ImGui::SliderInt("stacks", &stacks, 1, 10))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 1, 10))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			break;
 		case MeshType::SPHERE:
 			if (ImGui::SliderInt("stacks", &stacks, 5, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 5, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			break;
 		case MeshType::TORUS:
 			if (ImGui::SliderInt("stacks", &stacks, 10, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 10, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			break;
 		case MeshType::CYLINDER:
 			if (ImGui::SliderInt("stacks", &stacks, 5, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 5, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			break;
 		case MeshType::CONE:
 			if (ImGui::SliderInt("stacks", &stacks, 3, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::SliderInt("slices", &slices, 3, 35))
 			{
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			break;
 		}
@@ -232,55 +250,64 @@ void ProceduralMeshes::ImGuiDraw(float /*dt*/)
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/cube.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("car", "1"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/car.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("diamond", "2"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/diamond.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("dodecahedron", "3"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/dodecahedron.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("gourd", "4"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/gourd.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("sphere", "5"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/sphere.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("teapot", "6"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/teapot.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("vase", "7"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/vase.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			if (ImGui::MenuItem("monkey", "8"))
 			{
 				currentMesh = MeshType::OBJ;
 				objPath = "../Game/assets/Models/monkey.obj";
-				isRecreate = true;
+				//isRecreate = true;
+				RecreateMesh();
 			}
 			ImGui::EndMenu();
 		}
@@ -360,7 +387,7 @@ void ProceduralMeshes::End()
 	slices = 1;
 	isFill = true;
 	color = { 1.f, 0.f, 0.f, 1.f };
-	isRecreate = false;
+	//isRecreate = false;
 	isDrawNormals = false;
 	angle[0] = 0;
 	angle[1] = 0;
