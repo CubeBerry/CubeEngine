@@ -75,15 +75,6 @@ void ObjectManager::ObjectControllerForImGui()
 	if (ImGui::Button("Add New Object"))
 	{
 		AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "OBJECT" + std::to_string(GetLastObjectID()), ObjectType::NONE);
-		GetLastObject()->AddComponent<Sprite>();
-		if (Engine::GetRenderManager()->GetRenderType() == RenderType::ThreeDimension)
-		{
-			GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
-		}
-		else
-		{
-			GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
-		}
 	}
 
 	ImGui::SameLine();
@@ -269,6 +260,21 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			{
 				spriteComp->SetColor(color);
 			}
+			ImGui::Spacing();
+			if (ImGui::Button("FILL", ImVec2(100, 0)))
+			{
+				Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("LINE", ImVec2(100, 0)))
+			{
+				Engine::GetRenderManager()->SetPolygonType(PolygonType::LINE);
+			}
+#ifdef _DEBUG
+			ImGui::Spacing();
+			ImGui::Checkbox("DrawNormals", &isDrawNormals);
+			Engine::GetRenderManager()->DrawNormals(isDrawNormals);
+#endif
 			ImGui::Spacing();
 			if (ImGui::BeginMenu("Select Mesh Type"))
 			{
@@ -518,7 +524,7 @@ void ObjectManager::AddComponentPopUpForImGui()
 	if (ImGui::BeginPopupModal("Select Component", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-		ImGui::BeginChild("Scolling");
+		ImGui::BeginChild("Scrolling");
 		Object* currentObj = FindObjectWithId(currentIndex);
 
 		for (int i = 0; i < static_cast<int>(ComponentTypes::INVALID); i++)

@@ -72,6 +72,8 @@ public:
     }
 
     void ProcessComponentFunctionQueues();
+
+    void SetIsDrawNormals(bool draw) { isDrawNormals = draw; };
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
     void SpriteControllerForImGui(Sprite* sprite);
@@ -92,6 +94,9 @@ private:
 	int closestObjectId = 0;
     bool isDragObject = false;
     bool isObjGravityOn = false;
+#ifdef _DEBUG
+    bool isDrawNormals = false;
+#endif
     //
 
     std::vector<std::function<void()>> componentFunctionQueue;
