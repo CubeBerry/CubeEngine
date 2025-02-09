@@ -20,10 +20,7 @@ Sprite::~Sprite()
 		delete anim;
 	}
 	animations.clear();
-	if (this != nullptr)
-	{
-		Engine::GetSpriteManager().DeleteSprite(this);
-	}
+	DeleteFromSpriteManagerList();
 }
 
 void Sprite::Init()
@@ -254,6 +251,22 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks, slices, color, metallic, roughness); });
 }
 
+void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
+{
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks, slices, color); });
+}
+
+void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness)
+{
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks, slices, color, metallic, roughness); });
+}
+
 
 void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
 {
@@ -273,6 +286,14 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	materialId = static_cast<int>(Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->size() - 1);
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
+}
+
+void Sprite::DeleteFromSpriteManagerList()
+{
+	if (this != nullptr)
+	{
+		Engine::GetSpriteManager().DeleteSprite(this);
+	}
 }
 
 void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)

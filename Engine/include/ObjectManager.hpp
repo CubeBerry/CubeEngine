@@ -11,6 +11,7 @@
 #include <vector>
 #include <iostream>
 
+class Sprite;
 class Physics3D;
 class Light;
 class ObjectManager
@@ -73,9 +74,11 @@ public:
     void ProcessComponentFunctionQueues();
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
+    void SpriteControllerForImGui(Sprite* sprite);
     void LightControllerForImGui(Light* light);
     void SelectObjectWithMouse();
     void AddComponentPopUpForImGui();
+    void SelectObjModelPopUpForImGui();
     int                                    lastObjectID = 0;
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted

@@ -73,6 +73,12 @@ void GameStateManager::Update(float dt)
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		//Mouse Input X if order is opposite
 		break;
+	case State::PAUSE:
+		UpdateGameLogic(0.f);
+		UpdateDraw(0.f);
+		Engine::GetObjectManager().ProcessComponentFunctionQueues();
+		Engine::GetObjectManager().DeleteObjectsFromList();
+		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();
 		currentLevel = levelSelected;
@@ -160,34 +166,29 @@ void GameStateManager::RestartLevel()
 
 void GameStateManager::UpdateGameLogic(float dt)
 {
-	if (state == State::UPDATE)
+	if (levelSelected != currentLevel)
 	{
-		if (levelSelected != currentLevel)
-		{
-			state = State::CHANGE;
-		}
-		else
-		{
-			levelList.at(static_cast<int>(currentLevel))->Update(dt);
-			Engine::GetObjectManager().Update(dt);
-			Engine::GetParticleManager().Update(dt);
-			Engine::GetCameraManager().Update();
-			CollideObjects();
-			Engine::GetSpriteManager().Update(dt);
-		}
+		state = State::CHANGE;
+	}
+	else
+	{
+		levelList.at(static_cast<int>(currentLevel))->Update(dt);
+		Engine::GetObjectManager().Update(dt);
+		Engine::GetParticleManager().Update(dt);
+		Engine::GetCameraManager().Update();
+		CollideObjects();
+		Engine::GetSpriteManager().Update(dt);
 	}
 }
 void GameStateManager::UpdateDraw(float dt)
 {
-	if (state == State::UPDATE)
+	if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
 	{
-		if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
-		{
-			DrawWithImGui(dt);
-			//Draw();
-		}
+		DrawWithImGui(dt);
+		//Draw();
 	}
 }
+
 void GameStateManager::StateChanger()
 {
 	if (ImGui::BeginMainMenuBar())

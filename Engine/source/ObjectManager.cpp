@@ -76,7 +76,14 @@ void ObjectManager::ObjectControllerForImGui()
 	{
 		AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "OBJECT" + std::to_string(GetLastObjectID()), ObjectType::NONE);
 		GetLastObject()->AddComponent<Sprite>();
-		GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+		if (Engine::GetRenderManager()->GetRenderType() == RenderType::ThreeDimension)
+		{
+			GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+		}
+		else
+		{
+			GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+		}
 	}
 
 	ImGui::SameLine();
@@ -144,6 +151,9 @@ void ObjectManager::ObjectControllerForImGui()
 			ComponentTypes type = comp->GetType();
 			switch (type)
 			{
+			case ComponentTypes::SPRITE:
+				SpriteControllerForImGui(reinterpret_cast<Sprite*>(comp));
+				break;
 			case ComponentTypes::PHYSICS3D:
 				Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
 				break;
@@ -167,12 +177,23 @@ void ObjectManager::ObjectControllerForImGui()
 		{
 			AddComponentPopUpForImGui();
 		}
+		if(ImGui::IsPopupOpen("Select Model"))
+		{
+			SelectObjModelPopUpForImGui();
+		}
 	}
 
 	ImGui::End();
 	SelectObjectWithMouse();
 
-
+	if(isShowPopup == true && Engine::GetGameStateManager().GetGameState() == State::UPDATE)
+	{
+		Engine::GetGameStateManager().SetGameState(State::PAUSE);
+	}
+	else if (isShowPopup == false && Engine::GetGameStateManager().GetGameState() == State::PAUSE)
+	{
+		Engine::GetGameStateManager().SetGameState(State::UPDATE);
+	}
 }
 
 void ObjectManager::ProcessComponentFunctionQueues()
@@ -232,6 +253,68 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		physics->SetMass(mass);
 	}
 	physics = nullptr;
+}
+
+void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
+{
+	Sprite* spriteComp = sprite;
+	bool isSelectedObjModel = false;
+	if (Engine::GetRenderManager()->GetRenderType() == RenderType::ThreeDimension)
+	{
+		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Spacing();
+			glm::vec4 color = spriteComp->GetColor();
+			if (ImGui::ColorEdit4("Color", &color.r))
+			{
+				spriteComp->SetColor(color);
+			}
+			ImGui::Spacing();
+			if (ImGui::BeginMenu("Select Mesh Type"))
+			{
+				if (ImGui::MenuItem("Plane", "0"))
+				{
+					sprite->RecreateMesh3D(MeshType::PLANE, "", 2, 2, color);
+				}
+				if (ImGui::MenuItem("Cube", "1"))
+				{
+					sprite->RecreateMesh3D(MeshType::CUBE, "", 2, 2, color);
+				}
+				if (ImGui::MenuItem("Sphere", "2"))
+				{
+					sprite->RecreateMesh3D(MeshType::SPHERE, "", 30, 30, color);
+				}
+				if (ImGui::MenuItem("Torus", "3"))
+				{
+					sprite->RecreateMesh3D(MeshType::TORUS, "", 15, 15, color);
+				}
+				if (ImGui::MenuItem("Cylinder", "4"))
+				{
+					sprite->RecreateMesh3D(MeshType::CYLINDER, "", 10, 10, color);
+				}
+				if (ImGui::MenuItem("Cone", "5"))
+				{
+					sprite->RecreateMesh3D(MeshType::CONE, "", 10, 10, color);
+				}
+				if (ImGui::MenuItem("Obj Model", "6"))
+				{
+					isSelectedObjModel = true;
+				}
+				ImGui::EndMenu();
+			}
+
+			if (isSelectedObjModel)
+			{
+				ImGui::OpenPopup("Select Model");
+				isShowPopup = true;
+			}
+			ImGui::Spacing();
+		}
+	}
+	else
+	{
+	}
+	spriteComp = nullptr;
 }
 
 void ObjectManager::LightControllerForImGui(Light* light)
@@ -498,6 +581,100 @@ void ObjectManager::AddComponentPopUpForImGui()
 	ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::End();
 }
+
+void ObjectManager::SelectObjModelPopUpForImGui()
+{
+	ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+	ImVec2 popupSize = ImVec2(200, 300);
+	ImVec2 popupPos = ImVec2((displaySize.x - popupSize.x) / 2.0f, (displaySize.y - popupSize.y) / 2.0f);
+
+	ImGui::SetNextWindowPos(popupPos, ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(popupSize);
+
+	if (ImGui::BeginPopupModal("Select Model", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 4 * ImGui::GetTextLineHeightWithSpacing()));
+		ImGui::BeginChild("Scolling");
+		Object* currentObj = FindObjectWithId(currentIndex);
+		glm::vec4 color = currentObj->GetComponent<Sprite>()->GetColor();
+
+		//for (int i = 0; i < 9; i++)
+		{
+			if (ImGui::Selectable("Cube"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Car"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Diamond"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Dodecahedron"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Gourd"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Sphere"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Teapot"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Vase"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Monkey"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, color);
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		currentObj = nullptr;
+		ImGui::EndChild();
+		ImGui::Separator();
+
+		if (ImGui::Button("Close"))
+		{
+			isShowPopup = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::SetNextWindowBgAlpha(0.5f);
+	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImGui::End();
+}
+
 
 
 

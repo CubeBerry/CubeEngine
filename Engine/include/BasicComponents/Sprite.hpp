@@ -45,6 +45,8 @@ public:
 	void AddMeshWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness);
+	void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
+	void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness);
 
 	//Animation
 	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
@@ -71,6 +73,7 @@ public:
 	//For CompFuncQueue
 	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
 	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness);
+	void DeleteFromSpriteManagerList();
 	//For CompFuncQueue
 private:
 	//Animation
