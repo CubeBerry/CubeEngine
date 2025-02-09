@@ -46,7 +46,6 @@ public:
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness);
 
-
 	//Animation
 	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
 	glm::vec2 GetHotSpot(int index);
@@ -68,6 +67,11 @@ public:
 
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	SpriteDrawType GetSpriteDrawType() { return spriteDrawType; }
+
+	//For CompFuncQueue
+	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color = { 1.f,1.f,1.f,1.f });
+	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness);
+	//For CompFuncQueue
 private:
 	//Animation
 	glm::vec2 GetFrameTexel(int frameNum) const;

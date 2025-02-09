@@ -4,6 +4,7 @@
 #pragma once
 #include "Object.hpp"
 
+#include <functional>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -53,6 +54,23 @@ public:
         return objectMap.rbegin()->second.get();
     }
     void ObjectControllerForImGui();
+
+    template<typename ComponentTypes, typename Func>
+    void QueueComponentFunction(ComponentTypes* component, Func&& func)
+    {
+        if (component == nullptr)
+        {
+            std::cerr << "nullptr component!" << std::endl;
+            return;
+        }
+
+        componentFunctionQueue.push_back([component, func]()
+        {
+            func(component);
+        });
+    }
+
+    void ProcessComponentFunctionQueues();
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
     void LightControllerForImGui(Light* light);
@@ -72,4 +90,6 @@ private:
     bool isDragObject = false;
     bool isObjGravityOn = false;
     //
+
+    std::vector<std::function<void()>> componentFunctionQueue;
 };

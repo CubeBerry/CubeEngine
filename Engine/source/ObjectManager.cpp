@@ -28,6 +28,7 @@ void ObjectManager::End()
 	DestroyAllObjects();
 	currentIndex = 0;
 	objectListForImguiIndex = 0;
+	componentFunctionQueue.clear();
 }
 
 void ObjectManager::Draw(float dt)
@@ -171,6 +172,15 @@ void ObjectManager::ObjectControllerForImGui()
 	SelectObjectWithMouse();
 
 
+}
+
+void ObjectManager::ProcessComponentFunctionQueues()
+{
+	for (auto& task : componentFunctionQueue)
+	{
+		task();
+	}
+	componentFunctionQueue.clear();
 }
 
 void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)

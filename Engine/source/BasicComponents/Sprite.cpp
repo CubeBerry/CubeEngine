@@ -244,6 +244,19 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 
 void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
 {
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks, slices, color); });
+}
+
+void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness)
+{
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks, slices, color, metallic, roughness); });
+}
+
+
+void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
+{
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadMesh(type, path, color, stacks, slices);
 	//materialId = Engine::GetSpriteManager().GetSpritesAmount();
@@ -252,7 +265,7 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 	AddSpriteToManager();
 }
 
-void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness)
+void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadMesh(type, path, color, stacks, slices, metallic, roughness);

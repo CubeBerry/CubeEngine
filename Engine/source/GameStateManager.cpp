@@ -33,6 +33,7 @@ void GameStateManager::LevelInit(GameLevel currentLevel_)
 {
 	currentLevel = currentLevel_;
 	LevelInit();
+	Engine::GetObjectManager().ProcessComponentFunctionQueues();
 	state = State::UPDATE;
 #ifdef _DEBUG
 	std::cout << "Load Complete" << std::endl;
@@ -55,6 +56,7 @@ void GameStateManager::Update(float dt)
 		break;
 	case State::LOAD:
 		LevelInit();
+		Engine::GetObjectManager().ProcessComponentFunctionQueues();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #ifdef _DEBUG
 		std::cout << "Load Complete" << std::endl;
@@ -67,6 +69,7 @@ void GameStateManager::Update(float dt)
 	case State::UPDATE:
 		UpdateGameLogic(dt);
 		UpdateDraw(dt);
+		Engine::GetObjectManager().ProcessComponentFunctionQueues();
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		//Mouse Input X if order is opposite
 		break;
