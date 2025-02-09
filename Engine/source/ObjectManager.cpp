@@ -102,7 +102,8 @@ void ObjectManager::ObjectControllerForImGui()
 		for (auto& object : GetObjectMap())
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, (objectListForImguiIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
-			if ((ImGui::Selectable(object.second.get()->GetName().c_str(), index)) || index == objectListForImguiIndex)
+			std::string indexName = std::to_string(index) + "." + object.second.get()->GetName();
+			if ((ImGui::Selectable(indexName.c_str(), index)) || currentIndex == index)
 			{
 				objectListForImguiIndex = index;
 				currentIndex = object.second.get()->GetId();
