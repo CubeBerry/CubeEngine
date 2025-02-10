@@ -1401,7 +1401,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	switch(rMode)
 	{
 	case RenderType::TwoDimension:
-		if (vertexUniform2D != nullptr)
+		if (quadCount)
 		{
 			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
@@ -1430,10 +1430,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
 			vertexUniform2D->UpdateUniform(vertexUniforms2D.size(), vertexUniforms2D.data(), frameIndex);
-		}
 
-		if (fragmentUniform2D != nullptr)
-		{
 			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
@@ -1473,7 +1470,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 		}
 		break;
 	case RenderType::ThreeDimension:
-		if (vertexUniform3D != nullptr)
+		if (quadCount)
 		{
 			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
@@ -1497,10 +1494,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
-		}
 
-		if (fragmentUniform3D != nullptr)
-		{
 			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
