@@ -41,7 +41,7 @@ public:
     void  Destroy(int id);
     void  DestroyAllObjects();
 
-    int   GetLastObjectID() { return (GetLastObject()->GetId()); }
+    int   GetLastObjectID();
     std::map<int, std::unique_ptr<Object>>& GetObjectMap() { return objectMap; }
 
     Object* FindObjectWithName(std::string name);
@@ -86,6 +86,7 @@ private:
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
 
     //For ObjectController
+    std::string objName;
     bool isShowPopup = false;
     int selectedItem = -1;
 
@@ -94,10 +95,15 @@ private:
 	int closestObjectId = 0;
     bool isDragObject = false;
     bool isObjGravityOn = false;
+
+    int stacks = 1;
+    int slices = 1;
+    float metallic = 0.3f;
+    float roughness = 0.3f;
 #ifdef _DEBUG
     bool isDrawNormals = false;
 #endif
-    //
 
     std::vector<std::function<void()>> componentFunctionQueue;
+    //For ObjectController
 };

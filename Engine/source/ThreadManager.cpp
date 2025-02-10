@@ -104,7 +104,10 @@ void ThreadManager::ProcessSDLEvents()
 
 	while (!localEventQueue.empty()) {
 		SDL_Event& event = localEventQueue.front();
-		Engine::GetInputManager().InputPollEvent(event);
+		if(ImGui::IsAnyItemActive() == false)
+		{
+			Engine::GetInputManager().InputPollEvent(event);
+		}
 		localEventQueue.pop();
 	}
 

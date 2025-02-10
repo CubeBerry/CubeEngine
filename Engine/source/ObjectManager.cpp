@@ -25,6 +25,7 @@ void ObjectManager::DeleteObjectsFromList()
 
 void ObjectManager::End()
 {
+	objName = "Object";
 	DestroyAllObjects();
 	currentIndex = 0;
 	objectListForImguiIndex = 0;
@@ -57,6 +58,15 @@ void ObjectManager::DestroyAllObjects()
 	objectMap.clear();
 }
 
+int ObjectManager::GetLastObjectID()
+{
+	if (!objectMap.empty())
+	{
+		return (GetLastObject()->GetId());
+	}
+	return 0;
+}
+
 Object* ObjectManager::FindObjectWithName(std::string name)
 {
 	for (auto& obj : objectMap)
@@ -72,9 +82,14 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 void ObjectManager::ObjectControllerForImGui()
 {
 	ImGui::Begin("ObjectController");
+
+	static char newName[256] = "Object";
+	ImGui::InputText("Object Name", newName, 128);
+	objName = newName;
+
 	if (ImGui::Button("Add New Object"))
 	{
-		AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "OBJECT" + std::to_string(GetLastObjectID()), ObjectType::NONE);
+		AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, objName, ObjectType::NONE);
 	}
 
 	ImGui::SameLine();
@@ -168,7 +183,7 @@ void ObjectManager::ObjectControllerForImGui()
 		{
 			AddComponentPopUpForImGui();
 		}
-		if(ImGui::IsPopupOpen("Select Model"))
+		if (ImGui::IsPopupOpen("Select Model"))
 		{
 			SelectObjModelPopUpForImGui();
 		}
@@ -177,7 +192,7 @@ void ObjectManager::ObjectControllerForImGui()
 	ImGui::End();
 	SelectObjectWithMouse();
 
-	if(isShowPopup == true && Engine::GetGameStateManager().GetGameState() == State::UPDATE)
+	if (isShowPopup == true && Engine::GetGameStateManager().GetGameState() == State::UPDATE)
 	{
 		Engine::GetGameStateManager().SetGameState(State::PAUSE);
 	}
@@ -248,9 +263,15 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 
 void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 {
+	RenderManager* renderManager = Engine::GetRenderManager();
 	Sprite* spriteComp = sprite;
 	bool isSelectedObjModel = false;
-	if (Engine::GetRenderManager()->GetRenderType() == RenderType::ThreeDimension)
+	stacks = sprite->GetStacks();
+	slices = sprite->GetSlices();
+	metallic = sprite->GetMetallic();
+	roughness = sprite->GetRoughness();
+
+	if (renderManager->GetRenderType() == RenderType::ThreeDimension)
 	{
 		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -263,44 +284,163 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			ImGui::Spacing();
 			if (ImGui::Button("FILL", ImVec2(100, 0)))
 			{
-				Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
+				renderManager->SetPolygonType(PolygonType::FILL);
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("LINE", ImVec2(100, 0)))
 			{
-				Engine::GetRenderManager()->SetPolygonType(PolygonType::LINE);
+				renderManager->SetPolygonType(PolygonType::LINE);
 			}
 #ifdef _DEBUG
 			ImGui::Spacing();
 			ImGui::Checkbox("DrawNormals", &isDrawNormals);
-			Engine::GetRenderManager()->DrawNormals(isDrawNormals);
+			renderManager->DrawNormals(isDrawNormals);
 #endif
+
 			ImGui::Spacing();
+			if (ImGui::SliderInt("Stacks", &stacks, 1, 30))
+			{
+				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+			}
+			if (ImGui::SliderInt("Slices", &slices, 1, 30))
+			{
+				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+			}
+			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
+			{
+				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+			}
+			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
+			{
+				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+			}
+			ImGui::Spacing();
+
+			bool isTextureExist = false;
+			switch (renderManager->GetGraphicsMode())
+			{
+				case GraphicsMode::GL:
+				{
+					isTextureExist = !dynamic_cast<GLRenderManager*>(renderManager)->GetTextures().empty();
+					break;
+				}
+				case GraphicsMode::VK:
+				{
+					isTextureExist = !dynamic_cast<VKRenderManager*>(renderManager)->GetTextures().empty();
+					break;
+				}
+			}
+
+			if(isTextureExist)
+			{
+				bool isTextureOn = sprite->GetIsTex();
+				if (ImGui::Checkbox("Apply Texture", &isTextureOn))
+				{
+				}
+
+				if (isTextureOn)
+				{
+					switch (renderManager->GetGraphicsMode())
+					{
+					case GraphicsMode::GL:
+					{
+						GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
+						if (ImGui::BeginCombo("TextureList", sprite->GetTextureName().c_str()))
+						{
+							for (auto& tex : renderManagerGL->GetTextures())
+							{
+								int index = 0;
+								const bool is_selected = tex->GetName().c_str() == sprite->GetTextureName().c_str();
+
+								//ImGui::Image((void*)(intptr_t)tex->GetTextureHandle(), ImVec2(16, 16), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+								//ImGui::SameLine();
+
+								if (ImGui::Selectable(tex->GetName().c_str()))
+								{
+									sprite->ChangeTexture(tex->GetName());
+								}
+								if (is_selected)
+								{
+									ImGui::SetItemDefaultFocus();
+								}
+								index++;
+							}
+							ImGui::EndCombo();
+						}
+						break;
+					}
+					case GraphicsMode::VK:
+					{
+						VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
+
+						//VKTexture* objTex = renderManagerVK->GetTexture(sprite->GetTextureName().c_str());
+						//if(objTex != nullptr)
+						//{
+						//	VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(*objTex->GetSampler(), *objTex->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+						//	ImGui::Image((ImTextureID)descriptorSet, ImVec2(64, 64), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+						//	ImGui::SameLine();
+						//}
+
+						if (ImGui::BeginCombo("TextureList", sprite->GetTextureName().c_str()))
+						{
+							for (auto& tex : renderManagerVK->GetTextures())
+							{
+								int index = 0;
+								const bool is_selected = tex->GetName().c_str() == sprite->GetTextureName().c_str();
+
+								//VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(*tex->GetSampler(), *tex->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+								//ImGui::Image((ImTextureID)descriptorSet, ImVec2(16, 16), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+								//ImGui::SameLine();
+
+								if (ImGui::Selectable(tex->GetName().c_str()))
+								{
+									sprite->ChangeTexture(tex->GetName());
+								}
+								if (is_selected)
+								{
+									ImGui::SetItemDefaultFocus();
+								}
+								index++;
+							}
+							ImGui::EndCombo();
+						}
+						break;
+					}
+					}
+				}
+				else
+				{
+					sprite->SetIsTex(false);
+				}
+				sprite->SetIsTex(isTextureOn);
+				ImGui::Spacing();
+			}
+
 			if (ImGui::BeginMenu("Select Mesh Type"))
 			{
 				if (ImGui::MenuItem("Plane", "0"))
 				{
-					sprite->RecreateMesh3D(MeshType::PLANE, "", 2, 2, color);
+					sprite->RecreateMesh3D(MeshType::PLANE, "", 2, 2, color, metallic, roughness);
 				}
 				if (ImGui::MenuItem("Cube", "1"))
 				{
-					sprite->RecreateMesh3D(MeshType::CUBE, "", 2, 2, color);
+					sprite->RecreateMesh3D(MeshType::CUBE, "", 2, 2, color, metallic, roughness);
 				}
 				if (ImGui::MenuItem("Sphere", "2"))
 				{
-					sprite->RecreateMesh3D(MeshType::SPHERE, "", 30, 30, color);
+					sprite->RecreateMesh3D(MeshType::SPHERE, "", 30, 30, color, metallic, roughness);
 				}
 				if (ImGui::MenuItem("Torus", "3"))
 				{
-					sprite->RecreateMesh3D(MeshType::TORUS, "", 15, 15, color);
+					sprite->RecreateMesh3D(MeshType::TORUS, "", 15, 15, color, metallic, roughness);
 				}
 				if (ImGui::MenuItem("Cylinder", "4"))
 				{
-					sprite->RecreateMesh3D(MeshType::CYLINDER, "", 10, 10, color);
+					sprite->RecreateMesh3D(MeshType::CYLINDER, "", 10, 10, color, metallic, roughness);
 				}
 				if (ImGui::MenuItem("Cone", "5"))
 				{
-					sprite->RecreateMesh3D(MeshType::CONE, "", 10, 10, color);
+					sprite->RecreateMesh3D(MeshType::CONE, "", 10, 10, color, metallic, roughness);
 				}
 				if (ImGui::MenuItem("Obj Model", "6"))
 				{
@@ -321,6 +461,7 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 	{
 	}
 	spriteComp = nullptr;
+	renderManager = nullptr;
 }
 
 void ObjectManager::LightControllerForImGui(Light* light)
@@ -609,55 +750,55 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			if (ImGui::Selectable("Cube"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Car"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Diamond"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Dodecahedron"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Gourd"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Sphere"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Teapot"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Vase"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Monkey"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, color);
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", stacks, slices, color, metallic, roughness);
 				ImGui::CloseCurrentPopup();
 			}
 		}
