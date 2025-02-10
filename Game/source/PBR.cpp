@@ -56,10 +56,6 @@ void PBR::Init()
 void PBR::Update(float dt)
 {
 	Engine::GetCameraManager().ControlCamera(dt);
-
-#ifdef _DEBUG
-	Engine::GetRenderManager()->DrawNormals(isDrawNormals);
-#endif
 }
 
 void PBR::ImGuiDraw(float /*dt*/)
@@ -74,8 +70,6 @@ void PBR::Restart()
 
 void PBR::End()
 {
-	isDrawNormals = false;
-
 	Engine::GetRenderManager()->SetPolygonType(PolygonType::FILL);
 	Engine::GetRenderManager()->DeletePointLights();
 	Engine::GetRenderManager()->DeleteDirectionalLights();
