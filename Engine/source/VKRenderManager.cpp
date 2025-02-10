@@ -10,6 +10,8 @@
 #include "VKUniformBuffer.hpp"
 #include "VKSkybox.hpp"
 
+#include "Engine.hpp"
+
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
@@ -130,22 +132,22 @@ void VKRenderManager::CreateDepthBuffer()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -172,25 +174,25 @@ void VKRenderManager::CreateDepthBuffer()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Texture Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -205,22 +207,22 @@ void VKRenderManager::CreateDepthBuffer()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -249,22 +251,22 @@ void VKRenderManager::CreateDepthBuffer()
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Image View Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
@@ -301,22 +303,22 @@ void VKRenderManager::CreateColorResources()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -343,25 +345,25 @@ void VKRenderManager::CreateColorResources()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Texture Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -376,22 +378,22 @@ void VKRenderManager::CreateColorResources()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -418,22 +420,22 @@ void VKRenderManager::CreateColorResources()
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Image View Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
@@ -485,16 +487,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
-	std::cout << std::endl;
+	std::cout << '\n';
 
 	vkShader3D = new VKShader(vkInit->GetDevice());
 	vkShader3D->LoadShader("../Engine/shader/3D.vert", "../Engine/shader/3D.frag");
-	std::cout << std::endl;
+	std::cout << '\n';
 
 #ifdef _DEBUG
 	vkNormal3DShader = new VKShader(vkInit->GetDevice());
 	vkNormal3DShader->LoadShader("../Engine/shader/Normal3D.vert", "../Engine/shader/Normal3D.frag");
-	std::cout << std::endl;
+	std::cout << '\n';
 #endif
 
 	//2D Pipeline
@@ -557,14 +559,14 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
 #endif
 
-	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, 500);
-	fragmentUniform2D = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, 500);
+	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, MAX_OBJECT_SIZE);
+	fragmentUniform2D = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, MAX_OBJECT_SIZE);
 
-	vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, 500);
-	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, 500);
-	fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, 500);
-	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, 10);
-	directionalLightUniformBuffer = new VKUniformBuffer<ThreeDimension::DirectionalLightUniform>(vkInit, 10);
+	vertexUniform3D = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, MAX_OBJECT_SIZE);
+	fragmentUniform3D = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, MAX_OBJECT_SIZE);
+	fragmentMaterialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, MAX_OBJECT_SIZE);
+	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, MAX_LIGHT_SIZE);
+	directionalLightUniformBuffer = new VKUniformBuffer<ThreeDimension::DirectionalLightUniform>(vkInit, MAX_LIGHT_SIZE);
 
 	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
@@ -615,22 +617,22 @@ void VKRenderManager::InitCommandPool()
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Command Pool Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
@@ -655,22 +657,22 @@ void VKRenderManager::InitCommandBuffer()
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Command Buffer Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
@@ -779,22 +781,22 @@ void VKRenderManager::InitRenderPass()
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "RenderPass Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKRenderManager::~VKRenderManager();
 		std::exit(EXIT_FAILURE);
 	}
@@ -833,15 +835,15 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Framebuffer Creation Failed" };
 			}
@@ -849,7 +851,7 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1853,7 +1855,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			//Change Primitive Topology
 			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 			//Push Constant World-To_NDC
-			glm::mat4 transform[2] = { vertexUniforms3D[0].view, vertexUniforms3D[0].projection };
+			glm::mat4 transform[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
 			vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
 			//Draw
 			//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);

@@ -15,8 +15,11 @@
 
 #include <SDL_vulkan.h>
 
-const auto IMAGE_AVAILABLE_INDEX{ 0 };
-const auto RENDERING_DONE_INDEX{ 1 };
+constexpr auto IMAGE_AVAILABLE_INDEX{ 0 };
+constexpr auto RENDERING_DONE_INDEX{ 1 };
+
+#define MAX_OBJECT_SIZE 500
+#define MAX_LIGHT_SIZE 10
 
 class Window;
 class VKInit;
