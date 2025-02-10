@@ -547,7 +547,7 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			ImGui::Separator();
 			ImGui::Spacing();
 
-			if (ImGui::Button("Direct"))
+			if (ImGui::Button("Directional"))
 			{
 				isShowPopup = false;
 				light->AddLight(LightType::DIRECTIONAL);
