@@ -46,6 +46,8 @@ public:
 	void SetLinear(float amount);
 	void SetQuadratic(float amount);
 
+	void SetLightId(int index) { lightlId = index; }
+
 	glm::vec3 GetPosition() { return pos; }
 	glm::vec4 GetColor() { return color; }
 	glm::vec4 GetRotate() { return rotate; }
@@ -57,6 +59,7 @@ public:
 	float GetQuadratic() { return quadratic; }
 
 	LightType GetLightType() { return lightType; }
+	int GetLightId() { return lightlId; }
 private:
 	glm::vec3 pos = { 0.f,0.f,0.f };
 	glm::vec4 color = { 1.f, 1.f, 1.f, 1.f };

@@ -22,6 +22,7 @@ Light::~Light()
 	if (lightType == LightType::POINT)
 	{
 		std::vector<ThreeDimension::PointLightUniform>& list = Engine::GetRenderManager()->GetPointLightUniforms();
+		auto tempId = lightlId;
 		if (!list.empty())
 		{
 			auto iterator = std::find_if(list.begin(), list.end(), [&](const ThreeDimension::PointLightUniform& pL) {
@@ -35,13 +36,26 @@ Light::~Light()
 				{
 					list[i] = list[i + 1];
 				}
-				list.pop_back();
+			}
+			list.pop_back();
+		}
+
+		for (auto& obj : Engine::GetObjectManager().GetObjectMap())
+		{
+			if (obj.second.get() != nullptr && obj.second.get()->HasComponent<Light>())
+			{
+				Light* light = obj.second.get()->GetComponent<Light>();
+				if (light->GetLightType() == LightType::POINT && light->GetLightId() > tempId)
+				{
+					light->SetLightId(light->GetLightId() - 1);
+				}
 			}
 		}
 	}
 	else if (lightType == LightType::DIRECTIONAL)
 	{
 		std::vector<ThreeDimension::DirectionalLightUniform>& list = Engine::GetRenderManager()->GetDirectionalLightUniforms();
+		auto tempId = lightlId;
 		if (!list.empty())
 		{
 			auto iterator = std::find_if(list.begin(), list.end(), [&](const ThreeDimension::DirectionalLightUniform& dL) {
@@ -55,7 +69,19 @@ Light::~Light()
 				{
 					list[i] = list[i + 1];
 				}
-				list.pop_back();
+			}
+			list.pop_back();
+		}
+
+		for (auto& obj : Engine::GetObjectManager().GetObjectMap())
+		{
+			if (obj.second.get() != nullptr && obj.second.get()->HasComponent<Light>())
+			{
+				Light* light = obj.second.get()->GetComponent<Light>();
+				if (light->GetLightType() == LightType::DIRECTIONAL && light->GetLightId() > tempId)
+				{
+					light->SetLightId(light->GetLightId() - 1);
+				}
 			}
 		}
 	}
