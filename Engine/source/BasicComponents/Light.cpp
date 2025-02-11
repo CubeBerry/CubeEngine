@@ -18,6 +18,47 @@ Light::~Light()
 	{
 		delete pointLight;
 	}
+	
+	if (lightType == LightType::POINT)
+	{
+		std::vector<ThreeDimension::PointLightUniform>& list = Engine::GetRenderManager()->GetPointLightUniforms();
+		if (!list.empty())
+		{
+			auto iterator = std::find_if(list.begin(), list.end(), [&](const ThreeDimension::PointLightUniform& pL) {
+				return &pL == &pLight;
+			});
+
+			if (iterator != list.end())
+			{
+				size_t index = std::distance(list.begin(), iterator);
+				for (size_t i = index; i < list.size() - 1; i++)
+				{
+					list[i] = list[i + 1];
+				}
+				list.pop_back();
+			}
+		}
+	}
+	else if (lightType == LightType::DIRECTIONAL)
+	{
+		std::vector<ThreeDimension::DirectionalLightUniform>& list = Engine::GetRenderManager()->GetDirectionalLightUniforms();
+		if (!list.empty())
+		{
+			auto iterator = std::find_if(list.begin(), list.end(), [&](const ThreeDimension::DirectionalLightUniform& dL) {
+				return &dL == &dLight;
+			});
+
+			if (iterator != list.end())
+			{
+				size_t index = std::distance(list.begin(), iterator);
+				for (size_t i = index; i < list.size() - 1; i++)
+				{
+					list[i] = list[i + 1];
+				}
+				list.pop_back();
+			}
+		}
+	}
 }
 
 void Light::Init()

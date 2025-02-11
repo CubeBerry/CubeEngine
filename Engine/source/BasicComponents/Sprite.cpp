@@ -293,8 +293,6 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	filePath = path;
 	stacks = stacks_;
 	slices = slices_;
-	metallic = metallic_;
-	roughness = roughness_;
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadMesh(type, path, color, stacks_, slices_, metallic_, roughness_);

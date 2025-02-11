@@ -268,8 +268,8 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 	bool isSelectedObjModel = false;
 	stacks = sprite->GetStacks();
 	slices = sprite->GetSlices();
-	metallic = sprite->GetMetallic();
-	roughness = sprite->GetRoughness();
+	metallic = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic;
+	roughness = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness;
 
 	if (renderManager->GetRenderType() == RenderType::ThreeDimension)
 	{
@@ -308,11 +308,12 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
-				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+				renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic = metallic;
+
 			}
 			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
 			{
-				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+				renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness = roughness;
 			}
 			ImGui::Spacing();
 

@@ -66,8 +66,6 @@ public:
 	std::filesystem::path GetModelFilePath() { return filePath; }
 	int GetStacks() { return stacks; };
 	int GetSlices() { return slices; };
-	float GetMetallic() { return metallic; };
-	float GetRoughness() { return roughness; };
 	std::string GetTextureName() { return textureName; }
 	bool GetIsTex() { return isTex; }
 
@@ -78,7 +76,6 @@ public:
 	glm::vec4 GetColor();
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	void SetIsTex(bool state);
-
 
 	//For CompFuncQueue
 	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
@@ -100,8 +97,6 @@ private:
 	//For RecreateMesh
 	int stacks = 1;
 	int slices = 1;
-	float metallic = 0.3f;
-	float roughness = 0.3f;
 	bool isTex = false;
 	MeshType meshType; 
 	std::filesystem::path filePath = "";

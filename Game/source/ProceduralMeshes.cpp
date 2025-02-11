@@ -35,6 +35,26 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::DIRECTIONAL);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, -1.f, 0.25f), glm::vec3{ 0.05f,0.05f,0.05f }, "1", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, -1.f, 0.5f), glm::vec3{ 0.05f,0.05f,0.05f }, "2", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, -1.f, 0.75f), glm::vec3{ 0.05f,0.05f,0.05f }, "3", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 0.f, 1.f, 1.f));
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, -1.f, 0.1f), glm::vec3{ 0.05f,0.05f,0.05f }, "4", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
+
 	currentMesh = MeshType::PLANE;
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
