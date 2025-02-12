@@ -85,6 +85,7 @@ public:
 
 	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
 	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
+	std::vector<ThreeDimension::Material>* GetMaterialUniforms3D() { return &fragMaterialUniforms3D; };
 
 #ifdef _DEBUG
 	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };

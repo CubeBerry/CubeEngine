@@ -47,6 +47,7 @@ public:
 	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
 
 	GLTexture* GetTexture(std::string name);
+	std::vector<GLTexture*> GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
 	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) override;

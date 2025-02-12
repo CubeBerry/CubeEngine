@@ -33,6 +33,7 @@ void GameStateManager::LevelInit(GameLevel currentLevel_)
 {
 	currentLevel = currentLevel_;
 	LevelInit();
+	Engine::GetObjectManager().ProcessComponentFunctionQueues();
 	state = State::UPDATE;
 #ifdef _DEBUG
 	std::cout << "Load Complete" << std::endl;
@@ -55,6 +56,7 @@ void GameStateManager::Update(float dt)
 		break;
 	case State::LOAD:
 		LevelInit();
+		Engine::GetObjectManager().ProcessComponentFunctionQueues();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #ifdef _DEBUG
 		std::cout << "Load Complete" << std::endl;
@@ -67,12 +69,22 @@ void GameStateManager::Update(float dt)
 	case State::UPDATE:
 		UpdateGameLogic(dt);
 		UpdateDraw(dt);
+		Engine::GetObjectManager().ProcessComponentFunctionQueues();
+		Engine::GetObjectManager().DeleteObjectsFromList();
 		//Mouse Input X if order is opposite
+		break;
+	case State::PAUSE:
+		UpdateGameLogic(0.f);
+		UpdateDraw(0.f);
+		Engine::GetObjectManager().ProcessComponentFunctionQueues();
+		Engine::GetObjectManager().DeleteObjectsFromList();
 		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();
 		currentLevel = levelSelected;
 #ifdef _DEBUG
+		Engine::GetRenderManager()->DrawNormals(false);
+		Engine::GetObjectManager().SetIsDrawNormals(false);
 		std::cout << "Level Change" << std::endl;
 #endif
 		state = State::LOAD;
@@ -156,34 +168,29 @@ void GameStateManager::RestartLevel()
 
 void GameStateManager::UpdateGameLogic(float dt)
 {
-	if (state == State::UPDATE)
+	if (levelSelected != currentLevel)
 	{
-		if (levelSelected != currentLevel)
-		{
-			state = State::CHANGE;
-		}
-		else
-		{
-			levelList.at(static_cast<int>(currentLevel))->Update(dt);
-			Engine::GetObjectManager().Update(dt);
-			Engine::GetParticleManager().Update(dt);
-			Engine::GetCameraManager().Update();
-			CollideObjects();
-			Engine::GetSpriteManager().Update(dt);
-		}
+		state = State::CHANGE;
+	}
+	else
+	{
+		levelList.at(static_cast<int>(currentLevel))->Update(dt);
+		Engine::GetObjectManager().Update(dt);
+		Engine::GetParticleManager().Update(dt);
+		Engine::GetCameraManager().Update();
+		CollideObjects();
+		Engine::GetSpriteManager().Update(dt);
 	}
 }
 void GameStateManager::UpdateDraw(float dt)
 {
-	if (state == State::UPDATE)
+	if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
 	{
-		if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
-		{
-			DrawWithImGui(dt);
-			//Draw();
-		}
+		DrawWithImGui(dt);
+		//Draw();
 	}
 }
+
 void GameStateManager::StateChanger()
 {
 	if (ImGui::BeginMainMenuBar())

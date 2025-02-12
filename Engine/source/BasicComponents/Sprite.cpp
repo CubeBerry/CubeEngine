@@ -20,10 +20,7 @@ Sprite::~Sprite()
 		delete anim;
 	}
 	animations.clear();
-	if (this != nullptr)
-	{
-		Engine::GetSpriteManager().DeleteSprite(this);
-	}
+	DeleteFromSpriteManagerList();
 }
 
 void Sprite::Init()
@@ -242,8 +239,46 @@ void Sprite::AddMeshWithTexel(std::string name_, glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color)
+void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
 {
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color); });
+}
+
+void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
+{
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
+}
+
+void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
+{
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color); });
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[](Sprite* sprite) { sprite->SetIsTex(sprite->GetIsTex()); });
+}
+
+void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
+{
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
+	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+		[](Sprite* sprite) { sprite->SetIsTex(sprite->GetIsTex()); });
+}
+
+
+void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
+{
+	meshType = type;
+	filePath = path;
+	stacks = stacks_;
+	slices = slices_;
+
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->LoadMesh(type, path, color, stacks, slices);
 	//materialId = Engine::GetSpriteManager().GetSpritesAmount();
@@ -252,14 +287,27 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 	AddSpriteToManager();
 }
 
-void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks, int slices, glm::vec4 color, float metallic, float roughness)
+void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
 {
+	meshType = type;
+	filePath = path;
+	stacks = stacks_;
+	slices = slices_;
+
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->LoadMesh(type, path, color, stacks, slices, metallic, roughness);
+	renderManager->LoadMesh(type, path, color, stacks_, slices_, metallic_, roughness_);
 	//materialId = Engine::GetSpriteManager().GetSpritesAmount();
 	materialId = static_cast<int>(Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->size() - 1);
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
+}
+
+void Sprite::DeleteFromSpriteManagerList()
+{
+	if (this != nullptr)
+	{
+		Engine::GetSpriteManager().DeleteSprite(this);
+	}
 }
 
 void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
@@ -415,10 +463,13 @@ void Sprite::ChangeTexture(std::string name)
 			{
 				renderManagerGL->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
 				renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = true;
+				isTex = true;
+				textureName = name;
 			}
 			else
 			{
 				renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = false;
+				isTex = false;
 			}
 		}
 		else
@@ -427,10 +478,13 @@ void Sprite::ChangeTexture(std::string name)
 			{
 				renderManagerGL->GetFragmentUniforms3D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
 				renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = true;
+				isTex = true;
+				textureName = name;
 			}
 			else
 			{
 				renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = false;
+				isTex = false;
 			}
 		}
 		break;
@@ -444,10 +498,13 @@ void Sprite::ChangeTexture(std::string name)
 			{
 				renderManagerVK->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
 				renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = true;
+				isTex = true;
+				textureName = name;
 			}
 			else
 			{
 				renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = false;
+				isTex = false;
 			}
 		}
 		else 
@@ -456,10 +513,13 @@ void Sprite::ChangeTexture(std::string name)
 			{
 				renderManagerVK->GetFragmentUniforms3D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
 				renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = true;
+				isTex = true;
+				textureName = name;
 			}
 			else
 			{
 				renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = false;
+				isTex = false;
 			}
 		}
 		break;
@@ -495,6 +555,43 @@ glm::vec4 Sprite::GetColor()
 	else
 	{
 		return Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).color;
+	}
+}
+
+void Sprite::SetIsTex(bool state)
+{
+	isTex = state;
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	switch (renderManager->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
+	{
+		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = state;
+		}
+		else
+		{
+			renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = state;
+		}
+		break;
+	}
+	case GraphicsMode::VK:
+	{
+		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = state;
+		}
+		else
+		{
+			renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = state;
+		}
+		break;
+	}
+	default:
+		break;
 	}
 }
 

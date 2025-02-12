@@ -14,15 +14,22 @@
 void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
-	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
+	//DeleteObjectsFromList();
 	objectsToBeDeleted.clear();
+}
+
+void ObjectManager::DeleteObjectsFromList()
+{
+	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
 }
 
 void ObjectManager::End()
 {
+	objName = "Object";
 	DestroyAllObjects();
 	currentIndex = 0;
 	objectListForImguiIndex = 0;
+	componentFunctionQueue.clear();
 }
 
 void ObjectManager::Draw(float dt)
@@ -51,6 +58,15 @@ void ObjectManager::DestroyAllObjects()
 	objectMap.clear();
 }
 
+int ObjectManager::GetLastObjectID()
+{
+	if (!objectMap.empty())
+	{
+		return (GetLastObject()->GetId());
+	}
+	return 0;
+}
+
 Object* ObjectManager::FindObjectWithName(std::string name)
 {
 	for (auto& obj : objectMap)
@@ -66,36 +82,53 @@ Object* ObjectManager::FindObjectWithName(std::string name)
 void ObjectManager::ObjectControllerForImGui()
 {
 	ImGui::Begin("ObjectController");
-	//if (ImGui::Button("Add New Object"))
-	//{
-	//    AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "NEW OBJECT", ObjectType::NONE);
-	//    GetLastObject()->AddComponent<Sprite>();
-	//    GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
-	//}
-	ImGui::Separator();
-	ImGui::Spacing();
 
-	ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-	ImGui::BeginChild("Scrolling");
-	int index = 0;
-	for (auto& object : GetObjectMap())
+	static char newName[256] = "Object";
+	ImGui::InputText("Object Name", newName, 128);
+	objName = newName;
+
+	if (ImGui::Button("Add New Object"))
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, (objectListForImguiIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
-		if((ImGui::Selectable(object.second.get()->GetName().c_str(), index)) || index == objectListForImguiIndex)
-		{
-			objectListForImguiIndex = index;
-			currentIndex = object.second.get()->GetId();
-		}
-		ImGui::PopStyleColor();
-		index++;
+		AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, objName, ObjectType::NONE);
 	}
 
-	ImGui::EndChild();
-	ImGui::Separator();
-	ImGui::Spacing();
-
+	ImGui::SameLine();
 	if (!objectMap.empty())
 	{
+		if (ImGui::Button("Delete"))
+		{
+			Destroy(currentIndex);
+		}
+
+		if (currentIndex > GetLastObjectID())
+		{
+			objectListForImguiIndex--;
+			currentIndex = GetLastObjectID();
+		}
+
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
+		ImGui::BeginChild("Scrolling");
+		int index = 0;
+		for (auto& object : GetObjectMap())
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, (objectListForImguiIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
+			std::string indexName = std::to_string(index) + "." + object.second.get()->GetName();
+			if ((ImGui::Selectable(indexName.c_str(), currentIndex)) || objectListForImguiIndex == index)
+			{
+				objectListForImguiIndex = index;
+				currentIndex = object.second.get()->GetId();
+			}
+			ImGui::PopStyleColor();
+			index++;
+		}
+
+		ImGui::EndChild();
+		ImGui::Separator();
+		ImGui::Spacing();
+
 		Object* obj = FindObjectWithId(currentIndex);
 
 		glm::vec3 position = obj->GetPosition();
@@ -124,6 +157,9 @@ void ObjectManager::ObjectControllerForImGui()
 			ComponentTypes type = comp->GetType();
 			switch (type)
 			{
+			case ComponentTypes::SPRITE:
+				SpriteControllerForImGui(reinterpret_cast<Sprite*>(comp));
+				break;
 			case ComponentTypes::PHYSICS3D:
 				Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
 				break;
@@ -135,11 +171,11 @@ void ObjectManager::ObjectControllerForImGui()
 
 		ImGui::Separator();
 		ImGui::Spacing();
-		/*if (ImGui::Button("Add Component"))
+		if (ImGui::Button("Add Component"))
 		{
 			isShowPopup = true;
 			ImGui::OpenPopup("Select Component");
-		}*/
+		}
 
 		obj = nullptr;
 
@@ -147,12 +183,32 @@ void ObjectManager::ObjectControllerForImGui()
 		{
 			AddComponentPopUpForImGui();
 		}
+		if (ImGui::IsPopupOpen("Select Model"))
+		{
+			SelectObjModelPopUpForImGui();
+		}
 	}
 
 	ImGui::End();
-	SelectObjectWithMouse();
+	//SelectObjectWithMouse();
 
+	if (isShowPopup == true && Engine::GetGameStateManager().GetGameState() == State::UPDATE)
+	{
+		Engine::GetGameStateManager().SetGameState(State::PAUSE);
+	}
+	else if (isShowPopup == false && Engine::GetGameStateManager().GetGameState() == State::PAUSE)
+	{
+		Engine::GetGameStateManager().SetGameState(State::UPDATE);
+	}
+}
 
+void ObjectManager::ProcessComponentFunctionQueues()
+{
+	for (auto& task : componentFunctionQueue)
+	{
+		task();
+	}
+	componentFunctionQueue.clear();
 }
 
 void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
@@ -203,6 +259,210 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		physics->SetMass(mass);
 	}
 	physics = nullptr;
+}
+
+void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
+{
+	RenderManager* renderManager = Engine::GetRenderManager();
+	Sprite* spriteComp = sprite;
+	bool isSelectedObjModel = false;
+	stacks = sprite->GetStacks();
+	slices = sprite->GetSlices();
+	metallic = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic;
+	roughness = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness;
+
+	if (renderManager->GetRenderType() == RenderType::ThreeDimension)
+	{
+		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Spacing();
+			glm::vec4 color = spriteComp->GetColor();
+			if (ImGui::ColorEdit4("Color", &color.r))
+			{
+				spriteComp->SetColor(color);
+			}
+			ImGui::Spacing();
+			if (ImGui::Button("FILL", ImVec2(100, 0)))
+			{
+				renderManager->SetPolygonType(PolygonType::FILL);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("LINE", ImVec2(100, 0)))
+			{
+				renderManager->SetPolygonType(PolygonType::LINE);
+			}
+#ifdef _DEBUG
+			ImGui::Spacing();
+			ImGui::Checkbox("DrawNormals", &isDrawNormals);
+			renderManager->DrawNormals(isDrawNormals);
+#endif
+
+			ImGui::Spacing();
+			if (ImGui::SliderInt("Stacks", &stacks, 1, 30))
+			{
+				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+			}
+			if (ImGui::SliderInt("Slices", &slices, 1, 30))
+			{
+				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+			}
+			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
+			{
+				renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic = metallic;
+
+			}
+			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
+			{
+				renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness = roughness;
+			}
+			ImGui::Spacing();
+
+			bool isTextureExist = false;
+			switch (renderManager->GetGraphicsMode())
+			{
+				case GraphicsMode::GL:
+				{
+					isTextureExist = !dynamic_cast<GLRenderManager*>(renderManager)->GetTextures().empty();
+					break;
+				}
+				case GraphicsMode::VK:
+				{
+					isTextureExist = !dynamic_cast<VKRenderManager*>(renderManager)->GetTextures().empty();
+					break;
+				}
+			}
+
+			if(isTextureExist)
+			{
+				bool isTextureOn = sprite->GetIsTex();
+				if (ImGui::Checkbox("Apply Texture", &isTextureOn))
+				{
+				}
+
+				if (isTextureOn)
+				{
+					switch (renderManager->GetGraphicsMode())
+					{
+					case GraphicsMode::GL:
+					{
+						GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
+						if (ImGui::BeginCombo("TextureList", sprite->GetTextureName().c_str()))
+						{
+							for (auto& tex : renderManagerGL->GetTextures())
+							{
+								int index = 0;
+								const bool is_selected = tex->GetName().c_str() == sprite->GetTextureName().c_str();
+
+								//ImGui::Image((void*)(intptr_t)tex->GetTextureHandle(), ImVec2(16, 16), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+								//ImGui::SameLine();
+
+								if (ImGui::Selectable(tex->GetName().c_str()))
+								{
+									sprite->ChangeTexture(tex->GetName());
+								}
+								if (is_selected)
+								{
+									ImGui::SetItemDefaultFocus();
+								}
+								index++;
+							}
+							ImGui::EndCombo();
+						}
+						break;
+					}
+					case GraphicsMode::VK:
+					{
+						VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
+
+						//VKTexture* objTex = renderManagerVK->GetTexture(sprite->GetTextureName().c_str());
+						//if(objTex != nullptr)
+						//{
+						//	VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(*objTex->GetSampler(), *objTex->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+						//	ImGui::Image((ImTextureID)descriptorSet, ImVec2(64, 64), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+						//	ImGui::SameLine();
+						//}
+
+						if (ImGui::BeginCombo("TextureList", sprite->GetTextureName().c_str()))
+						{
+							for (auto& tex : renderManagerVK->GetTextures())
+							{
+								int index = 0;
+								const bool is_selected = tex->GetName().c_str() == sprite->GetTextureName().c_str();
+
+								//VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(*tex->GetSampler(), *tex->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+								//ImGui::Image((ImTextureID)descriptorSet, ImVec2(16, 16), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+								//ImGui::SameLine();
+
+								if (ImGui::Selectable(tex->GetName().c_str()))
+								{
+									sprite->ChangeTexture(tex->GetName());
+								}
+								if (is_selected)
+								{
+									ImGui::SetItemDefaultFocus();
+								}
+								index++;
+							}
+							ImGui::EndCombo();
+						}
+						break;
+					}
+					}
+				}
+				else
+				{
+					sprite->SetIsTex(false);
+				}
+				sprite->SetIsTex(isTextureOn);
+				ImGui::Spacing();
+			}
+
+			if (ImGui::BeginMenu("Select Mesh Type"))
+			{
+				if (ImGui::MenuItem("Plane", "0"))
+				{
+					sprite->RecreateMesh3D(MeshType::PLANE, "", 2, 2, color, metallic, roughness);
+				}
+				if (ImGui::MenuItem("Cube", "1"))
+				{
+					sprite->RecreateMesh3D(MeshType::CUBE, "", 2, 2, color, metallic, roughness);
+				}
+				if (ImGui::MenuItem("Sphere", "2"))
+				{
+					sprite->RecreateMesh3D(MeshType::SPHERE, "", 30, 30, color, metallic, roughness);
+				}
+				if (ImGui::MenuItem("Torus", "3"))
+				{
+					sprite->RecreateMesh3D(MeshType::TORUS, "", 15, 15, color, metallic, roughness);
+				}
+				if (ImGui::MenuItem("Cylinder", "4"))
+				{
+					sprite->RecreateMesh3D(MeshType::CYLINDER, "", 10, 10, color, metallic, roughness);
+				}
+				if (ImGui::MenuItem("Cone", "5"))
+				{
+					sprite->RecreateMesh3D(MeshType::CONE, "", 10, 10, color, metallic, roughness);
+				}
+				if (ImGui::MenuItem("Obj Model", "6"))
+				{
+					isSelectedObjModel = true;
+				}
+				ImGui::EndMenu();
+			}
+
+			if (isSelectedObjModel)
+			{
+				ImGui::OpenPopup("Select Model");
+				isShowPopup = true;
+			}
+			ImGui::Spacing();
+		}
+	}
+	else
+	{
+	}
+	spriteComp = nullptr;
+	renderManager = nullptr;
 }
 
 void ObjectManager::LightControllerForImGui(Light* light)
@@ -288,7 +548,7 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			ImGui::Separator();
 			ImGui::Spacing();
 
-			if (ImGui::Button("Direct"))
+			if (ImGui::Button("Directional"))
 			{
 				isShowPopup = false;
 				light->AddLight(LightType::DIRECTIONAL);
@@ -406,7 +666,7 @@ void ObjectManager::AddComponentPopUpForImGui()
 	if (ImGui::BeginPopupModal("Select Component", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 3 * ImGui::GetTextLineHeightWithSpacing()));
-		ImGui::BeginChild("Scolling");
+		ImGui::BeginChild("Scrolling");
 		Object* currentObj = FindObjectWithId(currentIndex);
 
 		for (int i = 0; i < static_cast<int>(ComponentTypes::INVALID); i++)
@@ -421,6 +681,8 @@ void ObjectManager::AddComponentPopUpForImGui()
 					if (currentObj->HasComponent<Sprite>() == false)
 					{
 						currentObj->AddComponent<Sprite>();
+						currentObj->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+						//TBD
 					}
 					break;
 				case ComponentTypes::PHYSICS2D:
@@ -467,6 +729,100 @@ void ObjectManager::AddComponentPopUpForImGui()
 	ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::End();
 }
+
+void ObjectManager::SelectObjModelPopUpForImGui()
+{
+	ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+	ImVec2 popupSize = ImVec2(200, 300);
+	ImVec2 popupPos = ImVec2((displaySize.x - popupSize.x) / 2.0f, (displaySize.y - popupSize.y) / 2.0f);
+
+	ImGui::SetNextWindowPos(popupPos, ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(popupSize);
+
+	if (ImGui::BeginPopupModal("Select Model", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 4 * ImGui::GetTextLineHeightWithSpacing()));
+		ImGui::BeginChild("Scolling");
+		Object* currentObj = FindObjectWithId(currentIndex);
+		glm::vec4 color = currentObj->GetComponent<Sprite>()->GetColor();
+
+		//for (int i = 0; i < 9; i++)
+		{
+			if (ImGui::Selectable("Cube"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Car"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Diamond"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Dodecahedron"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Gourd"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Sphere"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Teapot"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Vase"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Monkey"))
+			{
+				isShowPopup = false;
+				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", stacks, slices, color, metallic, roughness);
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		currentObj = nullptr;
+		ImGui::EndChild();
+		ImGui::Separator();
+
+		if (ImGui::Button("Close"))
+		{
+			isShowPopup = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::SetNextWindowBgAlpha(0.5f);
+	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImGui::End();
+}
+
 
 
 

@@ -157,12 +157,13 @@ void CameraManager::ControlCamera(float dt)
 	{
 		MoveCameraPos(CameraMoveDir::DOWN, 5.f * dt);
 	}
-	if (Engine::GetInputManager().GetMouseWheelMotion().y != 0.f)
-	{
-		SetZoom(GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
-	}
+	//if (Engine::GetInputManager().GetMouseWheelMotion().y != 0.f)
+	//{
+	//	SetZoom(GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
+	//}
 	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::RIGHT) || SDL_GetRelativeMouseMode() == SDL_TRUE)
 	{
 		UpdaetCameraDirectrion(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
 	}
+	//TBD
 }

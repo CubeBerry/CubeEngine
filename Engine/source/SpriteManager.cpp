@@ -57,6 +57,7 @@ void SpriteManager::DeleteSprite(Sprite* sprite_)
 			case RenderType::ThreeDimension:
 				Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at((*it)->GetMaterialId() + 1);
 				Engine::Instance().GetRenderManager()->GetFragmentUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetFragmentUniforms3D()->at((*it)->GetMaterialId() + 1);
+				Engine::Instance().GetRenderManager()->GetMaterialUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetMaterialUniforms3D()->at((*it)->GetMaterialId() + 1);
 				break;
 			}
 		}

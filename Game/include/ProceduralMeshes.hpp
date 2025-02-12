@@ -20,14 +20,9 @@ public:
 private:
 	int stacks{ 1 };
 	int slices{ 1 };
-	bool isFill{ true };
 	std::array<float, 4> color = { 1.f, 0.f, 0.f, 1.f };
 
 	MeshType currentMesh{ MeshType::PLANE };
-
-	bool isRecreate{ false };
-	void RecreateMesh();
-	bool isDrawNormals{ false };
 
 	//ImGui - Projection
 	float cNear{ 0.05f }, cFar{ 45.f };

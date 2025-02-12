@@ -20,5 +20,4 @@ public:
 private:
 	float cNear{ 0.05f }, cFar{ 45.f };
 	float cFov{ 22.5f };
-	bool isDrawNormals{ false };
 };

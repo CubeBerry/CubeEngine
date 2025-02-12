@@ -11,6 +11,7 @@ enum class State
 	START,
 	LOAD,
 	UPDATE,
+	PAUSE,
 	UNLOAD,
 	SHUTDOWN,
 	RESTART,

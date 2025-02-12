@@ -4,12 +4,14 @@
 #pragma once
 #include "Object.hpp"
 
+#include <functional>
 #include <algorithm>
 #include <map>
 #include <memory>
 #include <vector>
 #include <iostream>
 
+class Sprite;
 class Physics3D;
 class Light;
 class ObjectManager
@@ -19,6 +21,7 @@ public:
     ~ObjectManager() = default;
 
 	void Update(float dt);
+    void DeleteObjectsFromList();
     void End();
 
     template <typename T, typename... Args>
@@ -38,7 +41,7 @@ public:
     void  Destroy(int id);
     void  DestroyAllObjects();
 
-    int   GetLastObjectID() { return (GetLastObject()->GetId()); }
+    int   GetLastObjectID();
     std::map<int, std::unique_ptr<Object>>& GetObjectMap() { return objectMap; }
 
     Object* FindObjectWithName(std::string name);
@@ -49,19 +52,41 @@ public:
         {
             return nullptr;
         }
-        return objectMap.at(lastObjectID - 1).get();
+        return objectMap.rbegin()->second.get();
     }
     void ObjectControllerForImGui();
+
+    template<typename ComponentTypes, typename Func>
+    void QueueComponentFunction(ComponentTypes* component, Func&& func)
+    {
+        if (component == nullptr)
+        {
+            std::cerr << "nullptr component!" << std::endl;
+            return;
+        }
+
+        componentFunctionQueue.push_back([component, func]()
+        {
+            func(component);
+        });
+    }
+
+    void ProcessComponentFunctionQueues();
+
+    void SetIsDrawNormals(bool draw) { isDrawNormals = draw; };
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
+    void SpriteControllerForImGui(Sprite* sprite);
     void LightControllerForImGui(Light* light);
     void SelectObjectWithMouse();
     void AddComponentPopUpForImGui();
+    void SelectObjModelPopUpForImGui();
     int                                    lastObjectID = 0;
     std::map<int, std::unique_ptr<Object>> objectMap;
     std::vector<int>                       objectsToBeDeleted; // list of object id to be deleted
 
     //For ObjectController
+    std::string objName;
     bool isShowPopup = false;
     int selectedItem = -1;
 
@@ -70,5 +95,15 @@ private:
 	int closestObjectId = 0;
     bool isDragObject = false;
     bool isObjGravityOn = false;
-    //
+
+    int stacks = 1;
+    int slices = 1;
+    float metallic = 0.3f;
+    float roughness = 0.3f;
+#ifdef _DEBUG
+    bool isDrawNormals = false;
+#endif
+
+    std::vector<std::function<void()>> componentFunctionQueue;
+    //For ObjectController
 };

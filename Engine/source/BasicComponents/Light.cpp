@@ -18,6 +18,73 @@ Light::~Light()
 	{
 		delete pointLight;
 	}
+	
+	if (lightType == LightType::POINT)
+	{
+		std::vector<ThreeDimension::PointLightUniform>& list = Engine::GetRenderManager()->GetPointLightUniforms();
+		auto tempId = lightlId;
+		if (!list.empty())
+		{
+			auto iterator = std::find_if(list.begin(), list.end(), [&](const ThreeDimension::PointLightUniform& pL) {
+				return &pL == &pLight;
+			});
+
+			if (iterator != list.end())
+			{
+				size_t index = std::distance(list.begin(), iterator);
+				for (size_t i = index; i < list.size() - 1; i++)
+				{
+					list[i] = list[i + 1];
+				}
+			}
+			list.pop_back();
+		}
+
+		for (auto& obj : Engine::GetObjectManager().GetObjectMap())
+		{
+			if (obj.second.get() != nullptr && obj.second.get()->HasComponent<Light>())
+			{
+				Light* light = obj.second.get()->GetComponent<Light>();
+				if (light->GetLightType() == LightType::POINT && light->GetLightId() > tempId)
+				{
+					light->SetLightId(light->GetLightId() - 1);
+				}
+			}
+		}
+	}
+	else if (lightType == LightType::DIRECTIONAL)
+	{
+		std::vector<ThreeDimension::DirectionalLightUniform>& list = Engine::GetRenderManager()->GetDirectionalLightUniforms();
+		auto tempId = lightlId;
+		if (!list.empty())
+		{
+			auto iterator = std::find_if(list.begin(), list.end(), [&](const ThreeDimension::DirectionalLightUniform& dL) {
+				return &dL == &dLight;
+			});
+
+			if (iterator != list.end())
+			{
+				size_t index = std::distance(list.begin(), iterator);
+				for (size_t i = index; i < list.size() - 1; i++)
+				{
+					list[i] = list[i + 1];
+				}
+			}
+			list.pop_back();
+		}
+
+		for (auto& obj : Engine::GetObjectManager().GetObjectMap())
+		{
+			if (obj.second.get() != nullptr && obj.second.get()->HasComponent<Light>())
+			{
+				Light* light = obj.second.get()->GetComponent<Light>();
+				if (light->GetLightType() == LightType::DIRECTIONAL && light->GetLightId() > tempId)
+				{
+					light->SetLightId(light->GetLightId() - 1);
+				}
+			}
+		}
+	}
 }
 
 void Light::Init()
@@ -33,7 +100,6 @@ void Light::AddLight(LightType lightType_, float ambient_, float specular_)
 		if (lightType == LightType::DIRECTIONAL)
 		{
 			GetOwner()->SetPosition(glm::vec3(0.f));
-			dLight.lightDirection = { 0.f,0.f,0.f };
 			dLight.ambientStrength = ambient_;
 			dLight.specularStrength = specular_;
 			Engine::GetRenderManager()->AddDirectionalLight(dLight);
