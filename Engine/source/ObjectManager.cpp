@@ -15,12 +15,12 @@ void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
 	//DeleteObjectsFromList();
-	objectsToBeDeleted.clear();
 }
 
 void ObjectManager::DeleteObjectsFromList()
 {
 	std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
+	objectsToBeDeleted.clear();
 }
 
 void ObjectManager::End()
@@ -266,13 +266,14 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 	RenderManager* renderManager = Engine::GetRenderManager();
 	Sprite* spriteComp = sprite;
 	bool isSelectedObjModel = false;
-	stacks = sprite->GetStacks();
-	slices = sprite->GetSlices();
-	metallic = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic;
-	roughness = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness;
 
 	if (renderManager->GetRenderType() == RenderType::ThreeDimension)
 	{
+		stacks = sprite->GetStacks();
+		slices = sprite->GetSlices();
+		metallic = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic;
+		roughness = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness;
+
 		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::Spacing();

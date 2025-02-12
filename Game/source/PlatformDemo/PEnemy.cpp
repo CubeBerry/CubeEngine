@@ -150,7 +150,7 @@ void PEnemy::UpdateEnemyNormal(float dt)
 		{
 			if (GetComponent<Sprite>()->IsAnimationDone() == true)
 			{
-				Engine::GetObjectManager().Destroy(Object::id);
+				Engine::GetObjectManager().Destroy(id);
 			}
 		}
 	}
