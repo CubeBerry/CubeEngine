@@ -190,7 +190,7 @@ void ObjectManager::ObjectControllerForImGui()
 	}
 
 	ImGui::End();
-	SelectObjectWithMouse();
+	//SelectObjectWithMouse();
 
 	if (isShowPopup == true && Engine::GetGameStateManager().GetGameState() == State::UPDATE)
 	{
