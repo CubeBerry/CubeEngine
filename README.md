@@ -8,7 +8,7 @@ CubeEngine is a rendering engine written in C++, developed as a personal hobby p
 
 ## Minimum Requirements
 1. Latest Graphics Driver
-2. GPU with Vulkan version 1.3.296.0 or above supported
+2. GPU with Vulkan version 1.3.268.0 or above supported
 3. Discrete GPU recommended
 4. Download [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/) Minimum Version 1.3.268.0
  
