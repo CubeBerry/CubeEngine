@@ -14,7 +14,7 @@
 void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
-	std::vector<ThreeDimension::Vertex> tempVertices;
+	std::vector<ThreeDimension::GeometryVertex> tempVertices;
 	std::vector<uint32_t> tempIndices;
 	unsigned int verticesCount{ 0 };
 	for (unsigned int vertex : verticesPerMesh)
@@ -34,7 +34,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				tempVertices.push_back(ThreeDimension::Vertex(
+				tempVertices.push_back(ThreeDimension::GeometryVertex(
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row),
@@ -49,7 +49,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	break;
 	case MeshType::CUBE:
 	{
-		std::vector<ThreeDimension::Vertex> planeVertices;
+		std::vector<ThreeDimension::GeometryVertex> planeVertices;
 		std::vector<uint32_t> planeIndices;
 		//Vertices
 		for (int stack = 0; stack <= stacks; ++stack)
@@ -60,7 +60,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				planeVertices.push_back(ThreeDimension::Vertex(
+				planeVertices.push_back(ThreeDimension::GeometryVertex(
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row),
@@ -99,7 +99,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 
 			for (const auto& plane_vertex : planeVertices)
 			{
-				tempVertices.push_back(ThreeDimension::Vertex(
+				tempVertices.push_back(ThreeDimension::GeometryVertex(
 					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
 					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
 					plane_vertex.uv,
@@ -129,7 +129,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			{
 				const float col = static_cast<float>(slice) / static_cast<float>(slices);
 				const float alpha = col * PI * 2.f;
-				ThreeDimension::Vertex v;
+				ThreeDimension::GeometryVertex v;
 				v.position = glm::vec3(rad * sin(alpha) * cos_beta, rad * sin_beta, rad * cos(alpha) * cos_beta);
 				v.normal = glm::normalize(v.position);
 				v.normal /= rad;
@@ -160,7 +160,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(j) / static_cast<float>(slices);
 				float beta = 2.0f * col * PI;
 
-				ThreeDimension::Vertex v;
+				ThreeDimension::GeometryVertex v;
 				v.position = glm::vec3{ (R + r * cos(beta)) * sinAlpha,r * sin(-beta),(R + r * cos(beta)) * cosAlpha };
 				v.position /= 2 * (R + r);
 
@@ -192,7 +192,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(j) / static_cast<float>(slices);
 				float alpha = col * 2.0f * PI;
 
-				ThreeDimension::Vertex v;
+				ThreeDimension::GeometryVertex v;
 				v.position = glm::vec3{ radius * sin(alpha), row - radius, radius * cos(alpha) };
 				v.normal = glm::vec3{ v.position.x / radius, v.position.y, v.position.z / radius };
 				v.uv.x = col;
@@ -207,7 +207,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
 
 		//Top
-		ThreeDimension::Vertex P0, Pi;
+		ThreeDimension::GeometryVertex P0, Pi;
 		P0.position = glm::vec3{ 0.0f,0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, 1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
@@ -284,7 +284,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				float col = static_cast<float>(j) / static_cast<float>(slices);
 				float alpha = col * 2.0f * PI;
 
-				ThreeDimension::Vertex v;
+				ThreeDimension::GeometryVertex v;
 				//row == stacks
 				v.position = glm::vec3{ radius * (height - row) * sin(alpha),row - radius ,radius * (height - row) * cos(alpha) };
 				v.normal = v.position / radius;
@@ -300,7 +300,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
 
 		//Bottom
-		ThreeDimension::Vertex P0, Pi;
+		ThreeDimension::GeometryVertex P0, Pi;
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
@@ -543,7 +543,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 	}
 }
 
-void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices)
+void RenderManager::BuildIndices(const std::vector<ThreeDimension::GeometryVertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices)
 {
 	//Indices
 	int i0 = 0, i1 = 0, i2 = 0;
@@ -601,7 +601,7 @@ void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, unsigned int
 
 void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount)
 {
-	std::vector<ThreeDimension::Vertex> tempVertices;
+	std::vector<ThreeDimension::GeometryVertex> tempVertices;
 	std::vector<uint32_t> tempIndices;
 
 	//Vertices
@@ -609,7 +609,7 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int
 	{
 		aiVector3D vertex = mesh->mVertices[v];
 		aiVector3D normal = mesh->mNormals[v];
-		tempVertices.push_back(ThreeDimension::Vertex(
+		tempVertices.push_back(ThreeDimension::GeometryVertex(
 			glm::vec3(vertex.x, vertex.y, vertex.z),
 			glm::vec3(normal.x, normal.y, normal.z),
 			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },

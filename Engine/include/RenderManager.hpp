@@ -124,7 +124,7 @@ protected:
 	std::vector<ThreeDimension::DirectionalLightUniform> directionalLightUniforms;
 	std::vector<ThreeDimension::PointLightUniform> pointLightUniforms;
 
-	std::vector<ThreeDimension::Vertex> vertices3D;
+	std::vector<ThreeDimension::GeometryVertex> vertices3D;
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;
 	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
 	std::vector<ThreeDimension::Material> fragMaterialUniforms3D;
@@ -144,7 +144,7 @@ protected:
 	//Skybox
 	bool skyboxEnabled{ false };
 private:
-	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
+	static void BuildIndices(const std::vector<ThreeDimension::GeometryVertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
 	//Assimp
 	void ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount);
 	void ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount);

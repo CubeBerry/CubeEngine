@@ -12,21 +12,9 @@
 const float PI = 3.14159265359;
 
 layout(location = 0) in vec2 i_uv;
-layout(location = 1) in vec4 i_col;
-layout(location = 2) in flat int i_object_index;
-layout(location = 3) in flat int i_tex_sub_index;
-//Lighting
-layout(location = 4) in vec3 i_normal;
-layout(location = 5) in vec3 i_fragment_position;
-layout(location = 6) in vec3 i_view_position;
+layout(location = 1) in flat int i_object_index;
 
 layout(location = 0) out vec4 fragmentColor;
-
-struct fMatrix
-{
-    int isTex;
-    int texIndex;
-};
 
 struct fMaterial
 {
@@ -59,24 +47,28 @@ struct fPointLight
     float quadratic;
 };
 
+//G-Buffer Textures
 #if VULKAN
-layout(set = 1, binding = 0) uniform fUniformMatrix
+layout(input_attachment_index = 0, set = 0, binding = 0) uniform subpassInput gPosition;
+layout(input_attachment_index = 1, set = 0, binding = 1) uniform subpassInput gNormal;
+layout(input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput gAlbedo;
 #else
-layout(std140, binding = 3) uniform fUniformMatrix
+uniform sampler2D gPosition;
+uniform sampler2D gNormal;
+uniform sampler2D gAlbedo;
 #endif
+
+#if VULKAN
+layout(set = 0, binding = 3) uniform ViewMatrix
 {
-    fMatrix f_matrix[MAX_TEXTURES];
+    mat4 view_position;
 };
-
-#if VULKAN
-layout(set = 1, binding = 1) uniform sampler2D tex[MAX_TEXTURES];
 #else
-//Unit 0 ~ 28
-uniform sampler2D tex[MAX_TEXTURES];
+uniform mat4 view_position;
 #endif
 
 #if VULKAN
-layout(set = 1, binding = 2) uniform fUniformMaterial
+layout(set = 0, binding = 4) uniform fUniformMaterial
 #else
 layout(std140, binding = 4) uniform fUniformMaterial
 #endif
@@ -85,7 +77,7 @@ layout(std140, binding = 4) uniform fUniformMaterial
 };
 
 #if VULKAN
-layout(set = 1, binding = 3) uniform fDirectionalLightList
+layout(set = 0, binding = 5) uniform fDirectionalLightList
 #else
 layout(std140, binding = 5) uniform fDirectionalLightList
 #endif
@@ -94,7 +86,7 @@ layout(std140, binding = 5) uniform fDirectionalLightList
 };
 
 #if VULKAN
-layout(set = 1, binding = 4) uniform fPointLightList
+layout(set = 0, binding = 6) uniform fPointLightList
 #else
 layout(std140, binding = 6) uniform fPointLightList
 #endif
@@ -103,9 +95,9 @@ layout(std140, binding = 6) uniform fPointLightList
 };
 
 #if VULKAN
-layout(set = 1, binding = 5) uniform samplerCube irradianceMap;
-layout(set = 1, binding = 6) uniform samplerCube prefilterMap;
-layout(set = 1, binding = 7) uniform sampler2D brdfLUT;
+layout(set = 0, binding = 7) uniform samplerCube irradianceMap;
+layout(set = 0, binding = 8) uniform samplerCube prefilterMap;
+layout(set = 0, binding = 9) uniform sampler2D brdfLUT;
 #else
 //Unit 29
 uniform samplerCube irradianceMap;
@@ -132,8 +124,8 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     float attenuation = 0.0;
     if (isPointLight)
     {
-        light_direction = normalize(lightPosition - i_fragment_position);
-        float distance = length(lightPosition - i_fragment_position);
+        light_direction = normalize(lightPosition - subpassLoad(gPosition).rgb);
+        float distance = length(lightPosition - subpassLoad(gPosition).rgb);
         attenuation = 1.0 / (pointLightList[lightIndex].constant + pointLightList[lightIndex].linear * distance + pointLightList[lightIndex].quadratic * (distance * distance));
     }
     else
@@ -143,7 +135,7 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     vec3 ambient = ambientStrength * lightColor;
 
     //Diffuse Lighting
-    vec3 normal = normalize(i_normal);
+    vec3 normal = subpassLoad(gNormal).rgb;
     float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diff * lightColor;
 
@@ -151,7 +143,7 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     vec3 specular = vec3(0.0);
     if (diff > 0.0)
     {
-        vec3 view_direction = normalize(i_view_position - i_fragment_position);
+        vec3 view_direction = normalize(inverse(view_position)[3].xyz - subpassLoad(gPosition).rgb);
         // vec3 reflect_direction = reflect(-light_direction, normal);
         vec3 halfway_vector = normalize(view_direction + light_direction);
 
@@ -225,13 +217,13 @@ vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPo
     fMaterial material = f_material[i_object_index];
 
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - i_fragment_position) : 1.0;
+    float distance = isPointLight ? length(lightPosition - gPosition) : 1.0;
     
     vec3 L = vec3(0.0);
     float attenuation = 0.0;
     if (isPointLight)
     {
-        L = normalize(lightPosition - i_fragment_position);
+        L = normalize(lightPosition - gPosition);
         attenuation = 1.0 / (pointLightList[lightIndex].constant + pointLightList[lightIndex].linear * distance + pointLightList[lightIndex].quadratic * (distance * distance));
     }
     else
@@ -266,14 +258,10 @@ void main()
 {
     vec3 resultColor = vec3(0.0);
 
-    vec3 albedo = vec3(0.0);
-    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
-    else albedo = i_col.rgb;
-
-    vec3 F0 = mix(vec3(0.04), albedo, f_material[i_object_index].metallic);
-    vec3 V = normalize(i_view_position - i_fragment_position);
-    vec3 N = normalize(i_normal);
-    MainVectors mainVectors = { albedo, V, N, F0 };
+    vec3 F0 = mix(vec3(0.04), subpassLoad(gAlbedo), f_material[i_object_index].metallic);
+    vec3 V = normalize(inverse(view_position)[3].xyz - gPosition);
+    vec3 N = gNormal;
+    MainVectors mainVectors = { subpassLoad(gAlbedo), V, N, F0 };
 
     //Calculate Directional Lights
 #if VULKAN
@@ -306,7 +294,7 @@ void main()
     vec3 Ks = F;
     vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
     vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse = irradiance * albedo;
+    vec3 diffuse = irradiance * subpassLoad(gAlbedo);
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;

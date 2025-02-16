@@ -426,7 +426,7 @@ void GLRenderManager::DeleteWithIndex(int id)
 			(*it) = (*it) - static_cast<unsigned short>(verticesPerMesh[id]);
 		}
 
-		glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
+		//glCheck(glNamedBufferSubData(vertexBuffer->GetHandle(), 0, static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data()));
 		glCheck(glNamedBufferSubData(indexBuffer->GetHandle(), 0, sizeof(uint32_t) * indices.size(), indices.data()));
 		indexBuffer->SetCount(static_cast<int>(indices.size()));
 		vertexArray.SetIndexBuffer(std::move(*indexBuffer));
@@ -499,7 +499,7 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	if (quadCount > 0)
 		delete vertexBuffer;
 	vertexBuffer = new GLVertexBuffer;
-	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices3D.size()), vertices3D.data());
+	vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::GeometryVertex) * vertices3D.size()), vertices3D.data());
 #ifdef _DEBUG
 	normalVertexBuffer = new GLVertexBuffer;
 	normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices3D.size()), normalVertices3D.data());
@@ -517,47 +517,47 @@ void GLRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 	position_layout.component_dimension = GLAttributeLayout::_3;
 	position_layout.normalized = false;
 	position_layout.vertex_layout_location = 0;
-	position_layout.stride = sizeof(ThreeDimension::Vertex);
+	position_layout.stride = sizeof(ThreeDimension::GeometryVertex);
 	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(ThreeDimension::Vertex, position);
+	position_layout.relative_offset = offsetof(ThreeDimension::GeometryVertex, position);
 
 	GLAttributeLayout normal_layout;
 	normal_layout.component_type = GLAttributeLayout::Float;
 	normal_layout.component_dimension = GLAttributeLayout::_3;
 	normal_layout.normalized = false;
 	normal_layout.vertex_layout_location = 1;
-	normal_layout.stride = sizeof(ThreeDimension::Vertex);
+	normal_layout.stride = sizeof(ThreeDimension::GeometryVertex);
 	normal_layout.offset = 0;
-	normal_layout.relative_offset = offsetof(ThreeDimension::Vertex, normal);
+	normal_layout.relative_offset = offsetof(ThreeDimension::GeometryVertex, normal);
 
 	GLAttributeLayout uv_layout;
 	uv_layout.component_type = GLAttributeLayout::Float;
 	uv_layout.component_dimension = GLAttributeLayout::_2;
 	uv_layout.normalized = false;
 	uv_layout.vertex_layout_location = 2;
-	uv_layout.stride = sizeof(ThreeDimension::Vertex);
+	uv_layout.stride = sizeof(ThreeDimension::GeometryVertex);
 	uv_layout.offset = 0;
-	uv_layout.relative_offset = offsetof(ThreeDimension::Vertex, uv);
+	uv_layout.relative_offset = offsetof(ThreeDimension::GeometryVertex, uv);
 
 	GLAttributeLayout index_layout;
 	index_layout.component_type = GLAttributeLayout::Int;
 	index_layout.component_dimension = GLAttributeLayout::_1;
 	index_layout.normalized = false;
 	index_layout.vertex_layout_location = 3;
-	index_layout.stride = sizeof(ThreeDimension::Vertex);
+	index_layout.stride = sizeof(ThreeDimension::GeometryVertex);
 	index_layout.offset = 0;
-	index_layout.relative_offset = offsetof(ThreeDimension::Vertex, index);
+	index_layout.relative_offset = offsetof(ThreeDimension::GeometryVertex, index);
 
 	GLAttributeLayout tex_sub_index_layout;
 	tex_sub_index_layout.component_type = GLAttributeLayout::Int;
 	tex_sub_index_layout.component_dimension = GLAttributeLayout::_1;
 	tex_sub_index_layout.normalized = false;
 	tex_sub_index_layout.vertex_layout_location = 4;
-	tex_sub_index_layout.stride = sizeof(ThreeDimension::Vertex);
+	tex_sub_index_layout.stride = sizeof(ThreeDimension::GeometryVertex);
 	tex_sub_index_layout.offset = 0;
-	tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+	tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::GeometryVertex, texSubIndex);
 
-	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout });
+	vertexArray.AddVertexBuffer(std::move(*vertexBuffer), sizeof(ThreeDimension::GeometryVertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout });
 	vertexArray.SetIndexBuffer(std::move(*indexBuffer));
 #ifdef _DEBUG
 	//Attributes

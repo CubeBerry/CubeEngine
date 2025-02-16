@@ -38,13 +38,19 @@ namespace TwoDimension
 //3D
 namespace ThreeDimension
 {
-	struct alignas(16) Vertex
+	struct alignas(16) GeometryVertex
 	{
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 uv;
 		int index;
 		int texSubIndex{ 0 };
+	};
+
+	struct alignas(16) LightingVertex
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
 	};
 
 #ifdef _DEBUG

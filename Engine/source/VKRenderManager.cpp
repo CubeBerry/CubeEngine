@@ -64,9 +64,9 @@ VKRenderManager::~VKRenderManager()
 	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
 
 	//Destroy MSAA
-	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
+	//vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
+	//vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
+	//vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
 
 	//Destroy Normal
 #ifdef _DEBUG
@@ -87,15 +87,18 @@ VKRenderManager::~VKRenderManager()
 
 	//Destroy Shader
 	delete vkShader2D;
-	delete vkShader3D;
+	delete vkGeometryShader3D;
+	delete vkLightingShader3D;
 
 	//Destroy Pipeline
 	delete vkPipeline2D;
-	delete vkPipeline3D;
+	delete vkGeometryPipeline3D;
+	delete vkLightingPipeline3D;
 	delete vkPipeline3DLine;
 
 	//Destroy Descriptor
-	delete vkDescriptor;
+	delete vkGeometryDescriptor;
+	delete vkLightingDescriptor;
 
 	delete vkSwapChain;
 	delete vkInit;
@@ -114,7 +117,7 @@ void VKRenderManager::CreateDepthBuffer()
 		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;
-		createInfo.samples = msaaSamples;
+		createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		//Use Optimal Tiling to make GPU effectively process image
 		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		//Usage for copying and shader
@@ -274,30 +277,35 @@ void VKRenderManager::CreateDepthBuffer()
 
 void VKRenderManager::CreateColorResources()
 {
-	imageFormat = vkInit->SetSurfaceFormat().format;
-
+	// 0 == Position, 1 == Normal, 2 == Albedo
+	for (int i = 0; i < 3; ++i)
 	{
 		//Define an image to create
 		VkImageCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = imageFormat;
+		//Albedo format == VK_FORMAT_R8G8B8A8_UNORM
+		if (i == 2)
+			createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		else
+			createInfo.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+			//createInfo.format = vkInit->SetSurfaceFormat().format;
 		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;
 		createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		createInfo.samples = msaaSamples;
+		createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		//Use Optimal Tiling to make GPU effectively process image
 		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		//Usage for copying and shader
-		createInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		createInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		//Create image
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &colorImage);
+			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &colorImage[i]);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -326,7 +334,7 @@ void VKRenderManager::CreateColorResources()
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements{};
 		//Get Memory Requirements for Image
-		vkGetImageMemoryRequirements(*vkInit->GetDevice(), colorImage, &requirements);
+		vkGetImageMemoryRequirements(*vkInit->GetDevice(), colorImage[i], &requirements);
 
 		//Create Memory Allocation Info
 		VkMemoryAllocateInfo allocateInfo{};
@@ -372,7 +380,7 @@ void VKRenderManager::CreateColorResources()
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), colorImage, colorImageMemory, 0);
+			result = vkBindImageMemory(*vkInit->GetDevice(), colorImage[i], colorImageMemory, 0);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -401,43 +409,53 @@ void VKRenderManager::CreateColorResources()
 
 	//To access image from graphics pipeline, Image View is needed
 	//Create ImageView Info
-	VkImageViewCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = colorImage;
-	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = imageFormat;
-	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	createInfo.subresourceRange.levelCount = 1;
-	createInfo.subresourceRange.layerCount = 1;
-
-	//Create ImageView
-	try
+	for (int i = 0; i < 3; ++i)
 	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &colorImageView);
-		if (result != VK_SUCCESS)
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = colorImage[i];
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		//Albedo format == VK_FORMAT_R8G8B8A8_UNORM
+		if (i == 2)
+			createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		else
+			createInfo.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+		//createInfo.format = vkInit->SetSurfaceFormat().format;
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.layerCount = 1;
+
+		//Create ImageView
+		try
 		{
-			switch (result)
+			VkResult result{ VK_SUCCESS };
+			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &colorImageView[i]);
+			if (result != VK_SUCCESS)
 			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
+				switch (result)
+				{
+				case VK_ERROR_OUT_OF_HOST_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
+					break;
+				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
+					break;
+				default:
+					break;
+				}
+				std::cout << '\n';
 
-			throw std::runtime_error{ "Image View Creation Failed" };
+				throw std::runtime_error{ "Image View Creation Failed" };
+			}
 		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			VKRenderManager::~VKRenderManager();
+			std::exit(EXIT_FAILURE);
+		}
+
+		//vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
 	}
 }
 
@@ -453,8 +471,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
-	//MSAA
-	msaaSamples = GetMaxUsableSampleCount();
+	//Deferred Shading, MSAA
+	//msaaSamples = GetMaxUsableSampleCount();
 	CreateColorResources();
 	//Depth Buffering
 	CreateDepthBuffer();
@@ -462,35 +480,44 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
-	VKDescriptorLayout vertexLayout;
-	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
-	vertexLayout.descriptorCount = 1;
+	//Geometry Descriptor
+	VKDescriptorLayout geometryVertexLayout;
+	geometryVertexLayout.descriptorType = VKDescriptorLayout::UNIFORM;
+	geometryVertexLayout.descriptorCount = 1;
 
-	VKDescriptorLayout fragmentLayout[8];
-	fragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
-	fragmentLayout[0].descriptorCount = 1;
-	fragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
-	fragmentLayout[1].descriptorCount = 500;
-	fragmentLayout[2].descriptorType = VKDescriptorLayout::UNIFORM;
-	fragmentLayout[2].descriptorCount = 1;
-	fragmentLayout[3].descriptorType = VKDescriptorLayout::UNIFORM;
-	fragmentLayout[3].descriptorCount = 1;
-	fragmentLayout[4].descriptorType = VKDescriptorLayout::UNIFORM;
-	fragmentLayout[4].descriptorCount = 1;
-	fragmentLayout[5].descriptorType = VKDescriptorLayout::SAMPLER;
-	fragmentLayout[5].descriptorCount = 1;
-	fragmentLayout[6].descriptorType = VKDescriptorLayout::SAMPLER;
-	fragmentLayout[6].descriptorCount = 1;
-	fragmentLayout[7].descriptorType = VKDescriptorLayout::SAMPLER;
-	fragmentLayout[7].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7]});
+	VKDescriptorLayout geometryFragmentLayout[2];
+	geometryFragmentLayout[0].descriptorType = VKDescriptorLayout::UNIFORM;
+	geometryFragmentLayout[0].descriptorCount = 1;
+	geometryFragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
+	geometryFragmentLayout[1].descriptorCount = 500;
+	vkGeometryDescriptor = new VKDescriptor(vkInit, { geometryVertexLayout }, { geometryFragmentLayout[0], geometryFragmentLayout[1] });
 
+	//Lighting Descriptor
+	VKDescriptorLayout lightingFragmentLayout[7];
+	lightingFragmentLayout[0].descriptorType = VKDescriptorLayout::SAMPLER;
+	lightingFragmentLayout[0].descriptorCount = 1;
+	lightingFragmentLayout[1].descriptorType = VKDescriptorLayout::SAMPLER;
+	lightingFragmentLayout[1].descriptorCount = 1;
+	lightingFragmentLayout[2].descriptorType = VKDescriptorLayout::SAMPLER;
+	lightingFragmentLayout[2].descriptorCount = 1;
+	lightingFragmentLayout[3].descriptorType = VKDescriptorLayout::UNIFORM;
+	lightingFragmentLayout[3].descriptorCount = 1;
+	lightingFragmentLayout[4].descriptorType = VKDescriptorLayout::UNIFORM;
+	lightingFragmentLayout[4].descriptorCount = 1;
+	lightingFragmentLayout[5].descriptorType = VKDescriptorLayout::UNIFORM;
+	lightingFragmentLayout[5].descriptorCount = 1;
+	lightingFragmentLayout[6].descriptorType = VKDescriptorLayout::UNIFORM;
+	lightingFragmentLayout[6].descriptorCount = 1;
+	vkGeometryDescriptor = new VKDescriptor(vkInit, {}, { lightingFragmentLayout[0], lightingFragmentLayout[1], lightingFragmentLayout[2], lightingFragmentLayout[3], lightingFragmentLayout[4], lightingFragmentLayout[5], lightingFragmentLayout[6] });
+	
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
 	std::cout << '\n';
 
-	vkShader3D = new VKShader(vkInit->GetDevice());
-	vkShader3D->LoadShader("../Engine/shader/3D.vert", "../Engine/shader/3D.frag");
+	vkGeometryShader3D = new VKShader(vkInit->GetDevice());
+	vkGeometryShader3D->LoadShader("../Engine/shader/Geometry3D.vert", "../Engine/shader/Geometry3D.frag");
+	vkLightingShader3D = new VKShader(vkInit->GetDevice());
+	vkLightingShader3D->LoadShader("../Engine/shader/Lighting3D.vert", "../Engine/shader/Lighting3D.frag");
 	std::cout << '\n';
 
 #ifdef _DEBUG
@@ -510,37 +537,50 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.format = VK_FORMAT_R32_SINT;
 	index_layout.offset = offsetof(TwoDimension::Vertex, index);
 
-	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
+	//vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	//vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout, index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
 
 	//3D Pipeline
+	//Geometry
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
-	position_layout.offset = offsetof(ThreeDimension::Vertex, position);
+	position_layout.offset = offsetof(ThreeDimension::GeometryVertex, position);
 
 	VKAttributeLayout normal_layout;
 	normal_layout.vertex_layout_location = 1;
 	normal_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	normal_layout.offset = offsetof(ThreeDimension::Vertex, normal);
+	normal_layout.offset = offsetof(ThreeDimension::GeometryVertex, normal);
 
 	VKAttributeLayout uv_layout;
 	uv_layout.vertex_layout_location = 2;
 	uv_layout.format = VK_FORMAT_R32G32_SFLOAT;
-	uv_layout.offset = offsetof(ThreeDimension::Vertex, uv);
+	uv_layout.offset = offsetof(ThreeDimension::GeometryVertex, uv);
 
 	index_layout.vertex_layout_location = 3;
 	index_layout.format = VK_FORMAT_R32_SINT;
-	index_layout.offset = offsetof(ThreeDimension::Vertex, index);
+	index_layout.offset = offsetof(ThreeDimension::GeometryVertex, index);
 
 	VKAttributeLayout tex_sub_index_layout;
 	tex_sub_index_layout.vertex_layout_location = 4;
 	tex_sub_index_layout.format = VK_FORMAT_R32_SINT;
-	tex_sub_index_layout.offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+	tex_sub_index_layout.offset = offsetof(ThreeDimension::GeometryVertex, texSubIndex);
 
-	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
-	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkGeometryPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkGeometryDescriptor->GetDescriptorSetLayout());
+	vkGeometryPipeline3D->InitPipeLine(vkGeometryShader3D->GetVertexModule(), vkGeometryShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::GeometryVertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
+
+	//Lighting
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = offsetof(ThreeDimension::LightingVertex, position);
+
+	uv_layout.vertex_layout_location = 1;
+	uv_layout.format = VK_FORMAT_R32G32_SFLOAT;
+	uv_layout.offset = offsetof(ThreeDimension::LightingVertex, uv);
+
+	vkLightingPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkLightingDescriptor->GetDescriptorSetLayout());
+	vkLightingPipeline3D->InitPipeLine(vkLightingShader3D->GetVertexModule(), vkLightingShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::LightingVertex), { position_layout, uv_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
+	//vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	//vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -555,8 +595,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.format = VK_FORMAT_R32_SINT;
 	index_layout.offset = offsetof(ThreeDimension::NormalVertex, index);
 
-	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
+	//vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	//vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout, index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
 #endif
 
 	vertexUniform2D = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, MAX_OBJECT_SIZE);
@@ -568,7 +608,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, MAX_LIGHT_SIZE);
 	directionalLightUniformBuffer = new VKUniformBuffer<ThreeDimension::DirectionalLightUniform>(vkInit, MAX_LIGHT_SIZE);
 
-	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
+	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkGeometryDescriptor->GetDescriptorPool(), &vkRenderPass, VK_SAMPLE_COUNT_1_BIT);
 
 	//for (int i = 0; i < 500; ++i)
 	//{
@@ -597,6 +637,22 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 		.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
 	};
 	imageInfos.resize(500, imageInfo);
+
+	//Lighting Pass Fullscreen Quad
+	position_layout.vertex_layout_location = 0;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.offset = offsetof(ThreeDimension::LightingVertex, position);
+
+	uv_layout.vertex_layout_location = 1;
+	uv_layout.format = VK_FORMAT_R32G32_SFLOAT;
+	uv_layout.offset = offsetof(ThreeDimension::LightingVertex, uv);
+
+	std::vector<ThreeDimension::LightingVertex> lightingPassVertices;
+	for (int i = 0; i < 4; ++i)
+	{
+		lightingPassVertices.push_back({ fullscreenQuad[i], fullscreenQuadTexCoords[i] });
+	}
+	fullscreenQuadVertexBuffer = new VKVertexBuffer<ThreeDimension::LightingVertex>(vkInit, &lightingPassVertices);
 }
 
 void VKRenderManager::InitCommandPool()
@@ -680,96 +736,122 @@ void VKRenderManager::InitCommandBuffer()
 
 void VKRenderManager::InitRenderPass()
 {
+	//Create Attachment Description
+	VkAttachmentDescription attachments[5]{};
+
+	//Position Attachment
+	attachments[0].format = VK_FORMAT_R16G16B16A16_SFLOAT;
+	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	//Normal Attachment
+	attachments[1].format = VK_FORMAT_R16G16B16A16_SFLOAT;
+	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	//Albedo Attachment
+	attachments[2].format = VK_FORMAT_R8G8B8A8_UNORM;
+	attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[2].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	//Depth Attachment
+	attachments[3].format = depthFormat;
+	attachments[3].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[3].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[3].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[3].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[3].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[3].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	//Final Result (Swapchain) Attachment
 	VkSurfaceFormatKHR surfaceFormat = vkInit->SetSurfaceFormat();
+	attachments[4].format = surfaceFormat.format;
+	attachments[4].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[4].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[4].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[4].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[4].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[4].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[4].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	//Create Attachment Description
-	VkAttachmentDescription colorAattachmentDescription{};
-	colorAattachmentDescription.format = surfaceFormat.format;
-	colorAattachmentDescription.samples = msaaSamples;
-	colorAattachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAattachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	//colorAattachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	//colorAattachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAattachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAattachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	//Subpass Configuration
+	//--------------------Geometry Pass--------------------//
+	VkAttachmentReference positionAttachmentReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	VkAttachmentReference normalAttachmentReference = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	VkAttachmentReference albedoAttachmentReference = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	VkAttachmentReference depthAttachmentReference = { 3, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-	//Define which attachment should subpass refernece of renderpass
-	VkAttachmentReference colorAttachmentReference{};
-	//attachment == Index of VkAttachmentDescription array
-	colorAttachmentReference.attachment = 0;
-	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference colorAttachmentReferences[] = { positionAttachmentReference, normalAttachmentReference, albedoAttachmentReference };
 
-	VkAttachmentDescription depthAttachmentDescription{};
-	depthAttachmentDescription.format = depthFormat;
-	depthAttachmentDescription.samples = msaaSamples;
-	depthAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depthAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	VkSubpassDescription geometrySubpass{};
+	geometrySubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	geometrySubpass.colorAttachmentCount = 3;
+	geometrySubpass.pColorAttachments = colorAttachmentReferences;
+	geometrySubpass.pDepthStencilAttachment = &depthAttachmentReference;
 
-	//Define which attachment should subpass refernece of renderpass
-	VkAttachmentReference depthAttachmentReference{};
-	//attachment == Index of VkAttachmentDescription array
-	depthAttachmentReference.attachment = 1;
-	depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	//--------------------Lighting Pass--------------------//
+	VkAttachmentReference positionInputReference = { 0, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	VkAttachmentReference normalInputReference = { 1, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	VkAttachmentReference albedoInputReference = { 2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 
-	//Create Attachment Description
-	VkAttachmentDescription colorAattachmentResolveDescription{};
-	colorAattachmentResolveDescription.format = surfaceFormat.format;
-	colorAattachmentResolveDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAattachmentResolveDescription.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAattachmentResolveDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	//colorAattachmentResolveDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	//colorAattachmentResolveDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAattachmentResolveDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAattachmentResolveDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference lightingOutputReference = { 4, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
-	//Define which attachment should subpass refernece of renderpass
-	VkAttachmentReference colorAttachmentResolveReference{};
-	//attachment == Index of VkAttachmentDescription array
-	colorAttachmentResolveReference.attachment = 2;
-	colorAttachmentResolveReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference inputAttachments[] = { positionInputReference, normalInputReference, albedoInputReference };
 
-	//Create Subpass Description
-	VkSubpassDescription subpassDescription{};
-	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpassDescription.colorAttachmentCount = 1;
-	subpassDescription.pColorAttachments = &colorAttachmentReference;
-	subpassDescription.pResolveAttachments = &colorAttachmentResolveReference;
-	subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
+	VkSubpassDescription lightingSubpass{};
+	lightingSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	lightingSubpass.inputAttachmentCount = 3;
+	lightingSubpass.pInputAttachments = inputAttachments;
+	lightingSubpass.colorAttachmentCount = 1;
+	lightingSubpass.pColorAttachments = &lightingOutputReference;
 
-	VkSubpassDependency colorDependency{};
-	colorDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	colorDependency.dstSubpass = 0;
-	colorDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	colorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	colorDependency.srcAccessMask = 0;
-	colorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-	colorDependency.dependencyFlags = 0;
+	//Subpass Dependency
+	std::array<VkSubpassDependency, 2> dependencies{};
+	//Geometry Pass -> Lighting Pass
+	dependencies[0].srcSubpass = 0;
+	dependencies[0].dstSubpass = 1;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[0].dependencyFlags = 0;
 
-	VkSubpassDependency depthDependency{};
-	depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	depthDependency.dstSubpass = 0;
-	depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	depthDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-	depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-	depthDependency.dependencyFlags = 0;
+	//External -> Geometry Pass
+	dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].dstSubpass = 0;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	//Create Renderpass Info
-	VkAttachmentDescription attachments[3] = { colorAattachmentDescription, depthAttachmentDescription, colorAattachmentResolveDescription };
-	VkSubpassDependency dependencies[2] = { depthDependency, colorDependency };
+	VkSubpassDescription subpasses[2] = { geometrySubpass, lightingSubpass };
 
 	VkRenderPassCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	createInfo.attachmentCount = 3;
-	createInfo.pAttachments = &attachments[0];
-	createInfo.subpassCount = 1;
-	createInfo.pSubpasses = &subpassDescription;
-	createInfo.dependencyCount = 2;
-	createInfo.pDependencies = &dependencies[0];
+	createInfo.attachmentCount = 5;
+	createInfo.pAttachments = attachments;
+	createInfo.subpassCount = 2;
+	createInfo.pSubpasses = subpasses;
+	createInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+	createInfo.pDependencies = dependencies.data();
 
 	//Create Renderpass
 	try
@@ -809,13 +891,19 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 
 	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		VkImageView attachments[3] = { colorImageView, depthImageView, (*swapchainImageViews_)[i] };
+		VkImageView attachments[5] = {
+			colorImageView[0],
+			colorImageView[1],
+			colorImageView[2],
+			depthImageView,
+			(*swapchainImageViews_)[i]
+		};
 
 		//Create framebuffer info
 		VkFramebufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		createInfo.renderPass = vkRenderPass;
-		createInfo.attachmentCount = 3;
+		createInfo.attachmentCount = 5;
 		createInfo.pAttachments = &attachments[0];
 		createInfo.width = swapchainImageExtent_->width;
 		createInfo.height = swapchainImageExtent_->height;
@@ -903,9 +991,9 @@ void VKRenderManager::RecreateSwapChain()
 	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
 
 	//Destroy MSAA
-	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
+	//vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
+	//vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
+	//vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
 
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
@@ -1243,7 +1331,7 @@ void VKRenderManager::LoadMesh(MeshType type, const std::filesystem::path& path,
 
 	if (vertex3DBuffer != nullptr)
 		delete vertex3DBuffer;
-	vertex3DBuffer = new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices3D);
+	vertex3DBuffer = new VKVertexBuffer<ThreeDimension::GeometryVertex>(vkInit, &vertices3D);
 #ifdef _DEBUG
 	if (normalVertexBuffer != nullptr)
 		delete normalVertexBuffer;
@@ -1349,7 +1437,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 	position_layout.offset = 0;
 
 	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKSkybox(path, vkInit, &vkCommandPool);
 
@@ -1403,7 +1491,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		if (quadCount)
 		{
-			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			//currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				//std::vector<VkDescriptorBufferInfo> bufferInfos;
@@ -1431,7 +1519,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 			vertexUniform2D->UpdateUniform(vertexUniforms2D.size(), vertexUniforms2D.data(), frameIndex);
 
-			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			//currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(fragmentUniform2D->GetUniformBuffers()))[frameIndex];
@@ -1472,7 +1560,8 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::ThreeDimension:
 		if (quadCount)
 		{
-			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			//Geometry
+			currentVertexMaterialDescriptorSet = &(*vkGeometryDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
@@ -1495,7 +1584,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
 
-			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			currentTextureDescriptorSet = &(*vkGeometryDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
 
@@ -1513,14 +1602,6 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				fragmentDescriptorWrite.pBufferInfo = &fragmentBufferInfo;
 				descriptorWrites.push_back(fragmentDescriptorWrite);
 
-				//Create Texture DescriptorBuffer Info
-				//for (int i = 0; i < textures.size(); ++i)
-				//{
-				//	imageInfos[i].sampler = *textures[i]->GetSampler();
-				//	imageInfos[i].imageView = *textures[i]->GetImageView();
-				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				//}
-
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet textureDescriptorWrite{};
 				textureDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1531,6 +1612,31 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				textureDescriptorWrite.pImageInfo = imageInfos.data();
 				descriptorWrites.push_back(textureDescriptorWrite);
 
+				//Update DescriptorSet
+				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			}
+			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
+
+			//Lighting
+			currentTextureDescriptorSet = &(*vkLightingDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			{
+				std::vector<VkWriteDescriptorSet> descriptorWrites;
+
+				VkDescriptorBufferInfo viewPositionBufferInfo{};
+				viewPositionBufferInfo.buffer = (*(fragmentMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
+				viewPositionBufferInfo.offset = 0;
+				viewPositionBufferInfo.range = sizeof(glm::mat4);
+
+				VkWriteDescriptorSet viewPositionDescriptorWrite{};
+				viewPositionDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				viewPositionDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				viewPositionDescriptorWrite.dstBinding = 3;
+				viewPositionDescriptorWrite.descriptorCount = 1;
+				viewPositionDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				viewPositionDescriptorWrite.pBufferInfo = &viewPositionBufferInfo;
+				descriptorWrites.push_back(viewPositionDescriptorWrite);
+
 				VkDescriptorBufferInfo materialBufferInfo{};
 				materialBufferInfo.buffer = (*(fragmentMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
 				materialBufferInfo.offset = 0;
@@ -1539,7 +1645,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet materialDescriptorWrite{};
 				materialDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				materialDescriptorWrite.dstSet = *currentTextureDescriptorSet;
-				materialDescriptorWrite.dstBinding = 2;
+				materialDescriptorWrite.dstBinding = 4;
 				materialDescriptorWrite.descriptorCount = 1;
 				materialDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				materialDescriptorWrite.pBufferInfo = &materialBufferInfo;
@@ -1555,7 +1661,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 					VkWriteDescriptorSet directionalLightDescriptorWrite{};
 					directionalLightDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					directionalLightDescriptorWrite.dstSet = *currentTextureDescriptorSet;
-					directionalLightDescriptorWrite.dstBinding = 3;
+					directionalLightDescriptorWrite.dstBinding = 5;
 					directionalLightDescriptorWrite.descriptorCount = 1;
 					directionalLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					directionalLightDescriptorWrite.pBufferInfo = &directionalLightBufferInfo;
@@ -1572,7 +1678,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 					VkWriteDescriptorSet pointLightDescriptorWrite{};
 					pointLightDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					pointLightDescriptorWrite.dstSet = *currentTextureDescriptorSet;
-					pointLightDescriptorWrite.dstBinding = 4;
+					pointLightDescriptorWrite.dstBinding = 6;
 					pointLightDescriptorWrite.descriptorCount = 1;
 					pointLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					pointLightDescriptorWrite.pBufferInfo = &pointLightBufferInfo;
@@ -1587,7 +1693,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet irradianceDescriptorWrite{};
 				irradianceDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				irradianceDescriptorWrite.dstSet = *currentTextureDescriptorSet;
-				irradianceDescriptorWrite.dstBinding = 5;
+				irradianceDescriptorWrite.dstBinding = 7;
 				irradianceDescriptorWrite.descriptorCount = 1;
 				irradianceDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				irradianceDescriptorWrite.pImageInfo = &irradianceImageInfo;
@@ -1601,7 +1707,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet prefilterDescriptorWrite{};
 				prefilterDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				prefilterDescriptorWrite.dstSet = *currentTextureDescriptorSet;
-				prefilterDescriptorWrite.dstBinding = 6;
+				prefilterDescriptorWrite.dstBinding = 8;
 				prefilterDescriptorWrite.descriptorCount = 1;
 				prefilterDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				prefilterDescriptorWrite.pImageInfo = &prefilterImageInfo;
@@ -1615,7 +1721,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkWriteDescriptorSet brdfDescriptorWrite{};
 				brdfDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				brdfDescriptorWrite.dstSet = *currentTextureDescriptorSet;
-				brdfDescriptorWrite.dstBinding = 7;
+				brdfDescriptorWrite.dstBinding = 9;
 				brdfDescriptorWrite.descriptorCount = 1;
 				brdfDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				brdfDescriptorWrite.pImageInfo = &brdfImageInfo;
@@ -1625,7 +1731,8 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			}
-			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
+			glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
+			viewPositionUniformBuffer->UpdateUniform(1, &view, frameIndex);
 			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
 			if (!directionalLightUniforms.empty())
 				directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size(), directionalLightUniforms.data(), frameIndex);
@@ -1696,9 +1803,13 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 	//Set clear color
-	VkClearValue clearValues[2];
-	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
-	clearValues[1].depthStencil = { 1.f, 0 };
+	VkClearValue clearValues[5]{};
+	//clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
+	clearValues[0].color = { {0.f, 0.f, 0.f, 1.f} }; //Position
+	clearValues[1].color = { {0.f, 0.f, 0.f, 1.f} }; //Normal
+	clearValues[2].color = { {0.f, 0.f, 0.f, 1.f} }; //Albedo
+	clearValues[3].depthStencil = { 1.f, 0 };
+	clearValues[4].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
 
 	//VkClearValue clearValue{};
 	//clearValue.color.float32[0] = bgColor.r;	//R
@@ -1712,8 +1823,9 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderpassBeginInfo.renderPass = vkRenderPass;
 	renderpassBeginInfo.framebuffer = vkFrameBuffers[swapchainIndex];
+	renderpassBeginInfo.renderArea.offset = { 0, 0 };
 	renderpassBeginInfo.renderArea.extent = *vkSwapChain->GetSwapChainImageExtent();
-	renderpassBeginInfo.clearValueCount = 2;
+	renderpassBeginInfo.clearValueCount = 5;
 	renderpassBeginInfo.pClearValues = clearValues;
 
 	//Begin renderpass
@@ -1767,25 +1879,48 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			switch (pMode)
 			{
 			case PolygonType::FILL:
+				//--------------------Geometry Subpass--------------------//
+
 				//Bind Vertex Buffer
 				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
 				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
-				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
+				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkGeometryPipeline3D->GetPipeLine());
 				//Dynamic Viewport & Scissor
 				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				//Bind Material DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
-				//Bind Texture DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				//Bind Vertex DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkGeometryPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				//Bind Fragment DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkGeometryPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Push Constant Active Lights
 				activeLights[0] = static_cast<int>(pointLightUniforms.size());
 				activeLights[1] = static_cast<int>(directionalLightUniforms.size());
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
+				vkCmdPushConstants(*currentCommandBuffer, *vkGeometryPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
+				//Draw
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
+				vkCmdNextSubpass(*currentCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+				//--------------------Lighting Subpass--------------------//
+
+				//Bind Vertex Buffer
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, fullscreenQuadVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				//Bind Pipeline
+				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLightingPipeline3D->GetPipeLine());
+				//Dynamic Viewport & Scissor
+				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+				//Bind Material DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLightingPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				//Bind Texture DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkLightingPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				//Change Primitive Topology
+				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+				vkCmdDraw(*currentCommandBuffer, 3, 1, 0, 0);
 				//Draw
 				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 				break;
@@ -1806,7 +1941,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
 				//Push Constant Active Lights
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
+				vkCmdPushConstants(*currentCommandBuffer, *vkGeometryPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
 				//Draw
 				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 				break;

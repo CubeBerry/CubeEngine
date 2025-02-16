@@ -117,36 +117,39 @@ private:
 	void CreateDepthBuffer();
 
 	//MSAA
-	VkImage colorImage;
+	VkImage colorImage[3];
 	VkDeviceMemory colorImageMemory;
-	VkImageView colorImageView;
-	VkFormat imageFormat;
-	VkSampleCountFlagBits msaaSamples{ VK_SAMPLE_COUNT_1_BIT };
+	VkImageView colorImageView[3];
+	VkSampler colorSampler;
+	//VkSampleCountFlagBits msaaSamples{ VK_SAMPLE_COUNT_1_BIT };
 	//This function should be called after VKInit's Initialize() function
-	VkSampleCountFlagBits GetMaxUsableSampleCount() const
-	{
-		VkPhysicalDeviceProperties physicalDeviceProperties;
-		vkGetPhysicalDeviceProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceProperties);
+	//VkSampleCountFlagBits GetMaxUsableSampleCount() const
+	//{
+	//	VkPhysicalDeviceProperties physicalDeviceProperties;
+	//	vkGetPhysicalDeviceProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceProperties);
 
-		VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-		if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; };
-		if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; };
-		if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; };
-		if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; };
-		if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; };
-		if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; };
-		return VK_SAMPLE_COUNT_1_BIT;
-	}
+	//	VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+	//	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; };
+	//	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; };
+	//	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; };
+	//	if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; };
+	//	if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; };
+	//	if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; };
+	//	return VK_SAMPLE_COUNT_1_BIT;
+	//}
 	void CreateColorResources();
 
 	VKImGuiManager* imguiManager;
 
 	VKShader* vkShader2D;
 	VKPipeLine* vkPipeline2D;
-	VKShader* vkShader3D;
-	VKPipeLine* vkPipeline3D;
+	VKShader* vkGeometryShader3D;
+	VKShader* vkLightingShader3D;
+	VKPipeLine* vkGeometryPipeline3D;
+	VKPipeLine* vkLightingPipeline3D;
 	VKPipeLine* vkPipeline3DLine;
-	VKDescriptor* vkDescriptor;
+	VKDescriptor* vkGeometryDescriptor;
+	VKDescriptor* vkLightingDescriptor;
 
 	uint32_t swapchainIndex;
 	VkImage swapchainImage;
@@ -188,11 +191,27 @@ private:
 	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
 
 	//--------------------3D Render--------------------//
-	VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer{ nullptr };
+	VKVertexBuffer<ThreeDimension::GeometryVertex>* vertex3DBuffer{ nullptr };
+	std::vector<glm::vec3> fullscreenQuad = {
+	glm::vec3(-1.0f, 1.0f, 0.0f),
+	glm::vec3(-1.0f, -1.0f, 0.0f),
+	glm::vec3(1.0f, 1.0f, 0.0f),
+	glm::vec3(1.0f, -1.0f, 0.0f),
+	};
+	std::vector<glm::vec2> fullscreenQuadTexCoords = {
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(0.0f, 0.0f),
+		glm::vec2(1.0f, 1.0f),
+		glm::vec2(1.0f, 0.0f),
+	};
+	VKVertexBuffer<ThreeDimension::LightingVertex>* fullscreenQuadVertexBuffer{ nullptr };
 
+	//Geometry
 	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
 	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
+	//Lighting
 	VKUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
+	VKUniformBuffer<glm::mat4>* viewPositionUniformBuffer{ nullptr };
 
 #ifdef _DEBUG
 	VKShader* vkNormal3DShader;
