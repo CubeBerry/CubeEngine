@@ -49,9 +49,9 @@ struct fPointLight
 
 //G-Buffer Textures
 #if VULKAN
-layout(input_attachment_index = 0, set = 0, binding = 0) uniform subpassInput gPosition;
-layout(input_attachment_index = 1, set = 0, binding = 1) uniform subpassInput gNormal;
-layout(input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput gAlbedo;
+layout(set = 0, binding = 0) uniform sampler2D gPosition;
+layout(set = 0, binding = 1) uniform sampler2D gNormal;
+layout(set = 0, binding = 2) uniform sampler2D gAlbedo;
 #else
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
@@ -124,8 +124,8 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     float attenuation = 0.0;
     if (isPointLight)
     {
-        light_direction = normalize(lightPosition - subpassLoad(gPosition).rgb);
-        float distance = length(lightPosition - subpassLoad(gPosition).rgb);
+        light_direction = normalize(lightPosition - texture(gPosition, i_uv).rgb);
+        float distance = length(lightPosition - texture(gPosition, i_uv).rgb);
         attenuation = 1.0 / (pointLightList[lightIndex].constant + pointLightList[lightIndex].linear * distance + pointLightList[lightIndex].quadratic * (distance * distance));
     }
     else
@@ -135,7 +135,7 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     vec3 ambient = ambientStrength * lightColor;
 
     //Diffuse Lighting
-    vec3 normal = subpassLoad(gNormal).rgb;
+    vec3 normal = texture(gNormal, i_uv).rgb;
     float diff = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diff * lightColor;
 
@@ -143,7 +143,7 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     vec3 specular = vec3(0.0);
     if (diff > 0.0)
     {
-        vec3 view_direction = normalize(inverse(view_position)[3].xyz - subpassLoad(gPosition).rgb);
+        vec3 view_direction = normalize(inverse(view_position)[3].xyz - texture(gPosition, i_uv).rgb);
         // vec3 reflect_direction = reflect(-light_direction, normal);
         vec3 halfway_vector = normalize(view_direction + light_direction);
 
@@ -217,13 +217,13 @@ vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPo
     fMaterial material = f_material[i_object_index];
 
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - gPosition) : 1.0;
+    float distance = isPointLight ? length(lightPosition - texture(gPosition, i_uv).rgb) : 1.0;
     
     vec3 L = vec3(0.0);
     float attenuation = 0.0;
     if (isPointLight)
     {
-        L = normalize(lightPosition - gPosition);
+        L = normalize(lightPosition - texture(gPosition, i_uv).rgb);
         attenuation = 1.0 / (pointLightList[lightIndex].constant + pointLightList[lightIndex].linear * distance + pointLightList[lightIndex].quadratic * (distance * distance));
     }
     else
@@ -258,10 +258,10 @@ void main()
 {
     vec3 resultColor = vec3(0.0);
 
-    vec3 F0 = mix(vec3(0.04), subpassLoad(gAlbedo), f_material[i_object_index].metallic);
-    vec3 V = normalize(inverse(view_position)[3].xyz - gPosition);
-    vec3 N = gNormal;
-    MainVectors mainVectors = { subpassLoad(gAlbedo), V, N, F0 };
+    vec3 F0 = mix(vec3(0.04), texture(gAlbedo, i_uv).rgb, f_material[i_object_index].metallic);
+    vec3 V = normalize(inverse(view_position)[3].xyz - texture(gPosition, i_uv).rgb);
+    vec3 N = texture(gNormal, i_uv).rgb;
+    MainVectors mainVectors = { texture(gAlbedo, i_uv).rgb, V, N, F0 };
 
     //Calculate Directional Lights
 #if VULKAN
@@ -294,7 +294,7 @@ void main()
     vec3 Ks = F;
     vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
     vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse = irradiance * subpassLoad(gAlbedo);
+    vec3 diffuse = irradiance * texture(gAlbedo, i_uv).rgb;
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;

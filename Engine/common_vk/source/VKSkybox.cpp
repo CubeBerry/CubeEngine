@@ -506,7 +506,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 
 	VKPipeLine pipelineIBL{ vkInit->GetDevice(), descriptorIBL.GetDescriptorSetLayout() };
 	VkExtent2D extentIBL{ faceSize, faceSize };
-	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false, 0, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
 
@@ -991,7 +991,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 
 	VKPipeLine pipelineIBL{ vkInit->GetDevice(), descriptorIBL.GetDescriptorSetLayout() };
 	VkExtent2D extentIBL{ irradianceSize, irradianceSize };
-	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false, 0, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
 
@@ -1392,7 +1392,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 
 	VKPipeLine pipelineIBL{ vkInit->GetDevice(), descriptorIBL.GetDescriptorSetLayout() };
 	VkExtent2D extentIBL{ baseSize, baseSize };
-	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false, 0, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
 
@@ -1944,7 +1944,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 
 	VKPipeLine pipelineIBL{ vkInit->GetDevice(), descriptorIBL.GetDescriptorSetLayout() };
 	VkExtent2D extentIBL{ lutSize, lutSize };
-	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(VA), { position_layout, texture_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
+	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(VA), { position_layout, texture_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false, 0, false);
 
 	std::vector<VA> vas;
 	for (int i = 0; i < 4; ++i)

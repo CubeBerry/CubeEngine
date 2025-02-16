@@ -9,12 +9,12 @@
 #include "VKDescriptor.hpp"
 #include "VKPipeLine.hpp"
 
-VKImGuiManager::VKImGuiManager(VKInit* init_, SDL_Window* window_, VkCommandPool* cpool_, std::array<VkCommandBuffer, 2>* cbuffers_, VkDescriptorPool* dpool_, VkRenderPass* pass_, VkSampleCountFlagBits samples_)
+VKImGuiManager::VKImGuiManager(VKInit* init_, SDL_Window* window_, VkCommandPool* cpool_, std::array<VkCommandBuffer, 2>* cbuffers_, VkDescriptorPool* dpool_, VkRenderPass* /*pass_*/, VkSampleCountFlagBits samples_)
 {
 	vkCommandPool = *cpool_;
 	vkCommandBuffers = *cbuffers_;
 	vkDescriptorPool = *dpool_;
-	renderPass = *pass_;
+	//renderPass = *pass_;
 
 	Initialize(init_, window_, samples_);
 }
@@ -33,6 +33,38 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_, VkSampleCoun
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 	ImGui_ImplSDL2_InitForVulkan(window_);
+
+	//@TODO Temporal, Remove it later
+	//Prepare RenderPass
+	//Create Attachment Description
+	VkAttachmentDescription colorAattachmentDescription{};
+	colorAattachmentDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	colorAattachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAattachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAattachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAattachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAattachmentDescription.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	//Define which attachment should subpass refernece of renderpass
+	VkAttachmentReference colorAttachmentReference{};
+	//attachment == Index of VkAttachmentDescription array
+	colorAttachmentReference.attachment = 0;
+	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	//Create Subpass Description
+	VkSubpassDescription subpassDescription{};
+	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDescription.colorAttachmentCount = 1;
+	subpassDescription.pColorAttachments = &colorAttachmentReference;
+
+	VkRenderPassCreateInfo rpCreateInfo{};
+	rpCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	rpCreateInfo.attachmentCount = 1;
+	rpCreateInfo.pAttachments = &colorAattachmentDescription;
+	rpCreateInfo.subpassCount = 1;
+	rpCreateInfo.pSubpasses = &subpassDescription;
+
+	vkCreateRenderPass(*init_->GetDevice(), &rpCreateInfo, nullptr, &renderPass);
 
 	ImGui_ImplVulkan_InitInfo initInfo{};
 	initInfo.Instance = *init_->GetInstance();

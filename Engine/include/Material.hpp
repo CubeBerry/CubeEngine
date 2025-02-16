@@ -51,6 +51,8 @@ namespace ThreeDimension
 	{
 		glm::vec3 position;
 		glm::vec2 uv;
+		//@TODO Temporal, Remove it later
+		int index;
 	};
 
 #ifdef _DEBUG

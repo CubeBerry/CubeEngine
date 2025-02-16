@@ -38,6 +38,8 @@ public:
 		VkPrimitiveTopology primitiveTopology,
 		VkCullModeFlags cull_,
 		POLYGON_MODE mode_,
+		bool deferred,
+		uint32_t subpassIndex,
 		bool isPushConstant,
 		uint32_t pushConstantSize = 0,
 		VkShaderStageFlagBits pushConstantShaderBit = VK_SHADER_STAGE_VERTEX_BIT

@@ -30,6 +30,8 @@ void VKPipeLine::InitPipeLine(
 	VkPrimitiveTopology primitiveTopology,
 	VkCullModeFlags cull_,
 	POLYGON_MODE mode_,
+	bool deferred,
+	uint32_t subpassIndex,
 	bool isPushConstant,
 	uint32_t pushConstantSize,
 	VkShaderStageFlagBits pushConstantShaderBit
@@ -168,25 +170,52 @@ void VKPipeLine::InitPipeLine(
 	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
 
 	//Create Color Blend Attachment
-	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-	//Result does not be recorded when colorWriteMask is 0
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
-		| VK_COLOR_COMPONENT_G_BIT
-		| VK_COLOR_COMPONENT_B_BIT
-		| VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments{};
+	if (!deferred)
+	{
+		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+
+		//Result does not be recorded when colorWriteMask is 0
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+			| VK_COLOR_COMPONENT_G_BIT
+			| VK_COLOR_COMPONENT_B_BIT
+			| VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachments.push_back(colorBlendAttachment);
+	}
+	else
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+
+			//Result does not be recorded when colorWriteMask is 0
+			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+				| VK_COLOR_COMPONENT_G_BIT
+				| VK_COLOR_COMPONENT_B_BIT
+				| VK_COLOR_COMPONENT_A_BIT;
+			colorBlendAttachment.blendEnable = VK_TRUE;
+			colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+			colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+			colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+			colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+			colorBlendAttachments.push_back(colorBlendAttachment);
+		}
+	}
 
 	//Create Color Blend State Info
 	VkPipelineColorBlendStateCreateInfo colorBlendStateInfo{};
 	colorBlendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlendStateInfo.attachmentCount = 1;
-	colorBlendStateInfo.pAttachments = &colorBlendAttachment;
+	colorBlendStateInfo.attachmentCount = static_cast<uint32_t>(colorBlendAttachments.size());
+	colorBlendStateInfo.pAttachments = colorBlendAttachments.data();
 
 	//Create Dynamic State Info
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
@@ -219,6 +248,7 @@ void VKPipeLine::InitPipeLine(
 	createInfo.layout = vkPipelineLayout;
 	createInfo.renderPass = *renderPass;
 	createInfo.pDynamicState = &dynamicStateInfo;
+	createInfo.subpass = subpassIndex;
 
 	//Create Graphics Pipeline
 	try
