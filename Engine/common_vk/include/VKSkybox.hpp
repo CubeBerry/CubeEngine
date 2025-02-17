@@ -117,14 +117,14 @@ private:
 	//BRDF LUT fullscreen quad texture
 	std::vector<glm::vec3> fullscreenQuad = {
 	glm::vec3(-1.0f, -1.0f, 0.0f),
-	glm::vec3(1.0f, -1.0f, 0.0f),
 	glm::vec3(-1.0f, 1.0f, 0.0f),
+	glm::vec3(1.0f, -1.0f, 0.0f),
 	glm::vec3(1.0f, 1.0f, 0.0f),
 	};
 	std::vector<glm::vec2> fullscreenQuadTexCoords = {
 		glm::vec2(0.0f, 1.0f),
-		glm::vec2(1.0f, 1.0f),
 		glm::vec2(0.0f, 0.0f),
+		glm::vec2(1.0f, 1.0f),
 		glm::vec2(1.0f, 0.0f),
 	};
 
@@ -133,8 +133,8 @@ private:
 	glm::mat4 views[6] = {
 		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f)),
 		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(-1.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f)),
-		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f), glm::vec3(0.f,0.f, -1.f)),
 		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f,0.f, 1.f)),
+		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f), glm::vec3(0.f,0.f, -1.f)),
 		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, -1.f, 0.f)),
 		glm::lookAt(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, -1.f, 0.f))
 	};
