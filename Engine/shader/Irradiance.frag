@@ -14,7 +14,11 @@ uniform samplerCube environmentMap;
 
 void main()
 {
+#if VULKAN
+    vec3 N = normalize(vec3(i_pos.x, -i_pos.y, i_pos.z));
+#else
     vec3 N = normalize(vec3(i_pos.x, i_pos.y, i_pos.z));
+#endif
     vec3 irradiance = vec3(0.0);
 
     vec3 up = vec3(0.0, 1.0, 0.0);
