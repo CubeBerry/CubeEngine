@@ -15,7 +15,7 @@
 VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPool* pool_) : vkInit(init_), vkCommandPool(pool_)
 {
 	skyboxTexture = new VKTexture(vkInit, vkCommandPool);
-	skyboxTexture->LoadTexture(true, path, "skybox", false);
+	skyboxTexture->LoadTexture(true, path, "skybox", true);
 	faceSize = skyboxTexture->GetHeight();
 
 	//Create command buffer info

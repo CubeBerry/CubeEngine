@@ -98,6 +98,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
 
 void main()
 {
+    //Shoud BRDF LUT texture upside down in Vulkan?
     vec2 integrateBRDF = IntegrateBRDF(i_tex.x, i_tex.y);
     fragmentColor = vec4(integrateBRDF, 0.0, 1.0);
 }
