@@ -69,11 +69,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float alpha)
 
 void main()
 {
-#if VULKAN
-    vec3 N = normalize(vec3(i_pos.x, -i_pos.y, i_pos.z));
-#else
     vec3 N = normalize(vec3(i_pos.x, i_pos.y, i_pos.z));
-#endif
     vec3 R = N;
     vec3 V = R;
 

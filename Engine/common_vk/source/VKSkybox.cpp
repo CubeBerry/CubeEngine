@@ -15,7 +15,7 @@
 VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPool* pool_) : vkInit(init_), vkCommandPool(pool_)
 {
 	skyboxTexture = new VKTexture(vkInit, vkCommandPool);
-	skyboxTexture->LoadTexture(true, path, "skybox", false);
+	skyboxTexture->LoadTexture(true, path, "skybox", true);
 	faceSize = skyboxTexture->GetHeight();
 
 	//Create command buffer info
@@ -531,9 +531,9 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
 	viewport.x = 0.f;
-	viewport.y = static_cast<float>(faceSize);
+	viewport.y = 0.f;
 	viewport.width = static_cast<float>(faceSize);
-	viewport.height = -static_cast<float>(faceSize);
+	viewport.height = static_cast<float>(faceSize);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -1016,9 +1016,9 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
 	viewport.x = 0.f;
-	viewport.y = static_cast<float>(irradianceSize);
+	viewport.y = 0.f;
 	viewport.width = static_cast<float>(irradianceSize);
-	viewport.height = -static_cast<float>(irradianceSize);
+	viewport.height = static_cast<float>(irradianceSize);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -1532,9 +1532,9 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			//Create Viewport and Scissor for Dynamic State
 			VkViewport viewport{};
 			viewport.x = 0.f;
-			viewport.y = static_cast<float>(dim);
+			viewport.y = 0.f;
 			viewport.width = static_cast<float>(dim);
-			viewport.height = -static_cast<float>(dim);
+			viewport.height = static_cast<float>(dim);
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
 
@@ -1957,9 +1957,9 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
 	viewport.x = 0.f;
-	viewport.y = static_cast<float>(lutSize);
+	viewport.y = 0.f;
 	viewport.width = static_cast<float>(lutSize);
-	viewport.height = -static_cast<float>(lutSize);
+	viewport.height = static_cast<float>(lutSize);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
