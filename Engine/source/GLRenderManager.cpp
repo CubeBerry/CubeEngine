@@ -73,8 +73,9 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
-	glm::vec2 windowSize = Engine::GetWindow().GetWindowSize();
-	glViewport(0, 0, static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
+	GLsizei w, h;
+	SDL_GL_GetDrawableSize(Engine::GetWindow().GetWindow(), &w, &h);
+	glViewport(0, 0, w, h);
 	switch (pMode)
 	{
 	case PolygonType::FILL:
