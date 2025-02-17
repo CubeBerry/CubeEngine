@@ -298,7 +298,7 @@ void VKRenderManager::CreateColorResources()
 		//Use Optimal Tiling to make GPU effectively process image
 		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		//Usage for copying and shader
-		createInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+		createInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		//Create image
@@ -589,7 +589,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	index_layout.offset = offsetof(ThreeDimension::LightingVertex, index);
 
 	vkLightingPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkLightingDescriptor->GetDescriptorSetLayout());
-	vkLightingPipeline3D->InitPipeLine(vkLightingShader3D->GetVertexModule(), vkLightingShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::LightingVertex), { position_layout, uv_layout, index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false, 1, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkLightingPipeline3D->InitPipeLine(vkLightingShader3D->GetVertexModule(), vkLightingShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::LightingVertex), { position_layout, uv_layout, index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false, 1, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
 	//vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
 	//vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, index_layout, tex_sub_index_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(int) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
@@ -956,6 +956,53 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 			VKRenderManager::~VKRenderManager();
 			std::exit(EXIT_FAILURE);
 		}
+	}
+
+	VkSamplerCreateInfo samplerCreateInfo{};
+	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+	samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+	samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerCreateInfo.mipLodBias = 0.f;
+	samplerCreateInfo.maxAnisotropy = 1.f;
+	samplerCreateInfo.minLod = 0.f;
+	samplerCreateInfo.maxLod = 1.f;
+	samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+	//Create Sampler
+	try
+	{
+		VkResult result{ VK_SUCCESS };
+		result = vkCreateSampler(*vkInit->GetDevice(), &samplerCreateInfo, nullptr, &colorSampler);
+		if (result != VK_SUCCESS)
+		{
+			switch (result)
+			{
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				break;
+			case VK_ERROR_TOO_MANY_OBJECTS:
+				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+				break;
+			default:
+				break;
+			}
+			std::cout << std::endl;
+
+			throw std::runtime_error{ "Image Sampler Creation Failed" };
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		VKRenderManager::~VKRenderManager();
+		std::exit(EXIT_FAILURE);
 	}
 }
 
@@ -1450,7 +1497,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 	position_layout.offset = 0;
 
 	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false, 0, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false, 1, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKSkybox(path, vkInit, &vkCommandPool);
 
@@ -1636,6 +1683,51 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
 
+				//gPosition
+				VkDescriptorImageInfo gPositionImageInfo{};
+				gPositionImageInfo.sampler = colorSampler;
+				gPositionImageInfo.imageView = colorImageView[0];
+				gPositionImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet gPositionDescriptorWrite{};
+				gPositionDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				gPositionDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				gPositionDescriptorWrite.dstBinding = 0;
+				gPositionDescriptorWrite.descriptorCount = 1;
+				gPositionDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				gPositionDescriptorWrite.pImageInfo = &gPositionImageInfo;
+				descriptorWrites.push_back(gPositionDescriptorWrite);
+
+				//gNormal
+				VkDescriptorImageInfo gNormalImageInfo{};
+				gNormalImageInfo.sampler = colorSampler;
+				gNormalImageInfo.imageView = colorImageView[1];
+				gNormalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet gNormalDescriptorWrite{};
+				gNormalDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				gNormalDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				gNormalDescriptorWrite.dstBinding = 1;
+				gNormalDescriptorWrite.descriptorCount = 1;
+				gNormalDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				gNormalDescriptorWrite.pImageInfo = &gNormalImageInfo;
+				descriptorWrites.push_back(gNormalDescriptorWrite);
+
+				//gAlbedo
+				VkDescriptorImageInfo gAlbedoImageInfo{};
+				gAlbedoImageInfo.sampler = colorSampler;
+				gAlbedoImageInfo.imageView = colorImageView[2];
+				gAlbedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				VkWriteDescriptorSet gAlbedoDescriptorWrite{};
+				gAlbedoDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				gAlbedoDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				gAlbedoDescriptorWrite.dstBinding = 2;
+				gAlbedoDescriptorWrite.descriptorCount = 1;
+				gAlbedoDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				gAlbedoDescriptorWrite.pImageInfo = &gAlbedoImageInfo;
+				descriptorWrites.push_back(gAlbedoDescriptorWrite);
+
 				VkDescriptorBufferInfo viewPositionBufferInfo{};
 				viewPositionBufferInfo.buffer = (*(fragmentMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
 				viewPositionBufferInfo.offset = 0;
@@ -1797,32 +1889,32 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo);
 
 	//Change image layout to TRANSFER_DST_OPTIMAL
-	{
-		VkImageMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-		barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-		barrier.image = swapchainImage;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.layerCount = 1;
+	//{
+	//	VkImageMemoryBarrier barrier{};
+	//	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	//	barrier.srcAccessMask = 0;
+	//	barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	//	barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	//	barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	//	barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+	//	barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+	//	barrier.image = swapchainImage;
+	//	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	//	barrier.subresourceRange.levelCount = 1;
+	//	barrier.subresourceRange.layerCount = 1;
 
-		//Record pipeline barrier for chainging image layout
-		vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-	}
+	//	//Record pipeline barrier for chainging image layout
+	//	vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+	//}
 
 	//Set clear color
 	VkClearValue clearValues[5]{};
 	//clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
-	clearValues[0].color = { {0.f, 0.f, 0.f, 1.f} }; //Position
-	clearValues[1].color = { {0.f, 0.f, 0.f, 1.f} }; //Normal
-	clearValues[2].color = { {0.f, 0.f, 0.f, 1.f} }; //Albedo
+	clearValues[0].color = { {0.f, 0.f, 0.f, 0.f} }; //Position
+	clearValues[1].color = { {0.f, 0.f, 0.f, 0.f} }; //Normal
+	clearValues[2].color = { {0.f, 0.f, 0.f, 0.f} }; //Albedo
 	clearValues[3].depthStencil = { 1.f, 0 };
-	clearValues[4].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
+	clearValues[4].color = { {bgColor.r, bgColor.g, bgColor.b, 0.f} };
 
 	//VkClearValue clearValue{};
 	//clearValue.color.float32[0] = bgColor.r;	//R
@@ -1916,6 +2008,28 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				vkCmdNextSubpass(*currentCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
+				if (skyboxEnabled)
+				{
+					//Skybox
+					//Bind Vertex Buffer
+					vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+					//Bind Pipeline
+					vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
+					//Dynamic Viewport & Scissor
+					vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+					vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+					//Bind Texture DescriptorSet
+					vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
+					//Change Primitive Topology
+					//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+					//Push Constant World-To_NDC
+					glm::mat4 transform[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
+					vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
+					//Draw
+					//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+					vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
+				}
+
 				//--------------------Lighting Subpass--------------------//
 
 				//Bind Vertex Buffer
@@ -1983,28 +2097,6 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 #endif
 		}
 
-		if (skyboxEnabled)
-		{
-			//Skybox
-			//Bind Vertex Buffer
-			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-			//Bind Pipeline
-			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
-			//Dynamic Viewport & Scissor
-			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-			//Bind Texture DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
-			//Change Primitive Topology
-			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-			//Push Constant World-To_NDC
-			glm::mat4 transform[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
-			vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
-			//Draw
-			//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-			vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
-		}
-
 		break;
 	}
 
@@ -2023,23 +2115,23 @@ void VKRenderManager::EndRender()
 		vkCmdEndRenderPass(*currentCommandBuffer);
 
 		//Change image layout to PRESENT_SRC_KHR
-		{
-			VkImageMemoryBarrier barrier{};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.dstAccessMask = 0;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-			barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
-			barrier.image = swapchainImage;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			barrier.subresourceRange.levelCount = 1;
-			barrier.subresourceRange.layerCount = 1;
+		//{
+		//	VkImageMemoryBarrier barrier{};
+		//	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		//	barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		//	barrier.dstAccessMask = 0;
+		//	barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		//	barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		//	barrier.srcQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+		//	barrier.dstQueueFamilyIndex = *vkInit->GetQueueFamilyIndex();
+		//	barrier.image = swapchainImage;
+		//	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		//	barrier.subresourceRange.levelCount = 1;
+		//	barrier.subresourceRange.layerCount = 1;
 
-			//Record pipeline barrier for chainging image layout
-			vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-		}
+		//	//Record pipeline barrier for chainging image layout
+		//	vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		//}
 
 		//End command buffer
 		vkEndCommandBuffer(*currentCommandBuffer);

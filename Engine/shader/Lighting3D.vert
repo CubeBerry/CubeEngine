@@ -19,5 +19,6 @@ layout(location = 1) out int o_object_index;
 void main()
 {
     o_uv = i_uv;
+    o_object_index = object_index;
     gl_Position = vec4(i_pos, 0.0, 1.0);
 }

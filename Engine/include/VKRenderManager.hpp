@@ -116,7 +116,7 @@ private:
 	}
 	void CreateDepthBuffer();
 
-	//MSAA
+	//MSAA, Deferred Rendering
 	VkImage colorImage[3];
 	VkDeviceMemory colorImageMemory;
 	VkImageView colorImageView[3];
@@ -193,15 +193,15 @@ private:
 	//--------------------3D Render--------------------//
 	VKVertexBuffer<ThreeDimension::GeometryVertex>* vertex3DBuffer{ nullptr };
 	std::vector<glm::vec3> fullscreenQuad = {
-	glm::vec3(-1.0f, 1.0f, 0.0f),
 	glm::vec3(-1.0f, -1.0f, 0.0f),
-	glm::vec3(1.0f, 1.0f, 0.0f),
 	glm::vec3(1.0f, -1.0f, 0.0f),
+	glm::vec3(-1.0f, 1.0f, 0.0f),
+	glm::vec3(1.0f, 1.0f, 0.0f),
 	};
 	std::vector<glm::vec2> fullscreenQuadTexCoords = {
 		glm::vec2(0.0f, 1.0f),
-		glm::vec2(0.0f, 0.0f),
 		glm::vec2(1.0f, 1.0f),
+		glm::vec2(0.0f, 0.0f),
 		glm::vec2(1.0f, 0.0f),
 	};
 	VKVertexBuffer<ThreeDimension::LightingVertex>* fullscreenQuadVertexBuffer{ nullptr };
