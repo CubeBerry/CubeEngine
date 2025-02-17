@@ -16,6 +16,7 @@ layout(location = 3) in flat int i_tex_sub_index;
 //Lighting
 layout(location = 4) in vec3 i_normal;
 layout(location = 5) in vec3 i_fragment_position;
+layout(location = 6) in vec3 i_view_position;
 
 layout(location = 0) out vec4 gPosition;
 layout(location = 1) out vec4 gNormal;
