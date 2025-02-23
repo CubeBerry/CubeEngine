@@ -1514,7 +1514,7 @@ void VKRenderManager::DeleteSkybox()
 	skyboxEnabled = false;
 }
 
-void VKRenderManager::BeginRender(glm::vec3 bgColor)
+bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	isRecreated = false;
 	vkSemaphores = (*vkSwapChain->GetSemaphores())[frameIndex];
@@ -1526,7 +1526,7 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	{
 		RecreateSwapChain();
 		isRecreated = true;
-		return;
+		return false;
 	}
 	//else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	//	throw std::runtime_error("Failed Acquring SwapChain Image");
@@ -2101,6 +2101,8 @@ void VKRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 	imguiManager->Begin();
+
+	return true;
 }
 
 void VKRenderManager::EndRender()

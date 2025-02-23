@@ -45,7 +45,7 @@ class RenderManager
 {
 public:
 	//--------------------Common--------------------//
-	virtual void BeginRender(glm::vec3 bgColor) = 0;
+	virtual bool BeginRender(glm::vec3 bgColor) = 0;
 	virtual void EndRender() = 0;
 	virtual void DeleteWithIndex(int id) = 0;
 	void SetRenderType(RenderType type) { rMode = type; };
