@@ -128,9 +128,11 @@ void GameStateManager::Draw()
 void GameStateManager::DrawWithImGui(float dt)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->BeginRender({ 0.0f, 0.0f, 0.0f });
-	StateChanger();
-	levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+	if (renderManager->BeginRender({ 0.0f, 0.0f, 0.0f }))
+	{
+		StateChanger();
+		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+	}
 	renderManager->EndRender();
 
 	//VK Draw

@@ -69,7 +69,7 @@ void GLRenderManager::Initialize(
 	imguiManager = new GLImGuiManager(window_, context_);
 }
 
-void GLRenderManager::BeginRender(glm::vec3 bgColor)
+bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
@@ -220,6 +220,8 @@ void GLRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 	imguiManager->Begin();
+
+	return true;
 }
 
 void GLRenderManager::EndRender()
