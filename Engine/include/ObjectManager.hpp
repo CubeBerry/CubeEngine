@@ -73,7 +73,9 @@ public:
 
     void ProcessComponentFunctionQueues();
 
+#ifdef _DEBUG
     void SetIsDrawNormals(bool draw) { isDrawNormals = draw; };
+#endif
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
     void SpriteControllerForImGui(Sprite* sprite);
