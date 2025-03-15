@@ -94,18 +94,9 @@ layout(std140, binding = 6) uniform fPointLightList
     fPointLight pointLightList[MAX_LIGHTS];
 };
 
-#if VULKAN
 layout(set = 0, binding = 7) uniform samplerCube irradianceMap;
 layout(set = 0, binding = 8) uniform samplerCube prefilterMap;
 layout(set = 0, binding = 9) uniform sampler2D brdfLUT;
-#else
-//Unit 29
-uniform samplerCube irradianceMap;
-//Unit 30
-uniform samplerCube prefilterMap;
-//Unit 31
-uniform sampler2D brdfLUT;
-#endif
 
 #if VULKAN
 layout(push_constant) uniform ActiveLights
@@ -301,7 +292,7 @@ void main()
     vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material[i_object_index].roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
-    //1.0 == ao
+    // 1.0 == ao
     vec3 ambient = (Kd * diffuse + specular) * 1.0;
     resultColor = ambient + resultColor;
 
