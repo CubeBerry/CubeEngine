@@ -116,9 +116,9 @@ void VKPipeLine::InitPipeLine(
 	//Create Viewport
 	VkViewport viewport{};
 	viewport.x = 0.f;
-	viewport.y = static_cast<float>(swapchainImageExtent->height);
+	viewport.y = 0.f;
 	viewport.width = static_cast<float>(swapchainImageExtent->width);
-	viewport.height = -static_cast<float>(swapchainImageExtent->height);
+	viewport.height = static_cast<float>(swapchainImageExtent->height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 

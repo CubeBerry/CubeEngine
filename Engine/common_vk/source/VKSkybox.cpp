@@ -55,6 +55,7 @@ VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPo
 		std::exit(EXIT_FAILURE);
 	}
 
+	//projection[1][1] *= -1.0f;
 	EquirectangularToCube(&skyboxCommandBuffer);
 	CalculateIrradiance(&skyboxCommandBuffer);
 	PrefilteredEnvironmentMap(&skyboxCommandBuffer);

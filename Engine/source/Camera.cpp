@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#include <iostream>
 #include "Camera.hpp"
 #include "Engine.hpp"
 
@@ -34,6 +33,7 @@ void Camera::Update()
 			break;
 		case GraphicsMode::VK:
 			projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			projection[1][1] *= -1.0f;
 			break;
 		}
 		break;
@@ -95,6 +95,7 @@ void Camera::Update()
 			}
 			//projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
+			projection[1][1] *= -1.0f;
 
 			break;
 		}

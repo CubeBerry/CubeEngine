@@ -184,6 +184,10 @@ void Sprite::UpdateProjection()
 	case SpriteDrawType::UI:
 		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
 		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+		{
+			Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection[1][1] *= -1;
+		}
 		break;
 	}
 }
