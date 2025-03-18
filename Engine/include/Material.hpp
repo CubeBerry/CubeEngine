@@ -100,3 +100,22 @@ namespace ThreeDimension
 		float specularStrength;
 	};
 }
+
+// Union
+union Vertex
+{
+	TwoDimension::Vertex vertex2D;
+	ThreeDimension::Vertex vertex3D;
+};
+
+union VertexUniform
+{
+	TwoDimension::VertexUniform vertex2D;
+	ThreeDimension::VertexUniform vertex3D;
+};
+
+union FragmentUniform
+{
+	TwoDimension::FragmentUniform frag2D;
+	ThreeDimension::FragmentUniform frag3D;
+};
