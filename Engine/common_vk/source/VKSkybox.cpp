@@ -519,7 +519,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 
 	//Define which resource descriptor set will point
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = (*descriptorIBL.GetFragmentMaterialDescriptorSets())[0];
+	descriptorWrite.dstSet = (*descriptorIBL.GetFragmentDescriptorSets())[0];
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -572,7 +572,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		//Dynamic Viewport & Scissor
 		vkCmdSetViewport(*commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
-		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentMaterialDescriptorSets())[0], 0, nullptr);
+		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentDescriptorSets())[0], 0, nullptr);
 		//Push Constant World-To_NDC
 		glm::mat4 transform[2] = { views[f], projection};
 		vkCmdPushConstants(*commandBuffer, *pipelineIBL.GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
@@ -1005,7 +1005,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 
 	//Define which resource descriptor set will point
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = (*descriptorIBL.GetFragmentMaterialDescriptorSets())[0];
+	descriptorWrite.dstSet = (*descriptorIBL.GetFragmentDescriptorSets())[0];
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1058,7 +1058,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 		//Dynamic Viewport & Scissor
 		vkCmdSetViewport(*commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
-		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentMaterialDescriptorSets())[0], 0, nullptr);
+		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentDescriptorSets())[0], 0, nullptr);
 		//Push Constant World-To_NDC
 		glm::mat4 transform[2] = { views[f], projection };
 		vkCmdPushConstants(*commandBuffer, *pipelineIBL.GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
@@ -1409,7 +1409,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 
 	//Define which resource descriptor set will point
 	descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite[0].dstSet = (*descriptorIBL.GetFragmentMaterialDescriptorSets())[0];
+	descriptorWrite[0].dstSet = (*descriptorIBL.GetFragmentDescriptorSets())[0];
 	descriptorWrite[0].dstBinding = 0;
 	descriptorWrite[0].descriptorCount = 1;
 	descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1422,7 +1422,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 
 	//Define which resource descriptor set will point
 	descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite[1].dstSet = (*descriptorIBL.GetFragmentMaterialDescriptorSets())[0];
+	descriptorWrite[1].dstSet = (*descriptorIBL.GetFragmentDescriptorSets())[0];
 	descriptorWrite[1].dstBinding = 1;
 	descriptorWrite[1].descriptorCount = 1;
 	descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1565,7 +1565,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			//Dynamic Viewport & Scissor
 			vkCmdSetViewport(*commandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
-			vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentMaterialDescriptorSets())[0], 0, nullptr);
+			vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentDescriptorSets())[0], 0, nullptr);
 			//Push Constant World-To_NDC
 			glm::mat4 transform[2] = { views[f], projection };
 			vkCmdPushConstants(*commandBuffer, *pipelineIBL.GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);

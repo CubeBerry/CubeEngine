@@ -266,7 +266,7 @@ void VKDescriptor::InitDescriptorSets()
 			try
 			{
 				VkResult result{ VK_SUCCESS };
-				result = vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkVertexMaterialDescriptorSets[i]);
+				result = vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkVertexDescriptorSets[i]);
 				if (result != VK_SUCCESS)
 				{
 					switch (result)
@@ -309,7 +309,7 @@ void VKDescriptor::InitDescriptorSets()
 			try
 			{
 				VkResult result{ VK_SUCCESS };
-				result = vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkFragmentMaterialDescriptorSets[i]);
+				result = vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkFragmentDescriptorSets[i]);
 				if (result != VK_SUCCESS)
 				{
 					switch (result)

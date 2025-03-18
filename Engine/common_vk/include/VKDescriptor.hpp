@@ -33,8 +33,8 @@ public:
 
 	VkDescriptorPool* GetDescriptorPool() { return &vkDescriptorPool; };
 	std::vector<VkDescriptorSetLayout>* GetDescriptorSetLayout() { return &vkDescriptorSetLayouts; };
-	std::array<VkDescriptorSet, 2>* GetVertexMaterialDescriptorSets() { return &vkVertexMaterialDescriptorSets; };
-	std::array<VkDescriptorSet, 2>* GetFragmentMaterialDescriptorSets() { return &vkFragmentMaterialDescriptorSets; };
+	std::array<VkDescriptorSet, 2>* GetVertexDescriptorSets() { return &vkVertexDescriptorSets; };
+	std::array<VkDescriptorSet, 2>* GetFragmentDescriptorSets() { return &vkFragmentDescriptorSets; };
 	//std::array<VkDescriptorSet, 2>* GetTextureDescriptorSets() { return &vkTextureDescriptorSets; };
 private:
 	VKInit* vkInit;
@@ -43,8 +43,8 @@ private:
 	VkDescriptorSetLayout vkVertexMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
 	VkDescriptorSetLayout vkFragmentMaterialDescriptorSetLayout{ VK_NULL_HANDLE };
 	VkDescriptorPool vkDescriptorPool{ VK_NULL_HANDLE };
-	std::array<VkDescriptorSet, 2> vkVertexMaterialDescriptorSets{ VK_NULL_HANDLE };
-	std::array<VkDescriptorSet, 2> vkFragmentMaterialDescriptorSets{ VK_NULL_HANDLE };
+	std::array<VkDescriptorSet, 2> vkVertexDescriptorSets{ VK_NULL_HANDLE };
+	std::array<VkDescriptorSet, 2> vkFragmentDescriptorSets{ VK_NULL_HANDLE };
 
 	uint32_t vertexDescriptorCount{ 0 };
 	uint32_t fragmentDescriptorCount{ 0 };

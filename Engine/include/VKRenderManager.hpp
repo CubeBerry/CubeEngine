@@ -156,8 +156,8 @@ private:
 
 	VkCommandBuffer* currentCommandBuffer{ VK_NULL_HANDLE };
 	VkFence* currentFence{ VK_NULL_HANDLE };
-	VkDescriptorSet* currentVertexMaterialDescriptorSet{ VK_NULL_HANDLE };
-	VkDescriptorSet* currentTextureDescriptorSet{ VK_NULL_HANDLE };
+	VkDescriptorSet* currentVertexDescriptorSet{ VK_NULL_HANDLE };
+	VkDescriptorSet* currentFragmentDescriptorSet{ VK_NULL_HANDLE };
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;

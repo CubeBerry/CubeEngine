@@ -1403,7 +1403,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		if (quadCount)
 		{
-			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				//std::vector<VkDescriptorBufferInfo> bufferInfos;
@@ -1419,7 +1419,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
 				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite.dstSet = *currentVertexDescriptorSet;
 				descriptorWrite.dstBinding = 0;
 				descriptorWrite.descriptorCount = 1;
 				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1431,7 +1431,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 			vertexUniform2D->UpdateUniform(vertexUniforms2D.size(), vertexUniforms2D.data(), frameIndex);
 
-			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*(fragmentUniform2D->GetUniformBuffers()))[frameIndex];
@@ -1440,7 +1440,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				VkWriteDescriptorSet descriptorWrite[2] = {};
 				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite[0].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[0].dstSet = *currentFragmentDescriptorSet;
 				descriptorWrite[0].dstBinding = 0;
 				descriptorWrite[0].descriptorCount = 1;
 				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1456,7 +1456,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				//Define which resource descriptor set will point
 				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite[1].dstSet = *currentTextureDescriptorSet;
+				descriptorWrite[1].dstSet = *currentFragmentDescriptorSet;
 				descriptorWrite[1].dstBinding = 1;
 				descriptorWrite[1].descriptorCount = 500;
 				descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1472,7 +1472,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::ThreeDimension:
 		if (quadCount)
 		{
-			currentVertexMaterialDescriptorSet = &(*vkDescriptor->GetVertexMaterialDescriptorSets())[frameIndex];
+			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
@@ -1483,7 +1483,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
 				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = *currentVertexMaterialDescriptorSet;
+				descriptorWrite.dstSet = *currentVertexDescriptorSet;
 				descriptorWrite.dstBinding = 0;
 				descriptorWrite.descriptorCount = 1;
 				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1495,7 +1495,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
 
-			currentTextureDescriptorSet = &(*vkDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
 
@@ -1506,7 +1506,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				VkWriteDescriptorSet fragmentDescriptorWrite{};
 				fragmentDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				fragmentDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				fragmentDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 				fragmentDescriptorWrite.dstBinding = 0;
 				fragmentDescriptorWrite.descriptorCount = 1;
 				fragmentDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1524,7 +1524,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet textureDescriptorWrite{};
 				textureDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				textureDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				textureDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 				textureDescriptorWrite.dstBinding = 1;
 				textureDescriptorWrite.descriptorCount = 500;
 				textureDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1538,7 +1538,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				VkWriteDescriptorSet materialDescriptorWrite{};
 				materialDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				materialDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				materialDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 				materialDescriptorWrite.dstBinding = 2;
 				materialDescriptorWrite.descriptorCount = 1;
 				materialDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1554,7 +1554,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 					VkWriteDescriptorSet directionalLightDescriptorWrite{};
 					directionalLightDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					directionalLightDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+					directionalLightDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 					directionalLightDescriptorWrite.dstBinding = 3;
 					directionalLightDescriptorWrite.descriptorCount = 1;
 					directionalLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1571,7 +1571,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 					VkWriteDescriptorSet pointLightDescriptorWrite{};
 					pointLightDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					pointLightDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+					pointLightDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 					pointLightDescriptorWrite.dstBinding = 4;
 					pointLightDescriptorWrite.descriptorCount = 1;
 					pointLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1586,7 +1586,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				VkWriteDescriptorSet irradianceDescriptorWrite{};
 				irradianceDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				irradianceDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				irradianceDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 				irradianceDescriptorWrite.dstBinding = 5;
 				irradianceDescriptorWrite.descriptorCount = 1;
 				irradianceDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1600,7 +1600,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				VkWriteDescriptorSet prefilterDescriptorWrite{};
 				prefilterDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				prefilterDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				prefilterDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 				prefilterDescriptorWrite.dstBinding = 6;
 				prefilterDescriptorWrite.descriptorCount = 1;
 				prefilterDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1614,7 +1614,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				VkWriteDescriptorSet brdfDescriptorWrite{};
 				brdfDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				brdfDescriptorWrite.dstSet = *currentTextureDescriptorSet;
+				brdfDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 				brdfDescriptorWrite.dstBinding = 7;
 				brdfDescriptorWrite.descriptorCount = 1;
 				brdfDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1636,7 +1636,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		if (skyboxEnabled)
 		{
 			//Skybox Fragment Descriptor
-			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentMaterialDescriptorSets())[frameIndex];
+			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				VkWriteDescriptorSet descriptorWrite{};
 
@@ -1737,7 +1737,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	switch(rMode)
+	switch (rMode)
 	{
 	case RenderType::TwoDimension:
 		if (vertex2DBuffer != nullptr)
@@ -1752,9 +1752,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 			//Bind Material DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 0, nullptr);
 			//Bind Texture DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 0, nullptr);
 			//Change Primitive Topology
 			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 			//Draw
@@ -1777,9 +1777,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 				//Bind Material DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 0, nullptr);
 				//Bind Texture DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Push Constant Active Lights
@@ -1800,9 +1800,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 				//Bind Material DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 0, nullptr);
 				//Bind Texture DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentTextureDescriptorSet, 0, nullptr);
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
 				//Push Constant Active Lights
@@ -1824,7 +1824,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 				//Bind Material DescriptorSet
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLineLayout(), 0, 1, currentVertexMaterialDescriptorSet, 0, nullptr);
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 0, nullptr);
 				//Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Draw
