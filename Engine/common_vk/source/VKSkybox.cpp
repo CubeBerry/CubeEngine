@@ -550,17 +550,18 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	//Begin command buffer
 	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
 
+	//Create renderpass begin info
+	VkRenderPassBeginInfo renderpassBeginInfo{};
+	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderpassBeginInfo.renderPass = renderPassIBL;
+	renderpassBeginInfo.renderArea.offset = { 0, 0 };
+	renderpassBeginInfo.renderArea.extent = { faceSize, faceSize };
+	renderpassBeginInfo.clearValueCount = 1;
+	renderpassBeginInfo.pClearValues = &clearColor;
+
 	for (int f = 0; f < 6; ++f)
 	{
-		//Create renderpass begin info
-		VkRenderPassBeginInfo renderpassBeginInfo{};
-		renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderpassBeginInfo.renderPass = renderPassIBL;
 		renderpassBeginInfo.framebuffer = cubeFaceFramebuffers[f];
-		renderpassBeginInfo.renderArea.offset = { 0, 0 };
-		renderpassBeginInfo.renderArea.extent = { faceSize, faceSize };
-		renderpassBeginInfo.clearValueCount = 1;
-		renderpassBeginInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(*commandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -1035,17 +1036,18 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	//Begin command buffer
 	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
 
+	//Create renderpass begin info
+	VkRenderPassBeginInfo renderpassBeginInfo{};
+	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderpassBeginInfo.renderPass = renderPassIBL;
+	renderpassBeginInfo.renderArea.offset = { 0, 0 };
+	renderpassBeginInfo.renderArea.extent = { irradianceSize, irradianceSize };
+	renderpassBeginInfo.clearValueCount = 1;
+	renderpassBeginInfo.pClearValues = &clearColor;
+
 	for (int f = 0; f < 6; ++f)
 	{
-		//Create renderpass begin info
-		VkRenderPassBeginInfo renderpassBeginInfo{};
-		renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderpassBeginInfo.renderPass = renderPassIBL;
 		renderpassBeginInfo.framebuffer = cubeFaceFramebuffers[f];
-		renderpassBeginInfo.renderArea.offset = { 0, 0 };
-		renderpassBeginInfo.renderArea.extent = { irradianceSize, irradianceSize };
-		renderpassBeginInfo.clearValueCount = 1;
-		renderpassBeginInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(*commandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -1444,6 +1446,15 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		//Begin command buffer
 		vkBeginCommandBuffer(*commandBuffer, &beginInfo);
 
+		//Create renderpass begin info
+		VkRenderPassBeginInfo renderpassBeginInfo{};
+		renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderpassBeginInfo.renderPass = renderPassIBL;
+		renderpassBeginInfo.renderArea.offset = { 0, 0 };
+		renderpassBeginInfo.renderArea.extent = { dim, dim };
+		renderpassBeginInfo.clearValueCount = 1;
+		renderpassBeginInfo.pClearValues = &clearColor;
+
 		for (uint32_t f = 0; f < 6; ++f)
 		{
 			//Create ImageView
@@ -1543,15 +1554,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			scissor.offset = { 0, 0 };
 			scissor.extent = { dim, dim };
 
-			//Create renderpass begin info
-			VkRenderPassBeginInfo renderpassBeginInfo{};
-			renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderpassBeginInfo.renderPass = renderPassIBL;
 			renderpassBeginInfo.framebuffer = cubeFaceFramebuffers[f];
-			renderpassBeginInfo.renderArea.offset = { 0, 0 };
-			renderpassBeginInfo.renderArea.extent = { dim, dim };
-			renderpassBeginInfo.clearValueCount = 1;
-			renderpassBeginInfo.pClearValues = &clearColor;
 
 			vkCmdBeginRenderPass(*commandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
