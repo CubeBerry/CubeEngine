@@ -104,18 +104,27 @@ namespace ThreeDimension
 // Union
 union Vertex
 {
+	Vertex() = default;
+	~Vertex() = default;
+
 	TwoDimension::Vertex vertex2D;
 	ThreeDimension::Vertex vertex3D;
 };
 
 union VertexUniform
 {
+	VertexUniform() = default;
+	~VertexUniform() = default;
+
 	TwoDimension::VertexUniform vertex2D;
 	ThreeDimension::VertexUniform vertex3D;
 };
 
 union FragmentUniform
 {
+	FragmentUniform() = default;
+	~FragmentUniform() = default;
+
 	TwoDimension::FragmentUniform frag2D;
 	ThreeDimension::FragmentUniform frag3D;
 };
