@@ -20,6 +20,7 @@ public:
     void DeleteSprite(Sprite* sprite_);
 
     int GetSpritesAmount() { return static_cast<int>(sprites.size()); }
+    std::vector<Sprite*> GetSprites() { return sprites; }
 private:
     std::vector<Sprite*> sprites;
 };

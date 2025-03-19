@@ -6,6 +6,7 @@
 #include "Component.hpp"
 #include"../include/Object.hpp"
 #include "Animation.hpp"
+#include "../Material.hpp"
 
 #include <filesystem>
 #include <string>
@@ -20,9 +21,7 @@ enum class SpriteDrawType
 	UI
 };
 
-struct Vertex;
 enum class MeshType;
-
 class Sprite : public Component
 {
 public:
@@ -68,6 +67,17 @@ public:
 	int GetSlices() { return slices; };
 	std::string GetTextureName() { return textureName; }
 	bool GetIsTex() { return isTex; }
+	Vertex GetVertex() { return vertex; }
+	VertexUniform GetVertexUniform() { return vertexUniform; };
+	FragmentUniform GetFragmentUniform() { return fragmentUniform; };
+	glm::vec3 GetSpecularColor() { return material.specularColor; }
+	float GetShininess() { return material.shininess; }
+	float GetMetallic() { return material.metallic; }
+	float GetRoughness() { return material.roughness; }
+
+#ifdef _DEBUG
+	ThreeDimension::NormalVertex GetNormalVertex() { return normalVertex; }
+#endif
 
 	//Setter
 	void SetMaterialId(int index) { materialId = index; }
@@ -76,6 +86,10 @@ public:
 	glm::vec4 GetColor();
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	void SetIsTex(bool state);
+	void SetSpecularColor(glm::vec3 sColor) { material.specularColor = sColor; }
+	void SetShininess(float amount) { material.shininess = amount; }
+	void SetMetallic(float amount) { material.metallic = amount; }
+	void SetRoughness(float amount) { material.roughness = amount; }
 
 	//For CompFuncQueue
 	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
@@ -104,4 +118,13 @@ private:
 
 	int materialId = 0;
 	std::string textureName = "";
+
+	Vertex vertex;
+	VertexUniform vertexUniform;
+	FragmentUniform fragmentUniform;
+	ThreeDimension::Material material;
+
+#ifdef _DEBUG
+	ThreeDimension::NormalVertex normalVertex;
+#endif
 };
