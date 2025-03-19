@@ -4,7 +4,6 @@
 //File: Sprite.hpp
 #pragma once
 #include "Component.hpp"
-#include"../include/Object.hpp"
 #include "Animation.hpp"
 #include "../Material.hpp"
 
@@ -13,6 +12,14 @@
 #include <vector>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+
+#include "VKVertexBuffer.hpp"
+#include "VKUniformBuffer.hpp"
+
+class GLVertexBuffer;
+class GLIndexBuffer;
+class GLUniformBuffer;
+class VKIndexBuffer;
 
 enum class SpriteDrawType
 {
@@ -38,10 +45,11 @@ public:
 	void UpdateView();
 	void UpdateProjection();
 
-	//Add Mesh
+	// Add Quad
 	void AddQuad(glm::vec4 color_);
-	void AddMeshWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
-	void AddMeshWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
+	void AddQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
+	void AddQuadWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
+	// Add Mesh
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_);
 	void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
@@ -58,7 +66,6 @@ public:
 	void UpdateAnimation(float dt);
 
 	//Getter
-	int GetMaterialId() { return materialId; };
 	void ChangeTexture(std::string name);
 	SpriteDrawType GetSpriteDrawType() { return spriteDrawType; }
 	MeshType GetMeshType() { return meshType; }
@@ -67,9 +74,6 @@ public:
 	int GetSlices() { return slices; };
 	std::string GetTextureName() { return textureName; }
 	bool GetIsTex() { return isTex; }
-	Vertex GetVertex() { return vertex; }
-	VertexUniform GetVertexUniform() { return vertexUniform; };
-	FragmentUniform GetFragmentUniform() { return fragmentUniform; };
 	glm::vec3 GetSpecularColor() { return material.specularColor; }
 	float GetShininess() { return material.shininess; }
 	float GetMetallic() { return material.metallic; }
@@ -80,7 +84,6 @@ public:
 #endif
 
 	//Setter
-	void SetMaterialId(int index) { materialId = index; }
 	void AddSpriteToManager();
 	void SetColor(glm::vec4 color);
 	glm::vec4 GetColor();
@@ -116,15 +119,60 @@ private:
 	std::filesystem::path filePath = "";
 	//For RecreateMesh
 
-	int materialId = 0;
 	std::string textureName = "";
 
-	Vertex vertex;
+	// Buffer Data
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+#ifdef _DEBUG
+	std::vector<ThreeDimension::NormalVertex> normalVertices;
+#endif
 	VertexUniform vertexUniform;
 	FragmentUniform fragmentUniform;
 	ThreeDimension::Material material;
 
+	// Buffer
+	union VertexBuffer
+	{
+		VertexBuffer() {}
+		GLVertexBuffer* vertexBufferGL;
+		VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer;
+		VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer;
 #ifdef _DEBUG
-	ThreeDimension::NormalVertex normalVertex;
+		GLVertexBuffer* normalVertexBufferGL;
+		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
 #endif
+	} vertexBuffer;
+
+	union IndexBuffer
+	{
+		IndexBuffer() {}
+		GLIndexBuffer* indexBuffer;
+		VKIndexBuffer* indexBufferVK;
+	} indexBuffer;
+
+	union VertexUniformBuffer
+	{
+		VertexUniformBuffer() {}
+		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer2D;
+		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer3D;
+		VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBufferVK2D;
+		VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBufferVK3D;
+	} vertexUniformBuffer;
+
+	union FragmentUniformBuffer
+	{
+		FragmentUniformBuffer() {}
+		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer2D;
+		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer3D;
+		VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBufferVK2D;
+		VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBufferVK3D;
+	} fragmentUniformBuffer;
+
+	union MaterialUniformBuffer
+	{
+		MaterialUniformBuffer() {}
+		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+		VKUniformBuffer<ThreeDimension::Material>* materialUniformBufferVK;
+	} materialUniformBuffer;
 };

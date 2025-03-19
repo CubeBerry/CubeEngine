@@ -14,7 +14,6 @@ namespace TwoDimension
 	struct alignas(16) Vertex
 	{
 		glm::vec3 position;
-		int index;
 	};
 
 	struct alignas(16) VertexUniform
@@ -43,7 +42,6 @@ namespace ThreeDimension
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 uv;
-		int index;
 		int texSubIndex{ 0 };
 	};
 
@@ -105,6 +103,8 @@ namespace ThreeDimension
 union alignas(16) Vertex
 {
 	Vertex() {}
+	Vertex(const TwoDimension::Vertex& vertex) : vertex2D(vertex) {}
+	Vertex(const ThreeDimension::Vertex& vertex) : vertex3D(vertex) {}
 	TwoDimension::Vertex vertex2D;
 	ThreeDimension::Vertex vertex3D;
 };

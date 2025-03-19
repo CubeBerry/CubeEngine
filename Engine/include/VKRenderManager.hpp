@@ -164,40 +164,44 @@ public:
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
+	VKVertexBuffer<TwoDimension::Vertex>* AllocateVertexBuffer2D(std::vector<TwoDimension::Vertex>& vertices) const
+	{
+		return new VKVertexBuffer<TwoDimension::Vertex>(vkInit, &vertices);
+	}
+	VKVertexBuffer<ThreeDimension::Vertex>* AllocateVertexBuffer3D(std::vector<ThreeDimension::Vertex>& vertices) const
+	{
+		return new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices);
+	}
+#ifdef _DEBUG
+	VKVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
+	{
+		return new VKVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &vertices);
+	}
+#endif
+	VKIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
+	{
+		return new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+	}
 
 	VKTexture* GetTexture(std::string name);
 	std::vector<VKTexture*> GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) override;
 	void LoadSkybox(const std::filesystem::path& path) override;
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	VKIndexBuffer* indexBuffer{ nullptr };
 	VkSampler immutableSampler;
-
-	//--------------------2D Render--------------------//
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
-	VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer{ nullptr };
-
-	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
-	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
+	//--------------------2D Render--------------------//
 
 	//--------------------3D Render--------------------//
-	VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer{ nullptr };
-
-	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
-	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
-	VKUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
 
 #ifdef _DEBUG
 	VKShader* vkNormal3DShader;
 	VKPipeLine* vkPipeline3DNormal;
-	VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer{ nullptr };
 #endif
 
 	//Lighting

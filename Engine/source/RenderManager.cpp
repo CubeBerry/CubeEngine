@@ -11,16 +11,17 @@
 #include "Engine.hpp"
 
 
-void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices)
+void RenderManager::CreateMesh(
+	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+#ifdef _DEBUG
+	std::vector<ThreeDimension::NormalVertex>& normalVertices,
+#endif
+	MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	std::vector<ThreeDimension::Vertex> tempVertices;
 	std::vector<uint32_t> tempIndices;
 	unsigned int verticesCount{ 0 };
-	for (unsigned int vertex : verticesPerMesh)
-	{
-		verticesCount += vertex;
-	}
 	switch (type)
 	{
 	case MeshType::PLANE:
@@ -134,7 +135,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				v.normal = glm::normalize(v.position);
 				v.normal /= rad;
 				v.uv = glm::vec2(col, row);
-				v.index = quadCount;
 				tempVertices.push_back(v);
 			}
 		}
@@ -169,7 +169,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				v.normal /= r;
 				v.uv.x = row;
 				v.uv.y = col;
-				v.index = quadCount;
 
 				tempVertices.push_back(v);
 			}
@@ -197,7 +196,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				v.normal = glm::vec3{ v.position.x / radius, v.position.y, v.position.z / radius };
 				v.uv.x = col;
 				v.uv.y = row;
-				v.index = quadCount;
 
 				tempVertices.push_back(v);
 			}
@@ -211,7 +209,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		P0.position = glm::vec3{ 0.0f,0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, 1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		P0.index = quadCount;
 		tempVertices.push_back(P0);
 		size_t top_cap_index = tempVertices.size() - 1;
 		for (int i = 0; i <= slices; ++i)
@@ -222,7 +219,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			Pi.position = glm::vec3{ radius * sin(alpha), 0.5f, radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, 1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			Pi.index = quadCount;
 			tempVertices.push_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),0.5f,radius * cos(alpha + deltaAlpha) };
@@ -242,7 +238,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		P0.index = quadCount;
 		tempVertices.push_back(P0);
 		size_t bottom_cap_index = tempVertices.size() - 1;
 		size_t current_index = tempVertices.size();
@@ -254,7 +249,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			Pi.index = quadCount;
 			tempVertices.push_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),-0.5f,radius * cos(alpha + deltaAlpha) };
@@ -290,7 +284,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 				v.normal = v.position / radius;
 				v.uv.x = col;
 				v.uv.y = 1 - row;
-				v.index = quadCount;
 
 				tempVertices.push_back(v);
 			}
@@ -304,7 +297,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		P0.index = quadCount;
 		tempVertices.push_back(P0);
 		size_t bottom_cap_index = tempVertices.size() - 1;
 		size_t current_index = tempVertices.size();
@@ -316,7 +308,6 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			Pi.index = quadCount;
 			tempVertices.push_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),-0.5f,radius * cos(alpha + deltaAlpha) };
@@ -352,7 +343,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		}
 
 		unsigned int initialVerticesCount{ verticesCount };
-		ProcessNode(scene->mRootNode, scene, verticesCount, 0);
+		ProcessNode(vertices, indices, scene->mRootNode, scene, verticesCount, 0);
 
 		//for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 		//{
@@ -383,10 +374,10 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		//}
 
 		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-		for (auto it = vertices3D.begin() + initialVerticesCount; it != vertices3D.end(); ++it)
+		for (auto it = vertices.begin() + initialVerticesCount; it != vertices.end(); ++it)
 		{
-			minPos = glm::min(minPos, glm::vec3(it->position));
-			maxPos = glm::max(maxPos, glm::vec3(it->position));
+			minPos = glm::min(minPos, glm::vec3(it->vertex3D.position));
+			maxPos = glm::max(maxPos, glm::vec3(it->vertex3D.position));
 		}
 
 		glm::vec3 center;
@@ -400,14 +391,14 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
 #endif
-		for (auto it = vertices3D.begin() + initialVerticesCount; it != vertices3D.end(); ++it)
+		for (auto it = vertices.begin() + initialVerticesCount; it != vertices.end(); ++it)
 		{
-			it->position -= center;
-			it->position *= glm::vec3(unitScale, unitScale, unitScale);
+			it->vertex3D.position -= center;
+			it->vertex3D.position *= glm::vec3(unitScale, unitScale, unitScale);
 
 #ifdef _DEBUG
-			glm::vec3 start = it->position;
-			glm::vec3 end = it->position + it->normal * 0.1f;
+			glm::vec3 start = it->vertex3D.position;
+			glm::vec3 end = it->vertex3D.position + it->vertex3D.normal * 0.1f;
 
 			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
 			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
@@ -415,8 +406,7 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 		}
 
 #ifdef _DEBUG
-		normalVerticesPerMesh.push_back(static_cast<unsigned int>(tempNormalVertices.size()));
-		normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
+		normalVertices.insert(normalVertices.end(), tempNormalVertices.begin(), tempNormalVertices.end());
 #endif
 
 		//Custom Model Load
@@ -532,13 +522,10 @@ void RenderManager::CreateMesh(MeshType type, const std::filesystem::path& path,
 			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
 		}
 
-		normalVerticesPerMesh.push_back(static_cast<unsigned int>(tempNormalVertices.size()));
-		normalVertices3D.insert(normalVertices3D.end(), tempNormalVertices.begin(), tempNormalVertices.end());
+		normalVertices.insert(normalVertices.end(), tempNormalVertices.begin(), tempNormalVertices.end());
 #endif
 
-		verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
-		indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
-		vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
+		vertices.insert(vertices.end(), tempVertices.begin(), tempVertices.end());
 		indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
 	}
 }
@@ -585,21 +572,25 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 	}
 }
 
-void RenderManager::ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount)
+void RenderManager::ProcessNode(
+	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+	aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(mesh, scene, verticesCount, childCount);
+		ProcessMesh(vertices, indices, mesh, scene, verticesCount, childCount);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(node->mChildren[i], scene, verticesCount, i);
+		ProcessNode(vertices, indices, node->mChildren[i], scene, verticesCount, i);
 	}
 }
 
-void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount)
+void RenderManager::ProcessMesh(
+	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+	aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount)
 {
 	std::vector<ThreeDimension::Vertex> tempVertices;
 	std::vector<uint32_t> tempIndices;
@@ -613,7 +604,6 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int
 			glm::vec3(vertex.x, vertex.y, vertex.z),
 			glm::vec3(normal.x, normal.y, normal.z),
 			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
-			quadCount,
 			childCount)
 		);
 	}
@@ -638,9 +628,7 @@ void RenderManager::ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int
 	for (auto& i : tempIndices)
 		i += static_cast<uint32_t>(verticesCount);
 
-	verticesPerMesh.push_back(static_cast<unsigned int>(tempVertices.size()));
-	indicesPerMesh.push_back(static_cast<unsigned int>(tempIndices.size()));
-	vertices3D.insert(vertices3D.end(), tempVertices.begin(), tempVertices.end());
+	vertices.insert(vertices.end(), tempVertices.begin(), tempVertices.end());
 	indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
 
 	verticesCount += static_cast<unsigned int>(tempVertices.size());
