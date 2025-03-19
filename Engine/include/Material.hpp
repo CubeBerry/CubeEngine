@@ -102,29 +102,23 @@ namespace ThreeDimension
 }
 
 // Union
-union Vertex
+union alignas(16) Vertex
 {
-	Vertex() {};
-	~Vertex() = default;
-
+	Vertex() {}
 	TwoDimension::Vertex vertex2D;
 	ThreeDimension::Vertex vertex3D;
 };
 
-union VertexUniform
+union alignas(16) VertexUniform
 {
-	VertexUniform() {};
-	~VertexUniform() = default;
-
+	VertexUniform() {}
 	TwoDimension::VertexUniform vertex2D;
 	ThreeDimension::VertexUniform vertex3D;
 };
 
-union FragmentUniform
+union alignas(16) FragmentUniform
 {
-	FragmentUniform() {};
-	~FragmentUniform() = default;
-
+	FragmentUniform() {}
 	TwoDimension::FragmentUniform frag2D;
 	ThreeDimension::FragmentUniform frag3D;
 };
