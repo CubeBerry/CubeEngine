@@ -5,6 +5,7 @@
 #define NOMINMAX
 
 #include <filesystem>
+#include <variant>
 #include "Material.hpp"
 #include "Window.hpp"
 
@@ -175,42 +176,39 @@ enum class BufferType { NONE, GL, VK };
 
 struct VertexBufferWrapper
 {
-	VertexBufferWrapper() : active(BufferType::NONE) {}
-	~VertexBufferWrapper()
+	struct GLBuffer
 	{
-		switch (active)
-		{
-		case BufferType::NONE:
-			break;
-		case BufferType::GL:
-			delete glVertexBuffer;
+		GLVertexBuffer* vertexBuffer;
 #ifdef _DEBUG
-			delete glNormalVertexBuffer;
-#endif
-			break;
-		case BufferType::VK:
-			delete vkVertexBuffer;
-#ifdef _DEBUG
-			delete vkNormalVertexBuffer;
-#endif
-			break;
-		}
-	}
-
-	BufferType active;
-	union
-	{
-		// GL
-		GLVertexBuffer* glVertexBuffer;
-		// VK
-		VKVertexBuffer<Vertex>* vkVertexBuffer;
-#ifdef _DEBUG
-		// GL
-		GLVertexBuffer* glNormalVertexBuffer;
-		// VK
-		VKVertexBuffer<ThreeDimension::NormalVertex>* vkNormalVertexBuffer;
+		GLVertexBuffer* normalVertexBuffer;
 #endif
 	};
+
+	struct VKBuffer
+	{
+		VKVertexBuffer<Vertex>* vertexBuffer;
+#ifdef _DEBUG
+		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
+#endif
+	};
+
+	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
+
+	VertexBufferWrapper() : buffer(std::monostate{}) {}
+	~VertexBufferWrapper()
+	{
+		std::visit([](auto& buf)
+			{
+				using T = std::decay_t<decltype(buf)>;
+				if constexpr (!std::is_same_v<T, std::monostate>)
+				{
+					delete buf.vertexBuffer;
+#ifdef _DEBUG
+					delete buf.normalVertexBuffer;
+#endif
+				}
+			}, buffer);
+	}
 };
 
 struct IndexBufferWrapper

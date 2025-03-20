@@ -143,9 +143,9 @@ private:
 
 	// Buffer
 	VertexBufferWrapper vertexBuffer;
-#ifdef _DEBUG
-	VertexBufferWrapper normalVertexBuffer;
-#endif
+//#ifdef _DEBUG
+//	VertexBufferWrapper normalVertexBuffer;
+//#endif
 	IndexBufferWrapper indexBuffer;
 	VertexUniformBufferWrapper vertexUniformBuffer;
 	FragmentUniformBufferWrapper fragmentUniformBuffer;

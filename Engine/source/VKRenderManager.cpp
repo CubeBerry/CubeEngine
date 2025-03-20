@@ -1371,8 +1371,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		for (auto& sprite : sprites)
 		{
+			auto& vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer);
 			//Bind Vertex Buffer
-			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 			//Bind Index Buffer
 			vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 			//Bind Pipeline
@@ -1393,11 +1394,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::ThreeDimension:
 		for (auto& sprite : sprites)
 		{
+			auto& vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer);
 			switch (pMode)
 			{
 			case PolygonType::FILL:
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
 				vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
@@ -1420,7 +1422,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				break;
 			case PolygonType::LINE:
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
 				vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
@@ -1444,7 +1446,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			if (isDrawNormals)
 			{
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkNormalVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.normalVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
 				//vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 				//Bind Pipeline

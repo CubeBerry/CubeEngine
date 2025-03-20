@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.hpp>
 #include <iostream>
 
-class VKInit;
+#include "VKInit.hpp"
 
 template <typename Vertex>
 class VKVertexBuffer
@@ -14,7 +14,7 @@ public:
 	VKVertexBuffer(VKInit* init_, std::vector<Vertex>* vertices_) : vkInit(init_)
 	{
 		InitVertexBuffer(vertices_);
-	};
+	}
 
 	~VKVertexBuffer()
 	{
@@ -22,7 +22,7 @@ public:
 		vkFreeMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, nullptr);
 		//Destroy Vertex Buffer
 		vkDestroyBuffer(*vkInit->GetDevice(), vkVertexBuffer, nullptr);
-	};
+	}
 
 	void InitVertexBuffer(std::vector<Vertex>* vertices_)
 	{
@@ -177,7 +177,7 @@ public:
 
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);
-	};
+	}
 
 	void UpdateVertexBuffer(std::vector<Vertex>* vertices_)
 	{
@@ -221,7 +221,7 @@ public:
 
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);
-	};
+	}
 
 	VkBuffer* GetVertexBuffer() { return &vkVertexBuffer; };
 private:
@@ -245,7 +245,7 @@ private:
 			return i;
 		}
 		return UINT32_MAX;
-	};
+	}
 	VKInit* vkInit;
 
 	VkBuffer vkVertexBuffer{ VK_NULL_HANDLE };
