@@ -11,6 +11,13 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 
+#include "GLVertexBuffer.hpp"
+#include "GLIndexBuffer.hpp"
+#include "GLUniformBuffer.hpp"
+#include "VKVertexBuffer.hpp"
+#include "VKIndexBuffer.hpp"
+#include "VKUniformBuffer.hpp"
+
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
 constexpr float HALF_PI = 0.5f * PI;
@@ -97,7 +104,6 @@ protected:
 	GraphicsMode gMode{ GraphicsMode::GL };
 	RenderType rMode = RenderType::TwoDimension;
 	PolygonType pMode = PolygonType::FILL;
-	unsigned int quadCount{ 0 };
 
 	//--------------------2D Render--------------------//
 
@@ -148,3 +154,55 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
 
 	return result;
 }
+
+// Buffer
+union VertexBuffer
+{
+	VertexBuffer() {}
+	// GL
+	GLVertexBuffer* glVertexBuffer;
+	// VK
+	VKVertexBuffer<Vertex>* vkVertexBuffer;
+#ifdef _DEBUG
+	// GL
+	GLVertexBuffer* glNormalVertexBuffer;
+	// VK
+	VKVertexBuffer<ThreeDimension::NormalVertex>* vkNormalVertexBuffer;
+#endif
+};
+
+union IndexBuffer
+{
+	IndexBuffer() {}
+	// GL
+	GLIndexBuffer* glIndexBuffer;
+	// VK
+	VKIndexBuffer* vkIndexBuffer;
+};
+
+union VertexUniformBuffer
+{
+	VertexUniformBuffer() {}
+	// GL
+	GLUniformBuffer<VertexUniform>* glVertexUniformBuffer;
+	// VK
+	VKUniformBuffer<VertexUniform>* vkVertexUniformBuffer;
+};
+
+union FragmentUniformBuffer
+{
+	FragmentUniformBuffer() {}
+	// GL
+	GLUniformBuffer<FragmentUniform>* glFragmentUniformBuffer;
+	// VK
+	VKUniformBuffer<FragmentUniform>* vkFragmentUniformBuffer;
+};
+
+union MaterialUniformBuffer
+{
+	MaterialUniformBuffer() {}
+	// GL
+	GLUniformBuffer<ThreeDimension::Material>* glMaterialUniformBuffer;
+	// VK
+	VKUniformBuffer<ThreeDimension::Material>* vkMaterialUniformBuffer;
+};

@@ -13,13 +13,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
-#include "VKVertexBuffer.hpp"
-#include "VKUniformBuffer.hpp"
-
-class GLVertexBuffer;
-class GLIndexBuffer;
-class GLUniformBuffer;
-class VKIndexBuffer;
+#include "RenderManager.hpp"
 
 enum class SpriteDrawType
 {
@@ -55,7 +49,7 @@ public:
 	void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
 	void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_);
 
-	//Animation
+	// Animation
 	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
 	glm::vec2 GetHotSpot(int index);
 	glm::vec2 GetFrameSize() const { return frameSize; };
@@ -65,23 +59,39 @@ public:
 	int GetCurrentAnim() const { return currAnim; };
 	void UpdateAnimation(float dt);
 
-	//Getter
+	// Getter
 	void ChangeTexture(std::string name);
-	SpriteDrawType GetSpriteDrawType() { return spriteDrawType; }
-	MeshType GetMeshType() { return meshType; }
+	SpriteDrawType GetSpriteDrawType() const { return spriteDrawType; }
+	MeshType GetMeshType() const { return meshType; }
 	std::filesystem::path GetModelFilePath() { return filePath; }
-	int GetStacks() { return stacks; };
-	int GetSlices() { return slices; };
+	int GetStacks() const { return stacks; };
+	int GetSlices() const { return slices; };
 	std::string GetTextureName() { return textureName; }
-	bool GetIsTex() { return isTex; }
-	glm::vec3 GetSpecularColor() { return material.specularColor; }
-	float GetShininess() { return material.shininess; }
-	float GetMetallic() { return material.metallic; }
-	float GetRoughness() { return material.roughness; }
-
+	bool GetIsTex() const { return isTex; }
+	glm::vec3 GetSpecularColor() const { return material.specularColor; }
+	float GetShininess() const { return material.shininess; }
+	float GetMetallic() const { return material.metallic; }
+	float GetRoughness() const { return material.roughness; }
+	 
+	// Buffer Data
+	std::vector<Vertex>& GetVertices() { return vertices; }
 #ifdef _DEBUG
-	ThreeDimension::NormalVertex GetNormalVertex() { return normalVertex; }
+	std::vector<ThreeDimension::NormalVertex>& GetNormalVertices() { return normalVertices; }
 #endif
+	std::vector<uint32_t>& GetIndices() { return indices; }
+	VertexUniform& GetVertexUniform() { return vertexUniform; }
+	FragmentUniform& GetFragmentUniform() { return fragmentUniform; }
+	ThreeDimension::Material& GetMaterial() { return material; }
+	// Buffer
+	VertexBuffer* GetVertexBuffer() { return &vertexBuffer; }
+	IndexBuffer* GetIndexBuffer() { return &indexBuffer; }
+	VertexUniformBuffer* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
+	FragmentUniformBuffer* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
+	MaterialUniformBuffer* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
+
+//#ifdef _DEBUG
+//	std::vector<ThreeDimension::NormalVertex> GetNormalVertices() { return normalVertices; }
+//#endif
 
 	//Setter
 	void AddSpriteToManager();
@@ -132,47 +142,9 @@ private:
 	ThreeDimension::Material material;
 
 	// Buffer
-	union VertexBuffer
-	{
-		VertexBuffer() {}
-		GLVertexBuffer* vertexBufferGL;
-		VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer;
-		VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer;
-#ifdef _DEBUG
-		GLVertexBuffer* normalVertexBufferGL;
-		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
-#endif
-	} vertexBuffer;
-
-	union IndexBuffer
-	{
-		IndexBuffer() {}
-		GLIndexBuffer* indexBuffer;
-		VKIndexBuffer* indexBufferVK;
-	} indexBuffer;
-
-	union VertexUniformBuffer
-	{
-		VertexUniformBuffer() {}
-		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer2D;
-		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer3D;
-		VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBufferVK2D;
-		VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBufferVK3D;
-	} vertexUniformBuffer;
-
-	union FragmentUniformBuffer
-	{
-		FragmentUniformBuffer() {}
-		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer2D;
-		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer3D;
-		VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBufferVK2D;
-		VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBufferVK3D;
-	} fragmentUniformBuffer;
-
-	union MaterialUniformBuffer
-	{
-		MaterialUniformBuffer() {}
-		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
-		VKUniformBuffer<ThreeDimension::Material>* materialUniformBufferVK;
-	} materialUniformBuffer;
+	VertexBuffer vertexBuffer;
+	IndexBuffer indexBuffer;
+	VertexUniformBuffer vertexUniformBuffer;
+	FragmentUniformBuffer fragmentUniformBuffer;
+	MaterialUniformBuffer materialUniformBuffer;
 };

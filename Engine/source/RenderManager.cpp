@@ -38,8 +38,7 @@ void RenderManager::CreateMesh(
 				tempVertices.push_back(ThreeDimension::Vertex(
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
-					glm::vec2(col, row),
-					quadCount
+					glm::vec2(col, row)
 				));
 			}
 		}
@@ -64,8 +63,7 @@ void RenderManager::CreateMesh(
 				planeVertices.push_back(ThreeDimension::Vertex(
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
-					glm::vec2(col, row),
-					quadCount
+					glm::vec2(col, row)
 				));
 			}
 		}
@@ -103,8 +101,7 @@ void RenderManager::CreateMesh(
 				tempVertices.push_back(ThreeDimension::Vertex(
 					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
 					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
-					plane_vertex.uv,
-					quadCount
+					plane_vertex.uv
 				));
 			}
 
@@ -400,8 +397,8 @@ void RenderManager::CreateMesh(
 			glm::vec3 start = it->vertex3D.position;
 			glm::vec3 end = it->vertex3D.position + it->vertex3D.normal * 0.1f;
 
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
 #endif
 		}
 
@@ -518,8 +515,8 @@ void RenderManager::CreateMesh(
 			glm::vec3 start = tempVertices[v].position;
 			glm::vec3 end = tempVertices[v].position + tempVertices[v].normal * 0.1f;
 
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f}, static_cast<int>(quadCount) });
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f}, static_cast<int>(quadCount) });
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
+			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
 		}
 
 		normalVertices.insert(normalVertices.end(), tempNormalVertices.begin(), tempNormalVertices.end());

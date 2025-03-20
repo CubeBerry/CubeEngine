@@ -12,7 +12,6 @@
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
 layout(location = 2) in float inIsTex;
-layout(location = 3) in flat int inIndex;
 
 layout(location = 0) out vec4 fragmentColor;
 
@@ -27,7 +26,7 @@ layout(set = 1, binding = 0) uniform fUniformMatrix
 layout(std140, binding = 1) uniform fUniformMatrix
 #endif
 {
-    fMatrix f_matrix[MAX_TEXTURES];
+    fMatrix f_matrix;
 };
 
 #if VULKAN
@@ -38,7 +37,7 @@ uniform sampler2D tex[MAX_TEXTURES];
 
 void main()
 {
-    vec4 texColor = mix(i_col, texture(tex[f_matrix[inIndex].texIndex], i_uv), inIsTex);
+    vec4 texColor = mix(i_col, texture(tex[f_matrix.texIndex], i_uv), inIsTex);
 
     if (texColor.a < 0.5) discard;
     fragmentColor = i_col * texColor;

@@ -13,8 +13,7 @@ const float PI = 3.14159265359;
 
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_col;
-layout(location = 2) in flat int i_object_index;
-layout(location = 3) in flat int i_tex_sub_index;
+layout(location = 2) in flat int i_tex_sub_index;
 //Lighting
 layout(location = 4) in vec3 i_normal;
 layout(location = 5) in vec3 i_fragment_position;
@@ -65,7 +64,7 @@ layout(set = 1, binding = 0) uniform fUniformMatrix
 layout(std140, binding = 3) uniform fUniformMatrix
 #endif
 {
-    fMatrix f_matrix[MAX_TEXTURES];
+    fMatrix f_matrix;
 };
 
 #if VULKAN
@@ -81,7 +80,7 @@ layout(set = 1, binding = 2) uniform fUniformMaterial
 layout(std140, binding = 4) uniform fUniformMaterial
 #endif
 {
-    fMaterial f_material[MAX_TEXTURES];
+    fMaterial f_material;
 };
 
 #if VULKAN
@@ -156,8 +155,8 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
         vec3 halfway_vector = normalize(view_direction + light_direction);
 
         // float spec = pow(max(dot(view_direction, reflect_direction), 0.0), f_material[i_index].shininess);
-        float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material[i_object_index].shininess);
-        specular = specularStrength * spec * lightColor * f_material[i_object_index].specularColor;
+        float spec = pow(max(dot(halfway_vector, normal), 0.0), f_material.shininess);
+        specular = specularStrength * spec * lightColor * f_material.specularColor;
     }
 
     if (isPointLight)
@@ -222,7 +221,7 @@ struct MainVectors
 // Rendering Equation for one light source
 vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPointLight, int lightIndex)
 {
-    fMaterial material = f_material[i_object_index];
+    fMaterial material = f_material;
 
     float ao = 1.0;
     float distance = isPointLight ? length(lightPosition - i_fragment_position) : 1.0;
@@ -267,10 +266,10 @@ void main()
     vec3 resultColor = vec3(0.0);
 
     vec3 albedo = vec3(0.0);
-    if (f_matrix[i_object_index].isTex > 0) albedo = texture(tex[f_matrix[i_object_index].texIndex + i_tex_sub_index], i_uv).rgb;
+    if (f_matrix.isTex > 0) albedo = texture(tex[f_matrix.texIndex + i_tex_sub_index], i_uv).rgb;
     else albedo = i_col.rgb;
 
-    vec3 F0 = mix(vec3(0.04), albedo, f_material[i_object_index].metallic);
+    vec3 F0 = mix(vec3(0.04), albedo, f_material.metallic);
     vec3 V = normalize(i_view_position - i_fragment_position);
     vec3 N = normalize(i_normal);
     MainVectors mainVectors = { albedo, V, N, F0 };
@@ -301,16 +300,16 @@ void main()
 
     //PBR IBL Ambient Lighting
     vec3 R = reflect(-V, N);
-    vec3 F = Froughness(F0, V, N, f_material[i_object_index].roughness);
+    vec3 F = Froughness(F0, V, N, f_material.roughness);
 
     vec3 Ks = F;
-    vec3 Kd = (1.0 - f_material[i_object_index].metallic) * (vec3(1.0) - Ks);
+    vec3 Kd = (1.0 - f_material.metallic) * (vec3(1.0) - Ks);
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * albedo;
 
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterMap, R, f_material[i_object_index].roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material[i_object_index].roughness)).rg;
+    vec3 prefilteredColor = textureLod(prefilterMap, R, f_material.roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), f_material.roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     //1.0 == ao
@@ -322,9 +321,9 @@ void main()
     resultColor = pow(resultColor, vec3(1.0 / 2.2));  
 
     // Blinn-Phong Result Color
-    // if (f_matrix[i_object_index].isTex)
+    // if (f_matrix.isTex)
     // {
-    //     vec4 textureColor = texture(tex[f_matrix[i_object_index].texIndex  + i_tex_sub_index], i_uv);
+    //     vec4 textureColor = texture(tex[f_matrix.texIndex  + i_tex_sub_index], i_uv);
     //     fragmentColor = vec4(resultColor, 1.0) * textureColor;
     // }
     // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);

@@ -21,11 +21,11 @@ Ball::Ball(glm::vec3 pos_, glm::vec3 size_, std::string name, BallType ballType_
 	{
 	case BallType::WHITE:
 		AddComponent<Sprite>();
-		GetComponent<Sprite>()->AddMeshWithTexture(name);
+		GetComponent<Sprite>()->AddQuadWithTexture(name);
 		break;
 	case BallType::OTHER:
 		AddComponent<Sprite>();
-		GetComponent<Sprite>()->AddMeshWithTexture(name);
+		GetComponent<Sprite>()->AddQuadWithTexture(name);
 		break;
 	}
 	AddComponent<Physics2D>();

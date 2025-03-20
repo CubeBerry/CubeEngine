@@ -39,72 +39,72 @@ void BeatEmUpDemo::Init()
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -25.f,-3.f,-16.5f }, glm::vec3{ 25.f, 21.5f,0.f }, "-1");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-3.f,-16.5f }, glm::vec3{ 25.f, 21.5f,0.f }, "1");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 25.f,-3.f,-16.5f }, glm::vec3{ 25.f, 21.5f,0.f }, "2");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 50.f,-3.f,-16.5f }, glm::vec3{ 25.f, 21.5f,0.f }, "3");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 77.5f,-3.f,-37.65f }, glm::vec3{ 30.f, 42.53f, 0.f }, "4");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road1");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road1");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 102.5f,-3.f,-16.5f }, glm::vec3{ 25.f, 21.5f,0.f }, "5");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 127.5f,-3.f,-16.5f }, glm::vec3{ 25.f, 21.5f,0.f }, "-1");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("road");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("road");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -17.5f, 5.f,-38.f }, glm::vec3{ 22.f, 16.f,0.f }, "0");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("3");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("3");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 7.5f, 5.f,-38.f }, glm::vec3{ 22.f, 16.f,0.f }, "1");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("1");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("1");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 29.5f, 5.f,-38.f }, glm::vec3{ 22.f, 16.f,0.f }, "2");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("2");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("2");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 51.5f, 5.f,-38.f }, glm::vec3{ 22.f, 16.f,0.f }, "3");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("3");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("3");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -6.5f, 6.f,-60.f }, glm::vec3{ 22.f, 18.f,0.f }, "1.1");
 	Engine::GetObjectManager().GetLastObject()->SetYRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("4");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("4");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -3.5f, 6.f,-60.f }, glm::vec3{ 22.f, 18.f,0.f }, "1.2");
 	Engine::GetObjectManager().GetLastObject()->SetYRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("4");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("4");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -3.5f, 6.f,-58.f }, glm::vec3{ 6.f, 18.f,0.f }, "1.3");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("4_2");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("4_2");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -5.f, -3.f,-50.5f }, glm::vec3{ 3.f, 13.5f,0.f }, "road");
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("4_1");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("4_1");
 
 	Engine::GetObjectManager().AddObject<BEUPlayer>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 6.f, 6.f,0.f }, "Player", beatEmUpDemoSystem);
 

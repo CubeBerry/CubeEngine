@@ -161,16 +161,10 @@ private:
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
-
-	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	VKVertexBuffer<TwoDimension::Vertex>* AllocateVertexBuffer2D(std::vector<TwoDimension::Vertex>& vertices) const
+	VKVertexBuffer<Vertex>* AllocateVertexBuffer(std::vector<Vertex>& vertices) const
 	{
-		return new VKVertexBuffer<TwoDimension::Vertex>(vkInit, &vertices);
-	}
-	VKVertexBuffer<ThreeDimension::Vertex>* AllocateVertexBuffer3D(std::vector<ThreeDimension::Vertex>& vertices) const
-	{
-		return new VKVertexBuffer<ThreeDimension::Vertex>(vkInit, &vertices);
+		return new VKVertexBuffer<Vertex>(vkInit, &vertices);
 	}
 #ifdef _DEBUG
 	VKVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
@@ -181,6 +175,18 @@ public:
 	VKIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
 	{
 		return new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+	}
+	VKUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
+	{
+		return new VKUniformBuffer<VertexUniform>(vkInit, 1);
+	}
+	VKUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
+	{
+		return new VKUniformBuffer<FragmentUniform>(vkInit, 1);
+	}
+	VKUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
+	{
+		return new VKUniformBuffer<ThreeDimension::Material>(vkInit, 1);
 	}
 
 	VKTexture* GetTexture(std::string name);
@@ -194,10 +200,6 @@ private:
 	VkSampler immutableSampler;
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
-
-	//--------------------2D Render--------------------//
-
-	//--------------------3D Render--------------------//
 
 #ifdef _DEBUG
 	VKShader* vkNormal3DShader;

@@ -16,11 +16,11 @@ void BeatEmUpDemoSystem::Init()
 	hp = 30.f;
 	
 	healthBar = new Sprite();
-	healthBar->AddMeshWithTexture("hpbar", {0.f,1.f,0.f,1.f});
+	healthBar->AddQuadWithTexture("hpbar", {0.f,1.f,0.f,1.f});
 	healthBar->SetSpriteDrawType(SpriteDrawType::UI);
 
 	emeyHealthBar = new Sprite();
-	emeyHealthBar->AddMeshWithTexture("hpbar", { 0.f,0.f,0.f,0.f });
+	emeyHealthBar->AddQuadWithTexture("hpbar", { 0.f,0.f,0.f,0.f });
 	emeyHealthBar->SetSpriteDrawType(SpriteDrawType::UI);
 }
 

@@ -34,7 +34,6 @@ VKRenderManager::~VKRenderManager()
 	}
 
 	//Destroy Buffers
-	delete fragmentMaterialUniformBuffer;
 	delete pointLightUniformBuffer;
 	delete directionalLightUniformBuffer;
 
@@ -475,7 +474,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	fragmentLayout[6].descriptorCount = 1;
 	fragmentLayout[7].descriptorType = VKDescriptorLayout::SAMPLER;
 	fragmentLayout[7].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7]});
+	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
@@ -903,74 +902,23 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	imageInfos[texId].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
-void VKRenderManager::DeleteWithIndex(int id)
+void VKRenderManager::DeleteWithIndex(int /*id*/)
 {
-	quadCount--;
+	//Destroy Texture
+	for (auto t : textures)
+		delete t;
 
-	if (quadCount == 0)
+	//Destroy Batch ImageInfo
+	textures.erase(textures.begin(), textures.end());
+	imageInfos.erase(imageInfos.begin(), imageInfos.end());
+
+	const VkDescriptorImageInfo imageInfo
 	{
-		//Destroy Texture
-		for (auto t : textures)
-			delete t;
-
-		//Destroy Batch ImageInfo
-		textures.erase(textures.begin(), textures.end());
-		imageInfos.erase(imageInfos.begin(), imageInfos.end());
-
-		const VkDescriptorImageInfo imageInfo
-		{
-			.sampler = immutableSampler,
-			.imageView = VK_NULL_HANDLE,
-			.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
-		};
-		imageInfos.resize(500, imageInfo);
-
-		return;
-	}
-
-	//Create Command Buffer Allocate Info
-	VkCommandBufferAllocateInfo allocateInfo{};
-	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocateInfo.commandPool = vkCommandPool;
-	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocateInfo.commandBufferCount = 1;
-
-	//Create Command Buffer
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer);
-
-	//Create Command Buffer Begin Info
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	//Begin Command Buffer
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-	//vertices2D.erase(end(vertices2D) - 4, end(vertices2D));
-	//vkCmdUpdateBuffer(commandBuffer, *vertex2DBuffer->GetVertexBuffer(), 0, vertices2D.size() * sizeof(TwoDimension::Vertex), vertices2D.data());
-
-	//indices.erase(end(indices) - 6, end(indices));
-	//vkCmdUpdateBuffer(commandBuffer, *indexBuffer->GetIndexBuffer(), 0, indices.size() * sizeof(uint32_t), indices.data());
-
-	//End Command Buffer
-	vkEndCommandBuffer(commandBuffer);
-
-	//Create Submit Info
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	//Submit Queue to Command Buffer
-	//vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *vkSwapChain->GetFence());
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-
-	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
-
-	//Deallocate Command Buffers
-	vkFreeCommandBuffers(*vkInit->GetDevice(), vkCommandPool, 1, &commandBuffer);
+		.sampler = immutableSampler,
+		.imageView = VK_NULL_HANDLE,
+		.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+	};
+	imageInfos.resize(500, imageInfo);
 }
 
 VKTexture* VKRenderManager::GetTexture(std::string name)
@@ -1102,23 +1050,19 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 	//--------------------Descriptor Update--------------------//
 
-	switch(rMode)
+	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
+	switch (rMode)
 	{
 	case RenderType::TwoDimension:
-		if (quadCount)
+		for (auto& sprite : sprites)
 		{
 			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
-				//std::vector<VkDescriptorBufferInfo> bufferInfos;
-				//for (auto& t : textures)
-				//{
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(vertexUniform2D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.buffer = (*(sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(TwoDimension::VertexUniform) * quadCount;
-				//bufferInfos.push_back(bufferInfo);
-				//}
+				bufferInfo.range = sizeof(TwoDimension::VertexUniform);
 
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
@@ -1132,15 +1076,16 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+
+				sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex2D, frameIndex);
 			}
-			vertexUniform2D->UpdateUniform(vertexUniforms2D.size(), vertexUniforms2D.data(), frameIndex);
 
 			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(fragmentUniform2D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.buffer = (*(sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(TwoDimension::FragmentUniform) * quadCount;
+				bufferInfo.range = sizeof(TwoDimension::FragmentUniform);
 
 				VkWriteDescriptorSet descriptorWrite[2] = {};
 				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1149,14 +1094,6 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				descriptorWrite[0].descriptorCount = 1;
 				descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descriptorWrite[0].pBufferInfo = &bufferInfo;
-
-				//Create Texture DescriptorBuffer Info
-				//for (int i = 0; i < textures.size(); ++i)
-				//{
-				//	imageInfos[i].sampler = *textures[i]->GetSampler();
-				//	imageInfos[i].imageView = *textures[i]->GetImageView();
-				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				//}
 
 				//Define which resource descriptor set will point
 				descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1169,20 +1106,21 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
+
+				sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag2D, frameIndex);
 			}
-			fragmentUniform2D->UpdateUniform(fragUniforms2D.size(), fragUniforms2D.data(), frameIndex);
 		}
 		break;
 	case RenderType::ThreeDimension:
-		if (quadCount)
+		for (auto& sprite : sprites)
 		{
 			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(vertexUniform3D->GetUniformBuffers()))[frameIndex];
+				bufferInfo.buffer = (*(sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->GetUniformBuffers()))[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * quadCount;
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform);
 
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
@@ -1196,17 +1134,18 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+
+				sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex3D, frameIndex);
 			}
-			vertexUniform3D->UpdateUniform(vertexUniforms3D.size(), vertexUniforms3D.data(), frameIndex);
 
 			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 				VkDescriptorBufferInfo fragmentBufferInfo{};
-				fragmentBufferInfo.buffer = (*(fragmentUniform3D->GetUniformBuffers()))[frameIndex];
+				fragmentBufferInfo.buffer = (*(sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->GetUniformBuffers()))[frameIndex];
 				fragmentBufferInfo.offset = 0;
-				fragmentBufferInfo.range = sizeof(ThreeDimension::FragmentUniform) * quadCount;
+				fragmentBufferInfo.range = sizeof(ThreeDimension::FragmentUniform);
 
 				VkWriteDescriptorSet fragmentDescriptorWrite{};
 				fragmentDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1216,14 +1155,6 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				fragmentDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				fragmentDescriptorWrite.pBufferInfo = &fragmentBufferInfo;
 				descriptorWrites.push_back(fragmentDescriptorWrite);
-
-				//Create Texture DescriptorBuffer Info
-				//for (int i = 0; i < textures.size(); ++i)
-				//{
-				//	imageInfos[i].sampler = *textures[i]->GetSampler();
-				//	imageInfos[i].imageView = *textures[i]->GetImageView();
-				//	imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				//}
 
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet textureDescriptorWrite{};
@@ -1236,9 +1167,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				descriptorWrites.push_back(textureDescriptorWrite);
 
 				VkDescriptorBufferInfo materialBufferInfo{};
-				materialBufferInfo.buffer = (*(fragmentMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
+				materialBufferInfo.buffer = (*(sprite->GetMaterialUniformBuffer()->vkMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
 				materialBufferInfo.offset = 0;
-				materialBufferInfo.range = sizeof(ThreeDimension::Material) * quadCount;
+				materialBufferInfo.range = sizeof(ThreeDimension::Material);
 
 				VkWriteDescriptorSet materialDescriptorWrite{};
 				materialDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1328,13 +1259,14 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+
+				sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag3D, frameIndex);
+				sprite->GetMaterialUniformBuffer()->vkMaterialUniformBuffer->UpdateUniform(1, &sprite->GetMaterial(), frameIndex);
+				if (!directionalLightUniforms.empty())
+					directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size(), directionalLightUniforms.data(), frameIndex);
+				if (!pointLightUniforms.empty())
+					pointLightUniformBuffer->UpdateUniform(pointLightUniforms.size(), pointLightUniforms.data(), frameIndex);
 			}
-			fragmentUniform3D->UpdateUniform(fragUniforms3D.size(), fragUniforms3D.data(), frameIndex);
-			fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size(), fragMaterialUniforms3D.data(), frameIndex);
-			if (!directionalLightUniforms.empty())
-				directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size(), directionalLightUniforms.data(), frameIndex);
-			if (!pointLightUniforms.empty())
-				pointLightUniformBuffer->UpdateUniform(pointLightUniforms.size(), pointLightUniforms.data(), frameIndex);
 		}
 
 		if (skyboxEnabled)
@@ -1404,14 +1336,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
 	clearValues[1].depthStencil = { 1.f, 0 };
 
-	//VkClearValue clearValue{};
-	//clearValue.color.float32[0] = bgColor.r;	//R
-	//clearValue.color.float32[1] = bgColor.g;	//G
-	//clearValue.color.float32[2] = bgColor.b;	//B
-	//clearValue.color.float32[3] = bgColor.a;	//A
-	//clearValue.depthStencil = { 1.0f, 0 };
-
-	//Create renderpass begin info
+	//Create RenderPass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};
 	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderpassBeginInfo.renderPass = vkRenderPass;
@@ -1420,7 +1345,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	renderpassBeginInfo.clearValueCount = 2;
 	renderpassBeginInfo.pClearValues = clearValues;
 
-	//Begin renderpass
+	//Begin RenderPass
 	vkCmdBeginRenderPass(*currentCommandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	//--------------------Begin Draw--------------------//
@@ -1444,12 +1369,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:
-		if (vertex2DBuffer != nullptr)
+		for (auto& sprite : sprites)
 		{
 			//Bind Vertex Buffer
-			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex2DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 			//Bind Index Buffer
-			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 			//Bind Pipeline
 			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
 			//Dynamic Viewport & Scissor
@@ -1462,19 +1387,19 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			//Change Primitive Topology
 			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 			//Draw
-			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetIndices().size()), 1, 0, 0, 0);
 		}
 		break;
 	case RenderType::ThreeDimension:
-		if (vertex3DBuffer != nullptr)
+		for (auto& sprite : sprites)
 		{
 			switch (pMode)
 			{
 			case PolygonType::FILL:
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
 				//Dynamic Viewport & Scissor
@@ -1491,13 +1416,13 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				activeLights[1] = static_cast<int>(directionalLightUniforms.size());
 				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
 				//Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetIndices().size()), 1, 0, 0, 0);
 				break;
 			case PolygonType::LINE:
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertex3DBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLine());
 				//Dynamic Viewport & Scissor
@@ -1512,14 +1437,14 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Push Constant Active Lights
 				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
 				//Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetIndices().size()), 1, 0, 0, 0);
 				break;
 			}
 #ifdef _DEBUG
 			if (isDrawNormals)
 			{
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, normalVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, sprite->GetVertexBuffer()->vkNormalVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				//Bind Index Buffer
 				//vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 				//Bind Pipeline
@@ -1533,7 +1458,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Draw
 				//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-				vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(normalVertices3D.size()), 1, 0, 0);
+				vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetNormalVertices().size()), 1, 0, 0);
 			}
 #endif
 		}

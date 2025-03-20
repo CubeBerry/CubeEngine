@@ -5,7 +5,6 @@
 #include "BasicComponents/Sprite.hpp"
 
 #include <vector>
-#include <iostream>
 
 class SpriteManager
 {

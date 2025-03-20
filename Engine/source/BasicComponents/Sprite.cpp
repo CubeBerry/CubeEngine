@@ -3,7 +3,6 @@
 //Project: CubeEngine
 //File: Sprtie.cpp
 #include "BasicComponents/Sprite.hpp"
-#include "Engine.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 4201)
@@ -12,6 +11,8 @@
 #pragma warning(pop)
 
 #include <fstream>
+
+#include "Engine.hpp"
 
 Sprite::~Sprite()
 {
@@ -84,13 +85,13 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		vertexUniform.vertex2D.model = modelMatrix;
 		break;
 	case SpriteDrawType::ThreeDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).model = modelMatrix;
+		vertexUniform.vertex3D.model = modelMatrix;
 		break;
 	case SpriteDrawType::UI:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		vertexUniform.vertex2D.model = modelMatrix;
 		break;
 	}
 }
@@ -144,13 +145,13 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		vertexUniform.vertex2D.model = modelMatrix;
 		break;
 	case SpriteDrawType::ThreeDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).model = modelMatrix;
+		vertexUniform.vertex3D.model = modelMatrix;
 		break;
 	case SpriteDrawType::UI:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).model = modelMatrix;
+		vertexUniform.vertex2D.model = modelMatrix;
 		break;
 	}
 }
@@ -160,13 +161,13 @@ void Sprite::UpdateView()
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
+		vertexUniform.vertex2D.view = Engine::GetCameraManager().GetViewMatrix();
 		break;
 	case SpriteDrawType::ThreeDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).view = Engine::GetCameraManager().GetViewMatrix();
+		vertexUniform.vertex3D.view = Engine::GetCameraManager().GetViewMatrix();
 		break;
 	case SpriteDrawType::UI:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).view = glm::mat4(1.0f);
+		vertexUniform.vertex2D.view = glm::mat4(1.0f);
 		break;
 	}
 }
@@ -176,17 +177,17 @@ void Sprite::UpdateProjection()
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
+		vertexUniform.vertex2D.projection = Engine::GetCameraManager().GetProjectionMatrix();
 		break;
 	case SpriteDrawType::ThreeDimension:
-		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).projection = Engine::GetCameraManager().GetProjectionMatrix();
+		vertexUniform.vertex3D.projection = Engine::GetCameraManager().GetProjectionMatrix();
 		break;
 	case SpriteDrawType::UI:
 		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		vertexUniform.vertex2D.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 		if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
 		{
-			Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).projection[1][1] *= -1;
+			vertexUniform.vertex2D.projection[1][1] *= -1;
 		}
 		break;
 	}
@@ -201,9 +202,6 @@ void Sprite::AddQuad(glm::vec4 color_)
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.vertexBufferGL = new GLVertexBuffer<TwoDimension::Vertex>(&vertices) :
-		vertexBuffer.vertex2DBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer2D(vertices);
 
 	indices.push_back(0);
 	indices.push_back(1);
@@ -211,9 +209,6 @@ void Sprite::AddQuad(glm::vec4 color_)
 	indices.push_back(2);
 	indices.push_back(3);
 	indices.push_back(0);
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		indexBuffer.indexBuffer = new GLIndexBuffer(&indices) :
-		indexBuffer.indexBufferVK = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 
 	vertexUniform.vertex2D.model = glm::mat4(1.f);
 	vertexUniform.vertex2D.view = glm::mat4(1.f);
@@ -223,6 +218,21 @@ void Sprite::AddQuad(glm::vec4 color_)
 	vertexUniform.vertex2D.isTexel = 0.f;
 
 	fragmentUniform.frag2D.texIndex = 0;
+
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
+		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
+		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		fragmentUniformBuffer.glFragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+	}
+	else
+	{
+		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		fragmentUniformBuffer.vkFragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+	}
 
 	AddSpriteToManager();
 }
@@ -235,9 +245,6 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.vertexBufferGL = new GLVertexBuffer<TwoDimension::Vertex>(&vertices) :
-		vertexBuffer.vertex2DBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer2D(vertices);
 
 	indices.push_back(0);
 	indices.push_back(1);
@@ -245,9 +252,6 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 	indices.push_back(2);
 	indices.push_back(3);
 	indices.push_back(0);
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		indexBuffer.indexBuffer = new GLIndexBuffer(&indices) :
-		indexBuffer.indexBufferVK = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 
 	vertexUniform.vertex2D.model = glm::mat4(1.f);
 	vertexUniform.vertex2D.view = glm::mat4(1.f);
@@ -257,6 +261,21 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 	vertexUniform.vertex2D.isTexel = 0.f;
 
 	fragmentUniform.frag2D.texIndex = 0;
+
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
+		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
+		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		fragmentUniformBuffer.glFragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+	}
+	else
+	{
+		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		fragmentUniformBuffer.vkFragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+	}
 
 	ChangeTexture(name_);
 	switch (renderManager->GetGraphicsMode())
@@ -279,9 +298,6 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.vertexBufferGL = new GLVertexBuffer<TwoDimension::Vertex>(&vertices) :
-		vertexBuffer.vertex2DBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer2D(vertices);
 
 	indices.push_back(0);
 	indices.push_back(1);
@@ -289,9 +305,6 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 	indices.push_back(2);
 	indices.push_back(3);
 	indices.push_back(0);
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		indexBuffer.indexBuffer = new GLIndexBuffer(&indices) :
-		indexBuffer.indexBufferVK = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 
 	vertexUniform.vertex2D.model = glm::mat4(1.f);
 	vertexUniform.vertex2D.view = glm::mat4(1.f);
@@ -301,6 +314,21 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 	vertexUniform.vertex2D.isTexel = 0.f;
 
 	fragmentUniform.frag2D.texIndex = 0;
+
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
+		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
+		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		fragmentUniformBuffer.glFragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+	}
+	else
+	{
+		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		fragmentUniformBuffer.vkFragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+	}
 
 	ChangeTexture(name_);
 	switch (renderManager->GetGraphicsMode())
@@ -358,20 +386,6 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
 
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.vertexBufferGL = new GLVertexBuffer<ThreeDimension::Vertex>(&vertices) :
-		vertexBuffer.vertex3DBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer3D(vertices);
-
-#ifdef _DEBUG
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.normalVertexBufferGL = new GLVertexBuffer<ThreeDimension::Vertex>(&vertices) :
-		vertexBuffer.normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
-#endif
-
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		indexBuffer.indexBuffer = new GLIndexBuffer(&indices) :
-		indexBuffer.indexBufferVK = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-
 	vertexUniform.vertex3D.model = glm::mat4(1.f);
 	vertexUniform.vertex3D.view = glm::mat4(1.f);
 	vertexUniform.vertex3D.projection = glm::mat4(1.f);
@@ -379,8 +393,27 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	fragmentUniform.frag3D.texIndex = 0;
 
-	//material.metallic = metallic;
-	//material.roughness = roughness;
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
+#ifdef _DEBUG
+		vertexBuffer.glNormalVertexBuffer = new GLVertexBuffer();
+#endif
+		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
+		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		fragmentUniformBuffer.glFragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+	}
+	else
+	{
+		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+#ifdef _DEBUG
+		vertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+#endif
+		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		fragmentUniformBuffer.vkFragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		materialUniformBuffer.vkMaterialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
@@ -396,20 +429,6 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
 
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.vertexBufferGL = new GLVertexBuffer<ThreeDimension::Vertex>(&vertices) :
-		vertexBuffer.vertex3DBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer3D(vertices);
-
-#ifdef _DEBUG
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		vertexBuffer.normalVertexBufferGL = new GLVertexBuffer<ThreeDimension::Vertex>(&vertices) :
-		vertexBuffer.normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
-#endif
-
-	Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL ?
-		indexBuffer.indexBuffer = new GLIndexBuffer(&indices) :
-		indexBuffer.indexBufferVK = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-
 	vertexUniform.vertex3D.model = glm::mat4(1.f);
 	vertexUniform.vertex3D.view = glm::mat4(1.f);
 	vertexUniform.vertex3D.projection = glm::mat4(1.f);
@@ -419,6 +438,28 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	material.metallic = metallic_;
 	material.roughness = roughness_;
+
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
+#ifdef _DEBUG
+		vertexBuffer.glNormalVertexBuffer = new GLVertexBuffer();
+#endif
+		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
+		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		fragmentUniformBuffer.glFragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+	}
+	else
+	{
+		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+#ifdef _DEBUG
+		vertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+#endif
+		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		fragmentUniformBuffer.vkFragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		materialUniformBuffer.vkMaterialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();
@@ -566,8 +607,8 @@ void Sprite::UpdateAnimation(float dt)
 	if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
 	{
 		animations[currAnim]->Update(dt);
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
+		vertexUniform.vertex2D.frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
+		vertexUniform.vertex2D.texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
 	}
 }
 
@@ -583,14 +624,14 @@ void Sprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
-				renderManagerGL->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-				renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = true;
+				fragmentUniform.frag2D.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				vertexUniform.vertex2D.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = false;
+				vertexUniform.vertex2D.isTex = false;
 				isTex = false;
 			}
 		}
@@ -598,14 +639,14 @@ void Sprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
-				renderManagerGL->GetFragmentUniforms3D()->at(materialId).texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-				renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = true;
+				fragmentUniform.frag3D.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				fragmentUniform.frag3D.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = false;
+				fragmentUniform.frag3D.isTex = false;
 				isTex = false;
 			}
 		}
@@ -618,14 +659,14 @@ void Sprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
-				renderManagerVK->GetFragmentUniforms2D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-				renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = true;
+				fragmentUniform.frag2D.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				vertexUniform.vertex2D.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = false;
+				vertexUniform.vertex2D.isTex = false;
 				isTex = false;
 			}
 		}
@@ -633,14 +674,14 @@ void Sprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
-				renderManagerVK->GetFragmentUniforms3D()->at(materialId).texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-				renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = true;
+				fragmentUniform.frag3D.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				fragmentUniform.frag3D.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = false;
+				fragmentUniform.frag3D.isTex = false;
 				isTex = false;
 			}
 		}
@@ -660,11 +701,11 @@ void Sprite::SetColor(glm::vec4 color)
 {
 	if(spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
-		Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color = color;
+		vertexUniform.vertex2D.color = color;
 	}
 	else
 	{
-		Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).color = color;
+		vertexUniform.vertex3D.color = color;
 	}
 }
 
@@ -672,11 +713,11 @@ glm::vec4 Sprite::GetColor()
 {
 	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
-		return Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at(materialId).color;
+		return vertexUniform.vertex2D.color;
 	}
 	else
 	{
-		return Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at(materialId).color;
+		return vertexUniform.vertex3D.color;
 	}
 }
 
@@ -688,27 +729,27 @@ void Sprite::SetIsTex(bool state)
 	{
 	case GraphicsMode::GL:
 	{
-		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
+		//GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			renderManagerGL->GetVertexUniforms2D()->at(materialId).isTex = state;
+			vertexUniform.vertex2D.isTex = state;
 		}
 		else
 		{
-			renderManagerGL->GetFragmentUniforms3D()->at(materialId).isTex = state;
+			fragmentUniform.frag3D.isTex = state;
 		}
 		break;
 	}
 	case GraphicsMode::VK:
 	{
-		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
+		//VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			renderManagerVK->GetVertexUniforms2D()->at(materialId).isTex = state;
+			vertexUniform.vertex2D.isTex = state;
 		}
 		else
 		{
-			renderManagerVK->GetFragmentUniforms3D()->at(materialId).isTex = state;
+			fragmentUniform.frag3D.isTex = state;
 		}
 		break;
 	}

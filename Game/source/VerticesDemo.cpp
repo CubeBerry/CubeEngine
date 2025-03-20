@@ -21,7 +21,7 @@ void VerticesDemo::Init()
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,4.f,-9.f }, glm::vec3{ 16.f,9.f,0.f }, "0", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("1");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("1");
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -600.f,328.f,0.f }, glm::vec3{ 64.f,64.f,0.f }, "1", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
@@ -43,7 +43,7 @@ void VerticesDemo::Init()
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-256.f,0.f }, glm::vec3{ 256.f,256.f,0.f }, "4", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("FPS");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("FPS");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->SetSpriteDrawType(SpriteDrawType::UI);
 }
 
