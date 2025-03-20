@@ -19,9 +19,6 @@ void RenderManager::CreateMesh(
 	MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
-	std::vector<ThreeDimension::Vertex> tempVertices;
-	std::vector<uint32_t> tempIndices;
-	unsigned int verticesCount{ 0 };
 	switch (type)
 	{
 	case MeshType::PLANE:
@@ -35,7 +32,7 @@ void RenderManager::CreateMesh(
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				tempVertices.push_back(ThreeDimension::Vertex(
+				vertices.push_back(ThreeDimension::Vertex(
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row)
@@ -44,12 +41,12 @@ void RenderManager::CreateMesh(
 		}
 
 		//Indices
-		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
+		BuildIndices(vertices, indices, stacks, slices);
 	}
 	break;
 	case MeshType::CUBE:
 	{
-		std::vector<ThreeDimension::Vertex> planeVertices;
+		std::vector<Vertex> planeVertices;
 		std::vector<uint32_t> planeIndices;
 		//Vertices
 		for (int stack = 0; stack <= stacks; ++stack)
@@ -69,7 +66,7 @@ void RenderManager::CreateMesh(
 		}
 
 		//Indices
-		BuildIndices(planeVertices, planeIndices, 0, stacks, slices);
+		BuildIndices(planeVertices, planeIndices, stacks, slices);
 
 		const glm::vec3 translateArray[] = {
 			glm::vec3(+0.0f, +0.0f, +0.5f), // Z+
@@ -98,17 +95,17 @@ void RenderManager::CreateMesh(
 
 			for (const auto& plane_vertex : planeVertices)
 			{
-				tempVertices.push_back(ThreeDimension::Vertex(
-					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
-					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
-					plane_vertex.uv
+				vertices.push_back(ThreeDimension::Vertex(
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.vertex3D.position, 1.f))),
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.vertex3D.normal, 0.f))),
+					plane_vertex.vertex3D.uv
 				));
 			}
 
 			//Indices
 			for (const auto index : planeIndices)
 			{
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + (index + static_cast<int>(planeVertices.size()) * i)));
+				indices.push_back(static_cast<uint32_t>(index + static_cast<int>(planeVertices.size()) * i));
 			}
 		}
 	}
@@ -132,12 +129,12 @@ void RenderManager::CreateMesh(
 				v.normal = glm::normalize(v.position);
 				v.normal /= rad;
 				v.uv = glm::vec2(col, row);
-				tempVertices.push_back(v);
+				vertices.push_back(v);
 			}
 		}
 
 		//Indices
-		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
+		BuildIndices(vertices, indices, stacks, slices);
 	}
 	break;
 	case MeshType::TORUS:
@@ -167,12 +164,12 @@ void RenderManager::CreateMesh(
 				v.uv.x = row;
 				v.uv.y = col;
 
-				tempVertices.push_back(v);
+				vertices.push_back(v);
 			}
 		}
 
 		//Indices
-		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
+		BuildIndices(vertices, indices, stacks, slices);
 	}
 	break;
 	case MeshType::CYLINDER:
@@ -194,20 +191,20 @@ void RenderManager::CreateMesh(
 				v.uv.x = col;
 				v.uv.y = row;
 
-				tempVertices.push_back(v);
+				vertices.push_back(v);
 			}
 		}
 
 		//Indices
-		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
+		BuildIndices(vertices, indices, stacks, slices);
 
 		//Top
 		ThreeDimension::Vertex P0, Pi;
 		P0.position = glm::vec3{ 0.0f,0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, 1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		tempVertices.push_back(P0);
-		size_t top_cap_index = tempVertices.size() - 1;
+		vertices.push_back(P0);
+		size_t top_cap_index = vertices.size() - 1;
 		for (int i = 0; i <= slices; ++i)
 		{
 			float col = (float)i / slices;
@@ -216,7 +213,7 @@ void RenderManager::CreateMesh(
 			Pi.position = glm::vec3{ radius * sin(alpha), 0.5f, radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, 1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			tempVertices.push_back(Pi);
+			vertices.push_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),0.5f,radius * cos(alpha + deltaAlpha) };
 			//Pj.normal = glm::vec3{ 0.f, 1.f, 0.f };
@@ -225,9 +222,9 @@ void RenderManager::CreateMesh(
 
 			if (i > 0)
 			{
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(top_cap_index));
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(tempVertices.size()) - 2);
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(tempVertices.size()) - 1);
+				indices.push_back(static_cast<uint32_t>(top_cap_index));
+				indices.push_back(static_cast<uint32_t>(vertices.size()) - 2);
+				indices.push_back(static_cast<uint32_t>(vertices.size()) - 1);
 			}
 		}
 
@@ -235,9 +232,9 @@ void RenderManager::CreateMesh(
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		tempVertices.push_back(P0);
-		size_t bottom_cap_index = tempVertices.size() - 1;
-		size_t current_index = tempVertices.size();
+		vertices.push_back(P0);
+		size_t bottom_cap_index = vertices.size() - 1;
+		size_t current_index = vertices.size();
 		for (int i = 0; i <= slices; ++i)
 		{
 			float col = static_cast<float>(i) / static_cast<float>(slices);
@@ -246,7 +243,7 @@ void RenderManager::CreateMesh(
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			tempVertices.push_back(Pi);
+			vertices.push_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),-0.5f,radius * cos(alpha + deltaAlpha) };
 			//Pj.normal = glm::vec3{ 0.f, -1.f, 0.f };
@@ -255,9 +252,9 @@ void RenderManager::CreateMesh(
 
 			if (i > 0)
 			{
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(bottom_cap_index));
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(current_index) + i);
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(current_index) + i - 1);
+				indices.push_back(static_cast<uint32_t>(bottom_cap_index));
+				indices.push_back(static_cast<uint32_t>(current_index) + i);
+				indices.push_back(static_cast<uint32_t>(current_index) + i - 1);
 			}
 		}
 	}
@@ -282,21 +279,21 @@ void RenderManager::CreateMesh(
 				v.uv.x = col;
 				v.uv.y = 1 - row;
 
-				tempVertices.push_back(v);
+				vertices.push_back(v);
 			}
 		}
 
 		//Indices
-		BuildIndices(tempVertices, tempIndices, verticesCount, stacks, slices);
+		BuildIndices(vertices, indices, stacks, slices);
 
 		//Bottom
 		ThreeDimension::Vertex P0, Pi;
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		tempVertices.push_back(P0);
-		size_t bottom_cap_index = tempVertices.size() - 1;
-		size_t current_index = tempVertices.size();
+		vertices.push_back(P0);
+		size_t bottom_cap_index = vertices.size() - 1;
+		size_t current_index = vertices.size();
 		for (int i = 0; i <= slices; ++i)
 		{
 			float col = static_cast<float>(i) / slices;
@@ -305,7 +302,7 @@ void RenderManager::CreateMesh(
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			tempVertices.push_back(Pi);
+			vertices.push_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),-0.5f,radius * cos(alpha + deltaAlpha) };
 			//Pj.normal = glm::vec3{ 0.f, -1.f, 0.f };
@@ -313,9 +310,9 @@ void RenderManager::CreateMesh(
 
 			if (i > 0)
 			{
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(bottom_cap_index));
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(current_index) + i);
-				tempIndices.push_back(verticesCount + static_cast<uint32_t>(current_index) + i - 1);
+				indices.push_back(static_cast<uint32_t>(bottom_cap_index));
+				indices.push_back(static_cast<uint32_t>(current_index) + i);
+				indices.push_back(static_cast<uint32_t>(current_index) + i - 1);
 			}
 		}
 	}
@@ -339,8 +336,7 @@ void RenderManager::CreateMesh(
 			std::exit(EXIT_FAILURE);
 		}
 
-		unsigned int initialVerticesCount{ verticesCount };
-		ProcessNode(vertices, indices, scene->mRootNode, scene, verticesCount, 0);
+		ProcessNode(vertices, indices, scene->mRootNode, scene, 0);
 
 		//for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 		//{
@@ -371,7 +367,7 @@ void RenderManager::CreateMesh(
 		//}
 
 		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-		for (auto it = vertices.begin() + initialVerticesCount; it != vertices.end(); ++it)
+		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
 			minPos = glm::min(minPos, glm::vec3(it->vertex3D.position));
 			maxPos = glm::max(maxPos, glm::vec3(it->vertex3D.position));
@@ -388,7 +384,7 @@ void RenderManager::CreateMesh(
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
 #endif
-		for (auto it = vertices.begin() + initialVerticesCount; it != vertices.end(); ++it)
+		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
 			it->vertex3D.position -= center;
 			it->vertex3D.position *= glm::vec3(unitScale, unitScale, unitScale);
@@ -510,10 +506,10 @@ void RenderManager::CreateMesh(
 	{
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
-		for (size_t v = 0; v < tempVertices.size(); ++v)
+		for (size_t v = 0; v < vertices.size(); ++v)
 		{
-			glm::vec3 start = tempVertices[v].position;
-			glm::vec3 end = tempVertices[v].position + tempVertices[v].normal * 0.1f;
+			glm::vec3 start = vertices[v].vertex3D.position;
+			glm::vec3 end = vertices[v].vertex3D.position + vertices[v].vertex3D.normal * 0.1f;
 
 			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
 			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
@@ -522,12 +518,12 @@ void RenderManager::CreateMesh(
 		normalVertices.insert(normalVertices.end(), tempNormalVertices.begin(), tempNormalVertices.end());
 #endif
 
-		vertices.insert(vertices.end(), tempVertices.begin(), tempVertices.end());
-		indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+		vertices.insert(vertices.end(), vertices.begin(), vertices.end());
+		indices.insert(indices.end(), indices.begin(), indices.end());
 	}
 }
 
-void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices)
+void RenderManager::BuildIndices(const std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
 {
 	//Indices
 	int i0 = 0, i1 = 0, i2 = 0;
@@ -545,12 +541,12 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 			i2 = i1 + stride;
 
 			/*  Ignore degenerate triangle */
-			if (!DegenerateTri(tempVertices[i0].position, tempVertices[i1].position, tempVertices[i2].position))
+			if (!DegenerateTri(vertices[i0].vertex3D.position, vertices[i1].vertex3D.position, vertices[i2].vertex3D.position))
 			{
 				/*  Add the indices for the first triangle */
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + i0));
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + i1));
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + i2));
+				indices.push_back(static_cast<uint32_t>(i0));
+				indices.push_back(static_cast<uint32_t>(i1));
+				indices.push_back(static_cast<uint32_t>(i2));
 			}
 
 			/*  You need to compute the indices for the second triangle here */
@@ -559,11 +555,11 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 			i5 = i0;
 
 			/*  Ignore degenerate triangle */
-			if (!DegenerateTri(tempVertices[i3].position, tempVertices[i4].position, tempVertices[i5].position))
+			if (!DegenerateTri(vertices[i3].vertex3D.position, vertices[i4].vertex3D.position, vertices[i5].vertex3D.position))
 			{
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + i3));
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + i4));
-				tempIndices.push_back(static_cast<uint32_t>(verticesCount + i5));
+				indices.push_back(static_cast<uint32_t>(i3));
+				indices.push_back(static_cast<uint32_t>(i4));
+				indices.push_back(static_cast<uint32_t>(i5));
 			}
 		}
 	}
@@ -571,33 +567,30 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& temp
 
 void RenderManager::ProcessNode(
 	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-	aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount)
+	aiNode* node, const aiScene* scene, int childCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(vertices, indices, mesh, scene, verticesCount, childCount);
+		ProcessMesh(vertices, indices, mesh, scene, childCount);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(vertices, indices, node->mChildren[i], scene, verticesCount, i);
+		ProcessNode(vertices, indices, node->mChildren[i], scene, i);
 	}
 }
 
 void RenderManager::ProcessMesh(
 	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-	aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount)
+	aiMesh* mesh, const aiScene* scene, int childCount)
 {
-	std::vector<ThreeDimension::Vertex> tempVertices;
-	std::vector<uint32_t> tempIndices;
-
 	//Vertices
 	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
 	{
 		aiVector3D vertex = mesh->mVertices[v];
 		aiVector3D normal = mesh->mNormals[v];
-		tempVertices.push_back(ThreeDimension::Vertex(
+		vertices.push_back(ThreeDimension::Vertex(
 			glm::vec3(vertex.x, vertex.y, vertex.z),
 			glm::vec3(normal.x, normal.y, normal.z),
 			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
@@ -611,7 +604,7 @@ void RenderManager::ProcessMesh(
 		aiFace face = mesh->mFaces[f];
 		for (unsigned int i = 0; i < face.mNumIndices; i++)
 		{
-			tempIndices.push_back(static_cast<uint32_t>(face.mIndices[i]));
+			indices.push_back(static_cast<uint32_t>(face.mIndices[i]));
 		}
 	}
 
@@ -622,13 +615,9 @@ void RenderManager::ProcessMesh(
 		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	}
 
-	for (auto& i : tempIndices)
-		i += static_cast<uint32_t>(verticesCount);
+	vertices.insert(vertices.end(), vertices.begin(), vertices.end());
+	indices.insert(indices.end(), indices.begin(), indices.end());
 
-	vertices.insert(vertices.end(), tempVertices.begin(), tempVertices.end());
-	indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
-
-	verticesCount += static_cast<unsigned int>(tempVertices.size());
 }
 
 //@TODO This function is incomplete.

@@ -132,14 +132,14 @@ protected:
 	//Skybox
 	bool skyboxEnabled{ false };
 private:
-	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
+	static void BuildIndices(const std::vector<Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp
 	void ProcessNode(
 		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-		aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount);
+		aiNode* node, const aiScene* scene, int childCount);
 	void ProcessMesh(
 		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-		aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount);
+		aiMesh* mesh, const aiScene* scene, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
 
