@@ -176,15 +176,15 @@ public:
 	{
 		return new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
 	}
-	VKUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
+	[[nodiscard]] VKUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
 	{
 		return new VKUniformBuffer<VertexUniform>(vkInit, 1);
 	}
-	VKUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
+	[[nodiscard]] VKUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
 	{
 		return new VKUniformBuffer<FragmentUniform>(vkInit, 1);
 	}
-	VKUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
+	[[nodiscard]] VKUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
 	{
 		return new VKUniformBuffer<ThreeDimension::Material>(vkInit, 1);
 	}
