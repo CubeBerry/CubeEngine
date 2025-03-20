@@ -143,6 +143,9 @@ private:
 
 	// Buffer
 	VertexBuffer vertexBuffer;
+#ifdef _DEBUG
+	VertexBuffer normalVertexBuffer;
+#endif
 	IndexBuffer indexBuffer;
 	VertexUniformBuffer vertexUniformBuffer;
 	FragmentUniformBuffer fragmentUniformBuffer;

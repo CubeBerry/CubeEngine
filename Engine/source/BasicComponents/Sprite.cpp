@@ -397,7 +397,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	{
 		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
 #ifdef _DEBUG
-		vertexBuffer.glNormalVertexBuffer = new GLVertexBuffer();
+		normalVertexBuffer.glNormalVertexBuffer = new GLVertexBuffer();
 #endif
 		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
@@ -407,7 +407,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	{
 		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 #ifdef _DEBUG
-		vertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+		normalVertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 #endif
 		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
@@ -443,7 +443,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	{
 		vertexBuffer.glVertexBuffer = new GLVertexBuffer();
 #ifdef _DEBUG
-		vertexBuffer.glNormalVertexBuffer = new GLVertexBuffer();
+		normalVertexBuffer.glNormalVertexBuffer = new GLVertexBuffer();
 #endif
 		indexBuffer.glIndexBuffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.glVertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
@@ -453,7 +453,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	{
 		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 #ifdef _DEBUG
-		vertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+		normalVertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 #endif
 		indexBuffer.vkIndexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 		vertexUniformBuffer.vkVertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
