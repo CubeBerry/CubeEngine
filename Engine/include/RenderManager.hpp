@@ -156,53 +156,171 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
 }
 
 // Buffer
-union VertexBuffer
+enum class BufferType { NONE, GL, VK };
+
+//union VertexBuffer
+//{
+//	VertexBuffer() {}
+//	// GL
+//	GLVertexBuffer* glVertexBuffer;
+//	// VK
+//	VKVertexBuffer<Vertex>* vkVertexBuffer;
+//#ifdef _DEBUG
+//	// GL
+//	GLVertexBuffer* glNormalVertexBuffer;
+//	// VK
+//	VKVertexBuffer<ThreeDimension::NormalVertex>* vkNormalVertexBuffer;
+//#endif
+//};
+
+struct VertexBufferWrapper
 {
-	VertexBuffer() {}
-	// GL
-	GLVertexBuffer* glVertexBuffer;
-	// VK
-	VKVertexBuffer<Vertex>* vkVertexBuffer;
+	VertexBufferWrapper() : active(BufferType::NONE) {}
+	~VertexBufferWrapper()
+	{
+		switch (active)
+		{
+		case BufferType::NONE:
+			break;
+		case BufferType::GL:
+			delete glVertexBuffer;
 #ifdef _DEBUG
-	// GL
-	GLVertexBuffer* glNormalVertexBuffer;
-	// VK
-	VKVertexBuffer<ThreeDimension::NormalVertex>* vkNormalVertexBuffer;
+			delete glNormalVertexBuffer;
 #endif
+			break;
+		case BufferType::VK:
+			delete vkVertexBuffer;
+#ifdef _DEBUG
+			delete glNormalVertexBuffer;
+#endif
+			break;
+		}
+	}
+
+	BufferType active;
+	union
+	{
+		// GL
+		GLVertexBuffer* glVertexBuffer;
+		// VK
+		VKVertexBuffer<Vertex>* vkVertexBuffer;
+#ifdef _DEBUG
+		// GL
+		GLVertexBuffer* glNormalVertexBuffer;
+		// VK
+		VKVertexBuffer<ThreeDimension::NormalVertex>* vkNormalVertexBuffer;
+#endif
+	};
 };
 
-union IndexBuffer
+struct IndexBufferWrapper
 {
-	IndexBuffer() {}
-	// GL
-	GLIndexBuffer* glIndexBuffer;
-	// VK
-	VKIndexBuffer* vkIndexBuffer;
+	IndexBufferWrapper() : active(BufferType::NONE) {}
+	~IndexBufferWrapper()
+	{
+		switch (active)
+		{
+		case BufferType::NONE:
+			break;
+		case BufferType::GL:
+			delete glIndexBuffer;
+			break;
+		case BufferType::VK:
+			delete vkIndexBuffer;
+			break;
+		}
+	}
+
+	BufferType active;
+	union
+	{
+		// GL
+		GLIndexBuffer* glIndexBuffer;
+		// VK
+		VKIndexBuffer* vkIndexBuffer;
+	};
 };
 
-union VertexUniformBuffer
+struct VertexUniformBufferWrapper
 {
-	VertexUniformBuffer() {}
-	// GL
-	GLUniformBuffer<VertexUniform>* glVertexUniformBuffer;
-	// VK
-	VKUniformBuffer<VertexUniform>* vkVertexUniformBuffer;
+	VertexUniformBufferWrapper() : active(BufferType::NONE) {}
+	~VertexUniformBufferWrapper()
+	{
+		switch (active)
+		{
+		case BufferType::NONE:
+			break;
+		case BufferType::GL:
+			delete glVertexUniformBuffer;
+			break;
+		case BufferType::VK:
+			delete vkVertexUniformBuffer;
+			break;
+		}
+	}
+
+	BufferType active;
+	union
+	{
+		// GL
+		GLUniformBuffer<VertexUniform>* glVertexUniformBuffer;
+		// VK
+		VKUniformBuffer<VertexUniform>* vkVertexUniformBuffer;
+	};
 };
 
-union FragmentUniformBuffer
+struct FragmentUniformBufferWrapper
 {
-	FragmentUniformBuffer() {}
-	// GL
-	GLUniformBuffer<FragmentUniform>* glFragmentUniformBuffer;
-	// VK
-	VKUniformBuffer<FragmentUniform>* vkFragmentUniformBuffer;
+	FragmentUniformBufferWrapper() : active(BufferType::NONE) {}
+	~FragmentUniformBufferWrapper()
+	{
+		switch (active)
+		{
+		case BufferType::NONE:
+			break;
+		case BufferType::GL:
+			delete glFragmentUniformBuffer;
+			break;
+		case BufferType::VK:
+			delete vkFragmentUniformBuffer;
+			break;
+		}
+	}
+
+	BufferType active;
+	union
+	{
+		// GL
+		GLUniformBuffer<FragmentUniform>* glFragmentUniformBuffer;
+		// VK
+		VKUniformBuffer<FragmentUniform>* vkFragmentUniformBuffer;
+	};
 };
 
-union MaterialUniformBuffer
+struct MaterialUniformBufferWrapper
 {
-	MaterialUniformBuffer() {}
-	// GL
-	GLUniformBuffer<ThreeDimension::Material>* glMaterialUniformBuffer;
-	// VK
-	VKUniformBuffer<ThreeDimension::Material>* vkMaterialUniformBuffer;
+	MaterialUniformBufferWrapper() : active(BufferType::NONE) {}
+	~MaterialUniformBufferWrapper()
+	{
+		switch (active)
+		{
+		case BufferType::NONE:
+			break;
+		case BufferType::GL:
+			delete glMaterialUniformBuffer;
+			break;
+		case BufferType::VK:
+			delete vkMaterialUniformBuffer;
+			break;
+		}
+	}
+
+	BufferType active;
+	union
+	{
+		// GL
+		GLUniformBuffer<ThreeDimension::Material>* glMaterialUniformBuffer;
+		// VK
+		VKUniformBuffer<ThreeDimension::Material>* vkMaterialUniformBuffer;
+	};
 };

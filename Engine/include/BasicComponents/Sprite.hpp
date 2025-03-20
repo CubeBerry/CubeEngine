@@ -83,11 +83,11 @@ public:
 	FragmentUniform& GetFragmentUniform() { return fragmentUniform; }
 	ThreeDimension::Material& GetMaterial() { return material; }
 	// Buffer
-	VertexBuffer* GetVertexBuffer() { return &vertexBuffer; }
-	IndexBuffer* GetIndexBuffer() { return &indexBuffer; }
-	VertexUniformBuffer* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
-	FragmentUniformBuffer* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
-	MaterialUniformBuffer* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
+	VertexBufferWrapper* GetVertexBuffer() { return &vertexBuffer; }
+	IndexBufferWrapper* GetIndexBuffer() { return &indexBuffer; }
+	VertexUniformBufferWrapper* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
+	FragmentUniformBufferWrapper* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
+	MaterialUniformBufferWrapper* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
 
 //#ifdef _DEBUG
 //	std::vector<ThreeDimension::NormalVertex> GetNormalVertices() { return normalVertices; }
@@ -142,12 +142,12 @@ private:
 	ThreeDimension::Material material;
 
 	// Buffer
-	VertexBuffer vertexBuffer;
+	VertexBufferWrapper vertexBuffer;
 #ifdef _DEBUG
-	VertexBuffer normalVertexBuffer;
+	VertexBufferWrapper normalVertexBuffer;
 #endif
-	IndexBuffer indexBuffer;
-	VertexUniformBuffer vertexUniformBuffer;
-	FragmentUniformBuffer fragmentUniformBuffer;
-	MaterialUniformBuffer materialUniformBuffer;
+	IndexBufferWrapper indexBuffer;
+	VertexUniformBufferWrapper vertexUniformBuffer;
+	FragmentUniformBufferWrapper fragmentUniformBuffer;
+	MaterialUniformBufferWrapper materialUniformBuffer;
 };

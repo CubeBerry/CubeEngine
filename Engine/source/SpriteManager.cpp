@@ -4,8 +4,6 @@
 #include "SpriteManager.hpp"
 #include "Engine.hpp"
 
-#include <iostream>
-
 SpriteManager::~SpriteManager()
 {
 	//if (sprites.empty() != true)

@@ -406,6 +406,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	else
 	{
 		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		vertexBuffer.active = BufferType::VK;
 #ifdef _DEBUG
 		normalVertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 #endif
@@ -452,6 +453,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	else
 	{
 		vertexBuffer.vkVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		vertexBuffer.active = BufferType::VK;
 #ifdef _DEBUG
 		normalVertexBuffer.vkNormalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 #endif
