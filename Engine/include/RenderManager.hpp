@@ -191,7 +191,7 @@ struct VertexBufferWrapper
 		case BufferType::VK:
 			delete vkVertexBuffer;
 #ifdef _DEBUG
-			delete glNormalVertexBuffer;
+			delete vkNormalVertexBuffer;
 #endif
 			break;
 		}
