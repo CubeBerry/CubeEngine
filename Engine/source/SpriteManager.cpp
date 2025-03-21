@@ -38,33 +38,32 @@ void SpriteManager::AddSprite(Sprite* sprite_)
 
 void SpriteManager::DeleteSprite(Sprite* sprite_)
 {
-	//auto tempId = sprite_->GetMaterialId();
-	if (!sprites.empty())
-	{
-		//auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
-		auto iterator = std::ranges::find(sprites.begin(), sprites.end(), sprite_);
-		//for (auto it = iterator + 1; it != sprites.end(); ++it)
-		//{
-			//(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
+    if (!sprites.empty())
+    {
+        //auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
+        auto iterator = std::ranges::find(sprites.begin(), sprites.end(), sprite_);
+        //for (auto it = iterator + 1; it != sprites.end(); ++it)
+        //{
+            //(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
 
-			//switch(Engine::Instance().GetRenderManager()->GetRenderType())
-			//{
-			//case RenderType::TwoDimension:
-			//	Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at((*it)->GetMaterialId() + 1);
-			//	Engine::Instance().GetRenderManager()->GetFragmentUniforms2D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetFragmentUniforms2D()->at((*it)->GetMaterialId() + 1);
-			//	break;
-			//case RenderType::ThreeDimension:
-			//	Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at((*it)->GetMaterialId() + 1);
-			//	Engine::Instance().GetRenderManager()->GetFragmentUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetFragmentUniforms3D()->at((*it)->GetMaterialId() + 1);
-			//	Engine::Instance().GetRenderManager()->GetMaterialUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetMaterialUniforms3D()->at((*it)->GetMaterialId() + 1);
-			//	break;
-			//}
-		//}
-		//Engine::Instance().GetRenderManager()->DeleteWithIndex(tempId);
-		if (iterator != sprites.end())
-		{
-			//delete sprite_;
-			sprites.erase(iterator);
-		}
-	}
+            //switch(Engine::Instance().GetRenderManager()->GetRenderType())
+            //{
+            //case RenderType::TwoDimension:
+            //    Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetVertexUniforms2D()->at((*it)->GetMaterialId() + 1);
+            //    Engine::Instance().GetRenderManager()->GetFragmentUniforms2D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetFragmentUniforms2D()->at((*it)->GetMaterialId() + 1);
+            //    break;
+            //case RenderType::ThreeDimension:
+            //    Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetVertexUniforms3D()->at((*it)->GetMaterialId() + 1);
+            //    Engine::Instance().GetRenderManager()->GetFragmentUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetFragmentUniforms3D()->at((*it)->GetMaterialId() + 1);
+            //    Engine::Instance().GetRenderManager()->GetMaterialUniforms3D()->at((*it)->GetMaterialId()) = Engine::Instance().GetRenderManager()->GetMaterialUniforms3D()->at((*it)->GetMaterialId() + 1);
+            //    break;
+            //}
+        //}
+        //Engine::Instance().GetRenderManager()->DeleteWithIndex(tempId);
+        if (iterator != sprites.end())
+        {
+            //delete sprite_;
+            sprites.erase(iterator);
+        }
+    }
 }

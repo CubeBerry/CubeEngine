@@ -84,6 +84,24 @@ public:
 		return nullptr;
 	}
 
+	template<typename ComponentTypes> constexpr void DeleteComponent()
+	{
+		auto iterator = componentList.begin();
+		for (auto list : componentList)
+		{
+			if (typeid(*list).name() == typeid(ComponentTypes).name())
+			{
+				delete list;
+				componentList.erase(iterator);
+				break;
+			}
+			if(iterator != componentList.end())
+			{
+				++iterator;
+			}
+		}
+	}
+
 	std::vector<Component*> GetComponentList() { return componentList; }
 
 	//template <typename T> bool HasComponent()

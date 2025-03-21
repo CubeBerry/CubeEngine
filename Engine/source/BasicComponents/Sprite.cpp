@@ -355,25 +355,25 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
 }
 
-void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
-{
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color); });
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[](Sprite* sprite) { sprite->SetIsTex(sprite->GetIsTex()); });
-}
-
-void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
-{
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[](Sprite* sprite) { sprite->SetIsTex(sprite->GetIsTex()); });
-}
+//void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
+//{
+//	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+//		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
+//	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+//		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color); });
+//	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+//		[](Sprite* sprite) { sprite->SetIsTex(sprite->GetIsTex()); });
+//}
+//
+//void Sprite::RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
+//{
+//	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+//		[](Sprite* sprite) { sprite->DeleteFromSpriteManagerList(); });
+//	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+//		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
+//	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
+//		[](Sprite* sprite) { sprite->SetIsTex(sprite->GetIsTex()); });
+//}
 
 
 void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
