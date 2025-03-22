@@ -302,21 +302,27 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			ImGui::Spacing();
 			if (ImGui::SliderInt("Stacks", &stacks, 1, 30))
 			{
+				MeshType meshType = sprite->GetMeshType();
+				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
+
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 				{ obj->DeleteComponent<Sprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 				{ obj->AddComponent<Sprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness); });
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
 			if (ImGui::SliderInt("Slices", &slices, 1, 30))
 			{
+				MeshType meshType = sprite->GetMeshType();
+				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
+
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 				{ obj->DeleteComponent<Sprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 				{ obj->AddComponent<Sprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness); });
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
