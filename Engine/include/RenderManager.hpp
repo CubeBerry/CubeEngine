@@ -197,10 +197,9 @@ struct VertexBufferWrapper
 	VertexBufferWrapper() : buffer(std::monostate{}) {}
 	~VertexBufferWrapper()
 	{
-		std::visit([](auto& buf)
+		std::visit([]<typename T>(T& buf)
 			{
-				using T = std::decay_t<decltype(buf)>;
-				if constexpr (!std::is_same_v<T, std::monostate>)
+				if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
 				{
 					delete buf.vertexBuffer;
 #ifdef _DEBUG
