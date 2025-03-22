@@ -32,11 +32,11 @@ void RenderManager::CreateMesh(
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				vertices.push_back(ThreeDimension::Vertex(
+				vertices.emplace_back(ThreeDimension::Vertex{
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row)
-				));
+					});
 			}
 		}
 
@@ -57,11 +57,11 @@ void RenderManager::CreateMesh(
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				planeVertices.push_back(ThreeDimension::Vertex(
+				planeVertices.emplace_back(ThreeDimension::Vertex{
 					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
 					glm::vec3(0.0f, 0.0f, 1.0f),
 					glm::vec2(col, row)
-				));
+					});
 			}
 		}
 
@@ -95,11 +95,11 @@ void RenderManager::CreateMesh(
 
 			for (const auto& plane_vertex : planeVertices)
 			{
-				vertices.push_back(ThreeDimension::Vertex(
+				vertices.emplace_back(ThreeDimension::Vertex{
 					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.vertex3D.position, 1.f))),
 					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.vertex3D.normal, 0.f))),
 					plane_vertex.vertex3D.uv
-				));
+					});
 			}
 
 			//Indices
@@ -113,7 +113,7 @@ void RenderManager::CreateMesh(
 	case MeshType::SPHERE:
 	{
 		//Vertices
-		const float rad = 0.5f;
+		const float radius = 0.5f;
 		for (int stack = 0; stack <= stacks; ++stack)
 		{
 			const float row = static_cast<float>(stack) / static_cast<float>(stacks);
@@ -125,11 +125,11 @@ void RenderManager::CreateMesh(
 				const float col = static_cast<float>(slice) / static_cast<float>(slices);
 				const float alpha = col * PI * 2.f;
 				ThreeDimension::Vertex v;
-				v.position = glm::vec3(rad * sin(alpha) * cos_beta, rad * sin_beta, rad * cos(alpha) * cos_beta);
+				v.position = glm::vec3(radius * sin(alpha) * cos_beta, radius * sin_beta, radius * cos(alpha) * cos_beta);
 				v.normal = glm::normalize(v.position);
-				v.normal /= rad;
+				v.normal /= radius;
 				v.uv = glm::vec2(col, row);
-				vertices.push_back(v);
+				vertices.emplace_back(v);
 			}
 		}
 
@@ -164,7 +164,7 @@ void RenderManager::CreateMesh(
 				v.uv.x = row;
 				v.uv.y = col;
 
-				vertices.push_back(v);
+				vertices.emplace_back(v);
 			}
 		}
 
@@ -191,7 +191,7 @@ void RenderManager::CreateMesh(
 				v.uv.x = col;
 				v.uv.y = row;
 
-				vertices.push_back(v);
+				vertices.emplace_back(v);
 			}
 		}
 
@@ -203,7 +203,7 @@ void RenderManager::CreateMesh(
 		P0.position = glm::vec3{ 0.0f,0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, 1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		vertices.push_back(P0);
+		vertices.emplace_back(P0);
 		size_t top_cap_index = vertices.size() - 1;
 		for (int i = 0; i <= slices; ++i)
 		{
@@ -213,7 +213,7 @@ void RenderManager::CreateMesh(
 			Pi.position = glm::vec3{ radius * sin(alpha), 0.5f, radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, 1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			vertices.push_back(Pi);
+			vertices.emplace_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),0.5f,radius * cos(alpha + deltaAlpha) };
 			//Pj.normal = glm::vec3{ 0.f, 1.f, 0.f };
@@ -232,7 +232,7 @@ void RenderManager::CreateMesh(
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		vertices.push_back(P0);
+		vertices.emplace_back(P0);
 		size_t bottom_cap_index = vertices.size() - 1;
 		size_t current_index = vertices.size();
 		for (int i = 0; i <= slices; ++i)
@@ -243,7 +243,7 @@ void RenderManager::CreateMesh(
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			vertices.push_back(Pi);
+			vertices.emplace_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),-0.5f,radius * cos(alpha + deltaAlpha) };
 			//Pj.normal = glm::vec3{ 0.f, -1.f, 0.f };
@@ -279,7 +279,7 @@ void RenderManager::CreateMesh(
 				v.uv.x = col;
 				v.uv.y = 1 - row;
 
-				vertices.push_back(v);
+				vertices.emplace_back(v);
 			}
 		}
 
@@ -291,7 +291,7 @@ void RenderManager::CreateMesh(
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		vertices.push_back(P0);
+		vertices.emplace_back(P0);
 		size_t bottom_cap_index = vertices.size() - 1;
 		size_t current_index = vertices.size();
 		for (int i = 0; i <= slices; ++i)
@@ -302,7 +302,7 @@ void RenderManager::CreateMesh(
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			vertices.push_back(Pi);
+			vertices.emplace_back(Pi);
 			//float deltaAlpha{ (2.f * PI) / slices };
 			//Pj.position = glm::vec3{ radius * sin(alpha + deltaAlpha),-0.5f,radius * cos(alpha + deltaAlpha) };
 			//Pj.normal = glm::vec3{ 0.f, -1.f, 0.f };
@@ -381,9 +381,6 @@ void RenderManager::CreateMesh(
 		float extent = glm::max(size.x, glm::max(size.y, size.z));
 		unitScale = 1.f / extent;
 
-#ifdef _DEBUG
-		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
-#endif
 		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
 			it->vertex3D.position -= center;
@@ -393,14 +390,10 @@ void RenderManager::CreateMesh(
 			glm::vec3 start = it->vertex3D.position;
 			glm::vec3 end = it->vertex3D.position + it->vertex3D.normal * 0.1f;
 
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
 #endif
 		}
-
-#ifdef _DEBUG
-		normalVertices.insert(normalVertices.end(), tempNormalVertices.begin(), tempNormalVertices.end());
-#endif
 
 		//Custom Model Load
 		//std::ifstream file(path);
@@ -505,21 +498,15 @@ void RenderManager::CreateMesh(
 	if (type != MeshType::OBJ)
 	{
 #ifdef _DEBUG
-		std::vector<ThreeDimension::NormalVertex> tempNormalVertices;
 		for (size_t v = 0; v < vertices.size(); ++v)
 		{
 			glm::vec3 start = vertices[v].vertex3D.position;
 			glm::vec3 end = vertices[v].vertex3D.position + vertices[v].vertex3D.normal * 0.1f;
 
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
-			tempNormalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
 		}
-
-		normalVertices.insert(normalVertices.end(), tempNormalVertices.begin(), tempNormalVertices.end());
 #endif
-
-		vertices.insert(vertices.end(), vertices.begin(), vertices.end());
-		indices.insert(indices.end(), indices.begin(), indices.end());
 	}
 }
 
@@ -567,7 +554,7 @@ void RenderManager::BuildIndices(const std::vector<Vertex>& vertices, std::vecto
 
 void RenderManager::ProcessNode(
 	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-	aiNode* node, const aiScene* scene, int childCount)
+	const aiNode* node, const aiScene* scene, int childCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
@@ -583,19 +570,19 @@ void RenderManager::ProcessNode(
 
 void RenderManager::ProcessMesh(
 	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-	aiMesh* mesh, const aiScene* scene, int childCount)
+	const aiMesh* mesh, const aiScene* scene, int childCount)
 {
 	//Vertices
 	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
 	{
 		aiVector3D vertex = mesh->mVertices[v];
 		aiVector3D normal = mesh->mNormals[v];
-		vertices.push_back(ThreeDimension::Vertex(
+		vertices.emplace_back(ThreeDimension::Vertex{
 			glm::vec3(vertex.x, vertex.y, vertex.z),
 			glm::vec3(normal.x, normal.y, normal.z),
 			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
-			childCount)
-		);
+			childCount }
+			);
 	}
 
 	//Indices

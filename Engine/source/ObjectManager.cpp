@@ -4,8 +4,6 @@
 //File: ObjectManager.cpp
 #include "ObjectManager.hpp"
 
-#include <iostream>
-
 #include "Engine.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Light.hpp"

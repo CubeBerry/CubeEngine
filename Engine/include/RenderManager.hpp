@@ -137,10 +137,10 @@ private:
 	//Assimp
 	void ProcessNode(
 		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-		aiNode* node, const aiScene* scene, int childCount);
+		const aiNode* node, const aiScene* scene, int childCount);
 	void ProcessMesh(
 		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-		aiMesh* mesh, const aiScene* scene, int childCount);
+		const aiMesh* mesh, const aiScene* scene, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
 
