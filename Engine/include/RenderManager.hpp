@@ -212,112 +212,68 @@ struct VertexBufferWrapper
 
 struct IndexBufferWrapper
 {
-	IndexBufferWrapper() : active(BufferType::NONE) {}
+	std::variant<std::monostate, GLIndexBuffer*, VKIndexBuffer*> buffer;
+
+	IndexBufferWrapper() : buffer(std::monostate{}) {}
 	~IndexBufferWrapper()
 	{
-		switch (active)
+		std::visit([]<typename T>(const T& buf)
 		{
-		case BufferType::NONE:
-			break;
-		case BufferType::GL:
-			delete glIndexBuffer;
-			break;
-		case BufferType::VK:
-			delete vkIndexBuffer;
-			break;
-		}
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf;
+			}
+		}, buffer);
 	}
-
-	BufferType active;
-	union
-	{
-		// GL
-		GLIndexBuffer* glIndexBuffer;
-		// VK
-		VKIndexBuffer* vkIndexBuffer;
-	};
 };
 
 struct VertexUniformBufferWrapper
 {
-	VertexUniformBufferWrapper() : active(BufferType::NONE) {}
+	std::variant<std::monostate, GLUniformBuffer<VertexUniform>*, VKUniformBuffer<VertexUniform>*> buffer;
+
+	VertexUniformBufferWrapper() : buffer(std::monostate{}) {}
 	~VertexUniformBufferWrapper()
 	{
-		switch (active)
+		std::visit([]<typename T>(const T& buf)
 		{
-		case BufferType::NONE:
-			break;
-		case BufferType::GL:
-			delete glVertexUniformBuffer;
-			break;
-		case BufferType::VK:
-			delete vkVertexUniformBuffer;
-			break;
-		}
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf;
+			}
+		}, buffer);
 	}
-
-	BufferType active;
-	union
-	{
-		// GL
-		GLUniformBuffer<VertexUniform>* glVertexUniformBuffer;
-		// VK
-		VKUniformBuffer<VertexUniform>* vkVertexUniformBuffer;
-	};
 };
 
 struct FragmentUniformBufferWrapper
 {
-	FragmentUniformBufferWrapper() : active(BufferType::NONE) {}
+	std::variant<std::monostate, GLUniformBuffer<FragmentUniform>*, VKUniformBuffer<FragmentUniform>*> buffer;
+
+	FragmentUniformBufferWrapper() : buffer(std::monostate{}) {}
 	~FragmentUniformBufferWrapper()
 	{
-		switch (active)
+		std::visit([]<typename T>(const T & buf)
 		{
-		case BufferType::NONE:
-			break;
-		case BufferType::GL:
-			delete glFragmentUniformBuffer;
-			break;
-		case BufferType::VK:
-			delete vkFragmentUniformBuffer;
-			break;
-		}
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf;
+			}
+		}, buffer);
 	}
-
-	BufferType active;
-	union
-	{
-		// GL
-		GLUniformBuffer<FragmentUniform>* glFragmentUniformBuffer;
-		// VK
-		VKUniformBuffer<FragmentUniform>* vkFragmentUniformBuffer;
-	};
 };
 
 struct MaterialUniformBufferWrapper
 {
-	MaterialUniformBufferWrapper() : active(BufferType::NONE) {}
+	std::variant<std::monostate, GLUniformBuffer<ThreeDimension::Material>*, VKUniformBuffer<ThreeDimension::Material>*> buffer;
+
+	MaterialUniformBufferWrapper() : buffer(std::monostate{}) {}
 	~MaterialUniformBufferWrapper()
 	{
-		switch (active)
+		std::visit([]<typename T>(const T & buf)
 		{
-		case BufferType::NONE:
-			break;
-		case BufferType::GL:
-			delete glMaterialUniformBuffer;
-			break;
-		case BufferType::VK:
-			delete vkMaterialUniformBuffer;
-			break;
-		}
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf;
+			}
+		}, buffer);
 	}
-
-	BufferType active;
-	union
-	{
-		// GL
-		GLUniformBuffer<ThreeDimension::Material>* glMaterialUniformBuffer;
-		// VK
-		VKUniformBuffer<ThreeDimension::Material>* vkMaterialUniformBuffer;
-	};
 };

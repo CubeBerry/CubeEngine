@@ -1056,11 +1056,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		for (auto& sprite : sprites)
 		{
+			auto& vertexUniformBuffer = std::get<VKUniformBuffer<VertexUniform>*>(sprite->GetVertexUniformBuffer()->buffer);
 			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->GetUniformBuffers()))[frameIndex];
+				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(TwoDimension::VertexUniform);
 
@@ -1077,13 +1078,14 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 
-				sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex2D, frameIndex);
+				vertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex2D, frameIndex);
 			}
 
+			auto& fragmentUniformBuffer = std::get<VKUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
 			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->GetUniformBuffers()))[frameIndex];
+				bufferInfo.buffer = (*fragmentUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(TwoDimension::FragmentUniform);
 
@@ -1107,18 +1109,19 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 
-				sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag2D, frameIndex);
+				fragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag2D, frameIndex);
 			}
 		}
 		break;
 	case RenderType::ThreeDimension:
 		for (auto& sprite : sprites)
 		{
+			auto& vertexUniformBuffer = std::get<VKUniformBuffer<VertexUniform>*>(sprite->GetVertexUniformBuffer()->buffer);
 			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
-				bufferInfo.buffer = (*(sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->GetUniformBuffers()))[frameIndex];
+				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(ThreeDimension::VertexUniform);
 
@@ -1135,15 +1138,17 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 
-				sprite->GetVertexUniformBuffer()->vkVertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex3D, frameIndex);
+				vertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex3D, frameIndex);
 			}
 
+			auto& fragmentUniformBuffer = std::get<VKUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
+			auto& materialUniformBuffer = std::get<VKUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
 			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 				VkDescriptorBufferInfo fragmentBufferInfo{};
-				fragmentBufferInfo.buffer = (*(sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->GetUniformBuffers()))[frameIndex];
+				fragmentBufferInfo.buffer = (*fragmentUniformBuffer->GetUniformBuffers())[frameIndex];
 				fragmentBufferInfo.offset = 0;
 				fragmentBufferInfo.range = sizeof(ThreeDimension::FragmentUniform);
 
@@ -1167,7 +1172,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				descriptorWrites.push_back(textureDescriptorWrite);
 
 				VkDescriptorBufferInfo materialBufferInfo{};
-				materialBufferInfo.buffer = (*(sprite->GetMaterialUniformBuffer()->vkMaterialUniformBuffer->GetUniformBuffers()))[frameIndex];
+				materialBufferInfo.buffer = (*materialUniformBuffer->GetUniformBuffers())[frameIndex];
 				materialBufferInfo.offset = 0;
 				materialBufferInfo.range = sizeof(ThreeDimension::Material);
 
@@ -1260,8 +1265,8 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
-				sprite->GetFragmentUniformBuffer()->vkFragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag3D, frameIndex);
-				sprite->GetMaterialUniformBuffer()->vkMaterialUniformBuffer->UpdateUniform(1, &sprite->GetMaterial(), frameIndex);
+				fragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag3D, frameIndex);
+				materialUniformBuffer->UpdateUniform(1, &sprite->GetMaterial(), frameIndex);
 				if (!directionalLightUniforms.empty())
 					directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size(), directionalLightUniforms.data(), frameIndex);
 				if (!pointLightUniforms.empty())
@@ -1371,11 +1376,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		for (auto& sprite : sprites)
 		{
-			auto& vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer);
+			VkBuffer* vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer).vertexBuffer->GetVertexBuffer();
+			VkBuffer* indexBuffer = std::get<VKIndexBuffer*>(sprite->GetIndexBuffer()->buffer)->GetIndexBuffer();
 			//Bind Vertex Buffer
-			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer, &vertexBufferOffset);
 			//Bind Index Buffer
-			vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 			//Bind Pipeline
 			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
 			//Dynamic Viewport & Scissor
@@ -1394,14 +1400,15 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::ThreeDimension:
 		for (auto& sprite : sprites)
 		{
-			auto& vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer);
+			VkBuffer* vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer).vertexBuffer->GetVertexBuffer();
+			VkBuffer* indexBuffer = std::get<VKIndexBuffer*>(sprite->GetIndexBuffer()->buffer)->GetIndexBuffer();
 			switch (pMode)
 			{
 			case PolygonType::FILL:
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer, &vertexBufferOffset);
 				//Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
 				//Dynamic Viewport & Scissor
@@ -1422,9 +1429,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				break;
 			case PolygonType::LINE:
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer, &vertexBufferOffset);
 				//Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *sprite->GetIndexBuffer()->vkIndexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 				//Bind Pipeline
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLine());
 				//Dynamic Viewport & Scissor
@@ -1445,8 +1452,9 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 #ifdef _DEBUG
 			if (isDrawNormals)
 			{
+				VkBuffer* normalVertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer).normalVertexBuffer->GetVertexBuffer();
 				//Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, vertexBuffer.normalVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, normalVertexBuffer, &vertexBufferOffset);
 				//Bind Index Buffer
 				//vkCmdBindIndexBuffer(*currentCommandBuffer, *indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 				//Bind Pipeline
