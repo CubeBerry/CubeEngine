@@ -34,13 +34,38 @@ private:
 		glCheck(glDrawArrays(GL_TRIANGLES, 0, vertex_array.GetVerticesCount()));
 	}
 
-	GLVertexArray vertexArray;
 	GLShader gl2DShader;
 	GLShader gl3DShader;
 	GLImGuiManager* imguiManager;
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
+	GLVertexBuffer<Vertex>* AllocateVertexBuffer(std::vector<Vertex>& vertices) const
+	{
+		return new GLVertexBuffer<Vertex>(vkInit, &vertices);
+	}
+#ifdef _DEBUG
+	GLVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
+	{
+		return new GLVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &vertices);
+	}
+#endif
+	GLIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
+	{
+		return new GLIndexBuffer(vkInit, &vkCommandPool, &indices);
+	}
+	[[nodiscard]] GLUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
+	{
+		return new GLUniformBuffer<VertexUniform>(vkInit, 1);
+	}
+	[[nodiscard]] GLUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
+	{
+		return new GLUniformBuffer<FragmentUniform>(vkInit, 1);
+	}
+	[[nodiscard]] GLUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
+	{
+		return new GLUniformBuffer<ThreeDimension::Material>(vkInit, 1);
+	}
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
@@ -54,24 +79,11 @@ public:
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	GLVertexBuffer* vertexBuffer{ nullptr };
-	GLIndexBuffer* indexBuffer{ nullptr };
-
-	//--------------------2D Render--------------------//
 	std::vector<GLTexture*> textures;
 	std::vector<int> samplers;
 
-	GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
-	GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
-
-	//--------------------3D Render--------------------//
-	GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
-	GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
-	GLUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
-
 #ifdef _DEBUG
 	GLVertexArray normalVertexArray;
-	GLVertexBuffer* normalVertexBuffer{ nullptr };
 	GLShader glNormal3DShader;
 #endif
 

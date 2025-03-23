@@ -50,7 +50,6 @@ namespace ThreeDimension
 	{
 		glm::vec3 position;
 		glm::vec4 color;
-		int index;
 	};
 #endif
 

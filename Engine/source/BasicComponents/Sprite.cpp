@@ -26,6 +26,11 @@ Sprite::~Sprite()
 
 void Sprite::Init()
 {
+	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		vertexArray.Initialize();
+		normalVertexArray.Initialize();
+	}
 }
 
 void Sprite::Update(float dt)
@@ -221,13 +226,28 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		std::get<GLIndexBuffer*>(indexBuffer.buffer) = new GLIndexBuffer(&indices);
+		indexBuffer.buffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::Float;
+		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(TwoDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
+
+		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
 		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
@@ -264,13 +284,28 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		std::get<GLIndexBuffer*>(indexBuffer.buffer) = new GLIndexBuffer(&indices);
+		indexBuffer.buffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::Float;
+		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(TwoDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
+
+		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
 		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
@@ -317,13 +352,28 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		std::get<GLIndexBuffer*>(indexBuffer.buffer) = new GLIndexBuffer(&indices);
+		indexBuffer.buffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::Float;
+		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(TwoDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
+
+		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
 		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
 		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
@@ -395,13 +445,76 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
 #ifdef _DEBUG
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer = new GLVertexBuffer();
 #endif
-		std::get<GLIndexBuffer*>(indexBuffer.buffer) = new GLIndexBuffer(&indices);
+		indexBuffer.buffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::Float;
+		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(ThreeDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(ThreeDimension::Vertex, position);
+
+		GLAttributeLayout normal_layout;
+		normal_layout.component_type = GLAttributeLayout::Float;
+		normal_layout.component_dimension = GLAttributeLayout::_3;
+		normal_layout.normalized = false;
+		normal_layout.vertex_layout_location = 1;
+		normal_layout.stride = sizeof(ThreeDimension::Vertex);
+		normal_layout.offset = 0;
+		normal_layout.relative_offset = offsetof(ThreeDimension::Vertex, normal);
+
+		GLAttributeLayout uv_layout;
+		uv_layout.component_type = GLAttributeLayout::Float;
+		uv_layout.component_dimension = GLAttributeLayout::_2;
+		uv_layout.normalized = false;
+		uv_layout.vertex_layout_location = 2;
+		uv_layout.stride = sizeof(ThreeDimension::Vertex);
+		uv_layout.offset = 0;
+		uv_layout.relative_offset = offsetof(ThreeDimension::Vertex, uv);
+
+		GLAttributeLayout tex_sub_index_layout;
+		tex_sub_index_layout.component_type = GLAttributeLayout::Int;
+		tex_sub_index_layout.component_dimension = GLAttributeLayout::_1;
+		tex_sub_index_layout.normalized = false;
+		tex_sub_index_layout.vertex_layout_location = 3;
+		tex_sub_index_layout.stride = sizeof(ThreeDimension::Vertex);
+		tex_sub_index_layout.offset = 0;
+		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+
+		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+
+#ifdef _DEBUG
+		GLAttributeLayout normal_position_layout;
+		normal_position_layout.component_type = GLAttributeLayout::Float;
+		normal_position_layout.component_dimension = GLAttributeLayout::_3;
+		normal_position_layout.normalized = false;
+		normal_position_layout.vertex_layout_location = 0;
+		normal_position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+		normal_position_layout.offset = 0;
+		normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+		GLAttributeLayout normal_color_layout;
+		normal_color_layout.component_type = GLAttributeLayout::Float;
+		normal_color_layout.component_dimension = GLAttributeLayout::_4;
+		normal_color_layout.normalized = false;
+		normal_color_layout.vertex_layout_location = 1;
+		normal_color_layout.stride = sizeof(ThreeDimension::NormalVertex);
+		normal_color_layout.offset = 0;
+		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
+
+		normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+#endif
 	}
 	else
 	{
@@ -442,13 +555,76 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
+		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
 #ifdef _DEBUG
 		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer = new GLVertexBuffer();
 #endif
-		std::get<GLIndexBuffer*>(indexBuffer.buffer) = new GLIndexBuffer(&indices);
+		indexBuffer.buffer = new GLIndexBuffer(&indices);
 		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::Float;
+		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(ThreeDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(ThreeDimension::Vertex, position);
+
+		GLAttributeLayout normal_layout;
+		normal_layout.component_type = GLAttributeLayout::Float;
+		normal_layout.component_dimension = GLAttributeLayout::_3;
+		normal_layout.normalized = false;
+		normal_layout.vertex_layout_location = 1;
+		normal_layout.stride = sizeof(ThreeDimension::Vertex);
+		normal_layout.offset = 0;
+		normal_layout.relative_offset = offsetof(ThreeDimension::Vertex, normal);
+
+		GLAttributeLayout uv_layout;
+		uv_layout.component_type = GLAttributeLayout::Float;
+		uv_layout.component_dimension = GLAttributeLayout::_2;
+		uv_layout.normalized = false;
+		uv_layout.vertex_layout_location = 2;
+		uv_layout.stride = sizeof(ThreeDimension::Vertex);
+		uv_layout.offset = 0;
+		uv_layout.relative_offset = offsetof(ThreeDimension::Vertex, uv);
+
+		GLAttributeLayout tex_sub_index_layout;
+		tex_sub_index_layout.component_type = GLAttributeLayout::Int;
+		tex_sub_index_layout.component_dimension = GLAttributeLayout::_1;
+		tex_sub_index_layout.normalized = false;
+		tex_sub_index_layout.vertex_layout_location = 3;
+		tex_sub_index_layout.stride = sizeof(ThreeDimension::Vertex);
+		tex_sub_index_layout.offset = 0;
+		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+
+		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+
+#ifdef _DEBUG
+		GLAttributeLayout normal_position_layout;
+		normal_position_layout.component_type = GLAttributeLayout::Float;
+		normal_position_layout.component_dimension = GLAttributeLayout::_3;
+		normal_position_layout.normalized = false;
+		normal_position_layout.vertex_layout_location = 0;
+		normal_position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+		normal_position_layout.offset = 0;
+		normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+		GLAttributeLayout normal_color_layout;
+		normal_color_layout.component_type = GLAttributeLayout::Float;
+		normal_color_layout.component_dimension = GLAttributeLayout::_4;
+		normal_color_layout.normalized = false;
+		normal_color_layout.vertex_layout_location = 1;
+		normal_color_layout.stride = sizeof(ThreeDimension::NormalVertex);
+		normal_color_layout.offset = 0;
+		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
+
+		normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+#endif
 	}
 	else
 	{

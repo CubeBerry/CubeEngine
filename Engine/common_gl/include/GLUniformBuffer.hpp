@@ -6,8 +6,6 @@
 #include "glew/glew.h"
 #include "glCheck.hpp"
 
-#include <vector>
-
 template <typename Material>
 class GLUniformBuffer
 {

@@ -13,6 +13,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
+#include "GLVertexArray.hpp"
 #include "RenderManager.hpp"
 
 enum class SpriteDrawType
@@ -60,8 +61,8 @@ public:
 	void UpdateAnimation(float dt);
 
 	// Getter
+	glm::vec4 GetColor();
 	void ChangeTexture(std::string name);
-	SpriteDrawType GetSpriteDrawType() const { return spriteDrawType; }
 	MeshType GetMeshType() const { return meshType; }
 	std::filesystem::path GetModelFilePath() { return filePath; }
 	int GetStacks() const { return stacks; };
@@ -83,20 +84,19 @@ public:
 	FragmentUniform& GetFragmentUniform() { return fragmentUniform; }
 	ThreeDimension::Material& GetMaterial() { return material; }
 	// Buffer
+	GLVertexArray* GetVertexArray() { return &vertexArray; };
+#ifdef _DEBUG
+	GLVertexArray* GetNormalVertexArray() { return &normalVertexArray; };
+#endif
 	VertexBufferWrapper* GetVertexBuffer() { return &vertexBuffer; }
 	IndexBufferWrapper* GetIndexBuffer() { return &indexBuffer; }
 	VertexUniformBufferWrapper* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
 	FragmentUniformBufferWrapper* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
 	MaterialUniformBufferWrapper* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
 
-//#ifdef _DEBUG
-//	std::vector<ThreeDimension::NormalVertex> GetNormalVertices() { return normalVertices; }
-//#endif
-
 	//Setter
 	void AddSpriteToManager();
 	void SetColor(glm::vec4 color);
-	glm::vec4 GetColor();
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	void SetIsTex(bool state);
 	void SetSpecularColor(glm::vec3 sColor) { material.specularColor = sColor; }
@@ -142,10 +142,11 @@ private:
 	ThreeDimension::Material material;
 
 	// Buffer
+	GLVertexArray vertexArray;
+#ifdef _DEBUG
+	GLVertexArray normalVertexArray;
+#endif
 	VertexBufferWrapper vertexBuffer;
-//#ifdef _DEBUG
-//	VertexBufferWrapper normalVertexBuffer;
-//#endif
 	IndexBufferWrapper indexBuffer;
 	VertexUniformBufferWrapper vertexUniformBuffer;
 	FragmentUniformBufferWrapper fragmentUniformBuffer;

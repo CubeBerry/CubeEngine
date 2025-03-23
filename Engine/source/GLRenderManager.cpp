@@ -12,13 +12,7 @@ GLRenderManager::~GLRenderManager()
 	delete imguiManager;
 
 	//Destroy Buffers
-	delete vertexBuffer;
-	delete indexBuffer;
-	delete vertexUniform2D;
-	delete fragmentUniform2D;
-	delete vertexUniform3D;
-	delete fragmentUniform3D;
-	delete fragmentMaterialUniformBuffer;
+	delete directionalLightUniformBuffer;
 	delete pointLightUniformBuffer;
 
 	//Destroy Texture
@@ -37,7 +31,6 @@ void GLRenderManager::Initialize(
 	SDL_Window* window_, SDL_GLContext context_
 )
 {
-	vertexArray.Initialize();
 #ifdef _DEBUG
 	normalVertexArray.Initialize();
 #endif
@@ -47,18 +40,6 @@ void GLRenderManager::Initialize(
 #ifdef _DEBUG
 	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Normal3D.frag" } });
 #endif
-
-	vertexUniform2D = new GLUniformBuffer<TwoDimension::VertexUniform>();
-	vertexUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", 0, nullptr);
-	fragmentUniform2D = new GLUniformBuffer<TwoDimension::FragmentUniform>();
-	fragmentUniform2D->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", 0, nullptr);
-
-	vertexUniform3D = new GLUniformBuffer<ThreeDimension::VertexUniform>();
-	vertexUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", 0, nullptr);
-	fragmentUniform3D = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
-	fragmentUniform3D->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", 0, nullptr);
-	fragmentMaterialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
-	fragmentMaterialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", 0, nullptr);
 
 	//Lighting
 	directionalLightUniformBuffer = new GLUniformBuffer<ThreeDimension::DirectionalLightUniform>();
@@ -102,14 +83,6 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 			glCheck(glUniform1iv(texLocation, static_cast<GLsizei>(samplers.size()), samplers.data()));
 		}
 
-		if (vertexUniform2D != nullptr)
-		{
-			//vertexUniform2D->UpdateUniform(vertexUniforms2D.size() * sizeof(TwoDimension::VertexUniform), vertexUniforms2D.data());
-		}
-		if (fragmentUniform2D != nullptr)
-		{
-			//fragmentUniform2D->UpdateUniform(fragUniforms2D.size() * sizeof(TwoDimension::FragmentUniform), fragUniforms2D.data());
-		}
 		break;
 	case RenderType::ThreeDimension:
 		glCheck(glEnable(GL_CULL_FACE));
@@ -141,15 +114,6 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		//glBindTexture(GL_TEXTURE_2D, skybox->GetBRDF());
 		glCheck(glBindTextureUnit(31, skybox->GetBRDF()));
 
-		if (vertexUniform3D != nullptr)
-		{
-			//vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
-		}
-		if (fragmentUniform3D != nullptr)
-		{
-			//fragmentUniform3D->UpdateUniform(fragUniforms3D.size() * sizeof(ThreeDimension::FragmentUniform), fragUniforms3D.data());
-			//fragmentMaterialUniformBuffer->UpdateUniform(fragMaterialUniforms3D.size() * sizeof(ThreeDimension::Material), fragMaterialUniforms3D.data());
-		}
 		if (pointLightUniformBuffer != nullptr)
 		{
 			glCheck(glUniform1i(glGetUniformLocation(gl3DShader.GetProgramHandle(), "activePointLights"), static_cast<GLint>(pointLightUniforms.size())));
@@ -164,9 +128,22 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		break;
 	}
 
-	vertexArray.Use(true);
-	GLDrawIndexed(vertexArray);
-	vertexArray.Use(false);
+	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
+	for (auto& sprite : sprites)
+	{
+		auto& vertexUniformBuffer = std::get<GLUniformBuffer<VertexUniform>*>(sprite->GetVertexUniformBuffer()->buffer);
+		vertexUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(vertexUniformBuffer)>), &sprite->GetVertexUniform());
+
+		auto& fragmentUniformBuffer = std::get<GLUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
+		fragmentUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(fragmentUniformBuffer)>), &sprite->GetFragmentUniform());
+
+		auto& materialUniformBuffer = std::get<GLUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
+		materialUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(materialUniformBuffer)>), &sprite->GetMaterial());
+
+		sprite->GetVertexArray()->Use(true);
+		GLDrawIndexed(*sprite->GetVertexArray());
+		sprite->GetVertexArray()->Use(false);
+	}
 
 	switch (rMode)
 	{
