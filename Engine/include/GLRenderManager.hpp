@@ -40,32 +40,32 @@ private:
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
-	GLVertexBuffer<Vertex>* AllocateVertexBuffer(std::vector<Vertex>& vertices) const
-	{
-		return new GLVertexBuffer<Vertex>(vkInit, &vertices);
-	}
-#ifdef _DEBUG
-	GLVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
-	{
-		return new GLVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &vertices);
-	}
-#endif
-	GLIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
-	{
-		return new GLIndexBuffer(vkInit, &vkCommandPool, &indices);
-	}
-	[[nodiscard]] GLUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
-	{
-		return new GLUniformBuffer<VertexUniform>(vkInit, 1);
-	}
-	[[nodiscard]] GLUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
-	{
-		return new GLUniformBuffer<FragmentUniform>(vkInit, 1);
-	}
-	[[nodiscard]] GLUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
-	{
-		return new GLUniformBuffer<ThreeDimension::Material>(vkInit, 1);
-	}
+//	GLVertexBuffer<Vertex>* AllocateVertexBuffer(std::vector<Vertex>& vertices) const
+//	{
+//		return new GLVertexBuffer<Vertex>(vkInit, &vertices);
+//	}
+//#ifdef _DEBUG
+//	GLVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
+//	{
+//		return new GLVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &vertices);
+//	}
+//#endif
+//	GLIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
+//	{
+//		return new GLIndexBuffer(vkInit, &vkCommandPool, &indices);
+//	}
+//	[[nodiscard]] GLUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
+//	{
+//		return new GLUniformBuffer<VertexUniform>(vkInit, 1);
+//	}
+//	[[nodiscard]] GLUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
+//	{
+//		return new GLUniformBuffer<FragmentUniform>(vkInit, 1);
+//	}
+//	[[nodiscard]] GLUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
+//	{
+//		return new GLUniformBuffer<ThreeDimension::Material>(vkInit, 1);
+//	}
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
