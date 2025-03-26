@@ -112,8 +112,8 @@ private:
     bool isDragObject = false;
     bool isObjGravityOn = false;
 
-    int stacks = 1;
-    int slices = 1;
+    int stacks = 2;
+    int slices = 2;
     float metallic = 0.3f;
     float roughness = 0.3f;
 #ifdef _DEBUG

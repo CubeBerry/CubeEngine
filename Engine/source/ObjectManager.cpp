@@ -298,7 +298,7 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 #endif
 
 			ImGui::Spacing();
-			if (ImGui::SliderInt("Stacks", &stacks, 1, 30))
+			if (ImGui::SliderInt("Stacks", &stacks, 2, 30))
 			{
 				MeshType meshType = sprite->GetMeshType();
 				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
@@ -310,7 +310,7 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
 				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
-			if (ImGui::SliderInt("Slices", &slices, 1, 30))
+			if (ImGui::SliderInt("Slices", &slices, 2, 30))
 			{
 				MeshType meshType = sprite->GetMeshType();
 				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
