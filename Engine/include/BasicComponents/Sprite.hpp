@@ -84,15 +84,25 @@ public:
 	FragmentUniform& GetFragmentUniform() { return fragmentUniform; }
 	ThreeDimension::Material& GetMaterial() { return material; }
 	// Buffer
-	GLVertexArray* GetVertexArray() { return &vertexArray; };
+	// @TODO remove GetVertexArray() and GetNormalVertexArray()
+	GLVertexArray* GetVertexArray()
+	{
+		//return &vertexArray;
+		return &std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).vertexArray;
+	};
 #ifdef _DEBUG
-	GLVertexArray* GetNormalVertexArray() { return &normalVertexArray; };
+	GLVertexArray* GetNormalVertexArray()
+	{
+		//return &normalVertexArray;
+		return &std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).normalVertexArray;
+	};
 #endif
-	VertexBufferWrapper* GetVertexBuffer() { return &vertexBuffer; }
-	IndexBufferWrapper* GetIndexBuffer() { return &indexBuffer; }
-	VertexUniformBufferWrapper* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
-	FragmentUniformBufferWrapper* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
-	MaterialUniformBufferWrapper* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
+	//VertexBufferWrapper* GetVertexBuffer() { return &vertexBuffer; }
+	//IndexBufferWrapper* GetIndexBuffer() { return &indexBuffer; }
+	//VertexUniformBufferWrapper* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
+	//FragmentUniformBufferWrapper* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
+	//MaterialUniformBufferWrapper* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
+	BufferWrapper* GetBufferWrapper() { return &bufferWrapper; };
 
 	//Setter
 	void AddSpriteToManager();
@@ -142,13 +152,10 @@ private:
 	ThreeDimension::Material material;
 
 	// Buffer
-	GLVertexArray vertexArray;
-#ifdef _DEBUG
-	GLVertexArray normalVertexArray;
-#endif
-	VertexBufferWrapper vertexBuffer;
-	IndexBufferWrapper indexBuffer;
-	VertexUniformBufferWrapper vertexUniformBuffer;
-	FragmentUniformBufferWrapper fragmentUniformBuffer;
-	MaterialUniformBufferWrapper materialUniformBuffer;
+	//VertexBufferWrapper vertexBuffer;
+	//IndexBufferWrapper indexBuffer;
+	//VertexUniformBufferWrapper vertexUniformBuffer;
+	//FragmentUniformBufferWrapper fragmentUniformBuffer;
+	//MaterialUniformBufferWrapper materialUniformBuffer;
+	BufferWrapper bufferWrapper;
 };

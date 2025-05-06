@@ -131,14 +131,16 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
 	for (auto& sprite : sprites)
 	{
-		auto& vertexUniformBuffer = std::get<GLUniformBuffer<VertexUniform>*>(sprite->GetVertexUniformBuffer()->buffer);
-		vertexUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(vertexUniformBuffer)>), &sprite->GetVertexUniform());
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBufferWrapper()->buffer);
 
-		auto& fragmentUniformBuffer = std::get<GLUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
-		fragmentUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(fragmentUniformBuffer)>), &sprite->GetFragmentUniform());
+		//auto& vertexUniformBuffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBuffer()->buffer);
+		buffer.vertexUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(buffer.vertexUniformBuffer)>), &sprite->GetVertexUniform());
 
-		auto& materialUniformBuffer = std::get<GLUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
-		materialUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(materialUniformBuffer)>), &sprite->GetMaterial());
+		//auto& fragmentUniformBuffer = std::get<GLUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
+		buffer.fragmentUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(buffer.fragmentUniformBuffer)>), &sprite->GetFragmentUniform());
+
+		//auto& materialUniformBuffer = std::get<GLUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
+		buffer.materialUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(buffer.materialUniformBuffer)>), &sprite->GetMaterial());
 
 		sprite->GetVertexArray()->Use(true);
 		GLDrawIndexed(*sprite->GetVertexArray());

@@ -12,6 +12,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 
+#include "GLVertexArray.hpp"
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
 #include "GLUniformBuffer.hpp"
@@ -157,31 +158,21 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
 }
 
 // Buffer
-enum class BufferType { NONE, GL, VK };
-
-//union VertexBuffer
-//{
-//	VertexBuffer() {}
-//	// GL
-//	GLVertexBuffer* glVertexBuffer;
-//	// VK
-//	VKVertexBuffer<Vertex>* vkVertexBuffer;
-//#ifdef _DEBUG
-//	// GL
-//	GLVertexBuffer* glNormalVertexBuffer;
-//	// VK
-//	VKVertexBuffer<ThreeDimension::NormalVertex>* vkNormalVertexBuffer;
-//#endif
-//};
-
-struct VertexBufferWrapper
+struct BufferWrapper
 {
 	struct GLBuffer
 	{
+		GLVertexArray vertexArray;
 		GLVertexBuffer* vertexBuffer;
 #ifdef _DEBUG
+		GLVertexArray normalVertexArray;
 		GLVertexBuffer* normalVertexBuffer;
 #endif
+
+		GLIndexBuffer* indexBuffer;
+		GLUniformBuffer<VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<FragmentUniform>* fragmentUniformBuffer;
+		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
 	};
 
 	struct VKBuffer
@@ -190,90 +181,134 @@ struct VertexBufferWrapper
 #ifdef _DEBUG
 		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
 #endif
+		VKIndexBuffer* indexBuffer;
+		VKUniformBuffer<VertexUniform>* vertexUniformBuffer;
+		VKUniformBuffer<FragmentUniform>* fragmentUniformBuffer;
+		VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
 	};
 
 	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
 
-	VertexBufferWrapper() : buffer(std::monostate{}) {}
-	~VertexBufferWrapper()
+	BufferWrapper() : buffer(std::monostate{}) {}
+	~BufferWrapper()
 	{
-		std::visit([]<typename T>(T& buf)
+		std::visit([]<typename T>(T & buf)
+		{
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
 			{
-				if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-				{
-					delete buf.vertexBuffer;
+				delete buf.vertexBuffer;
 #ifdef _DEBUG
-					delete buf.normalVertexBuffer;
+				delete buf.normalVertexBuffer;
 #endif
-				}
-			}, buffer);
-	}
-};
-
-struct IndexBufferWrapper
-{
-	std::variant<std::monostate, GLIndexBuffer*, VKIndexBuffer*> buffer;
-
-	IndexBufferWrapper() : buffer(std::monostate{}) {}
-	~IndexBufferWrapper()
-	{
-		std::visit([]<typename T>(const T& buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf;
+				delete buf.indexBuffer;
+				delete buf.vertexUniformBuffer;
+				delete buf.fragmentUniformBuffer;
+				delete buf.materialUniformBuffer;
 			}
 		}, buffer);
 	}
 };
 
-struct VertexUniformBufferWrapper
-{
-	std::variant<std::monostate, GLUniformBuffer<VertexUniform>*, VKUniformBuffer<VertexUniform>*> buffer;
+//struct VertexBufferWrapper
+//{
+//	struct GLBuffer
+//	{
+//		GLVertexBuffer* vertexBuffer;
+//#ifdef _DEBUG
+//		GLVertexBuffer* normalVertexBuffer;
+//#endif
+//	};
+//
+//	struct VKBuffer
+//	{
+//		VKVertexBuffer<Vertex>* vertexBuffer;
+//#ifdef _DEBUG
+//		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
+//#endif
+//	};
+//
+//	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
+//
+//	VertexBufferWrapper() : buffer(std::monostate{}) {}
+//	~VertexBufferWrapper()
+//	{
+//		std::visit([]<typename T>(T& buf)
+//			{
+//				if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+//				{
+//					delete buf.vertexBuffer;
+//#ifdef _DEBUG
+//					delete buf.normalVertexBuffer;
+//#endif
+//				}
+//			}, buffer);
+//	}
+//};
 
-	VertexUniformBufferWrapper() : buffer(std::monostate{}) {}
-	~VertexUniformBufferWrapper()
-	{
-		std::visit([]<typename T>(const T& buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf;
-			}
-		}, buffer);
-	}
-};
+//struct IndexBufferWrapper
+//{
+//	std::variant<std::monostate, GLIndexBuffer*, VKIndexBuffer*> buffer;
+//
+//	IndexBufferWrapper() : buffer(std::monostate{}) {}
+//	~IndexBufferWrapper()
+//	{
+//		std::visit([]<typename T>(const T& buf)
+//		{
+//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+//			{
+//				delete buf;
+//			}
+//		}, buffer);
+//	}
+//};
 
-struct FragmentUniformBufferWrapper
-{
-	std::variant<std::monostate, GLUniformBuffer<FragmentUniform>*, VKUniformBuffer<FragmentUniform>*> buffer;
+//struct VertexUniformBufferWrapper
+//{
+//	std::variant<std::monostate, GLUniformBuffer<VertexUniform>*, VKUniformBuffer<VertexUniform>*> buffer;
+//
+//	VertexUniformBufferWrapper() : buffer(std::monostate{}) {}
+//	~VertexUniformBufferWrapper()
+//	{
+//		std::visit([]<typename T>(const T& buf)
+//		{
+//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+//			{
+//				delete buf;
+//			}
+//		}, buffer);
+//	}
+//};
 
-	FragmentUniformBufferWrapper() : buffer(std::monostate{}) {}
-	~FragmentUniformBufferWrapper()
-	{
-		std::visit([]<typename T>(const T & buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf;
-			}
-		}, buffer);
-	}
-};
+//struct FragmentUniformBufferWrapper
+//{
+//	std::variant<std::monostate, GLUniformBuffer<FragmentUniform>*, VKUniformBuffer<FragmentUniform>*> buffer;
+//
+//	FragmentUniformBufferWrapper() : buffer(std::monostate{}) {}
+//	~FragmentUniformBufferWrapper()
+//	{
+//		std::visit([]<typename T>(const T & buf)
+//		{
+//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+//			{
+//				delete buf;
+//			}
+//		}, buffer);
+//	}
+//};
 
-struct MaterialUniformBufferWrapper
-{
-	std::variant<std::monostate, GLUniformBuffer<ThreeDimension::Material>*, VKUniformBuffer<ThreeDimension::Material>*> buffer;
-
-	MaterialUniformBufferWrapper() : buffer(std::monostate{}) {}
-	~MaterialUniformBufferWrapper()
-	{
-		std::visit([]<typename T>(const T & buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf;
-			}
-		}, buffer);
-	}
-};
+//struct MaterialUniformBufferWrapper
+//{
+//	std::variant<std::monostate, GLUniformBuffer<ThreeDimension::Material>*, VKUniformBuffer<ThreeDimension::Material>*> buffer;
+//
+//	MaterialUniformBufferWrapper() : buffer(std::monostate{}) {}
+//	~MaterialUniformBufferWrapper()
+//	{
+//		std::visit([]<typename T>(const T & buf)
+//		{
+//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+//			{
+//				delete buf;
+//			}
+//		}, buffer);
+//	}
+//};

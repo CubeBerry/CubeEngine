@@ -28,8 +28,8 @@ void Sprite::Init()
 {
 	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		vertexArray.Initialize();
-		normalVertexArray.Initialize();
+		std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).vertexArray.Initialize();
+		std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).normalVertexArray.Initialize();
 	}
 }
 
@@ -190,6 +190,7 @@ void Sprite::UpdateProjection()
 	case SpriteDrawType::UI:
 		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
 		vertexUniform.vertex2D.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		// Flip y-axis for Vulkan
 		if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
 		{
 			vertexUniform.vertex2D.projection[1][1] *= -1;
@@ -226,11 +227,18 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		indexBuffer.buffer = new GLIndexBuffer(&indices);
-		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
-		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = new GLVertexBuffer();
+		buffer.indexBuffer = new GLIndexBuffer(&indices);
+		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+
+		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
+		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+		//indexBuffer.buffer = new GLIndexBuffer(&indices);
+		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
+		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -242,16 +250,26 @@ void Sprite::AddQuad(glm::vec4 color_)
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+
+		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
+		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+
+		//vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
+		//std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		//indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		//vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
 	}
 
 	AddSpriteToManager();
@@ -284,11 +302,18 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		indexBuffer.buffer = new GLIndexBuffer(&indices);
-		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
-		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = new GLVertexBuffer();
+		buffer.indexBuffer = new GLIndexBuffer(&indices);
+		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>(); 
+
+		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
+		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+		//indexBuffer.buffer = new GLIndexBuffer(&indices);
+		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
+		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -300,16 +325,26 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+
+		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
+		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+
+		//vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
+		//std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		//indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		//vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
 	}
 
 	ChangeTexture(name_);
@@ -352,11 +387,18 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		indexBuffer.buffer = new GLIndexBuffer(&indices);
-		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
-		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = new GLVertexBuffer();
+		buffer.indexBuffer = new GLIndexBuffer(&indices);
+		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+
+		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
+		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+		//indexBuffer.buffer = new GLIndexBuffer(&indices);
+		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
+		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -368,16 +410,26 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+
+		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
+		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+
+		//vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
+		//std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		//indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		//vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
 	}
 
 	ChangeTexture(name_);
@@ -445,14 +497,24 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = new GLVertexBuffer();
 #ifdef _DEBUG
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer = new GLVertexBuffer();
+		buffer.normalVertexBuffer = new GLVertexBuffer();
 #endif
-		indexBuffer.buffer = new GLIndexBuffer(&indices);
-		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
-		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+		buffer.indexBuffer = new GLIndexBuffer(&indices);
+		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+
+//		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
+//		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+//#ifdef _DEBUG
+//		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer = new GLVertexBuffer();
+//#endif
+//		indexBuffer.buffer = new GLIndexBuffer(&indices);
+//		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
+//		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -491,8 +553,11 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		tex_sub_index_layout.offset = 0;
 		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
-		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
-		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+
+		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 
 #ifdef _DEBUG
 		GLAttributeLayout normal_position_layout;
@@ -513,20 +578,32 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		normal_color_layout.offset = 0;
 		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
 
-		normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		buffer.normalVertexArray.AddVertexBuffer(std::move(*buffer.normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		//normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 #endif
 	}
 	else
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
+		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 #ifdef _DEBUG
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+		buffer.normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 #endif
-		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-		materialUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+
+//		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
+//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+//#ifdef _DEBUG
+//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+//#endif
+//		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+//		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+//		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+//		materialUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
 	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
@@ -555,14 +632,24 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = new GLVertexBuffer();
 #ifdef _DEBUG
-		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer = new GLVertexBuffer();
+		buffer.normalVertexBuffer = new GLVertexBuffer();
 #endif
-		indexBuffer.buffer = new GLIndexBuffer(&indices);
-		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
-		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+		buffer.indexBuffer = new GLIndexBuffer(&indices);
+		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+
+//		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
+//		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
+//#ifdef _DEBUG
+//		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer = new GLVertexBuffer();
+//#endif
+//		indexBuffer.buffer = new GLIndexBuffer(&indices);
+//		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
+//		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -601,8 +688,11 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		tex_sub_index_layout.offset = 0;
 		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
-		vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
-		vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
+		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+
+		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 
 #ifdef _DEBUG
 		GLAttributeLayout normal_position_layout;
@@ -623,20 +713,32 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		normal_color_layout.offset = 0;
 		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
 
-		normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		buffer.normalVertexArray.AddVertexBuffer(std::move(*buffer.normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		//normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 #endif
 	}
 	else
 	{
-		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
+		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 #ifdef _DEBUG
-		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+		buffer.normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 #endif
-		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-		materialUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+
+//		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
+//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+//#ifdef _DEBUG
+//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+//#endif
+//		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+//		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+//		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+//		materialUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
 	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
