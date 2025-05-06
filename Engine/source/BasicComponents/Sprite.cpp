@@ -28,8 +28,24 @@ void Sprite::Init()
 {
 	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
+		// Initialize VAO
+		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
 		std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).vertexArray.Initialize();
+#ifdef _DEBUG
 		std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).normalVertexArray.Initialize();
+#endif
+
+//		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+//		buffer.vertexBuffer = new GLVertexBuffer();
+//#ifdef _DEBUG
+//		buffer.normalVertexBuffer = new GLVertexBuffer();
+//#endif
+//		buffer.indexBuffer = new GLIndexBuffer(&indices);
+//		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+//		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+//
+//		RenderManager* renderManager = Engine::Instance().GetRenderManager();
+//		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 	}
 }
 
@@ -227,18 +243,21 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = new GLVertexBuffer();
-		buffer.indexBuffer = new GLIndexBuffer(&indices);
-		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+		//bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		//buffer.vertexBuffer = new GLVertexBuffer();
+		//buffer.indexBuffer = new GLIndexBuffer(&indices);
+		//buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		//buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
 
 		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
 		//indexBuffer.buffer = new GLIndexBuffer(&indices);
 		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -302,18 +321,21 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = new GLVertexBuffer();
-		buffer.indexBuffer = new GLIndexBuffer(&indices);
-		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>(); 
+		//bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		//buffer.vertexBuffer = new GLVertexBuffer();
+		//buffer.indexBuffer = new GLIndexBuffer(&indices);
+		//buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		//buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>(); 
 
 		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
 		//indexBuffer.buffer = new GLIndexBuffer(&indices);
 		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -387,18 +409,21 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = new GLVertexBuffer();
-		buffer.indexBuffer = new GLIndexBuffer(&indices);
-		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+		//bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		//buffer.vertexBuffer = new GLVertexBuffer();
+		//buffer.indexBuffer = new GLIndexBuffer(&indices);
+		//buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		//buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
 
 		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
 		//indexBuffer.buffer = new GLIndexBuffer(&indices);
 		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -497,15 +522,15 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = new GLVertexBuffer();
-#ifdef _DEBUG
-		buffer.normalVertexBuffer = new GLVertexBuffer();
-#endif
-		buffer.indexBuffer = new GLIndexBuffer(&indices);
-		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+		//bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+//		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+//		buffer.vertexBuffer = new GLVertexBuffer();
+//#ifdef _DEBUG
+//		buffer.normalVertexBuffer = new GLVertexBuffer();
+//#endif
+//		buffer.indexBuffer = new GLIndexBuffer(&indices);
+//		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+//		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
 
 //		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 //		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
@@ -515,6 +540,13 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 //		indexBuffer.buffer = new GLIndexBuffer(&indices);
 //		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 //		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), vertices.data());
+#ifdef _DEBUG
+		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * normalVertices.size()), normalVertices.data());
+#endif
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -632,15 +664,15 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = new GLVertexBuffer();
-#ifdef _DEBUG
-		buffer.normalVertexBuffer = new GLVertexBuffer();
-#endif
-		buffer.indexBuffer = new GLIndexBuffer(&indices);
-		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+		//bufferWrapper.buffer = BufferWrapper::GLBuffer{};
+//		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+//		buffer.vertexBuffer = new GLVertexBuffer();
+//#ifdef _DEBUG
+//		buffer.normalVertexBuffer = new GLVertexBuffer();
+//#endif
+//		buffer.indexBuffer = new GLIndexBuffer(&indices);
+//		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+//		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
 
 //		vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
 //		std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
@@ -650,6 +682,13 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 //		indexBuffer.buffer = new GLIndexBuffer(&indices);
 //		vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
 //		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
+
+		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), vertices.data());
+#ifdef _DEBUG
+		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * normalVertices.size()), normalVertices.data());
+#endif
 
 		//Attributes
 		GLAttributeLayout position_layout;

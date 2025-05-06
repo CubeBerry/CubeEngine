@@ -27,13 +27,11 @@ GLRenderManager::~GLRenderManager()
 	}
 }
 
-void GLRenderManager::Initialize(
-	SDL_Window* window_, SDL_GLContext context_
-)
+void GLRenderManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 {
-#ifdef _DEBUG
-	normalVertexArray.Initialize();
-#endif
+//#ifdef _DEBUG
+//	normalVertexArray.Initialize();
+//#endif
 
 	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/2D.frag" } });
 	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/3D.frag" } });
@@ -134,17 +132,17 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		auto& buffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBufferWrapper()->buffer);
 
 		//auto& vertexUniformBuffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBuffer()->buffer);
-		buffer.vertexUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(buffer.vertexUniformBuffer)>), &sprite->GetVertexUniform());
+		buffer.vertexUniformBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &sprite->GetVertexUniform().vertex3D);
 
 		//auto& fragmentUniformBuffer = std::get<GLUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
-		buffer.fragmentUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(buffer.fragmentUniformBuffer)>), &sprite->GetFragmentUniform());
+		buffer.fragmentUniformBuffer->UpdateUniform(sizeof(ThreeDimension::FragmentUniform), &sprite->GetFragmentUniform().frag3D);
 
 		//auto& materialUniformBuffer = std::get<GLUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
-		buffer.materialUniformBuffer->UpdateUniform(sizeof(std::decay_t<decltype(buffer.materialUniformBuffer)>), &sprite->GetMaterial());
+		buffer.materialUniformBuffer->UpdateUniform(sizeof(ThreeDimension::Material), &sprite->GetMaterial());
 
-		sprite->GetVertexArray()->Use(true);
-		GLDrawIndexed(*sprite->GetVertexArray());
-		sprite->GetVertexArray()->Use(false);
+		buffer.vertexArray.Use(true);
+		GLDrawIndexed(buffer.vertexArray);
+		buffer.vertexArray.Use(false);
 	}
 
 	switch (rMode)
@@ -158,12 +156,27 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 #ifdef _DEBUG
+	//if (isDrawNormals)
+	//{
+	//	glNormal3DShader.Use(true);
+	//	normalVertexArray.Use(true);
+	//	//glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
+	//	normalVertexArray.Use(false);
+	//	glNormal3DShader.Use(false);
+	//}
+
 	if (isDrawNormals)
 	{
 		glNormal3DShader.Use(true);
-		normalVertexArray.Use(true);
-		//glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
-		normalVertexArray.Use(false);
+		for (auto& sprite : sprites)
+		{
+			auto& buffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBufferWrapper()->buffer);
+
+			buffer.normalVertexArray.Use(true);
+			GLsizei size = static_cast<GLsizei>(sprite->GetNormalVertices().size());
+			glDrawArrays(GL_LINES, 0, size);
+			buffer.normalVertexArray.Use(false);
+		}
 		glNormal3DShader.Use(false);
 	}
 #endif

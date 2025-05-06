@@ -84,19 +84,6 @@ public:
 	FragmentUniform& GetFragmentUniform() { return fragmentUniform; }
 	ThreeDimension::Material& GetMaterial() { return material; }
 	// Buffer
-	// @TODO remove GetVertexArray() and GetNormalVertexArray()
-	GLVertexArray* GetVertexArray()
-	{
-		//return &vertexArray;
-		return &std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).vertexArray;
-	};
-#ifdef _DEBUG
-	GLVertexArray* GetNormalVertexArray()
-	{
-		//return &normalVertexArray;
-		return &std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).normalVertexArray;
-	};
-#endif
 	//VertexBufferWrapper* GetVertexBuffer() { return &vertexBuffer; }
 	//IndexBufferWrapper* GetIndexBuffer() { return &indexBuffer; }
 	//VertexUniformBufferWrapper* GetVertexUniformBuffer() { return &vertexUniformBuffer; }

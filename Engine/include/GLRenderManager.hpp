@@ -67,6 +67,32 @@ public:
 //		return new GLUniformBuffer<ThreeDimension::Material>(vkInit, 1);
 //	}
 
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+	{
+		// Initialize Buffers
+		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer = new GLVertexBuffer();
+#ifdef _DEBUG
+		buffer.normalVertexBuffer = new GLVertexBuffer();
+#endif
+		buffer.indexBuffer = new GLIndexBuffer(&indices);
+		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
+		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
+		if (rMode == RenderType::TwoDimension)
+		{
+			buffer.vertexUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", 0, nullptr);
+			buffer.fragmentUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", 0, nullptr);
+		}
+		else if (rMode == RenderType::ThreeDimension)
+		{
+			buffer.materialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
+
+			buffer.vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", 0, nullptr);
+			buffer.fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", 0, nullptr);
+			buffer.materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", 0, nullptr);
+		}
+	}
+
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
 
@@ -83,7 +109,7 @@ private:
 	std::vector<int> samplers;
 
 #ifdef _DEBUG
-	GLVertexArray normalVertexArray;
+	//GLVertexArray normalVertexArray;
 	GLShader glNormal3DShader;
 #endif
 
