@@ -141,6 +141,9 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		buffer.materialUniformBuffer->UpdateUniform(sizeof(ThreeDimension::Material), &sprite->GetMaterial());
 
 		buffer.vertexArray.Use(true);
+		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, buffer.vertexUniformBuffer->GetHandle()));
+		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, buffer.fragmentUniformBuffer->GetHandle()));
+		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, buffer.materialUniformBuffer->GetHandle()));
 		GLDrawIndexed(buffer.vertexArray);
 		buffer.vertexArray.Use(false);
 	}

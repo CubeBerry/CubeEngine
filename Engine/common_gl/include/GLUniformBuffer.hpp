@@ -16,6 +16,7 @@ public:
     void InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* data);
     void UpdateUniform(size_t size, const void* data);
 
+    [[nodiscard]] GLuint GetHandle() const noexcept { return uniformHandle; }
 private:
     GLuint uniformHandle{ 0 };
     GLuint uniformBlockIndex{ 0 };
@@ -52,7 +53,7 @@ void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, cons
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, uniformHandle));
     glCheck(glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW));
     //glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
-    glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, uniformBindingPoint, uniformHandle));
+    //glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, uniformBindingPoint, uniformHandle));
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }
 
