@@ -2,7 +2,9 @@
 //Project: CubeEngine
 //File: Physics2D.hpp
 #pragma once
+#include <vector>
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 #include "Component.hpp"
 #ifdef _DEBUG

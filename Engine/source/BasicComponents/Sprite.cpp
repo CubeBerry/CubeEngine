@@ -509,9 +509,13 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	filePath = path;
 	stacks = stacks_;
 	slices = slices_;
-
+	
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+#ifdef _DEBUG
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
+#else
+	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
+#endif
 
 	vertexUniform.vertex3D.model = glm::mat4(1.f);
 	vertexUniform.vertex3D.view = glm::mat4(1.f);
@@ -650,7 +654,11 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	slices = slices_;
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+#ifdef _DEBUG
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
+#else
+	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
+#endif
 
 	vertexUniform.vertex3D.model = glm::mat4(1.f);
 	vertexUniform.vertex3D.view = glm::mat4(1.f);
