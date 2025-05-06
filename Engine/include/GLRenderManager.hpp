@@ -80,16 +80,16 @@ public:
 		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
 		if (rMode == RenderType::TwoDimension)
 		{
-			buffer.vertexUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", 0, nullptr);
-			buffer.fragmentUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", 0, nullptr);
+			buffer.vertexUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", sizeof(TwoDimension::VertexUniform), nullptr);
+			buffer.fragmentUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", sizeof(TwoDimension::FragmentUniform), nullptr);
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			buffer.materialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
 
-			buffer.vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", 0, nullptr);
-			buffer.fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", 0, nullptr);
-			buffer.materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", 0, nullptr);
+			buffer.vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", sizeof(ThreeDimension::VertexUniform), nullptr);
+			buffer.fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", sizeof(ThreeDimension::FragmentUniform), nullptr);
+			buffer.materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
 		}
 	}
 

@@ -62,6 +62,7 @@ void GLUniformBuffer<Material>::UpdateUniform(size_t size, const void* data)
     //glBindBufferRange(GL_UNIFORM_BUFFER, 0, uniformHandle, 0, vector.size() * sizeof(Material));
 
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, uniformHandle));
+    // @TODO glBufferData should be used only for light uniforms
     glCheck(glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW));
     glCheck(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, 0));
