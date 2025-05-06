@@ -144,6 +144,9 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, buffer.vertexUniformBuffer->GetHandle()));
 		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, buffer.fragmentUniformBuffer->GetHandle()));
 		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, buffer.materialUniformBuffer->GetHandle()));
+
+		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 5, directionalLightUniformBuffer->GetHandle()));
+		glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 6, pointLightUniformBuffer->GetHandle()));
 		GLDrawIndexed(buffer.vertexArray);
 		buffer.vertexArray.Use(false);
 	}
