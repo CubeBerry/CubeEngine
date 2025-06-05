@@ -17,13 +17,21 @@ VKShader::~VKShader()
 	device = nullptr;
 }
 
-void VKShader::LoadShader(const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath)
+void VKShader::LoadShader(bool isGLSL, const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath)
 {
-	std::filesystem::path vertexSPIRV = GLSLtoSPIRV(vertexPath);
-	std::filesystem::path fragmentSPIRV = GLSLtoSPIRV(fragmentPath);
+	if (isGLSL)
+	{
+		std::filesystem::path vertexSPIRV = GLSLtoSPIRV(vertexPath);
+		std::filesystem::path fragmentSPIRV = GLSLtoSPIRV(fragmentPath);
 
-	vertexModule = LoadModule(vertexSPIRV);
-	fragmentModule = LoadModule(fragmentSPIRV);
+		vertexModule = LoadModule(vertexSPIRV);
+		fragmentModule = LoadModule(fragmentSPIRV);
+	}
+	else
+	{
+		vertexModule = LoadModule(vertexPath);
+		fragmentModule = LoadModule(fragmentPath);
+	}
 }
 
 VkShaderModule VKShader::LoadModule(const std::filesystem::path& spirvPath)

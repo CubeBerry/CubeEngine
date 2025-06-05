@@ -14,7 +14,7 @@ struct WorldToNDC
     float4x4 view;
     float4x4 projection;
 }
-ConstantBuffer<WorldToNDC> worldToNDC;
+[[vk::push_constant]] WorldToNDC worldToNDC;
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input)
@@ -36,7 +36,7 @@ VSOutput vertexMain(VSInput input)
     return output;
 }
 
-SamplerCube skybox;
+[[vk::binding(0, 0)]] SamplerCube skybox;
 
 [shader("fragment")]
 float4 fragmentMain(VSOutput input)

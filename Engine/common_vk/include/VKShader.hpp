@@ -11,7 +11,7 @@ class VKShader
 public:
 	VKShader(VkDevice* device_);
 	~VKShader();
-	void LoadShader(const std::filesystem::path& vertexPath,
+	void LoadShader(bool isGLSL, const std::filesystem::path& vertexPath,
 		const std::filesystem::path& fragmentPath);
 
 	VkShaderModule* GetVertexModule() { return &vertexModule; };
