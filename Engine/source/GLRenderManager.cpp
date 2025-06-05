@@ -33,10 +33,10 @@ void GLRenderManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 //	normalVertexArray.Initialize();
 //#endif
 
-	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/2D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/2D.frag" } });
-	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/3D.frag" } });
+	gl2DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/2D.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/2D.frag" } });
+	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/3D.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/3D.frag" } });
 #ifdef _DEBUG
-	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Normal3D.frag" } });
+	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/Normal3D.frag" } });
 #endif
 
 	//Lighting
@@ -659,7 +659,7 @@ void GLRenderManager::LoadSkybox(const std::filesystem::path& path)
 
 	skyboxVertexArray.AddVertexBuffer(std::move(*skyboxVertexBuffer), sizeof(float) * 3, { position_layout });
 
-	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Skybox.frag" } });
+	skyboxShader.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/Skybox.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/Skybox.frag" } });
 	skybox = new GLSkybox(path);
 
 	//Revert GL_TEXTURE0 which is binded(covered) by BRDFLUT's texture when loading skybox to first loaded texture

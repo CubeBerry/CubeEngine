@@ -477,16 +477,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
-	vkShader2D->LoadShader("../Engine/shader/2D.vert", "../Engine/shader/2D.frag");
+	vkShader2D->LoadShader("../Engine/shaders/glsl/2D.vert", "../Engine/shaders/glsl/2D.frag");
 	std::cout << '\n';
 
 	vkShader3D = new VKShader(vkInit->GetDevice());
-	vkShader3D->LoadShader("../Engine/shader/3D.vert", "../Engine/shader/3D.frag");
+	vkShader3D->LoadShader("../Engine/shaders/glsl/3D.vert", "../Engine/shaders/glsl/3D.frag");
 	std::cout << '\n';
 
 #ifdef _DEBUG
 	vkNormal3DShader = new VKShader(vkInit->GetDevice());
-	vkNormal3DShader->LoadShader("../Engine/shader/Normal3D.vert", "../Engine/shader/Normal3D.frag");
+	vkNormal3DShader->LoadShader("../Engine/shaders/glsl/Normal3D.vert", "../Engine/shaders/glsl/Normal3D.frag");
 	std::cout << '\n';
 #endif
 
@@ -943,7 +943,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	std::cout << '\n';
-	skyboxShader->LoadShader("../Engine/shader/Skybox.vert", "../Engine/shader/Skybox.frag");
+	skyboxShader->LoadShader("../Engine/shaders/glsl/Skybox.vert", "../Engine/shaders/glsl/Skybox.frag");
 
 	std::vector<glm::vec3> skyboxVertices = {
 		{-1.0f,  1.0f, -1.0f},
