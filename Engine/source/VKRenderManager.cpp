@@ -477,16 +477,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
-	vkShader2D->LoadShader(true, "../Engine/shaders/glsl/2D.vert", "../Engine/shaders/glsl/2D.frag");
+	vkShader2D->LoadShader("../Engine/shaders/spirv/2D.vert.spv", "../Engine/shaders/spirv/2D.frag.spv");
 	std::cout << '\n';
 
 	vkShader3D = new VKShader(vkInit->GetDevice());
-	vkShader3D->LoadShader(false, "../Engine/shaders/spirv/3D.vert.spv", "../Engine/shaders/spirv/3D.frag.spv");
+	vkShader3D->LoadShader("../Engine/shaders/spirv/3D.vert.spv", "../Engine/shaders/spirv/3D.frag.spv");
 	std::cout << '\n';
 
 #ifdef _DEBUG
 	vkNormal3DShader = new VKShader(vkInit->GetDevice());
-	vkNormal3DShader->LoadShader(false, "../Engine/shaders/spirv/Normal3D.vert.spv", "../Engine/shaders/spirv/Normal3D.frag.spv");
+	vkNormal3DShader->LoadShader("../Engine/shaders/spirv/Normal3D.vert.spv", "../Engine/shaders/spirv/Normal3D.frag.spv");
 	std::cout << '\n';
 #endif
 
@@ -943,7 +943,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	std::cout << '\n';
-	skyboxShader->LoadShader(false, "../Engine/shaders/spirv/Skybox.vert.spv", "../Engine/shaders/spirv/Skybox.frag.spv");
+	skyboxShader->LoadShader("../Engine/shaders/spirv/Skybox.vert.spv", "../Engine/shaders/spirv/Skybox.frag.spv");
 
 	std::vector<glm::vec3> skyboxVertices = {
 		{-1.0f,  1.0f, -1.0f},
