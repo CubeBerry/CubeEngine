@@ -269,6 +269,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -347,6 +348,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -435,6 +437,7 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -558,9 +561,9 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), vertices.data());
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * normalVertices.size()), normalVertices.data());
+		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -704,9 +707,9 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), vertices.data());
+		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(Vertex) * normalVertices.size()), normalVertices.data());
+		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
