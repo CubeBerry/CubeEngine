@@ -486,7 +486,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 #ifdef _DEBUG
 	vkNormal3DShader = new VKShader(vkInit->GetDevice());
-	vkNormal3DShader->LoadShader(true, "../Engine/shaders/glsl/Normal3D.vert", "../Engine/shaders/glsl/Normal3D.frag");
+	vkNormal3DShader->LoadShader(false, "../Engine/shaders/spirv/Normal3D.vert.spv", "../Engine/shaders/spirv/Normal3D.frag.spv");
 	std::cout << '\n';
 #endif
 
