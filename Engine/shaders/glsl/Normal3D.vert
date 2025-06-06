@@ -19,6 +19,8 @@ struct vMatrix
     mat4 view;
     mat4 projection;
     vec4 color;
+    // @TODO move to push constants later
+    vec3 viewPosition;
 };
 
 #if VULKAN
