@@ -14,6 +14,8 @@ layout(location = 0) out vec4 o_col;
 struct vMatrix
 {
     mat4 model;
+    // @TODO remove after Slang's inverseModel is moved to Push Constants
+    mat4 inverseModel;
     mat4 view;
     mat4 projection;
     vec4 color;
