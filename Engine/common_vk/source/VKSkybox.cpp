@@ -1926,7 +1926,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 
 	//Render Images to Cube
 	VKShader shaderIBL{ vkInit->GetDevice() };
-	shaderIBL.LoadShader(true, "../Engine/shaders/glsl/BRDF.vert", "../Engine/shaders/glsl/BRDF.frag");
+	shaderIBL.LoadShader(false, "../Engine/shaders/spirv/BRDF.vert.spv", "../Engine/shaders/spirv/BRDF.frag.spv");
 
 	VKDescriptor descriptorIBL{ vkInit, {}, {} };
 

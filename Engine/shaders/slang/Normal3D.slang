@@ -1,7 +1,4 @@
-#extension GL_EXT_nonuniform_qualifier : enable
-
 #define MAX_TEXTURES 500
-// #define PI 3.14159265358979323846f
 
 struct VSInput
 {
