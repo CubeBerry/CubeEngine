@@ -56,9 +56,13 @@ namespace ThreeDimension
 	struct alignas(16) VertexUniform
 	{
 		glm::mat4 model;
+		// @TODO move to push constants later
+		glm::mat4 transposeInverseModel;
 		glm::mat4 view;
 		glm::mat4 projection;
 		glm::vec4 color;
+		// @TODO move to push constants later
+		glm::vec3 viewPosition;
 	};
 
 	struct alignas(16) FragmentUniform

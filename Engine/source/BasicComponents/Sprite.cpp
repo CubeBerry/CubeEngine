@@ -110,6 +110,8 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 		break;
 	case SpriteDrawType::ThreeDimension:
 		vertexUniform.vertex3D.model = modelMatrix;
+		// @TODO move to push constants later
+		vertexUniform.vertex3D.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
 		break;
 	case SpriteDrawType::UI:
 		vertexUniform.vertex2D.model = modelMatrix;
@@ -170,6 +172,8 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 		break;
 	case SpriteDrawType::ThreeDimension:
 		vertexUniform.vertex3D.model = modelMatrix;
+		// @TODO move to push constants later
+		vertexUniform.vertex3D.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
 		break;
 	case SpriteDrawType::UI:
 		vertexUniform.vertex2D.model = modelMatrix;
@@ -186,6 +190,13 @@ void Sprite::UpdateView()
 		break;
 	case SpriteDrawType::ThreeDimension:
 		vertexUniform.vertex3D.view = Engine::GetCameraManager().GetViewMatrix();
+		// @TODO move to push constants later
+		glm::mat4 inverseView = glm::inverse(vertexUniform.vertex3D.view);
+		vertexUniform.vertex3D.viewPosition = glm::vec3(
+			inverseView[3].x,
+			inverseView[3].y,
+			inverseView[3].z
+			);
 		break;
 	case SpriteDrawType::UI:
 		vertexUniform.vertex2D.view = glm::mat4(1.0f);

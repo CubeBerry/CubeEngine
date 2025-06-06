@@ -259,7 +259,7 @@ void VKPipeLine::InitPipeLineLayout(bool isPushConstant, uint32_t size, VkShader
 	createInfo.setLayoutCount = static_cast<uint32_t>(vkDescriptorSetLayout->size());
 	//createInfo.pSetLayouts = &(*vkDescriptorSetLayout)[0];
 	createInfo.pSetLayouts = vkDescriptorSetLayout->data();
-	//Push Constant World-To-NDC
+	//Push Constants
 	VkPushConstantRange pushConstantRange{};
 	if (isPushConstant)
 	{

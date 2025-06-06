@@ -209,7 +209,12 @@ private:
 	//Lighting
 	VKUniformBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
 	VKUniformBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
-	int activeLights[2] = { 0, 0 };
+	//int activeLights[2] = { 0, 0 };
+	struct alignas(16) PushConstants
+	{
+		int activeDirectionalLight;
+		int activePointLight;
+	} pushConstants;
 
 	//Skyobx
 	VKSkybox* skybox;
