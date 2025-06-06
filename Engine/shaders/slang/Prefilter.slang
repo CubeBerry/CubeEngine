@@ -1,10 +1,4 @@
-#define MAX_TEXTURES 500
 #define PI 3.14159265358979323846f
-
-struct VSInput
-{
-    float3 position;
-}
 
 struct VSOutput
 {
@@ -12,104 +6,8 @@ struct VSOutput
     float3 o_position;
 };
 
-// Cubemap Vertex Shader
-struct WorldToNDC
-{
-    float4x4 view;
-    float4x4 projection;
-}
-[[vk::push_constant]] WorldToNDC worldToNDC;
-
-[shader("vertex")]
-VSOutput vertexMain(VSInput input)
-{
-    VSOutput output;
-
-    output.o_position = input.position;
-
-    output.position = mul(worldToNDC.projection, mul(worldToNDC.view, float4(input.position, 1.0)));
-    
-    return output;
-}
-
-// Equirectangular Fragment Shader
-const float2 invAtan = float2(0.1591, 0.3183);
-
-[[vk::binding(0, 0)]] Sampler2D equirectangularMap;
-
-float2 SampleSphericalMap(float3 v)
-{
-    float2 uv = float2(atan2(v.z, v.x), asin(v.y));
-    uv *= invAtan;
-    uv += 0.5;
-    return uv;
-}
-
-// Reinhard Tone Mapping
-float3 ReinhardToneMapping(float3 color)
-{
-    return color / (color + float3(1.0));
-}
-
-// Filimic/ACES TOne Mapping
-float3 FilmicToneMapping(float3 color) {
-    const float a = 2.51;
-    const float b = 0.03;
-    const float c = 2.43;
-    const float d = 0.59;
-    const float e = 0.14;
-    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
-}
-
-[shader("fragment")]
-float4 equirectangularFragmentMain(VSOutput input)
-{
-    float2 uv = SampleSphericalMap(normalize(input.o_position));
-    float3 color = equirectangularMap.Sample(uv).rgb;
-
-    color = ReinhardToneMapping(color);
-
-    // Gamma Correction
-    //  color = pow(color, vec3(1.0 / 2.2));
-
-    return float4(color, 1.0);
-}
-
-// Irradiance Fragment Shader
-[[vk::binding(0, 0)]] SamplerCube irradianceEnvironmentMap;
-
-[shader("fragment")]
-float4 irradianceFragmentMain(VSOutput input)
-{
-    float3 N = normalize(float3(input.o_position.x, input.o_position.y, input.o_position.z));
-    float3 irradiance = float3(0.0);
-
-    float3 up = float3(0.0, 1.0, 0.0);
-    float3 right = normalize(cross(up, N));
-    up = normalize(cross(N, right));
-
-    float sampleDelta = 0.025;
-    float nrSamples = 0.0;
-    for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
-    {
-        for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
-        {
-            // spherical to cartesian (in tangent space)
-            float3 tangentSample = float3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
-            // tangent space to world
-            float3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N;
-
-            irradiance += irradianceEnvironmentMap.Sample(sampleVec).rgb * cos(theta) * sin(theta);
-            nrSamples++;
-        }
-    }
-    irradiance = PI * irradiance * (1.0 / float(nrSamples));
-
-    return float4(irradiance, 1.0);
-}
-
 // Prefiler Fragment Shader
-[[vk::binding(0, 0)]] SamplerCube prefilterEnvironmentMap;
+[[vk::binding(0, 0)]] SamplerCube environmentMap;
 
 struct PrefilterUBO
 {
@@ -164,7 +62,7 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float alpha)
 }
 
 [shader("fragment")]
-float4 prefilterFragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input)
 {
     float3 N = normalize(float3(input.o_position.x, input.o_position.y, input.o_position.z));
     float3 R = N;
@@ -194,7 +92,7 @@ float4 prefilterFragmentMain(VSOutput input)
 
             float mipLevel = roughnessUBO.roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
-            prefilteredColor += prefilterEnvironmentMap.SampleLevel(L, mipLevel).rgb * NdotL;
+            prefilteredColor += environmentMap.SampleLevel(L, mipLevel).rgb * NdotL;
             totalWeight += NdotL;
         }
     }
