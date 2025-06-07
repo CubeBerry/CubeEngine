@@ -988,7 +988,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 		{-1.0f, -1.0f,  1.0f},
 		{ 1.0f, -1.0f,  1.0f}
 	};
-	skyboxVertexBuffer = new VKVertexBuffer<glm::vec3>(vkInit, &skyboxVertices);
+	skyboxVertexBuffer = new VKVertexBuffer(vkInit, sizeof(glm::vec3) * skyboxVertices.size(), skyboxVertices.data());
 
 	VKDescriptorLayout fragmentLayout;
 	fragmentLayout.descriptorType = VKDescriptorLayout::SAMPLER;
@@ -1056,7 +1056,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		for (auto& sprite : sprites)
 		{
-			auto& vertexUniformBuffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer).vertexUniformBuffer;
+			auto& vertexUniformBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().vertexUniformBuffer;
 			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
@@ -1078,10 +1078,10 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 
-				vertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex2D, frameIndex);
+				vertexUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, frameIndex);
 			}
 
-			auto& fragmentUniformBuffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer).fragmentUniformBuffer;
+			auto& fragmentUniformBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().fragmentUniformBuffer;
 			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
@@ -1109,14 +1109,14 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
 
-				fragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag2D, frameIndex);
+				fragmentUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, frameIndex);
 			}
 		}
 		break;
 	case RenderType::ThreeDimension:
 		for (auto& sprite : sprites)
 		{
-			auto& vertexUniformBuffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer).vertexUniformBuffer;
+			auto& vertexUniformBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().vertexUniformBuffer;
 			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
@@ -1138,11 +1138,11 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 
-				vertexUniformBuffer->UpdateUniform(1, &sprite->GetVertexUniform().vertex3D, frameIndex);
+				vertexUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, frameIndex);
 			}
 
-			auto& fragmentUniformBuffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer).fragmentUniformBuffer;
-			auto& materialUniformBuffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer).materialUniformBuffer;
+			auto& fragmentUniformBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().fragmentUniformBuffer;
+			auto& materialUniformBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().materialUniformBuffer;
 			//auto& materialUniformBuffer = std::get<VKUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
 			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
 			{
@@ -1266,8 +1266,8 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
-				fragmentUniformBuffer->UpdateUniform(1, &sprite->GetFragmentUniform().frag3D, frameIndex);
-				materialUniformBuffer->UpdateUniform(1, &sprite->GetMaterial(), frameIndex);
+				fragmentUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, frameIndex);
+				materialUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, frameIndex);
 				if (!directionalLightUniforms.empty())
 					directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size(), directionalLightUniforms.data(), frameIndex);
 				if (!pointLightUniforms.empty())
@@ -1377,7 +1377,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	case RenderType::TwoDimension:
 		for (auto& sprite : sprites)
 		{
-			auto& buffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer);
+			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::VKBuffer>();
 			//VkBuffer* vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer).vertexBuffer->GetVertexBuffer();
 			//VkBuffer* indexBuffer = std::get<VKIndexBuffer*>(sprite->GetIndexBuffer()->buffer)->GetIndexBuffer();
 			//Bind Vertex Buffer
@@ -1396,13 +1396,13 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			//Change Primitive Topology
 			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 			//Draw
-			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetIndices().size()), 1, 0, 0, 0);
+			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 		}
 		break;
 	case RenderType::ThreeDimension:
 		for (auto& sprite : sprites)
 		{
-			auto& buffer = std::get<BufferWrapper::VKBuffer>(sprite->GetBufferWrapper()->buffer);
+			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::VKBuffer>();
 			//VkBuffer* vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer).vertexBuffer->GetVertexBuffer();
 			//VkBuffer* indexBuffer = std::get<VKIndexBuffer*>(sprite->GetIndexBuffer()->buffer)->GetIndexBuffer();
 			switch (pMode)
@@ -1428,7 +1428,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
 				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
 				//Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetIndices().size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 				break;
 			case PolygonType::LINE:
 				//Bind Vertex Buffer
@@ -1450,7 +1450,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
 				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
 				//Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetIndices().size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 				break;
 			}
 #ifdef _DEBUG
@@ -1472,7 +1472,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Draw
 				//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-				vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetNormalVertices().size()), 1, 0, 0);
+				vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
 			}
 #endif
 		}

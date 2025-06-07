@@ -12,7 +12,7 @@
 
 
 void RenderManager::CreateMesh(
-	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
 	std::vector<ThreeDimension::NormalVertex>& normalVertices,
 #endif
@@ -46,7 +46,7 @@ void RenderManager::CreateMesh(
 	break;
 	case MeshType::CUBE:
 	{
-		std::vector<Vertex> planeVertices;
+		std::vector<ThreeDimension::Vertex> planeVertices;
 		std::vector<uint32_t> planeIndices;
 		//Vertices
 		for (int stack = 0; stack <= stacks; ++stack)
@@ -96,9 +96,9 @@ void RenderManager::CreateMesh(
 			for (const auto& plane_vertex : planeVertices)
 			{
 				vertices.emplace_back(ThreeDimension::Vertex{
-					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.vertex3D.position, 1.f))),
-					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.vertex3D.normal, 0.f))),
-					plane_vertex.vertex3D.uv
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
+					plane_vertex.uv
 					});
 			}
 
@@ -369,8 +369,8 @@ void RenderManager::CreateMesh(
 		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
 		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
-			minPos = glm::min(minPos, glm::vec3(it->vertex3D.position));
-			maxPos = glm::max(maxPos, glm::vec3(it->vertex3D.position));
+			minPos = glm::min(minPos, glm::vec3(it->position));
+			maxPos = glm::max(maxPos, glm::vec3(it->position));
 		}
 
 		glm::vec3 center;
@@ -383,12 +383,12 @@ void RenderManager::CreateMesh(
 
 		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
-			it->vertex3D.position -= center;
-			it->vertex3D.position *= glm::vec3(unitScale, unitScale, unitScale);
+			it->position -= center;
+			it->position *= glm::vec3(unitScale, unitScale, unitScale);
 
 #ifdef _DEBUG
-			glm::vec3 start = it->vertex3D.position;
-			glm::vec3 end = it->vertex3D.position + it->vertex3D.normal * 0.1f;
+			glm::vec3 start = it->position;
+			glm::vec3 end = it->position + it->normal * 0.1f;
 
 			normalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
 			normalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
@@ -500,8 +500,8 @@ void RenderManager::CreateMesh(
 #ifdef _DEBUG
 		for (size_t v = 0; v < vertices.size(); ++v)
 		{
-			glm::vec3 start = vertices[v].vertex3D.position;
-			glm::vec3 end = vertices[v].vertex3D.position + vertices[v].vertex3D.normal * 0.1f;
+			glm::vec3 start = vertices[v].position;
+			glm::vec3 end = vertices[v].position + vertices[v].normal * 0.1f;
 
 			normalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
 			normalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
@@ -510,7 +510,7 @@ void RenderManager::CreateMesh(
 	}
 }
 
-void RenderManager::BuildIndices(const std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
+void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
 {
 	//Indices
 	int i0 = 0, i1 = 0, i2 = 0;
@@ -528,7 +528,7 @@ void RenderManager::BuildIndices(const std::vector<Vertex>& vertices, std::vecto
 			i2 = i1 + stride;
 
 			/*  Ignore degenerate triangle */
-			if (!DegenerateTri(vertices[i0].vertex3D.position, vertices[i1].vertex3D.position, vertices[i2].vertex3D.position))
+			if (!DegenerateTri(vertices[i0].position, vertices[i1].position, vertices[i2].position))
 			{
 				/*  Add the indices for the first triangle */
 				indices.push_back(static_cast<uint32_t>(i0));
@@ -542,7 +542,7 @@ void RenderManager::BuildIndices(const std::vector<Vertex>& vertices, std::vecto
 			i5 = i0;
 
 			/*  Ignore degenerate triangle */
-			if (!DegenerateTri(vertices[i3].vertex3D.position, vertices[i4].vertex3D.position, vertices[i5].vertex3D.position))
+			if (!DegenerateTri(vertices[i3].position, vertices[i4].position, vertices[i5].position))
 			{
 				indices.push_back(static_cast<uint32_t>(i3));
 				indices.push_back(static_cast<uint32_t>(i4));
@@ -553,7 +553,7 @@ void RenderManager::BuildIndices(const std::vector<Vertex>& vertices, std::vecto
 }
 
 void RenderManager::ProcessNode(
-	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 	const aiNode* node, const aiScene* scene, int childCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
@@ -569,7 +569,7 @@ void RenderManager::ProcessNode(
 }
 
 void RenderManager::ProcessMesh(
-	std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 	const aiMesh* mesh, const aiScene* scene, int childCount)
 {
 	//Vertices

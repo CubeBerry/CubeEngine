@@ -133,15 +133,18 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
 	for (auto& sprite : sprites)
 	{
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBufferWrapper()->buffer);
+		auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::GLBuffer>();
 		switch (rMode)
 		{
 		case RenderType::TwoDimension:
 			gl2DShader.Use(true);
 
-			buffer.vertexUniformBuffer->UpdateUniform(sizeof(TwoDimension::VertexUniform), &sprite->GetVertexUniform().vertex2D);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().vertexUniformBuffer->UpdateUniform(sizeof(TwoDimension::VertexUniform), &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform);
 
-			buffer.fragmentUniformBuffer->UpdateUniform(sizeof(TwoDimension::FragmentUniform), &sprite->GetFragmentUniform().frag2D);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().fragmentUniformBuffer->UpdateUniform(sizeof(TwoDimension::FragmentUniform), &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform);
+
+			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 0, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().vertexUniformBuffer->GetHandle()));
+			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 1, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().fragmentUniformBuffer->GetHandle()));
 
 			buffer.vertexArray.Use(true);
 			GLDrawIndexed(buffer.vertexArray);
@@ -153,18 +156,18 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 			gl3DShader.Use(true);
 
 			//auto& vertexUniformBuffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBuffer()->buffer);
-			buffer.vertexUniformBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &sprite->GetVertexUniform().vertex3D);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().vertexUniformBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform);
 
 			//auto& fragmentUniformBuffer = std::get<GLUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
-			buffer.fragmentUniformBuffer->UpdateUniform(sizeof(ThreeDimension::FragmentUniform), &sprite->GetFragmentUniform().frag3D);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().fragmentUniformBuffer->UpdateUniform(sizeof(ThreeDimension::FragmentUniform), &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform);
 
 			//auto& materialUniformBuffer = std::get<GLUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
-			buffer.materialUniformBuffer->UpdateUniform(sizeof(ThreeDimension::Material), &sprite->GetMaterial());
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer->UpdateUniform(sizeof(ThreeDimension::Material), &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material);
 
 			buffer.vertexArray.Use(true);
-			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, buffer.vertexUniformBuffer->GetHandle()));
-			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, buffer.fragmentUniformBuffer->GetHandle()));
-			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, buffer.materialUniformBuffer->GetHandle()));
+			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().vertexUniformBuffer->GetHandle()));
+			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().fragmentUniformBuffer->GetHandle()));
+			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer->GetHandle()));
 
 			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 5, directionalLightUniformBuffer->GetHandle()));
 			glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 6, pointLightUniformBuffer->GetHandle()));
@@ -188,7 +191,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 				glNormal3DShader.Use(true);
 
 				buffer.normalVertexArray.Use(true);
-				GLsizei size = static_cast<GLsizei>(sprite->GetNormalVertices().size());
+				GLsizei size = static_cast<GLsizei>(sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size());
 				glDrawArrays(GL_LINES, 0, size);
 				buffer.normalVertexArray.Use(false);
 
@@ -397,11 +400,11 @@ void GLRenderManager::DeleteWithIndex(int /*id*/)
 //			break;
 //		}
 //
-//		//Destroy Texture
-//		for (auto t : textures)
-//			delete t;
-//		textures.erase(textures.begin(), textures.end());
-//		samplers.erase(samplers.begin(), samplers.end());
+		//Destroy Texture
+		for (auto t : textures)
+			delete t;
+		textures.erase(textures.begin(), textures.end());
+		samplers.erase(samplers.begin(), samplers.end());
 //
 //		return;
 //	}

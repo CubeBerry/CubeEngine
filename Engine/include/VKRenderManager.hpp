@@ -162,27 +162,27 @@ public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	VKVertexBuffer<Vertex>* AllocateVertexBuffer(std::vector<Vertex>& vertices) const
+	VKVertexBuffer* AllocateVertexBuffer(std::vector<std::variant<TwoDimension::Vertex, ThreeDimension::Vertex>>& vertices) const
 	{
-		return new VKVertexBuffer<Vertex>(vkInit, &vertices);
+		return new VKVertexBuffer(vkInit, vertices.size(), vertices.data());
 	}
 #ifdef _DEBUG
-	VKVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
+	VKVertexBuffer* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
 	{
-		return new VKVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &vertices);
+		return new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * vertices.size(), vertices.data());
 	}
 #endif
 	VKIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
 	{
 		return new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
 	}
-	[[nodiscard]] VKUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
+	[[nodiscard]] VKUniformBuffer<std::variant<TwoDimension::VertexUniform, ThreeDimension::VertexUniform>>* AllocateVertexUniformBuffer() const
 	{
-		return new VKUniformBuffer<VertexUniform>(vkInit, 1);
+		return new VKUniformBuffer<std::variant<TwoDimension::VertexUniform, ThreeDimension::VertexUniform>>(vkInit, 1);
 	}
-	[[nodiscard]] VKUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
+	[[nodiscard]] VKUniformBuffer<std::variant<TwoDimension::FragmentUniform, ThreeDimension::FragmentUniform>>* AllocateFragmentUniformBuffer() const
 	{
-		return new VKUniformBuffer<FragmentUniform>(vkInit, 1);
+		return new VKUniformBuffer<std::variant<TwoDimension::FragmentUniform, ThreeDimension::FragmentUniform>>(vkInit, 1);
 	}
 	[[nodiscard]] VKUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
 	{
@@ -221,7 +221,7 @@ private:
 	VKShader* skyboxShader;
 	VKPipeLine* vkPipeline3DSkybox;
 	VKDescriptor* skyboxDescriptor;
-	VKVertexBuffer<glm::vec3>* skyboxVertexBuffer{ nullptr };
+	VKVertexBuffer* skyboxVertexBuffer{ nullptr };
 	VkDescriptorSet* currentVertexSkyboxDescriptorSet{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentFragmentSkyboxDescriptorSet{ VK_NULL_HANDLE };
 };

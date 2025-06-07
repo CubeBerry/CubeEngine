@@ -509,7 +509,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	VkExtent2D extentIBL{ faceSize, faceSize };
 	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
-	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
+	VKVertexBuffer vertexBufferIBL{ vkInit, sizeof(glm::vec3) * skyboxVertices.size(), skyboxVertices.data()};
 
 	VkWriteDescriptorSet descriptorWrite{};
 	VkDescriptorImageInfo skyboxDescriptorImageInfo{};
@@ -995,7 +995,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	VkExtent2D extentIBL{ irradianceSize, irradianceSize };
 	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
-	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
+	VKVertexBuffer vertexBufferIBL{ vkInit, sizeof(glm::vec3) * skyboxVertices.size(), skyboxVertices.data() };
 
 	VkWriteDescriptorSet descriptorWrite{};
 	VkDescriptorImageInfo skyboxDescriptorImageInfo{};
@@ -1397,7 +1397,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 	VkExtent2D extentIBL{ baseSize, baseSize };
 	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(float) * 3, { position_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
-	VKVertexBuffer<glm::vec3> vertexBufferIBL{ vkInit, &skyboxVertices };
+	VKVertexBuffer vertexBufferIBL{ vkInit, sizeof(glm::vec3) * skyboxVertices.size(), skyboxVertices.data() };
 
 	VKUniformBuffer<float> prefilterUniform{ vkInit, 1 };
 
@@ -1956,7 +1956,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 		vas.push_back({ fullscreenQuad[i], fullscreenQuadTexCoords[i] });
 	}
 
-	VKVertexBuffer<VA> vertexBufferIBL{ vkInit, &vas };
+	VKVertexBuffer vertexBufferIBL{ vkInit, sizeof(VA) * vas.size(), vas.data() };
 
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};

@@ -7,13 +7,12 @@
 
 #include "VKInit.hpp"
 
-template <typename Vertex>
 class VKVertexBuffer
 {
 public:
-	VKVertexBuffer(VKInit* init_, std::vector<Vertex>* vertices_) : vkInit(init_)
+	VKVertexBuffer(VKInit* init_, VkDeviceSize size_, const void* data) : vkInit(init_)
 	{
-		InitVertexBuffer(vertices_);
+		InitVertexBuffer(size_, data);
 	}
 
 	~VKVertexBuffer()
@@ -24,12 +23,12 @@ public:
 		vkDestroyBuffer(*vkInit->GetDevice(), vkVertexBuffer, nullptr);
 	}
 
-	void InitVertexBuffer(std::vector<Vertex>* vertices_)
+	void InitVertexBuffer(VkDeviceSize size_, const void* data)
 	{
 		//Create Vertex Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = sizeof(Vertex) * vertices_->size();
+		createInfo.size = size_;
 		createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		//Create Vertex Buffer
@@ -142,7 +141,7 @@ public:
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, sizeof(Vertex) * vertices_->size(), 0, &contents);
+			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, size_, 0, &contents);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -173,32 +172,32 @@ public:
 
 		//Copy Vertex Info to Memory
 		//&(*vertices_)[0] == vertices_->data()
-		memcpy(contents, vertices_->data(), sizeof(Vertex) * vertices_->size());
+		memcpy(contents, data, size_);
 
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);
 	}
 
-	void UpdateVertexBuffer(std::vector<Vertex>* vertices_)
+	void UpdateVertexBuffer(VkDeviceSize size_, void* data)
 	{
 		//Get Virtual Address for CPU to access Memory
 		void* contents;
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, sizeof(Vertex) * vertices_->size(), 0, &contents);
+			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, size_, 0, &contents);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << std::endl;
+					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
 					break;
 				default:
 					break;
@@ -217,7 +216,7 @@ public:
 
 		//Copy Vertex Info to Memory
 		//&(*vertices_)[0] == vertices_->data()
-		memcpy(contents, vertices_->data(), sizeof(Vertex) * vertices_->size());
+		memcpy(contents, data, size_);
 
 		//End Accessing Memory from CPU
 		vkUnmapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory);

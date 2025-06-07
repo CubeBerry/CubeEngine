@@ -67,7 +67,7 @@ public:
 
 	//--------------------3D Render--------------------//
 	void CreateMesh(
-		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex>& normalVertices,
 #endif
@@ -134,13 +134,13 @@ protected:
 	//Skybox
 	bool skyboxEnabled{ false };
 private:
-	static void BuildIndices(const std::vector<Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
+	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp
 	void ProcessNode(
-		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 		const aiNode* node, const aiScene* scene, int childCount);
 	void ProcessMesh(
-		std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 		const aiMesh* mesh, const aiScene* scene, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
@@ -160,6 +160,34 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
 // Buffer
 struct BufferWrapper
 {
+	//--------------------Common--------------------//
+public:
+	struct BufferData2D
+	{
+		std::vector<TwoDimension::Vertex> vertices;
+		TwoDimension::VertexUniform vertexUniform;
+		TwoDimension::FragmentUniform fragmentUniform;
+	};
+
+	struct BufferData3D
+	{
+		std::vector<ThreeDimension::Vertex> vertices;
+#ifdef _DEBUG
+		std::vector<ThreeDimension::NormalVertex> normalVertices;
+#endif
+		ThreeDimension::VertexUniform vertexUniform;
+		ThreeDimension::FragmentUniform fragmentUniform;
+		ThreeDimension::Material material;
+	};
+private:
+	struct BufferData
+	{
+		std::vector<uint32_t> indices;
+		std::variant<std::monostate, BufferData2D, BufferData3D> classifiedData;
+	} bufferData;
+
+	//--------------------OpenGL--------------------//
+public:
 	struct GLBuffer
 	{
 		GLVertexArray vertexArray;
@@ -168,28 +196,56 @@ struct BufferWrapper
 		GLVertexArray normalVertexArray;
 		GLVertexBuffer* normalVertexBuffer;
 #endif
-
 		GLIndexBuffer* indexBuffer;
-		GLUniformBuffer<VertexUniform>* vertexUniformBuffer;
-		GLUniformBuffer<FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct GLUniformBuffer2D
+	{
+		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct GLUniformBuffer3D
+	{
+		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
 		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
 	};
 
+	//--------------------Vulkan--------------------//
+public:
 	struct VKBuffer
 	{
-		VKVertexBuffer<Vertex>* vertexBuffer;
+		VKVertexBuffer* vertexBuffer;
 #ifdef _DEBUG
-		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
+		VKVertexBuffer* normalVertexBuffer;
 #endif
 		VKIndexBuffer* indexBuffer;
-		VKUniformBuffer<VertexUniform>* vertexUniformBuffer;
-		VKUniformBuffer<FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct VKUniformBuffer2D
+	{
+		VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct VKUniformBuffer3D
+	{
+		VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
 		VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
 	};
 
+private:
 	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
+	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, VKUniformBuffer2D, VKUniformBuffer3D> uniformBuffer;
 
-	BufferWrapper() : buffer(std::monostate{}) {}
+public:
+	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
+	{
+		bufferData.classifiedData = std::monostate{};
+	}
+	// @TODO Should I use std::unique_ptr of raw pointers?
 	~BufferWrapper()
 	{
 		std::visit([]<typename T>(T & buf)
@@ -201,114 +257,74 @@ struct BufferWrapper
 				delete buf.normalVertexBuffer;
 #endif
 				delete buf.indexBuffer;
-				delete buf.vertexUniformBuffer;
-				delete buf.fragmentUniformBuffer;
-				delete buf.materialUniformBuffer;
 			}
 		}, buffer);
+
+		std::visit([]<typename T>(T& buf)
+		{
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf.vertexUniformBuffer;
+				delete buf.fragmentUniformBuffer;
+				if constexpr (requires { buf.materialUniformBuffer; })
+				{
+					delete buf.materialUniformBuffer;
+				}
+			}
+		}, uniformBuffer);
 	}
+
+	void Initialize(GraphicsMode mode, RenderType type)
+	{
+		if (mode == GraphicsMode::GL)
+		{
+			if (type == RenderType::TwoDimension)
+			{
+				buffer = GLBuffer{};
+				uniformBuffer = GLUniformBuffer2D{};
+				bufferData.classifiedData = BufferData2D{};
+
+				std::get<GLBuffer>(buffer).vertexArray.Initialize();
+			}
+			else if (type == RenderType::ThreeDimension)
+			{
+				buffer = GLBuffer{};
+				uniformBuffer = GLUniformBuffer3D{};
+				bufferData.classifiedData = BufferData3D{};
+
+				std::get<GLBuffer>(buffer).vertexArray.Initialize();
+#ifdef _DEBUG
+				std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
+#endif
+			}
+		}
+		else
+		{
+			if (type == RenderType::TwoDimension)
+			{
+				buffer = VKBuffer{};
+				uniformBuffer = VKUniformBuffer2D{};
+				bufferData.classifiedData = BufferData2D{};
+			}
+			else if (type == RenderType::ThreeDimension)
+			{
+				buffer = VKBuffer{};
+				uniformBuffer = VKUniformBuffer3D{};
+				bufferData.classifiedData = BufferData3D{};
+			}
+		}
+	}
+
+	// Getter
+	//--------------------Common--------------------//
+	[[nodiscard]] std::vector<uint32_t>& GetIndices() noexcept { return bufferData.indices; }
+	// ex) T = BufferData::BufferData2D
+	template <typename T>
+	[[nodiscard]] T& GetClassifiedData() noexcept { return std::get<T>(bufferData.classifiedData); }
+	// ex) T = GLBuffer
+	template <typename T>
+	[[nodiscard]] T& GetBuffer() noexcept { return std::get<T>(buffer); }
+	// ex) T = GLUniformBuffer2D
+	template <typename T>
+	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
 };
-
-//struct VertexBufferWrapper
-//{
-//	struct GLBuffer
-//	{
-//		GLVertexBuffer* vertexBuffer;
-//#ifdef _DEBUG
-//		GLVertexBuffer* normalVertexBuffer;
-//#endif
-//	};
-//
-//	struct VKBuffer
-//	{
-//		VKVertexBuffer<Vertex>* vertexBuffer;
-//#ifdef _DEBUG
-//		VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer;
-//#endif
-//	};
-//
-//	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
-//
-//	VertexBufferWrapper() : buffer(std::monostate{}) {}
-//	~VertexBufferWrapper()
-//	{
-//		std::visit([]<typename T>(T& buf)
-//			{
-//				if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-//				{
-//					delete buf.vertexBuffer;
-//#ifdef _DEBUG
-//					delete buf.normalVertexBuffer;
-//#endif
-//				}
-//			}, buffer);
-//	}
-//};
-
-//struct IndexBufferWrapper
-//{
-//	std::variant<std::monostate, GLIndexBuffer*, VKIndexBuffer*> buffer;
-//
-//	IndexBufferWrapper() : buffer(std::monostate{}) {}
-//	~IndexBufferWrapper()
-//	{
-//		std::visit([]<typename T>(const T& buf)
-//		{
-//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-//			{
-//				delete buf;
-//			}
-//		}, buffer);
-//	}
-//};
-
-//struct VertexUniformBufferWrapper
-//{
-//	std::variant<std::monostate, GLUniformBuffer<VertexUniform>*, VKUniformBuffer<VertexUniform>*> buffer;
-//
-//	VertexUniformBufferWrapper() : buffer(std::monostate{}) {}
-//	~VertexUniformBufferWrapper()
-//	{
-//		std::visit([]<typename T>(const T& buf)
-//		{
-//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-//			{
-//				delete buf;
-//			}
-//		}, buffer);
-//	}
-//};
-
-//struct FragmentUniformBufferWrapper
-//{
-//	std::variant<std::monostate, GLUniformBuffer<FragmentUniform>*, VKUniformBuffer<FragmentUniform>*> buffer;
-//
-//	FragmentUniformBufferWrapper() : buffer(std::monostate{}) {}
-//	~FragmentUniformBufferWrapper()
-//	{
-//		std::visit([]<typename T>(const T & buf)
-//		{
-//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-//			{
-//				delete buf;
-//			}
-//		}, buffer);
-//	}
-//};
-
-//struct MaterialUniformBufferWrapper
-//{
-//	std::variant<std::monostate, GLUniformBuffer<ThreeDimension::Material>*, VKUniformBuffer<ThreeDimension::Material>*> buffer;
-//
-//	MaterialUniformBufferWrapper() : buffer(std::monostate{}) {}
-//	~MaterialUniformBufferWrapper()
-//	{
-//		std::visit([]<typename T>(const T & buf)
-//		{
-//			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-//			{
-//				delete buf;
-//			}
-//		}, buffer);
-//	}
-//};

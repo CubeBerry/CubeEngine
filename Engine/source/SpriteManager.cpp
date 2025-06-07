@@ -59,7 +59,7 @@ void SpriteManager::DeleteSprite(Sprite* sprite_)
             //    break;
             //}
         //}
-        //Engine::Instance().GetRenderManager()->DeleteWithIndex(tempId);
+        //Engine::Instance().GetRenderManager()->DeleteWithIndex(0);
         if (iterator != sprites.end())
         {
             //delete sprite_;

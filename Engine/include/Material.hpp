@@ -103,25 +103,25 @@ namespace ThreeDimension
 }
 
 // Union
-union alignas(16) Vertex
-{
-	Vertex() {}
-	Vertex(const TwoDimension::Vertex& vertex) : vertex2D(vertex) {}
-	Vertex(const ThreeDimension::Vertex& vertex) : vertex3D(vertex) {}
-	TwoDimension::Vertex vertex2D;
-	ThreeDimension::Vertex vertex3D;
-};
-
-union alignas(16) VertexUniform
-{
-	VertexUniform() {}
-	TwoDimension::VertexUniform vertex2D;
-	ThreeDimension::VertexUniform vertex3D;
-};
-
-union alignas(16) FragmentUniform
-{
-	FragmentUniform() {}
-	TwoDimension::FragmentUniform frag2D;
-	ThreeDimension::FragmentUniform frag3D;
-};
+//union alignas(16) Vertex
+//{
+//	Vertex() {}
+//	Vertex(const TwoDimension::Vertex& vertex) : vertex2D(vertex) {}
+//	Vertex(const ThreeDimension::Vertex& vertex) : vertex3D(vertex) {}
+//	TwoDimension::Vertex vertex2D;
+//	ThreeDimension::Vertex vertex3D;
+//};
+//
+//union alignas(16) VertexUniform
+//{
+//	VertexUniform() {}
+//	TwoDimension::VertexUniform vertex2D;
+//	ThreeDimension::VertexUniform vertex3D;
+//};
+//
+//union alignas(16) FragmentUniform
+//{
+//	FragmentUniform() {}
+//	TwoDimension::FragmentUniform frag2D;
+//	ThreeDimension::FragmentUniform frag3D;
+//};

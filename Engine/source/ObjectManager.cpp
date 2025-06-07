@@ -270,8 +270,8 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 	{
 		stacks = sprite->GetStacks();
 		slices = sprite->GetSlices();
-		metallic = sprite->GetMaterial().metallic;
-		roughness = sprite->GetMaterial().roughness;
+		metallic = sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic;
+		roughness = sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness;
 
 		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -324,12 +324,12 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
-				sprite->GetMaterial().metallic = metallic;
+				sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = metallic;
 
 			}
 			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
 			{
-				sprite->GetMaterial().roughness = roughness;
+				sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = roughness;
 			}
 			ImGui::Spacing();
 

@@ -26,27 +26,6 @@ Sprite::~Sprite()
 
 void Sprite::Init()
 {
-	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
-	{
-		// Initialize VAO
-		bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).vertexArray.Initialize();
-#ifdef _DEBUG
-		std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer).normalVertexArray.Initialize();
-#endif
-
-//		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-//		buffer.vertexBuffer = new GLVertexBuffer();
-//#ifdef _DEBUG
-//		buffer.normalVertexBuffer = new GLVertexBuffer();
-//#endif
-//		buffer.indexBuffer = new GLIndexBuffer(&indices);
-//		buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-//		buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
-//
-//		RenderManager* renderManager = Engine::Instance().GetRenderManager();
-//		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	}
 }
 
 void Sprite::Update(float dt)
@@ -63,6 +42,7 @@ void Sprite::End()
 	Engine::GetSpriteManager().DeleteSprite(this);
 }
 
+// @TODO Replace with bufferWrapper's Getter functions
 void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 {
 	glm::mat4 modelMatrix(1.0f);
@@ -106,15 +86,15 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		vertexUniform.vertex2D.model = modelMatrix;
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
 		break;
 	case SpriteDrawType::ThreeDimension:
-		vertexUniform.vertex3D.model = modelMatrix;
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.model = modelMatrix;
 		// @TODO move to push constants later
-		vertexUniform.vertex3D.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
 		break;
 	case SpriteDrawType::UI:
-		vertexUniform.vertex2D.model = modelMatrix;
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
 		break;
 	}
 }
@@ -168,15 +148,15 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		vertexUniform.vertex2D.model = modelMatrix;
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
 		break;
 	case SpriteDrawType::ThreeDimension:
-		vertexUniform.vertex3D.model = modelMatrix;
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.model = modelMatrix;
 		// @TODO move to push constants later
-		vertexUniform.vertex3D.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
 		break;
 	case SpriteDrawType::UI:
-		vertexUniform.vertex2D.model = modelMatrix;
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
 		break;
 	}
 }
@@ -186,20 +166,20 @@ void Sprite::UpdateView()
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		vertexUniform.vertex2D.view = Engine::GetCameraManager().GetViewMatrix();
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
 		break;
 	case SpriteDrawType::ThreeDimension:
-		vertexUniform.vertex3D.view = Engine::GetCameraManager().GetViewMatrix();
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
 		// @TODO move to push constants later
-		glm::mat4 inverseView = glm::inverse(vertexUniform.vertex3D.view);
-		vertexUniform.vertex3D.viewPosition = glm::vec3(
+		glm::mat4 inverseView = glm::inverse(bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.view);
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.viewPosition = glm::vec3(
 			inverseView[3].x,
 			inverseView[3].y,
 			inverseView[3].z
-			);
+		);
 		break;
 	case SpriteDrawType::UI:
-		vertexUniform.vertex2D.view = glm::mat4(1.0f);
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.view = glm::mat4(1.0f);
 		break;
 	}
 }
@@ -209,18 +189,18 @@ void Sprite::UpdateProjection()
 	switch (spriteDrawType)
 	{
 	case SpriteDrawType::TwoDimension:
-		vertexUniform.vertex2D.projection = Engine::GetCameraManager().GetProjectionMatrix();
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
 		break;
 	case SpriteDrawType::ThreeDimension:
-		vertexUniform.vertex3D.projection = Engine::GetCameraManager().GetProjectionMatrix();
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
 		break;
 	case SpriteDrawType::UI:
 		glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
-		vertexUniform.vertex2D.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+		bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 		// Flip y-axis for Vulkan
 		if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
 		{
-			vertexUniform.vertex2D.projection[1][1] *= -1;
+			bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.projection[1][1] *= -1;
 		}
 		break;
 	}
@@ -230,12 +210,15 @@ void Sprite::UpdateProjection()
 void Sprite::AddQuad(glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
+	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
 
+	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
 	indices.push_back(1);
 	indices.push_back(2);
@@ -243,14 +226,16 @@ void Sprite::AddQuad(glm::vec4 color_)
 	indices.push_back(3);
 	indices.push_back(0);
 
-	vertexUniform.vertex2D.model = glm::mat4(1.f);
-	vertexUniform.vertex2D.view = glm::mat4(1.f);
-	vertexUniform.vertex2D.projection = glm::mat4(1.f);
-	vertexUniform.vertex2D.color = color_;
-	vertexUniform.vertex2D.isTex = 0.f;
-	vertexUniform.vertex2D.isTexel = 0.f;
+	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.color = color_;
+	vertexUniform.isTex = 0.f;
+	vertexUniform.isTexel = 0.f;
 
-	fragmentUniform.frag2D.texIndex = 0;
+	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
@@ -268,8 +253,15 @@ void Sprite::AddQuad(glm::vec4 color_)
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		//// @TODO How to avoid iterate vertices and resolve std::variant?
+		//std::vector<TwoDimension::Vertex> rawVertices;
+		//for (const auto& vertex : vertices)
+		//{
+		//	rawVertices.push_back(std::get<TwoDimension::Vertex>(vertex));
+		//}
+		//auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -277,44 +269,43 @@ void Sprite::AddQuad(glm::vec4 color_)
 		position_layout.component_dimension = GLAttributeLayout::_3;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
-		position_layout.stride = sizeof(TwoDimension::Vertex);
+		// @TODO Why ThreeDimension stride?
+		position_layout.stride = sizeof(ThreeDimension::Vertex);
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
 		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
-		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
-		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-
-		//vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		//std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		//indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		//vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		//fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
+		//bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		//bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>() = BufferWrapper::VKUniformBuffer2D{};
+		//uniformBuffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//uniformBuffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
 	}
 
+	SetSpriteDrawType(SpriteDrawType::TwoDimension);
 	AddSpriteToManager();
 }
 
 void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
+	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
 
+	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
 	indices.push_back(1);
 	indices.push_back(2);
@@ -322,14 +313,16 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 	indices.push_back(3);
 	indices.push_back(0);
 
-	vertexUniform.vertex2D.model = glm::mat4(1.f);
-	vertexUniform.vertex2D.view = glm::mat4(1.f);
-	vertexUniform.vertex2D.projection = glm::mat4(1.f);
-	vertexUniform.vertex2D.color = color_;
-	vertexUniform.vertex2D.isTex = 0.f;
-	vertexUniform.vertex2D.isTexel = 0.f;
+	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.color = color_;
+	vertexUniform.isTex = 0.f;
+	vertexUniform.isTexel = 0.f;
 
-	fragmentUniform.frag2D.texIndex = 0;
+	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
@@ -347,8 +340,14 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		// @TODO How to avoid iterate vertices and resolve std::variant?
+		//std::vector<TwoDimension::Vertex> rawVertices;
+		//for (const auto& vertex : vertices)
+		//{
+		//	rawVertices.push_back(std::get<TwoDimension::Vertex>(vertex));
+		//}
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -356,30 +355,25 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		position_layout.component_dimension = GLAttributeLayout::_3;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
-		position_layout.stride = sizeof(TwoDimension::Vertex);
+		// @TODO Why ThreeDimension stride?
+		position_layout.stride = sizeof(ThreeDimension::Vertex);
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
 		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
-		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
-		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-
-		//vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		//std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		//indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		//vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		//fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
+		//bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		//bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>() = BufferWrapper::VKUniformBuffer2D{};
+		//uniformBuffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//uniformBuffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
 	}
 
 	ChangeTexture(name_);
@@ -392,18 +386,23 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	}
+
+	SetSpriteDrawType(SpriteDrawType::TwoDimension);
 	AddSpriteToManager();
 }
 
 void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
+	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
 	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
 
+	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
 	indices.push_back(1);
 	indices.push_back(2);
@@ -411,14 +410,16 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 	indices.push_back(3);
 	indices.push_back(0);
 
-	vertexUniform.vertex2D.model = glm::mat4(1.f);
-	vertexUniform.vertex2D.view = glm::mat4(1.f);
-	vertexUniform.vertex2D.projection = glm::mat4(1.f);
-	vertexUniform.vertex2D.color = color_;
-	vertexUniform.vertex2D.isTex = 0.f;
-	vertexUniform.vertex2D.isTexel = 0.f;
+	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.color = color_;
+	vertexUniform.isTex = 0.f;
+	vertexUniform.isTexel = 1.f;
 
-	fragmentUniform.frag2D.texIndex = 0;
+	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
@@ -436,8 +437,14 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		// @TODO How to avoid iterate vertices and resolve std::variant?
+		//std::vector<TwoDimension::Vertex> rawVertices;
+		//for (const auto& vertex : vertices)
+		//{
+		//	rawVertices.push_back(std::get<TwoDimension::Vertex>(vertex));
+		//}
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
 		GLAttributeLayout position_layout;
@@ -445,30 +452,25 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 		position_layout.component_dimension = GLAttributeLayout::_3;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
-		position_layout.stride = sizeof(TwoDimension::Vertex);
+		// @TODO Why ThreeDimension stride?
+		position_layout.stride = sizeof(ThreeDimension::Vertex);
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
 		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
-		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
-		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-
-		//vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-		//std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-		//indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		//vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		//fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
+		//bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		//bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>() = BufferWrapper::VKUniformBuffer2D{};
+		//uniformBuffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//uniformBuffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
 	}
 
 	ChangeTexture(name_);
@@ -481,6 +483,8 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 		textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	}
+
+	SetSpriteDrawType(SpriteDrawType::TwoDimension);
 	AddSpriteToManager();
 }
 
@@ -519,11 +523,16 @@ void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int sta
 
 void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color)
 {
+	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+	auto& indices = bufferWrapper.GetIndices();
+
 	meshType = type;
 	filePath = path;
 	stacks = stacks_;
 	slices = slices_;
-	
+
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 #ifdef _DEBUG
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
@@ -531,12 +540,14 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
 #endif
 
-	vertexUniform.vertex3D.model = glm::mat4(1.f);
-	vertexUniform.vertex3D.view = glm::mat4(1.f);
-	vertexUniform.vertex3D.projection = glm::mat4(1.f);
-	vertexUniform.vertex3D.color = color;
+	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.color = color;
 
-	fragmentUniform.frag3D.texIndex = 0;
+	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
@@ -560,10 +571,17 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 //		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+
+		// @TODO How to avoid iterate vertices and resolve std::variant?
+		//std::vector<ThreeDimension::Vertex> rawVertices;
+		//for (const auto& vertex : vertices)
+		//{
+		//	rawVertices.push_back(std::get<ThreeDimension::Vertex>(vertex));
+		//}
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -603,8 +621,8 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		tex_sub_index_layout.offset = 0;
 		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
-		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
-		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
 		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
@@ -628,32 +646,21 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		normal_color_layout.offset = 0;
 		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
 
-		buffer.normalVertexArray.AddVertexBuffer(std::move(*buffer.normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 		//normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 #endif
 	}
 	else
 	{
-		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
-		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-#ifdef _DEBUG
-		buffer.normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
-#endif
-		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-		buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
-
-//		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
+//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 //#ifdef _DEBUG
-//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 //#endif
-//		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-//		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-//		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-//		materialUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		//buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		//buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
 	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
@@ -662,6 +669,11 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
 {
+	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+	auto& indices = bufferWrapper.GetIndices();
+
 	meshType = type;
 	filePath = path;
 	stacks = stacks_;
@@ -674,13 +686,16 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
 #endif
 
-	vertexUniform.vertex3D.model = glm::mat4(1.f);
-	vertexUniform.vertex3D.view = glm::mat4(1.f);
-	vertexUniform.vertex3D.projection = glm::mat4(1.f);
-	vertexUniform.vertex3D.color = color;
+	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.color = color;
 
-	fragmentUniform.frag3D.texIndex = 0;
+	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
+	auto& material = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material;
 	material.metallic = metallic_;
 	material.roughness = roughness_;
 
@@ -706,10 +721,16 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 //		fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
+		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
+		// @TODO How to avoid iterate vertices and resolve std::variant?
+		//std::vector<ThreeDimension::Vertex> rawVertices;
+		//for (const auto& vertex : vertices)
+		//{
+		//	rawVertices.push_back(std::get<ThreeDimension::Vertex>(vertex));
+		//}
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-		buffer.normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -749,8 +770,8 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		tex_sub_index_layout.offset = 0;
 		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
-		buffer.vertexArray.AddVertexBuffer(std::move(*buffer.vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
-		buffer.vertexArray.SetIndexBuffer(std::move(*buffer.indexBuffer));
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
 		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
@@ -774,32 +795,21 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		normal_color_layout.offset = 0;
 		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
 
-		buffer.normalVertexArray.AddVertexBuffer(std::move(*buffer.normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 		//normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 #endif
 	}
 	else
 	{
-		bufferWrapper.buffer = BufferWrapper::VKBuffer{};
-		auto& buffer = std::get<BufferWrapper::VKBuffer>(bufferWrapper.buffer);
-		buffer.vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-#ifdef _DEBUG
-		buffer.normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
-#endif
-		buffer.indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-		buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
-
-//		vertexBuffer.buffer = VertexBufferWrapper::VKBuffer{};
-//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
+//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
 //#ifdef _DEBUG
-//		std::get<VertexBufferWrapper::VKBuffer>(vertexBuffer.buffer).normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
+//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
 //#endif
-//		indexBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-//		vertexUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-//		fragmentUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-//		materialUniformBuffer.buffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
+		//buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
+		//buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
+		//buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
 	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
@@ -948,8 +958,9 @@ void Sprite::UpdateAnimation(float dt)
 	if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
 	{
 		animations[currAnim]->Update(dt);
-		vertexUniform.vertex2D.frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
-		vertexUniform.vertex2D.texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
+		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+		vertexUniform.frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
+		vertexUniform.texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
 	}
 }
 
@@ -961,18 +972,23 @@ void Sprite::ChangeTexture(std::string name)
 	case GraphicsMode::GL:
 	{
 		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-		if(spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
-				fragmentUniform.frag2D.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-				vertexUniform.vertex2D.isTex = true;
+				auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+
+				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				vertexUniform.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				vertexUniform.vertex2D.isTex = false;
+				auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+
+				vertexUniform.isTex = false;
 				isTex = false;
 			}
 		}
@@ -980,14 +996,18 @@ void Sprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
-				fragmentUniform.frag3D.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-				fragmentUniform.frag3D.isTex = true;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+
+				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				fragmentUniform.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				fragmentUniform.frag3D.isTex = false;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+
+				fragmentUniform.isTex = false;
 				isTex = false;
 			}
 		}
@@ -1000,29 +1020,38 @@ void Sprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
-				fragmentUniform.frag2D.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-				vertexUniform.vertex2D.isTex = true;
+				auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+
+				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				vertexUniform.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				vertexUniform.vertex2D.isTex = false;
+				auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+
+				vertexUniform.isTex = false;
 				isTex = false;
 			}
 		}
-		else 
+		else
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
-				fragmentUniform.frag3D.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-				fragmentUniform.frag3D.isTex = true;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+
+				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				fragmentUniform.isTex = true;
 				isTex = true;
 				textureName = name;
 			}
 			else
 			{
-				fragmentUniform.frag3D.isTex = false;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+
+				fragmentUniform.isTex = false;
 				isTex = false;
 			}
 		}
@@ -1040,13 +1069,17 @@ void Sprite::AddSpriteToManager()
 
 void Sprite::SetColor(glm::vec4 color)
 {
-	if(spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
-		vertexUniform.vertex2D.color = color;
+		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+
+		vertexUniform.color = color;
 	}
 	else
 	{
-		vertexUniform.vertex3D.color = color;
+		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+
+		vertexUniform.color = color;
 	}
 }
 
@@ -1054,11 +1087,15 @@ glm::vec4 Sprite::GetColor()
 {
 	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
-		return vertexUniform.vertex2D.color;
+		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+
+		return vertexUniform.color;
 	}
 	else
 	{
-		return vertexUniform.vertex3D.color;
+		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+
+		return vertexUniform.color;
 	}
 }
 
@@ -1073,11 +1110,15 @@ void Sprite::SetIsTex(bool state)
 		//GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			vertexUniform.vertex2D.isTex = state;
+			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+
+			vertexUniform.isTex = state;
 		}
 		else
 		{
-			fragmentUniform.frag3D.isTex = state;
+			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+
+			fragmentUniform.isTex = state;
 		}
 		break;
 	}
@@ -1086,11 +1127,15 @@ void Sprite::SetIsTex(bool state)
 		//VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			vertexUniform.vertex2D.isTex = state;
+			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+
+			vertexUniform.isTex = state;
 		}
 		else
 		{
-			fragmentUniform.frag3D.isTex = state;
+			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+
+			fragmentUniform.isTex = state;
 		}
 		break;
 	}
