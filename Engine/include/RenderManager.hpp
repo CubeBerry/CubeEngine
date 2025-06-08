@@ -223,22 +223,22 @@ public:
 		VKIndexBuffer* indexBuffer;
 	};
 
-	struct VKUniformBuffer2D
-	{
-		VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-		VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
-	};
+	//struct VKUniformBuffer2D
+	//{
+	//	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+	//	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	//};
 
-	struct VKUniformBuffer3D
-	{
-		VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-		VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-		VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
-	};
+	//struct VKUniformBuffer3D
+	//{
+	//	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+	//	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+	//	VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	//};
 
 private:
 	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
-	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, VKUniformBuffer2D, VKUniformBuffer3D> uniformBuffer;
+	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D/*, VKUniformBuffer2D, VKUniformBuffer3D*/> uniformBuffer;
 
 public:
 	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
@@ -278,9 +278,9 @@ public:
 	{
 		if (mode == GraphicsMode::GL)
 		{
+			buffer = GLBuffer{};
 			if (type == RenderType::TwoDimension)
 			{
-				buffer = GLBuffer{};
 				uniformBuffer = GLUniformBuffer2D{};
 				bufferData.classifiedData = BufferData2D{};
 
@@ -288,7 +288,6 @@ public:
 			}
 			else if (type == RenderType::ThreeDimension)
 			{
-				buffer = GLBuffer{};
 				uniformBuffer = GLUniformBuffer3D{};
 				bufferData.classifiedData = BufferData3D{};
 
@@ -300,15 +299,14 @@ public:
 		}
 		else
 		{
+			buffer = VKBuffer{};
 			if (type == RenderType::TwoDimension)
 			{
-				buffer = VKBuffer{};
 				uniformBuffer = VKUniformBuffer2D{};
 				bufferData.classifiedData = BufferData2D{};
 			}
 			else if (type == RenderType::ThreeDimension)
 			{
-				buffer = VKBuffer{};
 				uniformBuffer = VKUniformBuffer3D{};
 				bufferData.classifiedData = BufferData3D{};
 			}

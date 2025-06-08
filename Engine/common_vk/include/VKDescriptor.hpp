@@ -14,6 +14,7 @@ struct VKDescriptorLayout
     enum DescriptorType
     {
         UNIFORM = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		UNIFORM_DYNAMIC = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
         SAMPLER = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
     };
     DescriptorType descriptorType = DescriptorType::UNIFORM;

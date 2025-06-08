@@ -162,31 +162,28 @@ public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	VKVertexBuffer* AllocateVertexBuffer(std::vector<std::variant<TwoDimension::Vertex, ThreeDimension::Vertex>>& vertices) const
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
 	{
-		return new VKVertexBuffer(vkInit, vertices.size(), vertices.data());
-	}
+		// Initialize Buffers
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+		if (rMode == RenderType::TwoDimension)
+		{
+			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, vertices.size(), vertices.data());
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().vertexUniformBuffer = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, 1);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().fragmentUniformBuffer = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, 1);
+		}
+		else if (rMode == RenderType::ThreeDimension)
+		{
+			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, vertices.size(), vertices.data());
 #ifdef _DEBUG
-	VKVertexBuffer* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
-	{
-		return new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * vertices.size(), vertices.data());
-	}
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * vertices.size(), vertices.data());
 #endif
-	VKIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
-	{
-		return new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
-	}
-	[[nodiscard]] VKUniformBuffer<std::variant<TwoDimension::VertexUniform, ThreeDimension::VertexUniform>>* AllocateVertexUniformBuffer() const
-	{
-		return new VKUniformBuffer<std::variant<TwoDimension::VertexUniform, ThreeDimension::VertexUniform>>(vkInit, 1);
-	}
-	[[nodiscard]] VKUniformBuffer<std::variant<TwoDimension::FragmentUniform, ThreeDimension::FragmentUniform>>* AllocateFragmentUniformBuffer() const
-	{
-		return new VKUniformBuffer<std::variant<TwoDimension::FragmentUniform, ThreeDimension::FragmentUniform>>(vkInit, 1);
-	}
-	[[nodiscard]] VKUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
-	{
-		return new VKUniformBuffer<ThreeDimension::Material>(vkInit, 1);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().vertexUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, 1);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().fragmentUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, 1);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().materialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, 1);
+		}
 	}
 
 	VKTexture* GetTexture(std::string name);
@@ -205,6 +202,24 @@ private:
 	VKShader* vkNormal3DShader;
 	VKPipeLine* vkPipeline3DNormal;
 #endif
+
+	// Dynamic Uniform Buffer
+	struct VKUniformBuffer2D
+	{
+		std::unique_ptr<VKUniformBuffer<TwoDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<VKUniformBuffer<TwoDimension::FragmentUniform>> fragmentUniformBuffer;
+	};
+	struct VKUniformBuffer3D
+	{
+		std::unique_ptr<VKUniformBuffer<ThreeDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<VKUniformBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
+		std::unique_ptr<VKUniformBuffer<ThreeDimension::Material>> materialUniformBuffer;
+	};
+	void* vertexMappedMemory{ VK_NULL_HANDLE };
+	void* fragmentMappedMemory{ VK_NULL_HANDLE };
+	void* materialMappedMemory{ VK_NULL_HANDLE };
+	VKUniformBuffer2D uniformBuffer2D;
+	VKUniformBuffer3D uniformBuffer3D;
 
 	//Lighting
 	VKUniformBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
