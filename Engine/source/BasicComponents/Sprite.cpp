@@ -239,28 +239,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		//bufferWrapper.buffer = BufferWrapper::GLBuffer{};
-		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		//buffer.vertexBuffer = new GLVertexBuffer();
-		//buffer.indexBuffer = new GLIndexBuffer(&indices);
-		//buffer.vertexUniformBuffer = new GLUniformBuffer<VertexUniform>();
-		//buffer.fragmentUniformBuffer = new GLUniformBuffer<FragmentUniform>();
-
-		//vertexBuffer.buffer = VertexBufferWrapper::GLBuffer{};
-		//std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer = new GLVertexBuffer();
-		//indexBuffer.buffer = new GLIndexBuffer(&indices);
-		//vertexUniformBuffer.buffer = new GLUniformBuffer<VertexUniform>();
-		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
-
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		//// @TODO How to avoid iterate vertices and resolve std::variant?
-		//std::vector<TwoDimension::Vertex> rawVertices;
-		//for (const auto& vertex : vertices)
-		//{
-		//	rawVertices.push_back(std::get<TwoDimension::Vertex>(vertex));
-		//}
-		//auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
@@ -269,16 +248,12 @@ void Sprite::AddQuad(glm::vec4 color_)
 		position_layout.component_dimension = GLAttributeLayout::_3;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
-		// @TODO Why ThreeDimension stride?
-		position_layout.stride = sizeof(ThreeDimension::Vertex);
+		position_layout.stride = sizeof(TwoDimension::Vertex);
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
-
-		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
@@ -340,13 +315,6 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		//fragmentUniformBuffer.buffer = new GLUniformBuffer<FragmentUniform>();
 
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-		//auto& buffer = std::get<BufferWrapper::GLBuffer>(bufferWrapper.buffer);
-		// @TODO How to avoid iterate vertices and resolve std::variant?
-		//std::vector<TwoDimension::Vertex> rawVertices;
-		//for (const auto& vertex : vertices)
-		//{
-		//	rawVertices.push_back(std::get<TwoDimension::Vertex>(vertex));
-		//}
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
 		//Attributes
@@ -355,16 +323,12 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		position_layout.component_dimension = GLAttributeLayout::_3;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
-		// @TODO Why ThreeDimension stride?
-		position_layout.stride = sizeof(ThreeDimension::Vertex);
+		position_layout.stride = sizeof(TwoDimension::Vertex);
 		position_layout.offset = 0;
 		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
-
-		//vertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-		//vertexArray.SetIndexBuffer(std::move(*std::get<GLIndexBuffer*>(indexBuffer.buffer)));
 	}
 	else
 	{
