@@ -525,7 +525,6 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 {
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 	auto& indices = bufferWrapper.GetIndices();
 
 	meshType = type;
@@ -535,6 +534,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 #ifdef _DEBUG
+	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
 #else
 	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
@@ -671,7 +671,6 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 {
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 	auto& indices = bufferWrapper.GetIndices();
 
 	meshType = type;
@@ -681,6 +680,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 #ifdef _DEBUG
+	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
 #else
 	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
