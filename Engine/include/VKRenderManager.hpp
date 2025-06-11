@@ -146,7 +146,8 @@ private:
 	VKShader* vkShader3D;
 	VKPipeLine* vkPipeline3D;
 	VKPipeLine* vkPipeline3DLine;
-	VKDescriptor* vkDescriptor;
+	VKDescriptor* vkDescriptor2D;
+	VKDescriptor* vkDescriptor3D;
 
 	uint32_t swapchainIndex;
 	VkImage swapchainImage;
@@ -169,14 +170,14 @@ public:
 		if (rMode == RenderType::TwoDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, vertices.size(), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
 			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().vertexUniformBuffer = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, 1);
 			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().fragmentUniformBuffer = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, 1);
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, vertices.size(), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
 #ifdef _DEBUG
 			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * vertices.size(), vertices.data());
 #endif
@@ -215,9 +216,9 @@ private:
 		std::unique_ptr<VKUniformBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
 		std::unique_ptr<VKUniformBuffer<ThreeDimension::Material>> materialUniformBuffer;
 	};
-	void* vertexMappedMemory{ VK_NULL_HANDLE };
-	void* fragmentMappedMemory{ VK_NULL_HANDLE };
-	void* materialMappedMemory{ VK_NULL_HANDLE };
+	//void* vertexMappedMemory{ VK_NULL_HANDLE };
+	//void* fragmentMappedMemory{ VK_NULL_HANDLE };
+	//void* materialMappedMemory{ VK_NULL_HANDLE };
 	VKUniformBuffer2D uniformBuffer2D;
 	VKUniformBuffer3D uniformBuffer3D;
 

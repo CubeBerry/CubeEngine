@@ -16,8 +16,23 @@ public:
 	void InitUniformBuffer(const int count_);
 	void UpdateUniform(size_t count_, void* data_, const uint32_t frameIndex_);
 
-	std::array<VkBuffer, 2>* GetUniformBuffers() { return &vkUniformBuffers; };
-	std::array<VkDeviceMemory, 2>* GetUniformDeviceMemories() { return &vkUniformDeviceMemories; };
+	std::array<VkBuffer, 2>* GetUniformBuffers() { return &vkUniformBuffers; }
+	std::array<VkDeviceMemory, 2>* GetUniformDeviceMemories() { return &vkUniformDeviceMemories; }
+	void* GetMappedMemory(const uint32_t frameIndex_) const
+	{
+		auto& vkUniformDeviceMemory = vkUniformDeviceMemories[frameIndex_];
+
+		//Get Virtual Address for CPU to access Memory
+		void* contents;
+		vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material), 0, &contents);
+
+		return contents;
+	}
+	void UnmapMemory(const uint32_t frameIndex_) const
+	{
+		auto& vkUniformDeviceMemory = vkUniformDeviceMemories[frameIndex_];
+		vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
+	}
 private:
 	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;

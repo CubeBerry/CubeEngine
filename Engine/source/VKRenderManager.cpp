@@ -86,7 +86,8 @@ VKRenderManager::~VKRenderManager()
 	delete vkPipeline3DLine;
 
 	//Destroy Descriptor
-	delete vkDescriptor;
+	delete vkDescriptor2D;
+	delete vkDescriptor3D;
 
 	delete vkSwapChain;
 	delete vkInit;
@@ -391,7 +392,7 @@ void VKRenderManager::CreateColorResources()
 	}
 
 	//To access image from graphics pipeline, Image View is needed
-	//Create ImageView Info
+	// Create ImageView Info
 	VkImageViewCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	createInfo.image = colorImage;
@@ -401,7 +402,7 @@ void VKRenderManager::CreateColorResources()
 	createInfo.subresourceRange.levelCount = 1;
 	createInfo.subresourceRange.layerCount = 1;
 
-	//Create ImageView
+	// Create ImageView
 	try
 	{
 		VkResult result{ VK_SUCCESS };
@@ -444,15 +445,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
-	//MSAA
+	// MSAA
 	msaaSamples = GetMaxUsableSampleCount();
 	CreateColorResources();
-	//Depth Buffering
+	// Depth Buffering
 	CreateDepthBuffer();
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 
+	// Initialize Descriptor3D
 	VKDescriptorLayout vertexLayout;
 	vertexLayout.descriptorType = VKDescriptorLayout::UNIFORM_DYNAMIC;
 	vertexLayout.descriptorCount = 1;
@@ -464,9 +466,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	fragmentLayout[1].descriptorCount = 500;
 	fragmentLayout[2].descriptorType = VKDescriptorLayout::UNIFORM_DYNAMIC;
 	fragmentLayout[2].descriptorCount = 1;
-	fragmentLayout[3].descriptorType = VKDescriptorLayout::UNIFORM_DYNAMIC;
+	fragmentLayout[3].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[3].descriptorCount = 1;
-	fragmentLayout[4].descriptorType = VKDescriptorLayout::UNIFORM_DYNAMIC;
+	fragmentLayout[4].descriptorType = VKDescriptorLayout::UNIFORM;
 	fragmentLayout[4].descriptorCount = 1;
 	fragmentLayout[5].descriptorType = VKDescriptorLayout::SAMPLER;
 	fragmentLayout[5].descriptorCount = 1;
@@ -474,7 +476,10 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	fragmentLayout[6].descriptorCount = 1;
 	fragmentLayout[7].descriptorType = VKDescriptorLayout::SAMPLER;
 	fragmentLayout[7].descriptorCount = 1;
-	vkDescriptor = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7] });
+	vkDescriptor3D = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1], fragmentLayout[2], fragmentLayout[3], fragmentLayout[4], fragmentLayout[5], fragmentLayout[6], fragmentLayout[7] });
+
+	// Initialize Descriptor2D
+	vkDescriptor2D = new VKDescriptor(vkInit, { vertexLayout }, { fragmentLayout[0], fragmentLayout[1] });
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
 	vkShader2D->LoadShader("../Engine/shaders/spirv/2D.vert.spv", "../Engine/shaders/spirv/2D.frag.spv");
@@ -487,16 +492,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkNormal3DShader->LoadShader("../Engine/shaders/spirv/Normal3D.vert.spv", "../Engine/shaders/spirv/Normal3D.frag.spv");
 #endif
 
-	//2D Pipeline
+	// 2D Pipeline
 	VKAttributeLayout position_layout;
 	position_layout.vertex_layout_location = 0;
-	position_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(TwoDimension::Vertex, position);
 
-	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor2D->GetDescriptorSetLayout());
 	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
 
-	//3D Pipeline
+	// 3D Pipeline
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(ThreeDimension::Vertex, position);
@@ -516,9 +521,9 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	tex_sub_index_layout.format = VK_FORMAT_R32_SINT;
 	tex_sub_index_layout.offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
-	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
 	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
-	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
 	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
@@ -530,21 +535,21 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	color_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	color_layout.offset = offsetof(ThreeDimension::NormalVertex, color);
 
-	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor->GetDescriptorSetLayout());
+	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
 	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, color_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, false);
 #endif
 
 	// Uniform
-	uniformBuffer2D.vertexUniformBuffer = std::make_unique<VKUniformBuffer<TwoDimension::VertexUniform>>(vkInit, 1);
-	uniformBuffer2D.fragmentUniformBuffer = std::make_unique<VKUniformBuffer<TwoDimension::FragmentUniform>>(vkInit, 1);
-	uniformBuffer3D.vertexUniformBuffer = std::make_unique<VKUniformBuffer<ThreeDimension::VertexUniform>>(vkInit, 1);
-	uniformBuffer3D.fragmentUniformBuffer = std::make_unique<VKUniformBuffer<ThreeDimension::FragmentUniform>>(vkInit, 1);
-	uniformBuffer3D.materialUniformBuffer = std::make_unique<VKUniformBuffer<ThreeDimension::Material>>(vkInit, 1);
+	uniformBuffer2D.vertexUniformBuffer = std::make_unique<VKUniformBuffer<TwoDimension::VertexUniform>>(vkInit, MAX_OBJECT_SIZE);
+	uniformBuffer2D.fragmentUniformBuffer = std::make_unique<VKUniformBuffer<TwoDimension::FragmentUniform>>(vkInit, MAX_OBJECT_SIZE);
+	uniformBuffer3D.vertexUniformBuffer = std::make_unique<VKUniformBuffer<ThreeDimension::VertexUniform>>(vkInit, MAX_OBJECT_SIZE);
+	uniformBuffer3D.fragmentUniformBuffer = std::make_unique<VKUniformBuffer<ThreeDimension::FragmentUniform>>(vkInit, MAX_OBJECT_SIZE);
+	uniformBuffer3D.materialUniformBuffer = std::make_unique<VKUniformBuffer<ThreeDimension::Material>>(vkInit, MAX_OBJECT_SIZE);
 
 	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, MAX_LIGHT_SIZE);
 	directionalLightUniformBuffer = new VKUniformBuffer<ThreeDimension::DirectionalLightUniform>(vkInit, MAX_LIGHT_SIZE);
 
-	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor->GetDescriptorPool(), &vkRenderPass, msaaSamples);
+	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor2D->GetDescriptorPool(), &vkRenderPass, msaaSamples);
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1045,13 +1050,13 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		//for (auto& sprite : sprites)
 		{
 			auto& vertexUniformBuffer = uniformBuffer2D.vertexUniformBuffer;
-			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
+			currentVertexDescriptorSet = &(*vkDescriptor2D->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(TwoDimension::VertexUniform) * sprites.size();
+				bufferInfo.range = sizeof(TwoDimension::VertexUniform);
 
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
@@ -1071,12 +1076,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 
 			auto& fragmentUniformBuffer = uniformBuffer2D.fragmentUniformBuffer;
-			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
+			currentFragmentDescriptorSet = &(*vkDescriptor2D->GetFragmentDescriptorSets())[frameIndex];
 			{
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*fragmentUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(TwoDimension::FragmentUniform) * sprites.size();
+				bufferInfo.range = sizeof(TwoDimension::FragmentUniform);
 
 				VkWriteDescriptorSet descriptorWrite[2] = {};
 				descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1107,13 +1112,13 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		//for (auto& sprite : sprites)
 		{
 			auto& vertexUniformBuffer = uniformBuffer3D.vertexUniformBuffer;
-			currentVertexDescriptorSet = &(*vkDescriptor->GetVertexDescriptorSets())[frameIndex];
+			currentVertexDescriptorSet = &(*vkDescriptor3D->GetVertexDescriptorSets())[frameIndex];
 			{
 				//Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(ThreeDimension::VertexUniform) * sprites.size();
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform);
 
 				//Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
@@ -1135,14 +1140,14 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			auto& fragmentUniformBuffer = uniformBuffer3D.fragmentUniformBuffer;
 			auto& materialUniformBuffer = uniformBuffer3D.materialUniformBuffer;
 			//auto& materialUniformBuffer = std::get<VKUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
-			currentFragmentDescriptorSet = &(*vkDescriptor->GetFragmentDescriptorSets())[frameIndex];
+			currentFragmentDescriptorSet = &(*vkDescriptor3D->GetFragmentDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 				VkDescriptorBufferInfo fragmentBufferInfo{};
 				fragmentBufferInfo.buffer = (*fragmentUniformBuffer->GetUniformBuffers())[frameIndex];
 				fragmentBufferInfo.offset = 0;
-				fragmentBufferInfo.range = sizeof(ThreeDimension::FragmentUniform) * sprites.size();
+				fragmentBufferInfo.range = sizeof(ThreeDimension::FragmentUniform);
 
 				VkWriteDescriptorSet fragmentDescriptorWrite{};
 				fragmentDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1166,7 +1171,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				VkDescriptorBufferInfo materialBufferInfo{};
 				materialBufferInfo.buffer = (*materialUniformBuffer->GetUniformBuffers())[frameIndex];
 				materialBufferInfo.offset = 0;
-				materialBufferInfo.range = sizeof(ThreeDimension::Material) * sprites.size();
+				materialBufferInfo.range = sizeof(ThreeDimension::Material);
 
 				VkWriteDescriptorSet materialDescriptorWrite{};
 				materialDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1189,7 +1194,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 					directionalLightDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 					directionalLightDescriptorWrite.dstBinding = 3;
 					directionalLightDescriptorWrite.descriptorCount = 1;
-					directionalLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					directionalLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					directionalLightDescriptorWrite.pBufferInfo = &directionalLightBufferInfo;
 					descriptorWrites.push_back(directionalLightDescriptorWrite);
 				}
@@ -1206,7 +1211,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 					pointLightDescriptorWrite.dstSet = *currentFragmentDescriptorSet;
 					pointLightDescriptorWrite.dstBinding = 4;
 					pointLightDescriptorWrite.descriptorCount = 1;
-					pointLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					pointLightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					pointLightDescriptorWrite.pBufferInfo = &pointLightBufferInfo;
 					descriptorWrites.push_back(pointLightDescriptorWrite);
 				}
@@ -1348,7 +1353,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 	//--------------------Begin Draw--------------------//
 
-	//Create Viewport and Scissor for Dynamic State
+	// Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
 	viewport.x = 0.f;
 	viewport.y = 0.f;
@@ -1361,49 +1366,55 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	scissor.offset = { 0, 0 };
 	scissor.extent = *vkSwapChain->GetSwapChainImageExtent();
 
-	//Draw Quad
 	VkDeviceSize vertexBufferOffset{ 0 };
 
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:
-		for (int i = 0; i < sprites.size(); ++i)
+	{
+		void* vertexMappedMemory = uniformBuffer2D.vertexUniformBuffer->GetMappedMemory(frameIndex);
+		void* fragmentMappedMemory = uniformBuffer2D.fragmentUniformBuffer->GetMappedMemory(frameIndex);
+
+		// Bind Pipeline
+		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
+		for (size_t i = 0; i < sprites.size(); ++i)
 		{
 			auto& buffer = sprites[i]->GetBufferWrapper()->GetBuffer<BufferWrapper::VKBuffer>();
-			//VkBuffer* vertexBuffer = std::get<VertexBufferWrapper::VKBuffer>(sprite->GetVertexBuffer()->buffer).vertexBuffer->GetVertexBuffer();
-			//VkBuffer* indexBuffer = std::get<VKIndexBuffer*>(sprite->GetIndexBuffer()->buffer)->GetIndexBuffer();
 			//Bind Vertex Buffer
 			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-			//Bind Index Buffer
+			// Bind Index Buffer
 			vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-			//Bind Pipeline
-			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
-			//Dynamic Viewport & Scissor
+			// Dynamic Viewport & Scissor
 			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-			//Bind Material DescriptorSet
+			// Bind Vertex DescriptorSet
 			size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
 			size_t uniformSize = sizeof(TwoDimension::VertexUniform);
-			uint32_t dynamicOffset = static_cast<uint32_t>((i * uniformSize + alignment - 1) & ~(alignment - 1));
+			uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-			TwoDimension::VertexUniform* vertexDest = (TwoDimension::VertexUniform*)((uint8_t*)mappedMemory + dynamicOffset);
+			TwoDimension::VertexUniform* vertexDest = (TwoDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
 			*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
+			// @TODO do not use magic number for dynamicOffsetCount
 			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
-			//Bind Fragment DescriptorSet
-			uniformSize = sizeof(TwoDimension::FragmentUniform);
-			dynamicOffset = static_cast<uint32_t>((i * uniformSize + alignment - 1) & ~(alignment - 1));
 
-			TwoDimension::FragmentUniform* fragmentDest = (TwoDimension::FragmentUniform*)((uint8_t*)mappedMemory + dynamicOffset);
+			// Bind Fragment DescriptorSet
+			uniformSize = sizeof(TwoDimension::FragmentUniform);
+			dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+
+			TwoDimension::FragmentUniform* fragmentDest = (TwoDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
 			*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 0, nullptr);
-			//Change Primitive Topology
+			// @TODO do not use magic number for dynamicOffsetCount
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 1, &dynamicOffset);
+			// Change Primitive Topology
 			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 			//Draw
 			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 		}
-		break;
+		uniformBuffer2D.vertexUniformBuffer->UnmapMemory(frameIndex);
+		uniformBuffer2D.fragmentUniformBuffer->UnmapMemory(frameIndex);
+	}
+	break;
 	case RenderType::ThreeDimension:
 		for (auto& sprite : sprites)
 		{

@@ -302,12 +302,12 @@ public:
 			buffer = VKBuffer{};
 			if (type == RenderType::TwoDimension)
 			{
-				uniformBuffer = VKUniformBuffer2D{};
+				//uniformBuffer = VKUniformBuffer2D{};
 				bufferData.classifiedData = BufferData2D{};
 			}
 			else if (type == RenderType::ThreeDimension)
 			{
-				uniformBuffer = VKUniformBuffer3D{};
+				//uniformBuffer = VKUniformBuffer3D{};
 				bufferData.classifiedData = BufferData3D{};
 			}
 		}
