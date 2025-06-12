@@ -4,7 +4,7 @@
 //File: VKInit.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <vector>
 #include <array>
 

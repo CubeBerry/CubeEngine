@@ -13,7 +13,7 @@
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
 
-#include <SDL_vulkan.h>
+#include <SDL3/SDL_vulkan.h>
 
 constexpr auto IMAGE_AVAILABLE_INDEX{ 0 };
 constexpr auto RENDERING_DONE_INDEX{ 1 };

@@ -34,6 +34,12 @@ VKRenderManager::~VKRenderManager()
 	}
 
 	//Destroy Buffers
+	// @TODO Fix destroying unique pointers after VKRenderManager destructor so that uniform buffers can be deleted using VkDevice
+	uniformBuffer2D.vertexUniformBuffer.reset();
+	uniformBuffer2D.fragmentUniformBuffer.reset();
+	uniformBuffer3D.vertexUniformBuffer.reset();
+	uniformBuffer3D.fragmentUniformBuffer.reset();
+	uniformBuffer3D.materialUniformBuffer.reset();
 	delete pointLightUniformBuffer;
 	delete directionalLightUniformBuffer;
 
@@ -88,6 +94,9 @@ VKRenderManager::~VKRenderManager()
 	//Destroy Descriptor
 	delete vkDescriptor2D;
 	delete vkDescriptor3D;
+#ifdef _DEBUG
+	delete vkDescriptor3DNormal;
+#endif
 
 	delete vkSwapChain;
 	delete vkInit;
@@ -846,7 +855,7 @@ void VKRenderManager::RecreateSwapChain()
 	//{
 	//	SDL_PumpEvents();
 	//}
-	SDL_GL_GetDrawableSize(window, &width, &height);
+	SDL_GetWindowSizeInPixels(window, &width, &height);
 
 	vkDeviceWaitIdle(*vkInit->GetDevice());
 

@@ -53,7 +53,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
 	GLsizei w, h;
-	SDL_GL_GetDrawableSize(Engine::GetWindow().GetWindow(), &w, &h);
+	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &w, &h);
 	glViewport(0, 0, w, h);
 	switch (pMode)
 	{

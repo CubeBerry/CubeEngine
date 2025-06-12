@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: InputManager.hpp
 #pragma once
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <unordered_map>
 #include "glm/vec2.hpp"
 
@@ -194,12 +194,12 @@ protected:
 		SetKeyState(keycode, false);
 	}
 
-	void MouseButtonDown(MOUSEBUTTON button, int /*x*/, int /*y*/)
+	void MouseButtonDown(MOUSEBUTTON button, float /*x*/, float /*y*/)
 	{
 		SetMouseButtonState(button, true);
 	}
 
-	void MouseButtonUp(MOUSEBUTTON button, int /*x*/, int /*y*/)
+	void MouseButtonUp(MOUSEBUTTON button, float /*x*/, float /*y*/)
 	{
 		SetMouseButtonState(button, false);
 	}
@@ -226,6 +226,6 @@ private:
 	std::unordered_map<MOUSEBUTTON, bool> mouseButtonStatePrev;
 
 	glm::vec2 mouseWheelMotion = glm::vec2(0.0f, 0.0f);
-	int mouseRelX = 0;
-	int mouseRelY = 0;
+	float mouseRelX = 0;
+	float mouseRelY = 0;
 };

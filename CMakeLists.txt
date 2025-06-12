@@ -12,8 +12,8 @@ set(VK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk")
 # common_gl
 set(GL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_gl")
 # ImGui
-set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui")
-set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui/backends")
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui-1.91.9b")
+set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui-1.91.9b/backends")
 # common libs (FMOD, ImGUI, stb, SDL, glm, assimp)
 set(COMMON_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs")
 # FMOD
@@ -34,6 +34,8 @@ set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 add_subdirectory(${VK_DIR})
 # common_gl
 add_subdirectory(${GL_DIR})
+# SDL3
+add_subdirectory(${COMMON_LIB_DIR}/SDL3-3.2.16)
 
 # Compile Settings
 FILE(GLOB ENGINE_SRC
@@ -79,7 +81,7 @@ source_group("ImGui"            FILES ${IMGUI_SRC})
 FILE(COPY ./Engine/common_gl/libs/glew/glew32.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
-FILE(COPY ./Engine/libs/SDL2-2.30.6/lib/SDL2.dll
+FILE(COPY ./Engine/libs/SDL3-3.2.16/SDL3.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
 # FMOD
@@ -93,7 +95,8 @@ DESTINATION ${CMAKE_BINARY_DIR}
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/SDL2-2.30.6/lib/SDL2.lib)
+# target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/SDL2-2.30.6/lib/SDL2.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
@@ -108,5 +111,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2-2.30.6/include)
+# target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2-2.30.6/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL3-3.2.16/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs)

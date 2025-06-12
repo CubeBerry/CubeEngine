@@ -81,11 +81,10 @@ void ThreadManager::QueueSDLEvent(const SDL_Event& event)
 		std::lock_guard<std::mutex> lock(sdlEventMutex);
 		sdlEventQueue.push(event);
 
-		if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN ||
-			event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL ||
-			event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
-			event.type == SDL_TEXTINPUT || event.type == SDL_WINDOWEVENT ||
-			event.type == SDL_QUIT)
+		if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+			event.type == SDL_EVENT_MOUSE_BUTTON_UP || event.type == SDL_EVENT_MOUSE_WHEEL ||
+			event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP ||
+			event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_QUIT)
 		{
 			std::lock_guard<std::mutex> mainLock(mainThreadEventMutex);
 			mainThreadEventQueue.push(event);
@@ -125,19 +124,17 @@ void ThreadManager::ProcessSDLEventsMainThread()
 	while (!localMainThreadEventQueue.empty())
 	{
 		SDL_Event& event = localMainThreadEventQueue.front();
-		ImGui_ImplSDL2_ProcessEvent(&event);
+		ImGui_ImplSDL3_ProcessEvent(&event);
 
 		switch (event.type)
 		{
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			Engine::GetGameStateManager().SetGameState(State::UNLOAD);
 			break;
-		case SDL_WINDOWEVENT:
-			if ((event.window.event == SDL_WINDOWEVENT_MOVED) || (event.window.event == SDL_WINDOWEVENT_RESIZED) ||
-				(event.window.event == SDL_WINDOWEVENT_MINIMIZED))
-			{
-				Engine::Instance().ResetDeltaTime();
-			}
+		case SDL_EVENT_WINDOW_MOVED:
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_MINIMIZED:
+			Engine::Instance().ResetDeltaTime();
 			break;
 		default:
 			break;

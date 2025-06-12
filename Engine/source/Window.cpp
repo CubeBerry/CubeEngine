@@ -19,17 +19,17 @@ void APIENTRY OpenGLDebugMessageCallback(GLenum /*source*/, GLenum /*type*/, GLu
 void Window::Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode)
 {
 	int flags = 0;
-	wSize.x = (float)width;
-	wSize.y = (float)height;
+	wSize.x = static_cast<float>(width);
+	wSize.y = static_cast<float>(height);
 
 	if (fullscreen)
 	{
 		flags = SDL_WINDOW_FULLSCREEN;
 	}
 
-	if (SDL_Init(SDL_INIT_VIDEO) != 0)
+	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
-		std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+		std::cerr << "Failed to initialize SDL: " << SDL_GetError() << '\n';
 	}
 	else
 	{
@@ -44,26 +44,22 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 			case WindowMode::NORMAL:
 				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
 					title,
-					SDL_WINDOWPOS_CENTERED,
-					SDL_WINDOWPOS_CENTERED,
-					(int)wSize.x,
-					(int)wSize.y,
+					static_cast<int>(wSize.x),
+					static_cast<int>(wSize.y),
 					flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
 				break;
 			case WindowMode::BORADLESS:
 				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
 					title,
-					SDL_WINDOWPOS_CENTERED,
-					SDL_WINDOWPOS_CENTERED,
-					(int)wSize.x,
-					(int)wSize.y,
+					static_cast<int>(wSize.x),
+					static_cast<int>(wSize.y),
 					flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
 				break;
 			};
 			break;
 		}
 		SetMainWindowTitle(title);
-		std::cout << "Create Window Successful" << '\n' << std::endl;
+		std::cout << "Create Window Successful" << '\n';
 	}
 }
 
@@ -94,22 +90,18 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	case WindowMode::NORMAL:
 		window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
 			title,
-			SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED,
-			(int)wSize.x,
-			(int)wSize.y,
+			static_cast<int>(wSize.x),
+			static_cast<int>(wSize.y),
 			flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL));
 		break;
 	case WindowMode::BORADLESS:
 		window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
 			title,
-			SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED,
-			(int)wSize.x,
-			(int)wSize.y,
+			static_cast<int>(wSize.x),
+			static_cast<int>(wSize.y),
 			flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL));
 		break;
-	};
+	}
 
 	//Make Context
 	context = SDL_GL_CreateContext(window.get());
@@ -150,7 +142,7 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 
 void Window::UpdateWindowGL(SDL_Event& event)
 {
-	if ((event.type == SDL_WINDOWEVENT) && (event.window.event == SDL_WINDOWEVENT_RESIZED || event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+	if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
 	{
 		glViewport(0, 0, event.window.data1, event.window.data2);
 	}

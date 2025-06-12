@@ -3,7 +3,7 @@
 //File: GLImGuiManager.cpp
 #include "GLImGuiManager.hpp"
 #include "imgui.h"
-#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_opengl3.h"
 
 #include <iostream>
@@ -26,7 +26,7 @@ void GLImGuiManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-	ImGui_ImplSDL2_InitForOpenGL(window_, context_);
+	ImGui_ImplSDL3_InitForOpenGL(window_, context_);
 	ImGui_ImplOpenGL3_Init();
 }
 
@@ -38,7 +38,7 @@ void GLImGuiManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 void GLImGuiManager::Begin()
 {
 	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 }
 
@@ -58,6 +58,6 @@ void GLImGuiManager::End()
 void GLImGuiManager::Shutdown()
 {
 	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
 	ImGui::DestroyContext();
 }
