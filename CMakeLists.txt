@@ -69,7 +69,8 @@ if (MSVC)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+# Turnn off warning as error due to ImGui DX12
+# set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 add_executable(${PROJECT_NAME} main.cpp ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
 
@@ -111,6 +112,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
-# target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL2-2.30.6/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL3-3.2.16/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs)
