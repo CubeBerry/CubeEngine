@@ -49,7 +49,6 @@ namespace ThreeDimension
 	struct alignas(16) NormalVertex
 	{
 		glm::vec3 position;
-		glm::vec4 color;
 	};
 #endif
 

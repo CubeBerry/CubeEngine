@@ -171,19 +171,15 @@ public:
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().vertexUniformBuffer = new VKUniformBuffer<TwoDimension::VertexUniform>(vkInit, 1);
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer2D>().fragmentUniformBuffer = new VKUniformBuffer<TwoDimension::FragmentUniform>(vkInit, 1);
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::Vertex) * vertices.size(), vertices.data());
 #ifdef _DEBUG
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * vertices.size(), vertices.data());
+			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * normalVertices.size(), normalVertices.data());
 #endif
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().vertexUniformBuffer = new VKUniformBuffer<ThreeDimension::VertexUniform>(vkInit, 1);
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().fragmentUniformBuffer = new VKUniformBuffer<ThreeDimension::FragmentUniform>(vkInit, 1);
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::VKUniformBuffer3D>().materialUniformBuffer = new VKUniformBuffer<ThreeDimension::Material>(vkInit, 1);
 		}
 	}
 
@@ -202,6 +198,7 @@ private:
 #ifdef _DEBUG
 	VKShader* vkNormal3DShader;
 	VKPipeLine* vkPipeline3DNormal;
+	VKDescriptor* vkDescriptor3DNormal;
 #endif
 
 	// Dynamic Uniform Buffer
@@ -216,9 +213,6 @@ private:
 		std::unique_ptr<VKUniformBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
 		std::unique_ptr<VKUniformBuffer<ThreeDimension::Material>> materialUniformBuffer;
 	};
-	//void* vertexMappedMemory{ VK_NULL_HANDLE };
-	//void* fragmentMappedMemory{ VK_NULL_HANDLE };
-	//void* materialMappedMemory{ VK_NULL_HANDLE };
 	VKUniformBuffer2D uniformBuffer2D;
 	VKUniformBuffer3D uniformBuffer3D;
 

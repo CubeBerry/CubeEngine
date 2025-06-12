@@ -493,7 +493,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		//}
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -549,30 +549,13 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		normal_position_layout.offset = 0;
 		normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
 
-		GLAttributeLayout normal_color_layout;
-		normal_color_layout.component_type = GLAttributeLayout::Float;
-		normal_color_layout.component_dimension = GLAttributeLayout::_4;
-		normal_color_layout.normalized = false;
-		normal_color_layout.vertex_layout_location = 1;
-		normal_color_layout.stride = sizeof(ThreeDimension::NormalVertex);
-		normal_color_layout.offset = 0;
-		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
-
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
 		//normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 #endif
 	}
 	else
 	{
-		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
-//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-//#ifdef _DEBUG
-//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
-//#endif
-//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		//buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		//buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-		//buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
@@ -642,7 +625,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		//}
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * normalVertices.size()), normalVertices.data());
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -698,30 +681,13 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		normal_position_layout.offset = 0;
 		normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
 
-		GLAttributeLayout normal_color_layout;
-		normal_color_layout.component_type = GLAttributeLayout::Float;
-		normal_color_layout.component_dimension = GLAttributeLayout::_4;
-		normal_color_layout.normalized = false;
-		normal_color_layout.vertex_layout_location = 1;
-		normal_color_layout.stride = sizeof(ThreeDimension::NormalVertex);
-		normal_color_layout.offset = 0;
-		normal_color_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, color);
-
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
 		//normalVertexArray.AddVertexBuffer(std::move(*std::get<VertexBufferWrapper::GLBuffer>(vertexBuffer.buffer).normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_color_layout });
 #endif
 	}
 	else
 	{
-		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>() = BufferWrapper::VKBuffer{};
-//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexBuffer(vertices);
-//#ifdef _DEBUG
-//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateNormalVertexBuffer(normalVertices);
-//#endif
-//		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateIndexBuffer(indices);
-		//buffer.vertexUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateVertexUniformBuffer();
-		//buffer.fragmentUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateFragmentUniformBuffer();
-		//buffer.materialUniformBuffer = dynamic_cast<VKRenderManager*>(renderManager)->AllocateMaterialUniformBuffer();
+		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 	}
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);

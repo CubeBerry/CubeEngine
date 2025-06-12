@@ -3,36 +3,25 @@
 struct VSInput
 {
     float3 position;
-    float4 color;
 }
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float4 color;
 };
 
-struct vMatrix
+struct PushConstants
 {
-    float4x4 model;
-    // @TODO move to push constants
-    float4x4 transposeInverseModel;
-    float4x4 view;
-    float4x4 projection;
-    float4 color;
-    // @TODO move to push constants
-    float3 viewPosition;
+    float4x4 modelToNDC;
 }
-[[vk::binding(0, 0)]] ConstantBuffer<vMatrix> matrix;
+[[vk::push_constant]] PushConstants modelToNDC;
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input)
 {
     VSOutput output;
 
-    output.color = matrix.color;
-
-    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(input.position, 1.0))));
+    output.position = mul(modelToNDC.modelToNDC, float4(input.position, 1.0));
     
     return output;
 }
@@ -40,6 +29,5 @@ VSOutput vertexMain(VSInput input)
 [shader("fragment")]
 float4 fragmentMain(VSOutput input)
 {
-    // @TODO Fix 3D Normal Color to White (both on OpenGL and Vulkan)
-    return input.color;
+    return float4(1.0, 1.0, 1.0, 1.0);
 }

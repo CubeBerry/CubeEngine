@@ -390,8 +390,8 @@ void RenderManager::CreateMesh(
 			glm::vec3 start = it->position;
 			glm::vec3 end = it->position + it->normal * 0.1f;
 
-			normalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
-			normalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ start });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ end });
 #endif
 		}
 
@@ -503,8 +503,8 @@ void RenderManager::CreateMesh(
 			glm::vec3 start = vertices[v].position;
 			glm::vec3 end = vertices[v].position + vertices[v].normal * 0.1f;
 
-			normalVertices.push_back(ThreeDimension::NormalVertex{ start, glm::vec4{1.f} });
-			normalVertices.push_back(ThreeDimension::NormalVertex{ end, glm::vec4{1.f} });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ start });
+			normalVertices.push_back(ThreeDimension::NormalVertex{ end });
 		}
 #endif
 	}
