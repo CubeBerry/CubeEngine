@@ -25,7 +25,6 @@ target_include_directories(common_vk PRIVATE ${VK_INC_DIR})
 target_include_directories(common_vk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
 target_include_directories(common_vk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/SDL2-2.30.6/include)
 target_include_directories(common_vk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/imgui)
-# target_include_directories(common_vk PUBLIC ${LIB_DIR}/VulkanSDK/1.3.268.0/Include)
 
 find_package(Vulkan REQUIRED)
 target_link_libraries(common_vk ${Vulkan_LIBRARIES})
