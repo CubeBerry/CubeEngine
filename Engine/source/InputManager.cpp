@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: InputManager.cpp
 #include "InputManager.hpp"
+
 #include "Engine.hpp"
 
 InputManager::InputManager() {}
@@ -13,38 +14,38 @@ void InputManager::InputPollEvent(SDL_Event& event)
 	mouseWheelMotion = { 0.f,0.f };
 	switch (event.type)
 	{
-	case SDL_KEYDOWN:
-		KeyDown(static_cast<KEYBOARDKEYS>(event.key.keysym.sym));
+	case SDL_EVENT_KEY_DOWN:
+		KeyDown(static_cast<KEYBOARDKEYS>(event.key.key));
 		break;
-	case SDL_KEYUP:
-		KeyUp(static_cast<KEYBOARDKEYS>(event.key.keysym.sym));
+	case SDL_EVENT_KEY_UP:
+		KeyUp(static_cast<KEYBOARDKEYS>(event.key.key));
 		break;
-	case SDL_MOUSEBUTTONDOWN:
+	case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
 		{
 			MouseButtonDown(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
 		}
 		break;
-	case SDL_MOUSEBUTTONUP:
+	case SDL_EVENT_MOUSE_BUTTON_UP:
 		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
 		{
 			MouseButtonUp(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
 		}
 		break;
-	case SDL_MOUSEWHEEL:
+	case SDL_EVENT_MOUSE_WHEEL:
 		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
 		{
 			MouseWheel(event);
 		}
 		break;
-	case SDL_MOUSEMOTION:
+	case SDL_EVENT_MOUSE_MOTION:
 		mouseRelX = event.motion.xrel;
 		mouseRelY = event.motion.yrel;
 		break;
 	default:
 		break;
 	}
-	if (event.type == SDL_MOUSEMOTION)
+	if (event.type == SDL_EVENT_MOUSE_MOTION)
 	{
 		mouseRelX = event.motion.xrel;
 		mouseRelY = event.motion.yrel;
@@ -123,7 +124,7 @@ bool InputManager::IsMouseButtonReleaseOnce(MOUSEBUTTON button)
 
 glm::vec2 InputManager::GetMousePosition()
 {
-	int mouseX, mouseY;
+	float mouseX, mouseY;
 	SDL_GetMouseState(&mouseX, &mouseY);
 	glm::vec2 pos = { mouseX, mouseY };
 	glm::vec2 windowViewSize = Engine::Instance().GetCameraManager().GetViewSize();
@@ -143,13 +144,14 @@ glm::vec2 InputManager::GetMouseWheelMotion()
 
 void InputManager::SetRelativeMouseMode(bool state)
 {
+	SDL_Window* window = Engine::Instance().GetWindow().GetWindow();
 	if (state == true)
 	{
-		SDL_SetRelativeMouseMode(SDL_TRUE);
+		SDL_SetWindowRelativeMouseMode(window, true);
 	}
 	else
 	{
-		SDL_SetRelativeMouseMode(SDL_FALSE);
+		SDL_SetWindowRelativeMouseMode(window, false);
 	}
 	mouseRelX = 0;
 	mouseRelY = 0;
@@ -157,7 +159,8 @@ void InputManager::SetRelativeMouseMode(bool state)
 
 bool InputManager::GetRelativeMouseMode()
 {
-	return SDL_GetRelativeMouseMode();
+	SDL_Window* window = Engine::Instance().GetWindow().GetWindow();
+	return SDL_GetWindowRelativeMouseMode(window);
 }
 
 glm::vec2 InputManager::GetRelativeMouseState()

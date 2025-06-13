@@ -5,11 +5,20 @@
 #define NOMINMAX
 
 #include <filesystem>
+#include <variant>
 #include "Material.hpp"
 #include "Window.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
+
+#include "GLVertexArray.hpp"
+#include "GLVertexBuffer.hpp"
+#include "GLIndexBuffer.hpp"
+#include "GLUniformBuffer.hpp"
+#include "VKVertexBuffer.hpp"
+#include "VKIndexBuffer.hpp"
+#include "VKUniformBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -55,13 +64,15 @@ public:
 
 	//--------------------2D Render--------------------//
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
-	virtual void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) = 0;
-
-	std::vector<TwoDimension::VertexUniform>* GetVertexUniforms2D() { return &vertexUniforms2D; };
-	std::vector<TwoDimension::FragmentUniform>* GetFragmentUniforms2D() { return &fragUniforms2D; };
 
 	//--------------------3D Render--------------------//
-	virtual void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) = 0;
+	void CreateMesh(
+		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+#ifdef _DEBUG
+		std::vector<ThreeDimension::NormalVertex>& normalVertices,
+#endif
+		MeshType type, const std::filesystem::path& path, int stacks, int slices
+	);
 	void AddDirectionalLight(const ThreeDimension::DirectionalLightUniform& light)
 	{
 		directionalLightUniforms.push_back(light);
@@ -83,10 +94,6 @@ public:
 	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; };
 	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; };
 
-	std::vector<ThreeDimension::VertexUniform>* GetVertexUniforms3D() { return &vertexUniforms3D; };
-	std::vector<ThreeDimension::FragmentUniform>* GetFragmentUniforms3D() { return &fragUniforms3D; };
-	std::vector<ThreeDimension::Material>* GetMaterialUniforms3D() { return &fragMaterialUniforms3D; };
-
 #ifdef _DEBUG
 	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
 #endif
@@ -99,13 +106,8 @@ protected:
 	GraphicsMode gMode{ GraphicsMode::GL };
 	RenderType rMode = RenderType::TwoDimension;
 	PolygonType pMode = PolygonType::FILL;
-	unsigned int quadCount{ 0 };
-	std::vector<uint32_t> indices;
 
 	//--------------------2D Render--------------------//
-	std::vector<TwoDimension::Vertex> vertices2D;
-	std::vector<TwoDimension::VertexUniform> vertexUniforms2D;
-	std::vector<TwoDimension::FragmentUniform> fragUniforms2D;
 
 	//--------------------3D Render--------------------//
 	static bool DegenerateTri(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
@@ -118,25 +120,13 @@ protected:
 		return { RoundDecimal(input[0]), RoundDecimal(input[1]), RoundDecimal(input[2]) };
 	}
 
-	void CreateMesh(MeshType type, const std::filesystem::path& path, int stacks, int slices);
-
 	//Lighting
 	std::vector<ThreeDimension::DirectionalLightUniform> directionalLightUniforms;
 	std::vector<ThreeDimension::PointLightUniform> pointLightUniforms;
 
-	std::vector<ThreeDimension::Vertex> vertices3D;
-	std::vector<ThreeDimension::VertexUniform> vertexUniforms3D;
-	std::vector<ThreeDimension::FragmentUniform> fragUniforms3D;
-	std::vector<ThreeDimension::Material> fragMaterialUniforms3D;
-
 #ifdef _DEBUG
 	bool isDrawNormals{ false };
-	std::vector<ThreeDimension::NormalVertex> normalVertices3D;
-	std::vector<unsigned int> normalVerticesPerMesh;
 #endif
-
-	std::vector<unsigned int> verticesPerMesh;
-	std::vector<unsigned int> indicesPerMesh;
 
 	//Assimp
 	Assimp::Importer importer;
@@ -144,10 +134,14 @@ protected:
 	//Skybox
 	bool skyboxEnabled{ false };
 private:
-	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const unsigned int verticesCount, const int stacks, const int slices);
+	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp
-	void ProcessNode(aiNode* node, const aiScene* scene, unsigned int& verticesCount, int childCount);
-	void ProcessMesh(aiMesh* mesh, const aiScene* scene, unsigned int& verticesCount, int childCount);
+	void ProcessNode(
+		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+		const aiNode* node, const aiScene* scene, int childCount);
+	void ProcessMesh(
+		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+		const aiMesh* mesh, const aiScene* scene, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 };
 
@@ -162,3 +156,173 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
 
 	return result;
 }
+
+// Buffer
+struct BufferWrapper
+{
+	//--------------------Common--------------------//
+public:
+	struct BufferData2D
+	{
+		std::vector<TwoDimension::Vertex> vertices;
+		TwoDimension::VertexUniform vertexUniform;
+		TwoDimension::FragmentUniform fragmentUniform;
+	};
+
+	struct BufferData3D
+	{
+		std::vector<ThreeDimension::Vertex> vertices;
+#ifdef _DEBUG
+		std::vector<ThreeDimension::NormalVertex> normalVertices;
+#endif
+		ThreeDimension::VertexUniform vertexUniform;
+		ThreeDimension::FragmentUniform fragmentUniform;
+		ThreeDimension::Material material;
+	};
+private:
+	struct BufferData
+	{
+		std::vector<uint32_t> indices;
+		std::variant<std::monostate, BufferData2D, BufferData3D> classifiedData;
+	} bufferData;
+
+	//--------------------OpenGL--------------------//
+public:
+	struct GLBuffer
+	{
+		GLVertexArray vertexArray;
+		GLVertexBuffer* vertexBuffer;
+#ifdef _DEBUG
+		GLVertexArray normalVertexArray;
+		GLVertexBuffer* normalVertexBuffer;
+#endif
+		GLIndexBuffer* indexBuffer;
+	};
+
+	struct GLUniformBuffer2D
+	{
+		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct GLUniformBuffer3D
+	{
+		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	};
+
+	//--------------------Vulkan--------------------//
+public:
+	struct VKBuffer
+	{
+		VKVertexBuffer* vertexBuffer;
+#ifdef _DEBUG
+		VKVertexBuffer* normalVertexBuffer;
+#endif
+		VKIndexBuffer* indexBuffer;
+	};
+
+	//struct VKUniformBuffer2D
+	//{
+	//	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+	//	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	//};
+
+	//struct VKUniformBuffer3D
+	//{
+	//	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+	//	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+	//	VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	//};
+
+private:
+	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
+	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D/*, VKUniformBuffer2D, VKUniformBuffer3D*/> uniformBuffer;
+
+public:
+	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
+	{
+		bufferData.classifiedData = std::monostate{};
+	}
+	// @TODO Should I use std::unique_ptr of raw pointers?
+	~BufferWrapper()
+	{
+		std::visit([]<typename T>(T & buf)
+		{
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf.vertexBuffer;
+#ifdef _DEBUG
+				delete buf.normalVertexBuffer;
+#endif
+				delete buf.indexBuffer;
+			}
+		}, buffer);
+
+		std::visit([]<typename T>(T& buf)
+		{
+			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+			{
+				delete buf.vertexUniformBuffer;
+				delete buf.fragmentUniformBuffer;
+				if constexpr (requires { buf.materialUniformBuffer; })
+				{
+					delete buf.materialUniformBuffer;
+				}
+			}
+		}, uniformBuffer);
+	}
+
+	void Initialize(GraphicsMode mode, RenderType type)
+	{
+		if (mode == GraphicsMode::GL)
+		{
+			buffer = GLBuffer{};
+			if (type == RenderType::TwoDimension)
+			{
+				uniformBuffer = GLUniformBuffer2D{};
+				bufferData.classifiedData = BufferData2D{};
+
+				std::get<GLBuffer>(buffer).vertexArray.Initialize();
+			}
+			else if (type == RenderType::ThreeDimension)
+			{
+				uniformBuffer = GLUniformBuffer3D{};
+				bufferData.classifiedData = BufferData3D{};
+
+				std::get<GLBuffer>(buffer).vertexArray.Initialize();
+#ifdef _DEBUG
+				std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
+#endif
+			}
+		}
+		else
+		{
+			buffer = VKBuffer{};
+			if (type == RenderType::TwoDimension)
+			{
+				//uniformBuffer = VKUniformBuffer2D{};
+				bufferData.classifiedData = BufferData2D{};
+			}
+			else if (type == RenderType::ThreeDimension)
+			{
+				//uniformBuffer = VKUniformBuffer3D{};
+				bufferData.classifiedData = BufferData3D{};
+			}
+		}
+	}
+
+	// Getter
+	//--------------------Common--------------------//
+	[[nodiscard]] std::vector<uint32_t>& GetIndices() noexcept { return bufferData.indices; }
+	// ex) T = BufferData::BufferData2D
+	template <typename T>
+	[[nodiscard]] T& GetClassifiedData() noexcept { return std::get<T>(bufferData.classifiedData); }
+	// ex) T = GLBuffer
+	template <typename T>
+	[[nodiscard]] T& GetBuffer() noexcept { return std::get<T>(buffer); }
+	// ex) T = GLUniformBuffer2D
+	template <typename T>
+	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
+};

@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: GLImGuiManager.hpp
 #pragma once
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 class GLImGuiManager
 {

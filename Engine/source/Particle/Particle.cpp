@@ -27,7 +27,7 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float
 		break;
 	case ParticleType::SPRI:
 		sprite = new Sprite();
-		sprite->AddMeshWithTexel(spriteName);
+		sprite->AddQuadWithTexture(spriteName);
 		sprite->SetColor(color);
 		break;
 	case ParticleType::REC:
@@ -60,7 +60,7 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, glm::
 		break;
 	case ParticleType::SPRI:
 		sprite = new Sprite();
-		sprite->AddMeshWithTexel(spriteName);
+		sprite->AddQuadWithTexture(spriteName);
 		sprite->SetColor(color);
 		break;
 	case ParticleType::REC:

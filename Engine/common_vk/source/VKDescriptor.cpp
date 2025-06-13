@@ -104,6 +104,9 @@ void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLa
 			switch (static_cast<VkDescriptorType>(l.descriptorType))
 			{
 			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+				lightDescriptorCount += l.descriptorCount;
+				break;
+			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
 				fragmentDescriptorCount += l.descriptorCount;
 				break;
 			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
@@ -185,15 +188,22 @@ void VKDescriptor::InitDescriptorPool()
 	if (vertexDescriptorCount)
 	{
 		VkDescriptorPoolSize size;
-		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		size.descriptorCount = vertexDescriptorCount * 2;
 		poolSize.push_back(size);
 	}
 	if (fragmentDescriptorCount)
 	{
 		VkDescriptorPoolSize size;
-		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		size.descriptorCount = fragmentDescriptorCount * 2;
+		poolSize.push_back(size);
+	}
+	if (lightDescriptorCount)
+	{
+		VkDescriptorPoolSize size;
+		size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		size.descriptorCount = lightDescriptorCount * 2;
 		poolSize.push_back(size);
 	}
 	if (samplerDescriptorCount)
@@ -211,7 +221,7 @@ void VKDescriptor::InitDescriptorPool()
 	VkDescriptorPoolCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	//For uniform buffer and combined image sampler
-	createInfo.maxSets = (vertexDescriptorCount + fragmentDescriptorCount + samplerDescriptorCount) * 2 + 1;
+	createInfo.maxSets = (vertexDescriptorCount + fragmentDescriptorCount + lightDescriptorCount + samplerDescriptorCount) * 2 + 1;
 	createInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
 	createInfo.pPoolSizes = poolSize.data();
 	//ImGui requires VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
@@ -296,7 +306,7 @@ void VKDescriptor::InitDescriptorSets()
 			}
 		}
 
-		if (fragmentDescriptorCount || samplerDescriptorCount)
+		if (fragmentDescriptorCount || lightDescriptorCount || samplerDescriptorCount)
 		{
 			//Create Fragment Material DescriptorSet Allocation Info
 			VkDescriptorSetAllocateInfo allocateInfo{};

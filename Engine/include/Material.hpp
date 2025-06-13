@@ -14,7 +14,6 @@ namespace TwoDimension
 	struct alignas(16) Vertex
 	{
 		glm::vec3 position;
-		int index;
 	};
 
 	struct alignas(16) VertexUniform
@@ -43,7 +42,6 @@ namespace ThreeDimension
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 uv;
-		int index;
 		int texSubIndex{ 0 };
 	};
 
@@ -51,17 +49,19 @@ namespace ThreeDimension
 	struct alignas(16) NormalVertex
 	{
 		glm::vec3 position;
-		glm::vec4 color;
-		int index;
 	};
 #endif
 
 	struct alignas(16) VertexUniform
 	{
 		glm::mat4 model;
+		// @TODO move to push constants later
+		glm::mat4 transposeInverseModel;
 		glm::mat4 view;
 		glm::mat4 projection;
 		glm::vec4 color;
+		// @TODO move to push constants later
+		glm::vec3 viewPosition;
 	};
 
 	struct alignas(16) FragmentUniform
@@ -100,3 +100,27 @@ namespace ThreeDimension
 		float specularStrength;
 	};
 }
+
+// Union
+//union alignas(16) Vertex
+//{
+//	Vertex() {}
+//	Vertex(const TwoDimension::Vertex& vertex) : vertex2D(vertex) {}
+//	Vertex(const ThreeDimension::Vertex& vertex) : vertex3D(vertex) {}
+//	TwoDimension::Vertex vertex2D;
+//	ThreeDimension::Vertex vertex3D;
+//};
+//
+//union alignas(16) VertexUniform
+//{
+//	VertexUniform() {}
+//	TwoDimension::VertexUniform vertex2D;
+//	ThreeDimension::VertexUniform vertex3D;
+//};
+//
+//union alignas(16) FragmentUniform
+//{
+//	FragmentUniform() {}
+//	TwoDimension::FragmentUniform frag2D;
+//	ThreeDimension::FragmentUniform frag3D;
+//};

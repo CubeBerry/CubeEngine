@@ -4,8 +4,6 @@
 //File: ObjectManager.cpp
 #include "ObjectManager.hpp"
 
-#include <iostream>
-
 #include "Engine.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Light.hpp"
@@ -29,7 +27,7 @@ void ObjectManager::End()
 	DestroyAllObjects();
 	currentIndex = 0;
 	objectListForImguiIndex = 0;
-	componentFunctionQueue.clear();
+	functionQueue.clear();
 }
 
 void ObjectManager::Draw(float dt)
@@ -202,13 +200,13 @@ void ObjectManager::ObjectControllerForImGui()
 	}
 }
 
-void ObjectManager::ProcessComponentFunctionQueues()
+void ObjectManager::ProcessFunctionQueue()
 {
-	for (auto& task : componentFunctionQueue)
+	for (auto& task : functionQueue)
 	{
 		task();
 	}
-	componentFunctionQueue.clear();
+	functionQueue.clear();
 }
 
 void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
@@ -266,13 +264,14 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 	RenderManager* renderManager = Engine::GetRenderManager();
 	Sprite* spriteComp = sprite;
 	bool isSelectedObjModel = false;
+	Object* currentObj = FindObjectWithId(currentIndex);
 
 	if (renderManager->GetRenderType() == RenderType::ThreeDimension)
 	{
 		stacks = sprite->GetStacks();
 		slices = sprite->GetSlices();
-		metallic = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic;
-		roughness = renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness;
+		metallic = sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic;
+		roughness = sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness;
 
 		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -299,41 +298,57 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 #endif
 
 			ImGui::Spacing();
-			if (ImGui::SliderInt("Stacks", &stacks, 1, 30))
+			if (ImGui::SliderInt("Stacks", &stacks, 2, 30))
 			{
-				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+				MeshType meshType = sprite->GetMeshType();
+				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
-			if (ImGui::SliderInt("Slices", &slices, 1, 30))
+			if (ImGui::SliderInt("Slices", &slices, 2, 30))
 			{
-				sprite->RecreateMesh3D(sprite->GetMeshType(), sprite->GetModelFilePath(), stacks, slices, color, metallic, roughness);
+				MeshType meshType = sprite->GetMeshType();
+				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
-				renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).metallic = metallic;
+				sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = metallic;
 
 			}
 			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
 			{
-				renderManager->GetMaterialUniforms3D()->at(sprite->GetMaterialId()).roughness = roughness;
+				sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = roughness;
 			}
 			ImGui::Spacing();
 
 			bool isTextureExist = false;
 			switch (renderManager->GetGraphicsMode())
 			{
-				case GraphicsMode::GL:
-				{
-					isTextureExist = !dynamic_cast<GLRenderManager*>(renderManager)->GetTextures().empty();
-					break;
-				}
-				case GraphicsMode::VK:
-				{
-					isTextureExist = !dynamic_cast<VKRenderManager*>(renderManager)->GetTextures().empty();
-					break;
-				}
+			case GraphicsMode::GL:
+			{
+				isTextureExist = !dynamic_cast<GLRenderManager*>(renderManager)->GetTextures().empty();
+				break;
+			}
+			case GraphicsMode::VK:
+			{
+				isTextureExist = !dynamic_cast<VKRenderManager*>(renderManager)->GetTextures().empty();
+				break;
+			}
 			}
 
-			if(isTextureExist)
+			if (isTextureExist)
 			{
 				bool isTextureOn = sprite->GetIsTex();
 				if (ImGui::Checkbox("Apply Texture", &isTextureOn))
@@ -422,27 +437,57 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			{
 				if (ImGui::MenuItem("Plane", "0"))
 				{
-					sprite->RecreateMesh3D(MeshType::PLANE, "", 2, 2, color, metallic, roughness);
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->DeleteComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->AddComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::PLANE, "", 2, 2, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Cube", "1"))
 				{
-					sprite->RecreateMesh3D(MeshType::CUBE, "", 2, 2, color, metallic, roughness);
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->DeleteComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->AddComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::CUBE, "", 2, 2, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Sphere", "2"))
 				{
-					sprite->RecreateMesh3D(MeshType::SPHERE, "", 30, 30, color, metallic, roughness);
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->DeleteComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->AddComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::SPHERE, "", 30, 30, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Torus", "3"))
 				{
-					sprite->RecreateMesh3D(MeshType::TORUS, "", 15, 15, color, metallic, roughness);
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->DeleteComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->AddComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::TORUS, "", 15, 15, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Cylinder", "4"))
 				{
-					sprite->RecreateMesh3D(MeshType::CYLINDER, "", 10, 10, color, metallic, roughness);
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->DeleteComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->AddComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::CYLINDER, "", 10, 10, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Cone", "5"))
 				{
-					sprite->RecreateMesh3D(MeshType::CONE, "", 10, 10, color, metallic, roughness);
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->DeleteComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+					{ obj->AddComponent<Sprite>(); });
+					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::CONE, "", 10, 10, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Obj Model", "6"))
 				{
@@ -752,55 +797,106 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			if (ImGui::Selectable("Cube"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness);
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Car"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", stacks, slices, color, metallic, roughness);
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Diamond"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", stacks, slices, color, metallic, roughness);
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Dodecahedron"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", stacks, slices, color, metallic, roughness);
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Gourd"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", stacks, slices, color, metallic, roughness);
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Sphere"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", stacks, slices, color, metallic, roughness);
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Teapot"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", stacks, slices, color, metallic, roughness);
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Vase"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", stacks, slices, color, metallic, roughness);
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Monkey"))
 			{
 				isShowPopup = false;
-				currentObj->GetComponent<Sprite>()->RecreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", stacks, slices, color, metallic, roughness);
+
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->DeleteComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
+				{ obj->AddComponent<Sprite>(); });
+				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 		}

@@ -13,7 +13,7 @@
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
 
-#include <SDL_vulkan.h>
+#include <SDL3/SDL_vulkan.h>
 
 constexpr auto IMAGE_AVAILABLE_INDEX{ 0 };
 constexpr auto RENDERING_DONE_INDEX{ 1 };
@@ -146,7 +146,8 @@ private:
 	VKShader* vkShader3D;
 	VKPipeLine* vkPipeline3D;
 	VKPipeLine* vkPipeline3DLine;
-	VKDescriptor* vkDescriptor;
+	VKDescriptor* vkDescriptor2D;
+	VKDescriptor* vkDescriptor3D;
 
 	uint32_t swapchainIndex;
 	VkImage swapchainImage;
@@ -161,56 +162,76 @@ private:
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
-
-	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	void LoadQuad(glm::vec4 color_, float isTex_, float isTexel_) override;
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+	{
+		// Initialize Buffers
+		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
+		if (rMode == RenderType::TwoDimension)
+		{
+			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
+		}
+		else if (rMode == RenderType::ThreeDimension)
+		{
+			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::Vertex) * vertices.size(), vertices.data());
+#ifdef _DEBUG
+			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * normalVertices.size(), normalVertices.data());
+#endif
+		}
+	}
 
 	VKTexture* GetTexture(std::string name);
 	std::vector<VKTexture*> GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
-	void LoadMesh(MeshType type, const std::filesystem::path& path, glm::vec4 color, int stacks, int slices, float metallic = 0.3f, float roughness = 0.3f) override;
 	void LoadSkybox(const std::filesystem::path& path) override;
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	VKIndexBuffer* indexBuffer{ nullptr };
 	VkSampler immutableSampler;
-
-	//--------------------2D Render--------------------//
 	std::vector<VKTexture*> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
-
-	VKVertexBuffer<TwoDimension::Vertex>* vertex2DBuffer{ nullptr };
-
-	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniform2D{ nullptr };
-	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniform2D{ nullptr };
-
-	//--------------------3D Render--------------------//
-	VKVertexBuffer<ThreeDimension::Vertex>* vertex3DBuffer{ nullptr };
-
-	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniform3D{ nullptr };
-	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniform3D{ nullptr };
-	VKUniformBuffer<ThreeDimension::Material>* fragmentMaterialUniformBuffer{ nullptr };
 
 #ifdef _DEBUG
 	VKShader* vkNormal3DShader;
 	VKPipeLine* vkPipeline3DNormal;
-	VKVertexBuffer<ThreeDimension::NormalVertex>* normalVertexBuffer{ nullptr };
+	VKDescriptor* vkDescriptor3DNormal;
 #endif
+
+	// Dynamic Uniform Buffer
+	struct VKUniformBuffer2D
+	{
+		std::unique_ptr<VKUniformBuffer<TwoDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<VKUniformBuffer<TwoDimension::FragmentUniform>> fragmentUniformBuffer;
+	};
+	struct VKUniformBuffer3D
+	{
+		std::unique_ptr<VKUniformBuffer<ThreeDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<VKUniformBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
+		std::unique_ptr<VKUniformBuffer<ThreeDimension::Material>> materialUniformBuffer;
+	};
+	VKUniformBuffer2D uniformBuffer2D;
+	VKUniformBuffer3D uniformBuffer3D;
 
 	//Lighting
 	VKUniformBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
 	VKUniformBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
-	int activeLights[2] = { 0, 0 };
+	//int activeLights[2] = { 0, 0 };
+	struct alignas(16) PushConstants
+	{
+		int activeDirectionalLight;
+		int activePointLight;
+	} pushConstants;
 
 	//Skyobx
 	VKSkybox* skybox;
 	VKShader* skyboxShader;
 	VKPipeLine* vkPipeline3DSkybox;
 	VKDescriptor* skyboxDescriptor;
-	VKVertexBuffer<glm::vec3>* skyboxVertexBuffer{ nullptr };
+	VKVertexBuffer* skyboxVertexBuffer{ nullptr };
 	VkDescriptorSet* currentVertexSkyboxDescriptorSet{ VK_NULL_HANDLE };
 	VkDescriptorSet* currentFragmentSkyboxDescriptorSet{ VK_NULL_HANDLE };
 };

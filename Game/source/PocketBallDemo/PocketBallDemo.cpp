@@ -32,7 +32,7 @@ void PocketBallDemo::Init()
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-38.f,-0.1f }, glm::vec3{ 368.f*2 + 32.f, 510.f + 88.f,0.f }, "Table");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMeshWithTexture("Table");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("Table");
 	Engine::GetObjectManager().AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "White", BallType::WHITE, pocketBallSystem);
 	pocketBallSystem->SetPlayerBall(Engine::GetObjectManager().GetLastObject());
 

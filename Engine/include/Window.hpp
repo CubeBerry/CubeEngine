@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: Window.hpp
 #pragma once
-#include "SDL.h"
+#include "SDL3/SDL.h"
 
 #include "glm/vec2.hpp"
 #include <memory>

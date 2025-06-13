@@ -5,8 +5,7 @@
 #include "VKInit.hpp"
 
 #include <iostream>
-#include <SDL_vulkan.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL_vulkan.h>
 #include <string>
 #include <sstream>
 
@@ -232,7 +231,7 @@ void VKInit::InitSurface(SDL_Window* window)
 		//}
 
 		//Create sruface using SDL_Vulkan_CreateSurface function
-		if (SDL_Vulkan_CreateSurface(window, vkInstance, &vkSurface) == SDL_FALSE)
+		if (SDL_Vulkan_CreateSurface(window, vkInstance, nullptr, &vkSurface) == false)
 		{
 			throw std::runtime_error{ "vkSurface Creation Failed" };
 		}

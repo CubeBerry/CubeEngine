@@ -4,7 +4,7 @@
 //File: VKInit.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <vector>
 #include <array>
 
@@ -36,12 +36,19 @@ public:
 
 	VkPhysicalDevice GetRequiredDevice(std::vector<VkPhysicalDevice>& physicalDevices, bool isDiscrete);
 
-	VkInstance* GetInstance() { return &vkInstance; };
-	VkDevice* GetDevice() { return &vkDevice; };
-	VkPhysicalDevice* GetPhysicalDevice() { return &vkPhysicalDevice; };
-	VkSurfaceKHR* GetSurface() { return &vkSurface; };
-	uint32_t* GetQueueFamilyIndex() { return &queueFamilyIndex; };
-	VkQueue* GetQueue() { return &vkQueue; };
+	VkInstance* GetInstance() { return &vkInstance; }
+	VkDevice* GetDevice() { return &vkDevice; }
+	VkPhysicalDevice* GetPhysicalDevice() { return &vkPhysicalDevice; }
+	VkSurfaceKHR* GetSurface() { return &vkSurface; }
+	uint32_t* GetQueueFamilyIndex() { return &queueFamilyIndex; }
+	VkQueue* GetQueue() { return &vkQueue; }
+
+	VkDeviceSize GetMinUniformBufferOffsetAlignment() const
+	{
+		VkPhysicalDeviceProperties deviceProperties;
+		vkGetPhysicalDeviceProperties(vkPhysicalDevice, &deviceProperties);
+		return deviceProperties.limits.minUniformBufferOffsetAlignment;
+	}
 private:
 	VkInstance vkInstance{ VK_NULL_HANDLE };
 	VkPhysicalDevice vkPhysicalDevice{ VK_NULL_HANDLE };

@@ -56,7 +56,7 @@ void BackgroundManager::AddNormalBackground(std::string spriteName_, glm::vec2 p
 	else
 	{
 		temp.sprite = new Sprite;
-		temp.sprite->AddMeshWithTexture(temp.spriteName);
+		temp.sprite->AddQuadWithTexture(temp.spriteName);
 		temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 		temp.sprite->UpdateProjection();
 		temp.sprite->UpdateView();
@@ -111,7 +111,7 @@ void BackgroundManager::AddVerticalParallexBackground(std::string spriteName_, s
 		else
 		{
 			temp.sprite = new Sprite;
-			temp.sprite->AddMeshWithTexture(temp.spriteName);
+			temp.sprite->AddQuadWithTexture(temp.spriteName);
 			temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 			temp.sprite->UpdateProjection();
 			temp.sprite->UpdateView();
@@ -167,7 +167,7 @@ void BackgroundManager::AddHorizonParallexBackground(std::string spriteName_, st
 		else
 		{
 			temp.sprite = new Sprite;
-			temp.sprite->AddMeshWithTexture(temp.spriteName);
+			temp.sprite->AddQuadWithTexture(temp.spriteName);
 			temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 			temp.sprite->UpdateProjection();
 			temp.sprite->UpdateView();
@@ -203,7 +203,7 @@ void BackgroundManager::AddSaveBackgroundList(std::string spriteName_, std::stri
 	else
 	{
 		temp.sprite = new Sprite;
-		temp.sprite->AddMeshWithTexture(temp.spriteName);
+		temp.sprite->AddQuadWithTexture(temp.spriteName);
 		temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 		temp.sprite->UpdateProjection();
 		temp.sprite->UpdateView();

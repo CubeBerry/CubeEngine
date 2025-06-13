@@ -6,6 +6,7 @@
 #include <vector>
 #include "BasicComponents/Sprite.hpp"
 #include "Background.hpp"
+#include "ObjectType.hpp"
 
 struct Target
 {

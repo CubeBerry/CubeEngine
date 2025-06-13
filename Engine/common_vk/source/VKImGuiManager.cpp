@@ -32,7 +32,7 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_, VkSampleCoun
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-	ImGui_ImplSDL2_InitForVulkan(window_);
+	ImGui_ImplSDL3_InitForVulkan(window_);
 
 	ImGui_ImplVulkan_InitInfo initInfo{};
 	initInfo.Instance = *init_->GetInstance();
@@ -127,7 +127,7 @@ void VKImGuiManager::Initialize(VKInit* init_, SDL_Window* window_, VkSampleCoun
 void VKImGuiManager::Begin()
 {
 	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 }
 
@@ -141,6 +141,6 @@ void VKImGuiManager::End(uint32_t index_)
 void VKImGuiManager::Shutdown()
 {
 	ImGui_ImplVulkan_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
 	ImGui::DestroyContext();
 }

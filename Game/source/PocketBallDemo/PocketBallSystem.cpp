@@ -9,7 +9,7 @@
 void PocketBallSystem::Init()
 {
 	cursor = new Sprite();
-	cursor->AddMeshWithTexture("Arrow",{ 1.f, 1.f, 1.f, 1.f });
+	cursor->AddQuadWithTexture("Arrow",{ 1.f, 1.f, 1.f, 1.f });
 
 	powerMeter = new Sprite();
 	powerMeter->AddQuad({ 1.f,0.f,0.f,1.f });

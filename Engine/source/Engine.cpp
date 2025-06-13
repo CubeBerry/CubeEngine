@@ -48,7 +48,7 @@ void Engine::Update()
 		deltaTime = timer.GetDeltaTime();
 		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
-			Uint32 winFlag = SDL_GetWindowFlags(window.GetWindow());
+			Uint64 winFlag = SDL_GetWindowFlags(window.GetWindow());
 			threadManager.ProcessSDLEvents();
 			SDL_PollEvent(&event);
 

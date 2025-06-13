@@ -52,7 +52,7 @@ void GLSkybox::EquirectangularToCube()
 	glCheck(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
 	GLShader shaderIBL;
-	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Equirectangular.frag" } });
+	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/Equirectangular.frag" } });
 	shaderIBL.Use(true);
 
 	glCheck(glUniform1i(glGetUniformLocation(shaderIBL.GetProgramHandle(), "equirectangularMap"), 0));
@@ -114,7 +114,7 @@ void GLSkybox::CalculateIrradiance()
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, irradianceSize, irradianceSize);
 
 	GLShader shaderIBL;
-	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Irradiance.frag" } });
+	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/Irradiance.frag" } });
 	shaderIBL.Use(true);
 
 	glCheck(glUniform1i(glGetUniformLocation(shaderIBL.GetProgramHandle(), "environmentMap"), 0));
@@ -173,7 +173,7 @@ void GLSkybox::PrefilteredEnvironmentMap()
 	glCheck(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 
 	GLShader shaderIBL;
-	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shader/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shader/Prefilter.frag" } });
+	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/Cubemap.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/Prefilter.frag" } });
 	shaderIBL.Use(true);
 
 	glCheck(glUniform1i(glGetUniformLocation(shaderIBL.GetProgramHandle(), "environmentMap"), 0));
@@ -242,7 +242,7 @@ void GLSkybox::BRDFLUT()
 	glCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdflut, 0));
 
 	GLShader shaderIBL;
-	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shader/BRDF.vert" }, { GLShader::FRAGMENT, "../Engine/shader/BRDF.frag" } });
+	shaderIBL.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/BRDF.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/BRDF.frag" } });
 	shaderIBL.Use(true);
 
 	GLVertexArray vertexArray;

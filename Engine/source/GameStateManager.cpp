@@ -33,7 +33,7 @@ void GameStateManager::LevelInit(GameLevel currentLevel_)
 {
 	currentLevel = currentLevel_;
 	LevelInit();
-	Engine::GetObjectManager().ProcessComponentFunctionQueues();
+	Engine::GetObjectManager().ProcessFunctionQueue();
 	state = State::UPDATE;
 #ifdef _DEBUG
 	std::cout << "Load Complete" << std::endl;
@@ -56,7 +56,7 @@ void GameStateManager::Update(float dt)
 		break;
 	case State::LOAD:
 		LevelInit();
-		Engine::GetObjectManager().ProcessComponentFunctionQueues();
+		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #ifdef _DEBUG
 		std::cout << "Load Complete" << std::endl;
@@ -69,18 +69,20 @@ void GameStateManager::Update(float dt)
 	case State::UPDATE:
 		UpdateGameLogic(dt);
 		UpdateDraw(dt);
-		Engine::GetObjectManager().ProcessComponentFunctionQueues();
+		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		//Mouse Input X if order is opposite
 		break;
 	case State::PAUSE:
 		UpdateGameLogic(0.f);
 		UpdateDraw(0.f);
-		Engine::GetObjectManager().ProcessComponentFunctionQueues();
+		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		break;
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();
+		// @TODO temporary function to clear all textures
+		Engine::GetRenderManager()->DeleteWithIndex(0);
 		currentLevel = levelSelected;
 #ifdef _DEBUG
 		Engine::GetRenderManager()->DrawNormals(false);

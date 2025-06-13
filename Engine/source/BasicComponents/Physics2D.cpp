@@ -3,8 +3,9 @@
 //File: Physics2D.cpp
 #include "BasicComponents/Physics2D.hpp"
 #include "BasicComponents/Sprite.hpp"
-#include <iostream>
 #include <glm/geometric.hpp>
+
+#include "Engine.hpp"
 
 Physics2D::~Physics2D()
 {

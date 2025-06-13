@@ -65,13 +65,27 @@ public:
             return;
         }
 
-        componentFunctionQueue.push_back([component, func]()
+        functionQueue.push_back([component, func]()
         {
             func(component);
         });
     }
 
-    void ProcessComponentFunctionQueues();
+    template<typename T, typename Func>
+    void QueueObjectFunction(T* object, Func&& func) 
+    {
+        if (object == nullptr) 
+        {
+            std::cerr << "nullptr object!" << std::endl;
+            return;
+        }
+        functionQueue.push_back([object, func]() 
+        {
+            func(object);
+        });
+    }
+
+    void ProcessFunctionQueue();
 
 #ifdef _DEBUG
     void SetIsDrawNormals(bool draw) { isDrawNormals = draw; };
@@ -98,14 +112,14 @@ private:
     bool isDragObject = false;
     bool isObjGravityOn = false;
 
-    int stacks = 1;
-    int slices = 1;
+    int stacks = 2;
+    int slices = 2;
     float metallic = 0.3f;
     float roughness = 0.3f;
 #ifdef _DEBUG
     bool isDrawNormals = false;
 #endif
 
-    std::vector<std::function<void()>> componentFunctionQueue;
+    std::vector<std::function<void()>> functionQueue;
     //For ObjectController
 };
