@@ -36,6 +36,11 @@ void Camera::Update()
 			// Flip y-axis for Vulkan
 			projection[1][1] *= -1.0f;
 			break;
+		case GraphicsMode::DX:
+			projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			// Flip y-axis for Vulkan
+			projection[1][1] *= -1.0f;
+			break;
 		}
 		break;
 	case CameraType::ThreeDimension:
@@ -49,6 +54,9 @@ void Camera::Update()
 			direction.y = sin(glm::radians(-pitch));
 			break;
 		case GraphicsMode::VK:
+			direction.y = sin(glm::radians(-pitch));
+			break;
+		case GraphicsMode::DX:
 			direction.y = sin(glm::radians(-pitch));
 			break;
 		}
@@ -83,6 +91,24 @@ void Camera::Update()
 			projection = glm::perspectiveRH_NO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
 		case GraphicsMode::VK:
+
+			if (isThirdPersonView == true)
+			{
+				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
+				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, cameraCenter + back, up);
+			}
+			else
+			{
+				view = glm::lookAt(cameraPosition, cameraPosition + back, up);
+				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
+			}
+			//projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
+			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
+			// Flip y-axis for Vulkan
+			projection[1][1] *= -1.0f;
+
+			break;
+		case GraphicsMode::DX:
 
 			if (isThirdPersonView == true)
 			{
@@ -268,6 +294,9 @@ void Camera::LookAt(glm::vec3 pos)
 		case GraphicsMode::VK:
 			direction.y = sin(glm::radians(-pitch));
 			break;
+		case GraphicsMode::DX:
+			direction.y = sin(glm::radians(-pitch));
+			break;
 		}
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		back = glm::normalize(direction);
@@ -281,6 +310,9 @@ void Camera::LookAt(glm::vec3 pos)
 			view = glm::lookAt(cameraPosition, cameraCenter, up);
 			break;
 		case GraphicsMode::VK:
+			view = glm::lookAt({ cameraPosition.x, cameraPosition.y, cameraPosition.z }, { cameraCenter.x, cameraCenter.y, cameraCenter.z }, up);
+			break;
+		case GraphicsMode::DX:
 			view = glm::lookAt({ cameraPosition.x, cameraPosition.y, cameraPosition.z }, { cameraCenter.x, cameraCenter.y, cameraCenter.z }, up);
 			break;
 		}

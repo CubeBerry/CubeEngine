@@ -6,6 +6,7 @@
 #include "Window.hpp"
 #include "GLRenderManager.hpp"
 #include "VKRenderManager.hpp"
+#include "DXRenderManager.hpp"
 #include "GameStateManager.hpp"
 #include "InputManager.hpp"
 #include "ObjectManager.hpp"

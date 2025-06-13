@@ -163,7 +163,7 @@ public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
 		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);

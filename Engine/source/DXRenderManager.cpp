@@ -1,0 +1,256 @@
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: DXRenderManager.cpp
+#include "Engine.hpp"
+
+DXRenderManager::~DXRenderManager()
+{
+}
+
+void DXRenderManager::Initialize(SDL_Window* window_)
+{
+	// Get HWND (Handle to a Window)
+	SDL_PropertiesID props = SDL_GetWindowProperties(window_);
+	HWND hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+
+	// Initialize Direct3D 12
+	HRESULT hr;
+
+	// Enable Debug Layer
+#ifdef _DEBUG
+	{
+		ComPtr<ID3D12Debug> debugController;
+		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+		{
+			debugController->EnableDebugLayer();
+		}
+	}
+#endif
+
+	// Create GXDI factory
+	ComPtr<IDXGIFactory4> factory;
+	hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create DXGI factory.");
+	}
+
+	// Create Device
+	hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create device.");
+	}
+
+	// Create Command Queue
+	// DESC = Description
+	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+	hr = m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create command queue.");
+	}
+
+	// Create Swap Chain
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+	swapChainDesc.BufferCount = frameCount; // Double buffering
+	swapChainDesc.Width = 0;
+	swapChainDesc.Height = 0;
+	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.SampleDesc.Count = 1;
+
+	ComPtr<IDXGISwapChain1> swapChain;
+	hr = factory->CreateSwapChainForHwnd(
+		m_commandQueue.Get(),
+		hwnd,
+		&swapChainDesc,
+		nullptr,
+		nullptr,
+		&swapChain
+	);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create swap chain.");
+	}
+	hr = swapChain.As(&m_swapChain);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to cast swap chain to IDXGISwapChain3.");
+	}
+
+	// Create Descriptor Heap
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = frameCount; // Double buffering
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	hr = m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create RTV descriptor heap.");
+	}
+
+	// Create Render Target Views (RTVs)
+	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	for (UINT i = 0; i < 2; ++i)
+	{
+		hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i]));
+		if (FAILED(hr))
+		{
+			throw std::runtime_error("Failed to get swap chain buffer.");
+		}
+		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
+		rtvHandle.ptr += rtvDescriptorSize;
+	}
+
+	// Create Command Allocator
+	hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create command allocator.");
+	}
+
+	// Create Command List
+	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create command list.");
+	}
+
+	m_commandList->Close();
+
+	// Create Fence for synchronization
+	hr = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create fence.");
+	}
+
+	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (m_fenceEvent == nullptr)
+	{
+		throw std::runtime_error("Failed to create fence event.");
+	}
+
+	SDL_ShowWindow(window_);
+}
+
+bool DXRenderManager::BeginRender(glm::vec3 bgColor)
+{
+	return true;
+}
+
+void DXRenderManager::EndRender()
+{
+}
+
+void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
+{
+}
+
+void DXRenderManager::DeleteWithIndex(int /*id*/)
+{
+	//Destroy Texture
+	//for (auto t : textures)
+	//	delete t;
+	//textures.erase(textures.begin(), textures.end());
+	//samplers.erase(samplers.begin(), samplers.end());
+}
+
+//DXTexture* DXRenderManager::GetTexture(std::string name)
+//{
+//	for (auto& tex : textures)
+//	{
+//		if (tex->GetName() == name)
+//		{
+//			return tex;
+//		}
+//	}
+//	return nullptr;
+//}
+
+void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
+{
+	//skyboxVertexArray.Initialize();
+
+	//float skyboxVertices[] = {
+	//	-1.0f,  1.0f, -1.0f,
+	//	-1.0f, -1.0f, -1.0f,
+	//	 1.0f, -1.0f, -1.0f,
+	//	 1.0f, -1.0f, -1.0f,
+	//	 1.0f,  1.0f, -1.0f,
+	//	-1.0f,  1.0f, -1.0f,
+
+	//	-1.0f, -1.0f,  1.0f,
+	//	-1.0f, -1.0f, -1.0f,
+	//	-1.0f,  1.0f, -1.0f,
+	//	-1.0f,  1.0f, -1.0f,
+	//	-1.0f,  1.0f,  1.0f,
+	//	-1.0f, -1.0f,  1.0f,
+
+	//	 1.0f, -1.0f, -1.0f,
+	//	 1.0f, -1.0f,  1.0f,
+	//	 1.0f,  1.0f,  1.0f,
+	//	 1.0f,  1.0f,  1.0f,
+	//	 1.0f,  1.0f, -1.0f,
+	//	 1.0f, -1.0f, -1.0f,
+
+	//	-1.0f, -1.0f,  1.0f,
+	//	-1.0f,  1.0f,  1.0f,
+	//	 1.0f,  1.0f,  1.0f,
+	//	 1.0f,  1.0f,  1.0f,
+	//	 1.0f, -1.0f,  1.0f,
+	//	-1.0f, -1.0f,  1.0f,
+
+	//	-1.0f,  1.0f, -1.0f,
+	//	 1.0f,  1.0f, -1.0f,
+	//	 1.0f,  1.0f,  1.0f,
+	//	 1.0f,  1.0f,  1.0f,
+	//	-1.0f,  1.0f,  1.0f,
+	//	-1.0f,  1.0f, -1.0f,
+
+	//	-1.0f, -1.0f, -1.0f,
+	//	-1.0f, -1.0f,  1.0f,
+	//	 1.0f, -1.0f, -1.0f,
+	//	 1.0f, -1.0f, -1.0f,
+	//	-1.0f, -1.0f,  1.0f,
+	//	 1.0f, -1.0f,  1.0f
+	//};
+
+	//skyboxVertexBuffer = new DXVertexBuffer;
+	//skyboxVertexBuffer->SetData(sizeof(float) * 108, skyboxVertices);
+
+	//DXAttributeLayout position_layout;
+	//position_layout.component_type = DXAttributeLayout::Float;
+	//position_layout.component_dimension = DXAttributeLayout::_3;
+	//position_layout.normalized = false;
+	//position_layout.vertex_layout_location = 0;
+	//position_layout.stride = sizeof(float) * 3;
+	//position_layout.offset = 0;
+	//position_layout.relative_offset = 0;
+
+	//skyboxVertexArray.AddVertexBuffer(std::move(*skyboxVertexBuffer), sizeof(float) * 3, { position_layout });
+
+	//skyboxShader.LoadShader({ { DXShader::VERTEX, "../Engine/shaders/glsl/Skybox.vert" }, { DXShader::FRAGMENT, "../Engine/shaders/glsl/Skybox.frag" } });
+	//skybox = new DXSkybox(path);
+
+	////Revert DX_TEXTURE0 which is binded(covered) by BRDFLUT's texture when loading skybox to first loaded texture
+	//if (!textures.empty())
+	//{
+	//	glActiveTexture(DX_TEXTURE0);
+	//	glBindTexture(DX_TEXTURE_2D, textures[0]->GetTextureHandle());
+	//}
+
+	//skyboxEnabled = true;
+}
+
+void DXRenderManager::DeleteSkybox()
+{
+	//delete skyboxVertexBuffer;
+	//delete skybox;
+	//skyboxEnabled = false;
+}

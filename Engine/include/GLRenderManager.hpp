@@ -67,7 +67,7 @@ public:
 //		return new GLUniformBuffer<ThreeDimension::Material>(vkInit, 1);
 //	}
 
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer = new GLVertexBuffer();

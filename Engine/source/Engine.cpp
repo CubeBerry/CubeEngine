@@ -6,7 +6,7 @@
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
-	std::cout << "0. OpenGL    1. Vulkan";
+	std::cout << "0. OpenGL    1. Vulkan	2. DirectX 12";
 	std::cout << std::endl << std::endl;
 	std::cout << "Select API number: ";
 	int number{ 0 };
@@ -22,14 +22,18 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 		dynamic_cast<GLRenderManager*>(renderManager)->Initialize(
 			window.GetWindow(), window.GetContext()
 		);
-		//renderManager->Initialize(window.GetWindow(), window.GetContext());
 	}
-	else
+	else if (number == 1)
 	{
 		window.Init(GraphicsMode::VK, title, windowWidth, windowHeight, fullScreen, mode);
 		renderManager = new VKRenderManager;
 		dynamic_cast<VKRenderManager*>(renderManager)->Initialize(window.GetWindow());
-		//renderManager->Initialize(window.GetWindow());
+	}
+	else
+	{
+		window.Init(GraphicsMode::DX, title, windowWidth, windowHeight, fullScreen, mode);
+		renderManager = new DXRenderManager;
+		dynamic_cast<DXRenderManager*>(renderManager)->Initialize(window.GetWindow());
 	}
 	timer.Init();
 
