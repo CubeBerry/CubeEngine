@@ -23,6 +23,11 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
 		{
 			debugController->EnableDebugLayer();
+			ComPtr<ID3D12Debug1> debugController1;
+			if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
+			{
+				debugController1->SetEnableGPUBasedValidation(TRUE);
+			}
 		}
 	}
 #endif
@@ -141,11 +146,50 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 
 bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
+	m_commandAllocator->Reset();
+	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_commandList->ResourceBarrier(1, &barrier);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+	// @TODO What does OMSetRenderTargets do?
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
+	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
 	return true;
 }
 
 void DXRenderManager::EndRender()
 {
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_commandList->ResourceBarrier(1, &barrier);
+
+	m_commandList->Close();
+
+	// Execute the command list
+	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	m_swapChain->Present(1, 0);
+
+	// Wait for the GPU to finish
+	// Is this a good way to synchronize? -> https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12HelloWorld/src/HelloWindow/D3D12HelloWindow.cpp
+	if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), m_fenceValue)))
+	{
+		if (m_fence->GetCompletedValue() < m_fenceValue)
+		{
+			if (SUCCEEDED(m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent)))
+			{
+				WaitForSingleObject(m_fenceEvent, INFINITE);
+			}
+		}
+		m_fenceValue++;
+	}
+
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)

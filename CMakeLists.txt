@@ -3,11 +3,20 @@ cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(Project LANGUAGES CXX C)
 
+# FetchContent for DirectX-Headers
+include(FetchContent)
+FetchContent_Declare(
+    DirectXHeaders
+    GIT_REPOSITORY https://github.com/microsoft/DirectX-Headers.git
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(DirectXHeaders)
+
 # @TODO move the code to common_dx later
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(D3D12)
 if(NOT D3D12_FOUND)
     message(FATAL_ERROR "Could not find D3D12. Please ensure the Windows SDK is installed.")
@@ -103,13 +112,13 @@ DESTINATION ${CMAKE_BINARY_DIR}
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
-# target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/SDL2-2.30.6/lib/SDL2.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+target_link_libraries(${PROJECT_NAME} PRIVATE DirectX-Headers)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D12_LIBRARIES})
 
 # Include Directories
@@ -122,4 +131,3 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL3-3.2.16/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs)
-target_include_directories(${PROJECT_NAME} PRIVATE ${D3D12_INCLUDE_DIRS})
