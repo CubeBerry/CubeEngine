@@ -18,7 +18,6 @@
 #include "GLUniformBuffer.hpp"
 #include "VKVertexBuffer.hpp"
 #include "VKIndexBuffer.hpp"
-#include "VKUniformBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -26,6 +25,12 @@ constexpr float HALF_PI = 0.5f * PI;
 constexpr int   XINDEX = 0;
 constexpr int   YINDEX = 1;
 constexpr int   ZINDEX = 2;
+
+// @TODO temporal forward declaration classes for DirectX
+class DXVertexBuffer;
+class DXIndexBuffer;
+template<typename T>
+class DXUniformBuffer;
 
 enum class RenderType
 {
@@ -89,7 +94,6 @@ public:
 	};
 
 	//--------------------Vulkan--------------------//
-public:
 	struct VKBuffer
 	{
 		VKVertexBuffer* vertexBuffer;
@@ -112,9 +116,32 @@ public:
 	//	VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
 	//};
 
+	//--------------------DirectX--------------------//
+	struct DXBuffer
+	{
+		DXVertexBuffer* vertexBuffer;
+#ifdef _DEBUG
+		DXVertexBuffer* normalVertexBuffer;
+#endif
+		DXIndexBuffer* indexBuffer;
+	};
+
+	struct DXUniformBuffer2D
+	{
+		DXUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		DXUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct DXUniformBuffer3D
+	{
+		DXUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		DXUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+		DXUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	};
+
 private:
-	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
-	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D/*, VKUniformBuffer2D, VKUniformBuffer3D*/> uniformBuffer;
+	std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;
+	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, /*, VKUniformBuffer2D, VKUniformBuffer3D*/ DXUniformBuffer2D, DXUniformBuffer3D> uniformBuffer;
 
 public:
 	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
@@ -152,40 +179,54 @@ public:
 
 	void Initialize(GraphicsMode mode, RenderType type)
 	{
-		if (mode == GraphicsMode::GL)
+		switch(mode)
 		{
-			buffer = GLBuffer{};
-			if (type == RenderType::TwoDimension)
-			{
-				uniformBuffer = GLUniformBuffer2D{};
-				bufferData.classifiedData = BufferData2D{};
+			case GraphicsMode::GL:
+				buffer = GLBuffer{};
+				if (type == RenderType::TwoDimension)
+				{
+					uniformBuffer = GLUniformBuffer2D{};
+					bufferData.classifiedData = BufferData2D{};
 
-				std::get<GLBuffer>(buffer).vertexArray.Initialize();
-			}
-			else if (type == RenderType::ThreeDimension)
-			{
-				uniformBuffer = GLUniformBuffer3D{};
-				bufferData.classifiedData = BufferData3D{};
+					std::get<GLBuffer>(buffer).vertexArray.Initialize();
+				}
+				else if (type == RenderType::ThreeDimension)
+				{
+					uniformBuffer = GLUniformBuffer3D{};
+					bufferData.classifiedData = BufferData3D{};
 
-				std::get<GLBuffer>(buffer).vertexArray.Initialize();
+					std::get<GLBuffer>(buffer).vertexArray.Initialize();
 #ifdef _DEBUG
-				std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
+					std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
 #endif
-			}
-		}
-		else
-		{
-			buffer = VKBuffer{};
-			if (type == RenderType::TwoDimension)
-			{
-				//uniformBuffer = VKUniformBuffer2D{};
-				bufferData.classifiedData = BufferData2D{};
-			}
-			else if (type == RenderType::ThreeDimension)
-			{
-				//uniformBuffer = VKUniformBuffer3D{};
-				bufferData.classifiedData = BufferData3D{};
-			}
+				}
+				break;
+			case GraphicsMode::VK:
+				buffer = VKBuffer{};
+				if (type == RenderType::TwoDimension)
+				{
+					//uniformBuffer = VKUniformBuffer2D{};
+					bufferData.classifiedData = BufferData2D{};
+				}
+				else if (type == RenderType::ThreeDimension)
+				{
+					//uniformBuffer = VKUniformBuffer3D{};
+					bufferData.classifiedData = BufferData3D{};
+				}
+				break;
+			case GraphicsMode::DX:
+				buffer = DXBuffer{};
+				if (type == RenderType::TwoDimension)
+				{
+					uniformBuffer = DXUniformBuffer2D{};
+					bufferData.classifiedData = BufferData2D{};
+				}
+				else if (type == RenderType::ThreeDimension)
+				{
+					uniformBuffer = DXUniformBuffer3D{};
+					bufferData.classifiedData = BufferData3D{};
+				}
+				break;
 		}
 	}
 

@@ -9,6 +9,13 @@
 #include <dxgi1_6.h>
 #include <wrl.h>
 
+// @TODO temporal forward declaration classes for DirectX
+class DXTexture;
+class DXSkybox;
+class DXShader;
+template<typename T>
+class DXUniformBuffer;
+
 using Microsoft::WRL::ComPtr;
 
 class DXSkybox;
@@ -48,29 +55,29 @@ public:
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
-//		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer();
-//#ifdef _DEBUG
-//		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer();
-//#endif
-//		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().indexBuffer = new DXIndexBuffer(&indices);
-//		if (rMode == RenderType::TwoDimension)
-//		{
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().vertexUniformBuffer = new DXUniformBuffer<TwoDimension::VertexUniform>();
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().fragmentUniformBuffer = new DXUniformBuffer<TwoDimension::FragmentUniform>();
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().vertexUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", sizeof(TwoDimension::VertexUniform), nullptr);
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().fragmentUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", sizeof(TwoDimension::FragmentUniform), nullptr);
-//		}
-//		else if (rMode == RenderType::ThreeDimension)
-//		{
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().vertexUniformBuffer = new DXUniformBuffer<ThreeDimension::VertexUniform>();
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().fragmentUniformBuffer = new DXUniformBuffer<ThreeDimension::FragmentUniform>();
-//
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().materialUniformBuffer = new DXUniformBuffer<ThreeDimension::Material>();
-//
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", sizeof(ThreeDimension::VertexUniform), nullptr);
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", sizeof(ThreeDimension::FragmentUniform), nullptr);
-//			bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
-//		}
+		//bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer();
+#ifdef _DEBUG
+		//bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer();
+#endif
+		//bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().indexBuffer = new DXIndexBuffer(&indices);
+		if (rMode == RenderType::TwoDimension)
+		{
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().vertexUniformBuffer = new DXUniformBuffer<TwoDimension::VertexUniform>();
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().fragmentUniformBuffer = new DXUniformBuffer<TwoDimension::FragmentUniform>();
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().vertexUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", sizeof(TwoDimension::VertexUniform), nullptr);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer2D>().fragmentUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", sizeof(TwoDimension::FragmentUniform), nullptr);
+		}
+		else if (rMode == RenderType::ThreeDimension)
+		{
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().vertexUniformBuffer = new DXUniformBuffer<ThreeDimension::VertexUniform>();
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().fragmentUniformBuffer = new DXUniformBuffer<ThreeDimension::FragmentUniform>();
+
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().materialUniformBuffer = new DXUniformBuffer<ThreeDimension::Material>();
+
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", sizeof(ThreeDimension::VertexUniform), nullptr);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", sizeof(ThreeDimension::FragmentUniform), nullptr);
+			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXUniformBuffer3D>().materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
+		}
 	}
 
 	//--------------------2D Render--------------------//
@@ -85,8 +92,7 @@ public:
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	//std::vector<DXTexture*> textures;
-	std::vector<int> samplers;
+	std::vector<DXTexture*> textures;
 
 #ifdef _DEBUG
 	//DXVertexArray normalVertexArray;
@@ -94,12 +100,11 @@ private:
 #endif
 
 	//Lighting
-	//DXUniformBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
-	//DXUniformBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
+	DXUniformBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
+	DXUniformBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
 
 	//Skybox
-	//DXVertexArray skyboxVertexArray;
-	//DXVertexBuffer* skyboxVertexBuffer{ nullptr };
+	DXVertexBuffer* skyboxVertexBuffer{ nullptr };
 	//DXShader skyboxShader;
 	//DXSkybox* skybox;
 };

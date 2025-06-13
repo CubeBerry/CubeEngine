@@ -6,27 +6,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(Project LANGUAGES CXX C)
 
-# FetchContent for DirectX-Headers
-include(FetchContent)
-FetchContent_Declare(
-    DirectXHeaders
-    GIT_REPOSITORY https://github.com/microsoft/DirectX-Headers.git
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(DirectXHeaders)
-
-# @TODO move the code to common_dx later
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-find_package(D3D12)
-if(NOT D3D12_FOUND)
-    message(FATAL_ERROR "Could not find D3D12. Please ensure the Windows SDK is installed.")
-endif()
-
 # Set Directories
-# common_vk
-set(VK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk")
 # common_gl
 set(GL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_gl")
+# common_vk
+set(VK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_vk")
+# common_dx
+set(DX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/common_dx")
 # ImGui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui-1.91.9b")
 set(IMGUI_BACKEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/imgui-1.91.9b/backends")
@@ -46,10 +32,12 @@ set(GAME_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
 set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
 # Subdirectories
-# common_vk
-add_subdirectory(${VK_DIR})
 # common_gl
 add_subdirectory(${GL_DIR})
+# common_vk
+add_subdirectory(${VK_DIR})
+# common_dx
+add_subdirectory(${DX_DIR})
 # SDL3
 add_subdirectory(${COMMON_LIB_DIR}/SDL3-3.2.16)
 
@@ -111,19 +99,18 @@ DESTINATION ${CMAKE_BINARY_DIR}
 )
 
 # Link Libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk)
+target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk PRIVATE common_dx)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
-target_link_libraries(${PROJECT_NAME} PRIVATE DirectX-Headers)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D12_LIBRARIES})
 
 # Include Directories
-target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${DX_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_INC_DIR})
