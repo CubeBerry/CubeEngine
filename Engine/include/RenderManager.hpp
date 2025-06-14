@@ -18,6 +18,7 @@
 #include "GLUniformBuffer.hpp"
 #include "VKVertexBuffer.hpp"
 #include "VKIndexBuffer.hpp"
+#include "DXVertexBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -27,7 +28,6 @@ constexpr int   YINDEX = 1;
 constexpr int   ZINDEX = 2;
 
 // @TODO temporal forward declaration classes for DirectX
-class DXVertexBuffer;
 class DXIndexBuffer;
 template<typename T>
 class DXUniformBuffer;

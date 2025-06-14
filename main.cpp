@@ -92,7 +92,7 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new PlatformDemo);
     engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);
     engine.GetGameStateManager().AddLevel(new PBR);
-    engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
+    engine.GetGameStateManager().LevelInit(GameLevel::POCKETBALL);
 
     engine.Update();
     engine.End();

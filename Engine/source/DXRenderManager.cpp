@@ -5,6 +5,8 @@
 
 DXRenderManager::~DXRenderManager()
 {
+	void WaitForGPU();
+	CloseHandle(m_fenceEvent);
 }
 
 void DXRenderManager::Initialize(SDL_Window* window_)
@@ -149,6 +151,16 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandAllocator->Reset();
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
 
+	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+	// Set the viewport and scissor rect
+	int width, height;
+	SDL_GetWindowSize(Engine::GetWindow().GetWindow(), &width, &height);
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, width, height };
+	m_commandList->RSSetViewports(1, &viewport);
+	m_commandList->RSSetScissorRects(1, &scissorRect);
+
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
@@ -158,6 +170,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
+	for (const auto& sprite : sprites)
+	{
+		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_commandList->IASetVertexBuffers(0, 1, &sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer->GetView());
+		m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+	}
 
 	return true;
 }
@@ -176,6 +196,35 @@ void DXRenderManager::EndRender()
 	m_swapChain->Present(1, 0);
 
 	// Wait for the GPU to finish
+	WaitForGPU();
+
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void DXRenderManager::CreateRootSignature()
+{
+	// @TODO What is root signature?
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	ComPtr<ID3DBlob> signature;
+	ComPtr<ID3DBlob> error;
+	HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+	if (FAILED(hr))
+	{
+		if (error) OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));
+		throw std::runtime_error("Failed to serialize root signature.");
+	}
+
+	hr = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create root signature.");
+	}
+}
+
+void DXRenderManager::WaitForGPU()
+{
 	// Is this a good way to synchronize? -> https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12HelloWorld/src/HelloWindow/D3D12HelloWindow.cpp
 	if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), m_fenceValue)))
 	{
@@ -188,8 +237,6 @@ void DXRenderManager::EndRender()
 		}
 		m_fenceValue++;
 	}
-
-	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
