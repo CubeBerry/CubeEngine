@@ -21,6 +21,8 @@ Currently it only supports MSVC compiler(Visual Studio 2022 Recommended).
 All required APIs and Libraries are integrated in Project.
 
 ## How to Compile Slang Shading Language
+To compile Slang Shading Language, slangc is required. slangc is able to download from the following [link](https://github.com/shader-slang/slang/releases) or included in the Vulkan SDK since version 1.3.296.0.
+
 Shaders are located in Engine/shaders.
 1. From .slang to .glsl
 ```
