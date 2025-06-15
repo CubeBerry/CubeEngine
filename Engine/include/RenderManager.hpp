@@ -19,6 +19,8 @@
 #include "VKVertexBuffer.hpp"
 #include "VKIndexBuffer.hpp"
 #include "DXVertexBuffer.hpp"
+#include "DXIndexBuffer.hpp"
+#include "DXConstantBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -26,11 +28,6 @@ constexpr float HALF_PI = 0.5f * PI;
 constexpr int   XINDEX = 0;
 constexpr int   YINDEX = 1;
 constexpr int   ZINDEX = 2;
-
-// @TODO temporal forward declaration classes for DirectX
-class DXIndexBuffer;
-template<typename T>
-class DXUniformBuffer;
 
 enum class RenderType
 {
@@ -126,22 +123,22 @@ public:
 		DXIndexBuffer* indexBuffer;
 	};
 
-	struct DXUniformBuffer2D
+	struct DXConstantBuffer2D
 	{
-		DXUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-		DXUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+		DXConstantBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		DXConstantBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
 	};
 
-	struct DXUniformBuffer3D
+	struct DXConstantBuffer3D
 	{
-		DXUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-		DXUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-		DXUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+		DXConstantBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		DXConstantBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+		DXConstantBuffer<ThreeDimension::Material>* materialUniformBuffer;
 	};
 
 private:
 	std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;
-	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, /*, VKUniformBuffer2D, VKUniformBuffer3D*/ DXUniformBuffer2D, DXUniformBuffer3D> uniformBuffer;
+	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, /*, VKUniformBuffer2D, VKUniformBuffer3D*/ DXConstantBuffer2D, DXConstantBuffer3D> uniformBuffer;
 
 public:
 	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
@@ -218,12 +215,12 @@ public:
 				buffer = DXBuffer{};
 				if (type == RenderType::TwoDimension)
 				{
-					uniformBuffer = DXUniformBuffer2D{};
+					uniformBuffer = DXConstantBuffer2D{};
 					bufferData.classifiedData = BufferData2D{};
 				}
 				else if (type == RenderType::ThreeDimension)
 				{
-					uniformBuffer = DXUniformBuffer3D{};
+					uniformBuffer = DXConstantBuffer3D{};
 					bufferData.classifiedData = BufferData3D{};
 				}
 				break;

@@ -4,15 +4,15 @@
 
 struct VSInput
 {
-    float3 position;
+    float3 position : POSITION;
 }
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float2 uv;
-    float4 color;
-    float isTex;
+    float2 uv : TEXCOORD0;
+    float4 color : COLOR0;
+    float isTex : TEXCOORD1;
 };
 
 struct vMatrix
@@ -26,7 +26,7 @@ struct vMatrix
     float3 texelPos;
     float isTexel;
 }
-[[vk::binding(0, 0)]] ConstantBuffer<vMatrix> matrix;
+[[vk::binding(0, 0)]] ConstantBuffer<vMatrix> matrix : register(b0);
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input)
@@ -62,14 +62,23 @@ struct fMatrix
 {
     int texIndex;
 }
-[[vk::binding(0, 1)]] ConstantBuffer<fMatrix> f_matrix;
+[[vk::binding(0, 1)]] ConstantBuffer<fMatrix> f_matrix : register(b1);
 
+#if defined(__hlsl__)
+SamplerState smp : register(s0, space1);
+Texture2D tex[MAX_TEXTURES] : register(t0, space1);
+#else
 [[vk::binding(1, 1)]] Sampler2D tex[MAX_TEXTURES];
+#endif
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
+#if defined(__hlsl__)
+    float4 texColor = lerp(input.color, tex[f_matrix.texIndex].Sample(smp, input.uv), input.isTex);
+#else
     float4 texColor = lerp(input.color, tex[f_matrix.texIndex].Sample(input.uv), input.isTex);
+#endif
 
     if (texColor.a < 0.5) discard;
 

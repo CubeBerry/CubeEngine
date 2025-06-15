@@ -115,27 +115,42 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	}
 
 	// Create Command Allocator
-	hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator));
-	if (FAILED(hr))
+	for (UINT i = 0; i < 2; ++i)
 	{
-		throw std::runtime_error("Failed to create command allocator.");
+		hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i]));
+		if (FAILED(hr))
+		{
+			throw std::runtime_error("Failed to create command allocator.");
+		}
 	}
 
+	CreateRootSignature();
+
+	m_pipeline2D = std::make_unique<DXPipeLine>(
+		m_device,
+		m_rootSignature,
+		"../Engine/shaders/hlsl/2D.vert.hlsl",
+		"../Engine/shaders/hlsl/2D.frag.hlsl",
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA },
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+	);
+
 	// Create Command List
-	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList));
+	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), nullptr, IID_PPV_ARGS(&m_commandList));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create command list.");
 	}
-
 	m_commandList->Close();
 
 	// Create Fence for synchronization
-	hr = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
+	// @TODO Why do m_fenceValues[m_frameIndex]++?
+	hr = m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create fence.");
 	}
+	m_fenceValues[m_frameIndex]++;
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
@@ -148,8 +163,8 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 
 bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+	m_commandAllocators[m_frameIndex]->Reset();
+	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
 
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
@@ -175,7 +190,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	for (const auto& sprite : sprites)
 	{
 		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		m_commandList->IASetVertexBuffers(0, 1, &sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer->GetView());
+		D3D12_VERTEX_BUFFER_VIEW view = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer->GetView();
+		m_commandList->IASetVertexBuffers(0, 1, &view);
 		m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 	}
 
@@ -226,16 +242,16 @@ void DXRenderManager::CreateRootSignature()
 void DXRenderManager::WaitForGPU()
 {
 	// Is this a good way to synchronize? -> https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12HelloWorld/src/HelloWindow/D3D12HelloWindow.cpp
-	if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), m_fenceValue)))
+	if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex])))
 	{
-		if (m_fence->GetCompletedValue() < m_fenceValue)
+		if (m_fence->GetCompletedValue() < m_fenceValues[m_frameIndex])
 		{
-			if (SUCCEEDED(m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent)))
+			if (SUCCEEDED(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent)))
 			{
 				WaitForSingleObject(m_fenceEvent, INFINITE);
 			}
 		}
-		m_fenceValue++;
+		m_fenceValues[m_frameIndex]++;
 	}
 }
 

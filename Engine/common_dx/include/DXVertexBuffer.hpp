@@ -3,7 +3,6 @@
 //File: DXVertexBuffer.hpp
 #pragma once
 #include <directx/d3dx12_core.h>
-#include <d3d12.h>
 #include <wrl.h>
 
 #include <stdexcept>
@@ -19,12 +18,21 @@ public:
 	}
 	~DXVertexBuffer() = default;
 
+	DXVertexBuffer(const DXVertexBuffer&) = delete;
+	DXVertexBuffer& operator=(const DXVertexBuffer&) = delete;
+	DXVertexBuffer(const DXVertexBuffer&&) = delete;
+	DXVertexBuffer& operator=(const DXVertexBuffer&&) = delete;
+
+	//@ TODO Implement UPLOAD & DEFAULT heap support
 	void InitVertexBuffer(const ComPtr<ID3D12Device>& device, UINT strideSize, UINT totalSize, const void* data)
 	{
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
+
 		HRESULT hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(totalSize),
+			&resourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_vertexBuffer)

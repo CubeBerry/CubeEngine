@@ -20,6 +20,30 @@ Currently it only supports MSVC compiler(Visual Studio 2022 Recommended).
 
 All required APIs and Libraries are integrated in Project.
 
+## How to Compile Slang Shading Language
+Shaders are located in Engine/shaders.
+1. From .slang to .glsl
+```
+GLSL
+slangc Skybox.slang -profile glsl_460 -entry vertexMain -stage vertex -target glsl -o Skybox.vert
+
+slangc Skybox.slang -profile glsl_460 -entry fragmentMain -stage fragment -target glsl -o Skybox.frag
+```
+2. From .slang to .spv
+```
+SPIR-V
+slangc Skybox.slang -profile glsl_460 -entry vertexMain -stage vertex -target spirv -o Skybox.vert.spv
+
+slangc Skybox.slang -profile glsl_460 -entry fragmentMain -stage fragment -target spirv -o Skybox.frag.spv
+```
+3. From .slang to .hlsl
+```
+HLSL (Add -D__hlsl__ when converting to HLSL)
+slangc Skybox.slang -profile sm_6_0 -entry vertexMain -stage vertex -target hlsl -o Skybox.vert.hlsl -D__hlsl__
+
+slangc Skybox.slang -profile sm_6_0 -entry fragmentMain -stage fragment -target hlsl -o Skybox.frag.hlsl -D__hlsl__
+```
+
 ## Features
 1. Running on OpenGL & Vulkan Graphics APIs.
 2. [Slang Shading Language](https://shader-slang.org/)

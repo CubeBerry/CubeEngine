@@ -6,7 +6,7 @@
 #include "VKInit.hpp"
 #include <iostream>
 
-template<typename Material>
+template<typename Type>
 class VKUniformBuffer
 {
 public:
@@ -24,7 +24,7 @@ public:
 
 		//Get Virtual Address for CPU to access Memory
 		void* contents;
-		vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material), 0, &contents);
+		vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Type), 0, &contents);
 
 		return contents;
 	}
@@ -42,14 +42,14 @@ private:
 	std::array<VkDeviceMemory, 2> vkUniformDeviceMemories{ VK_NULL_HANDLE };
 };
 
-template<typename Material>
-VKUniformBuffer<Material>::VKUniformBuffer(VKInit* init_, const int size_) : vkInit(init_)
+template<typename Type>
+VKUniformBuffer<Type>::VKUniformBuffer(VKInit* init_, const int size_) : vkInit(init_)
 {
 	InitUniformBuffer(size_);
 }
 
-template<typename Material>
-VKUniformBuffer<Material>::~VKUniformBuffer()
+template<typename Type>
+VKUniformBuffer<Type>::~VKUniformBuffer()
 {
 	//Free Memories
 	for (auto& memory : vkUniformDeviceMemories)
@@ -63,15 +63,15 @@ VKUniformBuffer<Material>::~VKUniformBuffer()
 	}
 }
 
-template<typename Material>
-inline void VKUniformBuffer<Material>::InitUniformBuffer(const int count_)
+template<typename Type>
+inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 {
 	for (auto i = 0; i != 2; ++i)
 	{
 		//Create Uniform Buffer Info
 		VkBufferCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		createInfo.size = sizeof(Material) * count_;
+		createInfo.size = sizeof(Type) * count_;
 		createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		//Create Uniform Buffer
@@ -181,24 +181,24 @@ inline void VKUniformBuffer<Material>::InitUniformBuffer(const int count_)
 	}
 }
 
-template<typename Material>
-inline void VKUniformBuffer<Material>::UpdateUniform(size_t count_, void* data_, const uint32_t frameIndex_)
+template<typename Type>
+inline void VKUniformBuffer<Type>::UpdateUniform(size_t count_, void* data_, const uint32_t frameIndex_)
 {
 	auto& vkUniformDeviceMemory = vkUniformDeviceMemories[frameIndex_];
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Material) * count_, 0, &contents);
+	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Type) * count_, 0, &contents);
 
-	//auto material = static_cast<Material*>(contents);
+	//auto material = static_cast<Type*>(contents);
 	//*material = *material_;
-	memcpy(contents, data_, sizeof(Material) * count_);
+	memcpy(contents, data_, sizeof(Type) * count_);
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 }
 
-template<typename Material>
-inline uint32_t VKUniformBuffer<Material>::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
+template<typename Type>
+inline uint32_t VKUniformBuffer<Type>::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
 {
 	//Get Physical Device Memory Properties
 	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
