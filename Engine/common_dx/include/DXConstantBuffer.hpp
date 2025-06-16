@@ -26,7 +26,9 @@ public:
 	DXConstantBuffer& operator=(const DXConstantBuffer&&) = delete;
 
 	void InitConstantBuffer(const ComPtr<ID3D12Device>& device);
-	void UpdateConstant(size_t count, const void* data, const uint32_t frameIndex) const;
+	void UpdateConstant(const void* data, const uint32_t frameIndex) const;
+
+	ComPtr<ID3D12Resource> GetConstantBuffer() const { return m_constantBuffer; }
 private:
 	ComPtr<ID3D12Resource> m_constantBuffer;
 	void* m_mappedData{ nullptr };
@@ -79,7 +81,7 @@ void DXConstantBuffer<Type>::InitConstantBuffer(const ComPtr<ID3D12Device>& devi
 }
 
 template<typename Type>
-void DXConstantBuffer<Type>::UpdateConstant(size_t count, const void* data, const uint32_t frameIndex) const
+void DXConstantBuffer<Type>::UpdateConstant(const void* data, const uint32_t frameIndex) const
 {
-	memcpy(m_mappedData, &data, sizeof(Type));
+	memcpy(m_mappedData, data, sizeof(Type));
 }

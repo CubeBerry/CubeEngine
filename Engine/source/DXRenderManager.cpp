@@ -43,7 +43,9 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	}
 
 	// Create Device
-	hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device));
+	ComPtr<IDXGIAdapter1> hardwareAdapter;
+	GetHardwareAdapter(factory.Get(), &hardwareAdapter);
+	hr = D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create device.");
@@ -103,7 +105,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	// Create Render Target Views (RTVs)
 	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
-	for (UINT i = 0; i < 2; ++i)
+	for (UINT i = 0; i < frameCount; ++i)
 	{
 		hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i]));
 		if (FAILED(hr))
@@ -115,7 +117,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	}
 
 	// Create Command Allocator
-	for (UINT i = 0; i < 2; ++i)
+	for (UINT i = 0; i < frameCount; ++i)
 	{
 		hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i]));
 		if (FAILED(hr))
@@ -126,17 +128,19 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 
 	CreateRootSignature();
 
+	DXAttributeLayout layout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	
 	m_pipeline2D = std::make_unique<DXPipeLine>(
 		m_device,
 		m_rootSignature,
-		"../Engine/shaders/hlsl/2D.vert.hlsl",
-		"../Engine/shaders/hlsl/2D.frag.hlsl",
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA },
+		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
+		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
+		std::initializer_list<DXAttributeLayout>{ layout },
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 
 	// Create Command List
-	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), nullptr, IID_PPV_ARGS(&m_commandList));
+	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create command list.");
@@ -144,12 +148,12 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	m_commandList->Close();
 
 	// Create Fence for synchronization
-	// @TODO Why do m_fenceValues[m_frameIndex]++?
 	hr = m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create fence.");
 	}
+	// @TODO Why do m_fenceValues[m_frameIndex]++?
 	m_fenceValues[m_frameIndex]++;
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -186,13 +190,28 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
 	for (const auto& sprite : sprites)
 	{
-		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		D3D12_VERTEX_BUFFER_VIEW view = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer->GetView();
-		m_commandList->IASetVertexBuffers(0, 1, &view);
-		m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+		auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
+		auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
+
+		// Update Constant Buffer
+		constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, m_frameIndex);
+		constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, m_frameIndex);
+
+		// Bind Vertex Buffer & Index Buffer
+		D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
+		D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
+		m_commandList->IASetVertexBuffers(0, 1, &vbv);
+		m_commandList->IASetIndexBuffer(&ibv);
+		// Bind constant buffers to root signature
+		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
+		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
+
+		m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 	}
 
 	return true;
@@ -217,15 +236,45 @@ void DXRenderManager::EndRender()
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
+void DXRenderManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter)
+{
+	*ppAdapter = nullptr;
+	ComPtr<IDXGIAdapter1> adapter;
+	ComPtr<IDXGIFactory6> factory6;
+	if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
+	{
+		for (UINT i = 0; SUCCEEDED(factory6->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter))); ++i)
+		{
+			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr))) break;
+		}
+	}
+	if (adapter.Get() == nullptr)
+	{
+		for (UINT i = 0; SUCCEEDED(pFactory->EnumAdapters1(i, &adapter)); ++i)
+		{
+			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr))) break;
+		}
+	}
+	*ppAdapter = adapter.Detach();
+}
+
 void DXRenderManager::CreateRootSignature()
 {
-	// @TODO What is root signature?
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	// The slot of a root signature version 1.1
+	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
 
-	ComPtr<ID3DBlob> signature;
-	ComPtr<ID3DBlob> error;
-	HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+	// @TODO What is root signature?
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init_1_1(
+		_countof(rootParameters), rootParameters,
+		0, nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+	);
+
+	ComPtr<ID3DBlob> signature, error;
+	HRESULT hr = D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
 	if (FAILED(hr))
 	{
 		if (error) OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));

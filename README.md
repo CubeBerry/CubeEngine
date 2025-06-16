@@ -41,9 +41,9 @@ slangc Skybox.slang -profile glsl_460 -entry fragmentMain -stage fragment -targe
 3. From .slang to .hlsl
 ```
 HLSL (Add -D__hlsl__ when converting to HLSL)
-slangc Skybox.slang -profile sm_6_0 -entry vertexMain -stage vertex -target hlsl -o Skybox.vert.hlsl -D__hlsl__
+slangc Skybox.slang -profile sm_5_1 -entry vertexMain -stage vertex -target hlsl -o Skybox.vert.hlsl -D__hlsl__
 
-slangc Skybox.slang -profile sm_6_0 -entry fragmentMain -stage fragment -target hlsl -o Skybox.frag.hlsl -D__hlsl__
+slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target hlsl -o Skybox.frag.hlsl -D__hlsl__
 ```
 
 ## Features

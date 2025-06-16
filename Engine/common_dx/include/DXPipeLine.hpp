@@ -36,6 +36,8 @@ public:
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 	~DXPipeLine() = default;
+
+	ComPtr<ID3D12PipelineState> GetPipelineState() const { return m_pipelineState; }
 private:
 	ComPtr<ID3DBlob> m_vertexShader;
 	ComPtr<ID3DBlob> m_pixelShader;

@@ -29,10 +29,11 @@ public:
 	void EndRender() override;
 private:
 	// Initialize DirectX 12 components
+	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
 	void CreateRootSignature();
 	void WaitForGPU();
 
-	static const UINT frameCount = 2;
+	static constexpr UINT frameCount = 2;
 
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
