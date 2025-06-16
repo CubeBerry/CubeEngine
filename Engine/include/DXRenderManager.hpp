@@ -4,13 +4,12 @@
 #pragma once
 #include "RenderManager.hpp"
 
-#include <directx/d3dx12.h>
 #include <dxgi1_6.h>
 
 #include "DXPipeLine.hpp"
+#include "DXTexture.hpp"
 
 // @TODO temporal forward declaration classes for DirectX
-class DXTexture;
 class DXSkybox;
 class DXShader;
 
@@ -22,7 +21,7 @@ class DXRenderManager : public RenderManager
 {
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
-	~DXRenderManager();
+	~DXRenderManager() override;
 	void Initialize(SDL_Window* window_);
 
 	bool BeginRender(glm::vec3 bgColor) override;
@@ -47,7 +46,7 @@ private:
 	// dsv = Depth Stencil View
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
-	ComPtr<ID3D12DescriptorHeap> m_cbvSrvHeap;
+	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
 	ComPtr<ID3D12Resource> m_depthStencil;
 

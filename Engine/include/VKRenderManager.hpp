@@ -34,7 +34,7 @@ class VKRenderManager : public RenderManager
 {
 public:
 	VKRenderManager() { gMode = GraphicsMode::VK; };
-	~VKRenderManager();
+	~VKRenderManager() override;
 	void Initialize(SDL_Window* window_);
 
 	bool BeginRender(glm::vec3 bgColor) override;

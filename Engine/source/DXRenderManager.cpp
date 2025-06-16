@@ -102,6 +102,16 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		throw std::runtime_error("Failed to create RTV descriptor heap.");
 	}
 
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 500;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	hr = m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create SRV descriptor heap.");
+	}
+
 	// Create Render Target Views (RTVs)
 	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -162,6 +172,8 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		throw std::runtime_error("Failed to create fence event.");
 	}
 
+	WaitForGPU();
+
 	SDL_ShowWindow(window_);
 }
 
@@ -171,6 +183,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
 
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
+	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	// Set the viewport and scissor rect
 	int width, height;
@@ -210,6 +225,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Bind constant buffers to root signature
 		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
 		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
+
+		m_commandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 		m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 	}
@@ -260,16 +277,43 @@ void DXRenderManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1*
 
 void DXRenderManager::CreateRootSignature()
 {
+	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+	{
+		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+	}
+
+	CD3DX12_DESCRIPTOR_RANGE1 srvRange;
+	srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 500, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
 	// The slot of a root signature version 1.1
-	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+	CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+	rootParameters[2].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.MipLODBias = 0.0f;
+	sampler.MaxAnisotropy = 0;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;
+	sampler.RegisterSpace = 1;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// @TODO What is root signature?
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init_1_1(
 		_countof(rootParameters), rootParameters,
-		0, nullptr,
+		1, &sampler,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
 	);
 
@@ -306,15 +350,35 @@ void DXRenderManager::WaitForGPU()
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
+	DXTexture* texture = new DXTexture();
+	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
+	texture->LoadTexture(
+		m_device,
+		m_commandList,
+		m_srvHeap,
+		m_commandQueue,
+		m_fence,
+		m_fenceEvent,
+		false,
+		path_,
+		name_,
+		flip
+	);
+
+	WaitForGPU();
+
+	textures.push_back(texture);
+
+	int texId = static_cast<int>(textures.size() - 1);
+	textures.at(texId)->SetTextureID(texId);
 }
 
 void DXRenderManager::DeleteWithIndex(int /*id*/)
 {
 	//Destroy Texture
-	//for (auto t : textures)
-	//	delete t;
-	//textures.erase(textures.begin(), textures.end());
-	//samplers.erase(samplers.begin(), samplers.end());
+	for (auto t : textures)
+		delete t;
+	textures.erase(textures.begin(), textures.end());
 }
 
 //DXTexture* DXRenderManager::GetTexture(std::string name)
@@ -331,6 +395,7 @@ void DXRenderManager::DeleteWithIndex(int /*id*/)
 
 void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
+	path;
 	//skyboxVertexArray.Initialize();
 
 	//float skyboxVertices[] = {

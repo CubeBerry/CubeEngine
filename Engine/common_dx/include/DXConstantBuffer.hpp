@@ -83,5 +83,6 @@ void DXConstantBuffer<Type>::InitConstantBuffer(const ComPtr<ID3D12Device>& devi
 template<typename Type>
 void DXConstantBuffer<Type>::UpdateConstant(const void* data, const uint32_t frameIndex) const
 {
+	frameIndex;
 	memcpy(m_mappedData, data, sizeof(Type));
 }

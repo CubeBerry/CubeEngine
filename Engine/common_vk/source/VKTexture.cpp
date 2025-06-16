@@ -72,8 +72,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		VkImageCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		if (isHDR) createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		else  createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		createInfo.format = isHDR ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_UNORM;
 		createInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;

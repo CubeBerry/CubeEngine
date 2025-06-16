@@ -261,14 +261,16 @@ enum class MeshType
 class RenderManager
 {
 public:
+	virtual ~RenderManager() = default;
+
 	//--------------------Common--------------------//
 	virtual bool BeginRender(glm::vec3 bgColor) = 0;
 	virtual void EndRender() = 0;
 	virtual void DeleteWithIndex(int id) = 0;
-	void SetRenderType(RenderType type) { rMode = type; };
-	void SetPolygonType(PolygonType type) { pMode = type; };
-	GraphicsMode GetGraphicsMode() { return gMode; };
-	RenderType GetRenderType() { return rMode; };
+	void SetRenderType(RenderType type) { rMode = type; }
+	void SetPolygonType(PolygonType type) { pMode = type; }
+	GraphicsMode GetGraphicsMode() { return gMode; }
+	RenderType GetRenderType() { return rMode; }
 
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;

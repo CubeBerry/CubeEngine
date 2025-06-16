@@ -16,7 +16,7 @@ class GLRenderManager : public RenderManager
 {
 public:
 	GLRenderManager() { gMode = GraphicsMode::GL; };
-	~GLRenderManager();
+	~GLRenderManager() override;
 	void Initialize(
 		SDL_Window* window_, SDL_GLContext context_
 	);
