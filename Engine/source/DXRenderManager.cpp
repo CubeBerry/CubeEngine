@@ -209,6 +209,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
+	m_commandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+
 	// Set the viewport and scissor rect
 	int width, height;
 	SDL_GetWindowSize(Engine::GetWindow().GetWindow(), &width, &height);
@@ -247,8 +249,6 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Bind constant buffers to root signature
 		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
 		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
-
-		m_commandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 		m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 	}
@@ -426,7 +426,13 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	}
 
 	DXTexture* texture = new DXTexture();
-	texture->LoadTexture(
+
+	textures.push_back(texture);
+
+	int texId = static_cast<int>(textures.size() - 1);
+	textures.at(texId)->SetTextureID(texId);
+
+	textures.back()->LoadTexture(
 		m_device,
 		tempCommandList,
 		m_srvHeap,
@@ -438,11 +444,6 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 		name_,
 		flip
 	);
-
-	textures.push_back(texture);
-
-	int texId = static_cast<int>(textures.size() - 1);
-	textures.at(texId)->SetTextureID(texId);
 }
 
 void DXRenderManager::DeleteWithIndex(int /*id*/)
