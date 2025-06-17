@@ -252,11 +252,10 @@ void GLRenderManager::EndRender()
 
 void GLRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
-	std::unique_ptr<GLTexture> texture = std::make_unique<GLTexture>();
-	int texID = static_cast<int>(textures.size());
+	const auto& texture = textures.emplace_back(std::make_unique<GLTexture>());
+	const int texID = static_cast<int>(textures.size() - 1);
 	texture->LoadTexture(false, path_, name_, flip, texID);
 
-	textures.emplace_back(std::move(texture));
 	samplers.push_back(texID);
 
 	//int texId = static_cast<int>(textures.size() - 1);

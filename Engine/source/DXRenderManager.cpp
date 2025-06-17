@@ -414,14 +414,12 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 		throw std::runtime_error("Failed to create texture fence event.");
 	}
 
-	std::unique_ptr<DXTexture> texture = std::make_unique<DXTexture>();
+	const auto& texture = textures.emplace_back(std::make_unique<DXTexture>());
 
-	textures.emplace_back(std::move(texture));
+	const int texId = static_cast<int>(textures.size() - 1);
+	texture->SetTextureID(texId);
 
-	int texId = static_cast<int>(textures.size() - 1);
-	textures.at(texId)->SetTextureID(texId);
-
-	textures.back()->LoadTexture(
+	texture->LoadTexture(
 		m_device,
 		tempCommandList,
 		m_srvHeap,

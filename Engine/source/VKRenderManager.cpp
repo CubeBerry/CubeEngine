@@ -886,14 +886,11 @@ void VKRenderManager::RecreateSwapChain()
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
-	std::unique_ptr<VKTexture> texture = std::make_unique<VKTexture>(vkInit, &vkCommandPool);
+	const auto& texture = textures.emplace_back(std::make_unique<VKTexture>(vkInit, &vkCommandPool));
 	texture->LoadTexture(false, path_, name_, flip);
 
-	//vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
-	textures.emplace_back(std::move(texture));
-
-	int texId = static_cast<int>(textures.size() - 1);
-	textures.at(texId)->SetTextureID(texId);
+	const int texId = static_cast<int>(textures.size() - 1);
+	texture->SetTextureID(texId);
 
 	imageInfos[texId].sampler = *textures[texId]->GetSampler();
 	imageInfos[texId].imageView = *textures[texId]->GetImageView();
