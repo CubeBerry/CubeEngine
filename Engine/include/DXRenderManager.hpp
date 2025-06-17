@@ -32,7 +32,7 @@ public:
 private:
 	// Initialize DirectX 12 components
 	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
-	void CreateRootSignature();
+	void CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters);
 	void WaitForGPU();
 	void MoveToNextFrame();
 
@@ -58,7 +58,11 @@ private:
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
-	ComPtr<ID3D12RootSignature> m_rootSignature;
+	ComPtr<ID3D12RootSignature> m_rootSignature2D;
+	ComPtr<ID3D12RootSignature> m_rootSignature3D;
+#ifdef _DEBUG
+	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
+#endif
 	// rtv = Render Target View
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// dsv = Depth Stencil View
@@ -77,6 +81,10 @@ private:
 	UINT64 m_fenceValues[frameCount]{};
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
+	std::unique_ptr<DXPipeLine> m_pipeline3D;
+#ifdef _DEBUG
+	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
+#endif
 
 	std::unique_ptr<DXImGuiManager> m_imguiManager;
 public:
@@ -97,15 +105,16 @@ public:
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
-			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
+			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 #ifdef _DEBUG
-			//bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer();
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
 #endif
 
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = new DXConstantBuffer<ThreeDimension::VertexUniform>();
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = new DXConstantBuffer<ThreeDimension::FragmentUniform>();
-			//bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = new DXConstantBuffer<ThreeDimension::Material>();
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = new DXConstantBuffer<ThreeDimension::VertexUniform>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = new DXConstantBuffer<ThreeDimension::FragmentUniform>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = new DXConstantBuffer<ThreeDimension::Material>(m_device, frameCount);
 		}
 	}
 
@@ -130,6 +139,11 @@ private:
 	//Lighting
 	DXConstantBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
 	DXConstantBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
+	struct alignas(16) PushConstants
+	{
+		int activeDirectionalLight;
+		int activePointLight;
+	} pushConstants;
 
 	//Skybox
 	//DXVertexBuffer* skyboxVertexBuffer{ nullptr };

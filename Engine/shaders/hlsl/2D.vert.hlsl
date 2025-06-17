@@ -42,7 +42,7 @@ struct VSOutput_0
 #line 5
 struct VSInput_0
 {
-    float3 position_1 : POSITION;
+    float3 position_1 : POSITION0;
 };
 
 

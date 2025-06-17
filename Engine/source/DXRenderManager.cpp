@@ -204,16 +204,55 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		m_commandAllocators[i]->SetName((L"Command Allocator " + std::to_wstring(i)).c_str());
 	}
 
-	CreateRootSignature();
+	// Create root signature and pipeline for 2D
+	// The slot of a root signature version 1.1
+	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(3, {});
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
+	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 500, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+	rootParameters[2].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	DXAttributeLayout layout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	CreateRootSignature(m_rootSignature2D, rootParameters);
+
+	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	
 	m_pipeline2D = std::make_unique<DXPipeLine>(
 		m_device,
-		m_rootSignature,
+		m_rootSignature2D,
 		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ layout },
+		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+	);
+
+	// Create root signature and pipeline for 3D
+	rootParameters.clear();
+	rootParameters.resize(8, {});
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[2].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[3].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[4].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[5].InitAsConstantBufferView(4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 iblSrvRange;
+	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+	rootParameters[6].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[7].InitAsConstants(2, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	CreateRootSignature(m_rootSignature3D, rootParameters);
+
+	positionLayout.offset = offsetof(ThreeDimension::Vertex, position);
+	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, offsetof(ThreeDimension::Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, offsetof(ThreeDimension::Vertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 3, offsetof(ThreeDimension::Vertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
+	m_pipeline3D = std::make_unique<DXPipeLine>(
+		m_device,
+		m_rootSignature3D,
+		std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
+		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
+		std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 
@@ -333,9 +372,23 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandAllocators[m_frameIndex]->Reset();
 	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
 
-	m_commandList->SetPipelineState(m_pipeline2D->GetPipelineState().Get());
+	switch (rMode)
+	{
+	case RenderType::TwoDimension:
+		m_commandList->SetPipelineState(m_pipeline2D->GetPipelineState().Get());
 
-	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+		m_commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
+		break;
+	case RenderType::ThreeDimension:
+		m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
+
+		m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
+
+		pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
+		pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
+		m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
+		break;
+	}
 
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -369,11 +422,24 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	for (const auto& sprite : sprites)
 	{
 		auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
-		auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
+		// @TODO Find a way to store two different types of constant buffer
+		//auto& constantBuffer = rMode == RenderType::TwoDimension ?
+		//	sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>() :
+		//	sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
 		// Update Constant Buffer
-		constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, m_frameIndex);
-		constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, m_frameIndex);
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, m_frameIndex);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, m_frameIndex);
+			break;
+		case RenderType::ThreeDimension:
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, m_frameIndex);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, m_frameIndex);
+			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, m_frameIndex);
+			break;
+		}
 
 		// Bind Vertex Buffer & Index Buffer
 		D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
@@ -381,8 +447,18 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		m_commandList->IASetVertexBuffers(0, 1, &vbv);
 		m_commandList->IASetIndexBuffer(&ibv);
 		// Bind constant buffers to root signature
-		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+		switch (rMode)
+		{
+		case RenderType::TwoDimension:
+			m_commandList->SetGraphicsRootConstantBufferView(0, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(1, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			break;
+		case RenderType::ThreeDimension:
+			m_commandList->SetGraphicsRootConstantBufferView(0, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(1, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(2, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			break;
+		}
 
 		m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 	}
@@ -436,7 +512,7 @@ void DXRenderManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1*
 	*ppAdapter = adapter.Detach();
 }
 
-void DXRenderManager::CreateRootSignature()
+void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters)
 {
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -445,15 +521,6 @@ void DXRenderManager::CreateRootSignature()
 	{
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
-
-	CD3DX12_DESCRIPTOR_RANGE1 srvRange;
-	srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 500, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-
-	// The slot of a root signature version 1.1
-	CD3DX12_ROOT_PARAMETER1 rootParameters[3];
-	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-	rootParameters[2].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
 	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -473,7 +540,7 @@ void DXRenderManager::CreateRootSignature()
 	// @TODO What is root signature?
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init_1_1(
-		_countof(rootParameters), rootParameters,
+		static_cast<UINT>(rootParameters.size()), rootParameters.data(),
 		1, &sampler,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
 	);
@@ -486,7 +553,7 @@ void DXRenderManager::CreateRootSignature()
 		throw std::runtime_error("Failed to serialize root signature.");
 	}
 
-	hr = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature));
+	hr = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create root signature.");

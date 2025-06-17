@@ -20,6 +20,7 @@ DXPipeLine::DXPipeLine(
 #endif
 
 	HRESULT hr;
+	ComPtr<ID3DBlob> errorMessages;
 
 	// Compile vertex shader
 	hr = D3DCompileFromFile(
@@ -31,10 +32,16 @@ DXPipeLine::DXPipeLine(
 		compileFlags,
 		0,
 		&m_vertexShader,
-		nullptr
+		&errorMessages
 	);
 	if (FAILED(hr))
 	{
+		if (errorMessages)
+		{
+			const char* string = static_cast<const char*>(errorMessages->GetBufferPointer());
+			OutputDebugStringA("Vertex Shader Compilation Error:\n");
+			OutputDebugStringA(string);
+		}
 		throw std::runtime_error("Failed to compile vertex shader.");
 	}
 
@@ -48,10 +55,16 @@ DXPipeLine::DXPipeLine(
 		compileFlags,
 		0,
 		&m_pixelShader,
-		nullptr
+		&errorMessages
 	);
 	if (FAILED(hr))
 	{
+		if (errorMessages)
+		{
+			const char* string = static_cast<const char*>(errorMessages->GetBufferPointer());
+			OutputDebugStringA("Pixel Shader Compilation Error:\n");
+			OutputDebugStringA(string);
+		}
 		throw std::runtime_error("Failed to compile pixel shader.");
 	}
 

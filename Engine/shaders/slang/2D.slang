@@ -4,7 +4,7 @@
 
 struct VSInput
 {
-    float3 position : POSITION;
+    float3 position : POSITION0;
 }
 
 struct VSOutput

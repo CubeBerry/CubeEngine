@@ -6,22 +6,22 @@
 
 struct VSInput
 {
-    float3 position;
-    float3 normal;
-    float2 uv;
-    int tex_sub_index;
+    float3 position : POSITION0;
+    float3 normal : NORMAL0;
+    float2 uv : TEXCOORD0;
+    int tex_sub_index : TEXCOORD1;
 }
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float2 uv;
-    float4 color;
-    int tex_sub_index;
+    float2 uv : TEXCOORD0;
+    float4 color : COLOR0;
+    int tex_sub_index : TEXCOORD1;
     // Lighting
-    float3 normal;
-    float3 fragmentPosition;
-    float3 viewPosition;
+    float3 normal : NORMAL0;
+    float3 fragmentPosition : LIGHT0;
+    float3 viewPosition : LIGHT1;
 };
 
 struct vMatrix
@@ -35,7 +35,7 @@ struct vMatrix
     // @TODO move to push constants
     float3 viewPosition;
 }
-[[vk::binding(0, 0)]] ConstantBuffer<vMatrix> matrix;
+[[vk::binding(0, 0)]] ConstantBuffer<vMatrix> matrix : register(b0, space0);
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input)
@@ -61,9 +61,14 @@ struct fMatrix
     int isTex;
     int texIndex;
 }
-[[vk::binding(0, 1)]] ConstantBuffer<fMatrix> f_matrix;
+[[vk::binding(0, 1)]] ConstantBuffer<fMatrix> f_matrix : register(b1, space0);
 
+#if defined(__hlsl__)
+SamplerState smp : register(s0, space1);
+Texture2D tex[MAX_TEXTURES] : register(t0, space1);
+#else
 [[vk::binding(1, 1)]] Sampler2D tex[MAX_TEXTURES];
+#endif
 
 struct fMaterial
 {
@@ -75,7 +80,7 @@ struct fMaterial
     float metallic;
     float roughness;
 }
-[[vk::binding(2, 1)]] ConstantBuffer<fMaterial> f_material;
+[[vk::binding(2, 1)]] ConstantBuffer<fMaterial> f_material : register(b2, space0);
 
 struct fDirectionalLight
 {
@@ -89,7 +94,7 @@ struct fDirectionalLightList
 {
     fDirectionalLight lights[MAX_LIGHTS];
 }
-[[vk::binding(3, 1)]] ConstantBuffer<fDirectionalLightList> directionalLightList;
+[[vk::binding(3, 1)]] ConstantBuffer<fDirectionalLightList> directionalLightList : register(b3, space0);
 
 struct fPointLight
 {
@@ -107,18 +112,28 @@ struct fPointLightList
 {
     fPointLight lights[MAX_LIGHTS];
 }
-[[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList;
+[[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList : register(b4, space0);
 
+#if defined(__hlsl__)
+TextureCube irradianceMap : register(t0, space2);
+TextureCube prefilterMap : register(t1, space2);
+Texture2D brdfLUT : register(t2, space2);
+#else
 [[vk::binding(5, 1)]] SamplerCube irradianceMap;
 [[vk::binding(6, 1)]] SamplerCube prefilterMap;
 [[vk::binding(7, 1)]] Sampler2D brdfLUT;
+#endif
 
 struct PushConstants
 {
     int activeDirectionalLights;
     int activePointLights;
 }
+#if defined(__hlsl__)
+ConstantBuffer<PushConstants> pushConstants : register(b5, space0);
+#else
 [[vk::push_constant]] PushConstants pushConstants;
+#endif
 
 // float3 BlinnPhong(float3 lightPosition, float3 lightColor, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
 // {
@@ -258,12 +273,16 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, boo
 }
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
     float3 resultColor = float3(0.0);
 
     float3 albedo = float3(0.0);
+#if defined(__hlsl__)
+    if (f_matrix.isTex > 0) albedo = tex[f_matrix.texIndex + input.tex_sub_index].Sample(smp, input.uv).rgb;
+#else
     if (f_matrix.isTex > 0) albedo = tex[f_matrix.texIndex + input.tex_sub_index].Sample(input.uv).rgb;
+#endif
     else albedo = input.color.rgb;
 
     // float3 F0 = mix(float3(0.04), albedo, f_material.metallic);
@@ -294,12 +313,21 @@ float4 fragmentMain(VSOutput input)
 
     float3 Ks = F;
     float3 Kd = (1.0 - f_material.metallic) * (float3(1.0) - Ks);
+#if defined(__hlsl__)
+    float3 irradiance = irradianceMap.Sample(smp, N).rgb;
+#else
     float3 irradiance = irradianceMap.Sample(N).rgb;
+#endif
     float3 diffuse = irradiance * albedo;
 
     const float MAX_REFLECTION_LOD = 4.0;
+#if defined(__hlsl__)
+    float3 prefilteredColor = prefilterMap.SampleLevel(smp, R, f_material.roughness * MAX_REFLECTION_LOD).rgb;
+    float2 brdf = brdfLUT.Sample(smp, float2(max(dot(N, V), 0.0), f_material.roughness)).rg;
+#else
     float3 prefilteredColor = prefilterMap.SampleLevel(R, f_material.roughness * MAX_REFLECTION_LOD).rgb;
     float2 brdf = brdfLUT.Sample(float2(max(dot(N, V), 0.0), f_material.roughness)).rg;
+#endif
     float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     // 1.0 == ao
