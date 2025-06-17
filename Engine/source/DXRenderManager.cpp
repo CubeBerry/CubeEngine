@@ -1,6 +1,7 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: DXRenderManager.cpp
+#include "DXRenderManager.hpp"
 
 #include "Engine.hpp"
 
@@ -16,14 +17,6 @@ DXRenderManager::~DXRenderManager()
 	//Destroy Texture
 	for (const auto t : textures)
 		delete t;
-
-//#ifdef _DEBUG
-//	ComPtr<IDXGIDebug1> dxgiDebug;
-//	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
-//	{
-//		dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
-//	}
-//#endif
 }
 
 void DXRenderManager::Initialize(SDL_Window* window_)

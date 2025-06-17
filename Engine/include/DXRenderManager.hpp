@@ -6,6 +6,10 @@
 
 #include <dxgi1_6.h>
 
+#ifdef _DEBUG
+#include <dxgidebug.h>
+#endif
+
 #include "DXPipeLine.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
@@ -31,7 +35,19 @@ private:
 	void WaitForGPU();
 	void MoveToNextFrame();
 
-	std::unique_ptr<DXImGuiManager> m_imguiManager;
+	struct LiveObjectReporter
+	{
+		~LiveObjectReporter()
+		{
+#ifdef _DEBUG
+			ComPtr<IDXGIDebug1> dxgiDebug;
+			if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+			{
+				dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+			}
+#endif
+		}
+	} reporter;
 
 	static constexpr UINT frameCount = 2;
 
@@ -60,6 +76,8 @@ private:
 	UINT64 m_fenceValues[frameCount]{};
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
+
+	std::unique_ptr<DXImGuiManager> m_imguiManager;
 public:
 	//--------------------Common--------------------//
 	void DeleteWithIndex(int id) override;

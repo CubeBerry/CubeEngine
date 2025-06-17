@@ -77,10 +77,19 @@ void Engine::Update()
 
 void Engine::End()
 {
-	if (renderManager->GetGraphicsMode() == GraphicsMode::GL)
+	switch (renderManager->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
 		delete dynamic_cast<GLRenderManager*>(renderManager);
-	else
+		break;
+	case GraphicsMode::VK:
 		delete dynamic_cast<VKRenderManager*>(renderManager);
+		break;
+	case GraphicsMode::DX:
+		delete dynamic_cast<DXRenderManager*>(renderManager);
+		break;
+	}
+
 	threadManager.Stop();
 }
 
