@@ -80,7 +80,7 @@ private:
 	std::unique_ptr<DXImGuiManager> m_imguiManager;
 public:
 	//--------------------Common--------------------//
-	void DeleteWithIndex(int id) override;
+	void ClearTextures() override;
 
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
@@ -91,8 +91,8 @@ public:
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), sizeof(TwoDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = new DXConstantBuffer<TwoDimension::VertexUniform>(m_device);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = new DXConstantBuffer<TwoDimension::FragmentUniform>(m_device);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = new DXConstantBuffer<TwoDimension::VertexUniform>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = new DXConstantBuffer<TwoDimension::FragmentUniform>(m_device, frameCount);
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
@@ -112,7 +112,7 @@ public:
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
 
 	DXTexture* GetTexture(const std::string& name) const;
-	std::vector<DXTexture*> GetTextures() { return textures; }
+	const std::vector<std::unique_ptr<DXTexture>>& GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
 
@@ -120,7 +120,7 @@ public:
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	std::vector<DXTexture*> textures;
+	std::vector<std::unique_ptr<DXTexture>> textures;
 
 #ifdef _DEBUG
 	//DXShader glNormal3DShader;

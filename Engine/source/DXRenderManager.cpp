@@ -13,10 +13,6 @@ DXRenderManager::~DXRenderManager()
 	//Destroy Buffers
 	delete directionalLightUniformBuffer;
 	delete pointLightUniformBuffer;
-
-	//Destroy Texture
-	for (const auto t : textures)
-		delete t;
 }
 
 void DXRenderManager::Initialize(SDL_Window* window_)
@@ -240,8 +236,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		m_commandList->IASetVertexBuffers(0, 1, &vbv);
 		m_commandList->IASetIndexBuffer(&ibv);
 		// Bind constant buffers to root signature
-		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
-		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
+		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
 		m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 	}
@@ -418,9 +414,9 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 		throw std::runtime_error("Failed to create texture fence event.");
 	}
 
-	DXTexture* texture = new DXTexture();
+	std::unique_ptr<DXTexture> texture = std::make_unique<DXTexture>();
 
-	textures.push_back(texture);
+	textures.emplace_back(std::move(texture));
 
 	int texId = static_cast<int>(textures.size() - 1);
 	textures.at(texId)->SetTextureID(texId);
@@ -439,12 +435,9 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	);
 }
 
-void DXRenderManager::DeleteWithIndex(int /*id*/)
+void DXRenderManager::ClearTextures()
 {
-	//Destroy Texture
-	for (auto t : textures)
-		delete t;
-	textures.erase(textures.begin(), textures.end());
+	textures.clear();
 }
 
 DXTexture* DXRenderManager::GetTexture(const std::string& name) const
@@ -453,7 +446,7 @@ DXTexture* DXRenderManager::GetTexture(const std::string& name) const
 	{
 		if (tex->GetName() == name)
 		{
-			return tex;
+			return tex.get();
 		}
 	}
 	return nullptr;

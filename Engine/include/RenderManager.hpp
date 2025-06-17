@@ -266,11 +266,11 @@ public:
 	//--------------------Common--------------------//
 	virtual bool BeginRender(glm::vec3 bgColor) = 0;
 	virtual void EndRender() = 0;
-	virtual void DeleteWithIndex(int id) = 0;
+	virtual void ClearTextures() = 0;
 	void SetRenderType(RenderType type) { rMode = type; }
 	void SetPolygonType(PolygonType type) { pMode = type; }
-	GraphicsMode GetGraphicsMode() { return gMode; }
-	RenderType GetRenderType() { return rMode; }
+	GraphicsMode GetGraphicsMode() const { return gMode; }
+	RenderType GetRenderType() const { return rMode; }
 
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;

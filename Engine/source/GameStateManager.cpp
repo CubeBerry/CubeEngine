@@ -82,7 +82,7 @@ void GameStateManager::Update(float dt)
 	case State::CHANGE:
 		levelList.at(static_cast<int>(currentLevel))->End();
 		// @TODO temporary function to clear all textures
-		Engine::GetRenderManager()->DeleteWithIndex(0);
+		Engine::GetRenderManager()->ClearTextures();
 		currentLevel = levelSelected;
 #ifdef _DEBUG
 		Engine::GetRenderManager()->DrawNormals(false);

@@ -43,10 +43,6 @@ VKRenderManager::~VKRenderManager()
 	delete pointLightUniformBuffer;
 	delete directionalLightUniformBuffer;
 
-	//Destroy Texture
-	for (const auto t : textures)
-		delete t;
-
 	//Destroy Batch ImageInfo
 	vkDestroySampler(*vkInit->GetDevice(), immutableSampler, nullptr);
 	//size_t texSize{ textures.size() };
@@ -890,11 +886,11 @@ void VKRenderManager::RecreateSwapChain()
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
-	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
+	std::unique_ptr<VKTexture> texture = std::make_unique<VKTexture>(vkInit, &vkCommandPool);
 	texture->LoadTexture(false, path_, name_, flip);
 
 	//vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
-	textures.push_back(texture);
+	textures.emplace_back(std::move(texture));
 
 	int texId = static_cast<int>(textures.size() - 1);
 	textures.at(texId)->SetTextureID(texId);
@@ -904,14 +900,10 @@ void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	imageInfos[texId].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
-void VKRenderManager::DeleteWithIndex(int /*id*/)
+void VKRenderManager::ClearTextures()
 {
-	//Destroy Texture
-	for (auto t : textures)
-		delete t;
-
 	//Destroy Batch ImageInfo
-	textures.erase(textures.begin(), textures.end());
+	textures.clear();
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
 
 	const VkDescriptorImageInfo imageInfo
@@ -933,7 +925,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	{
 		if (tex->GetName() == name)
 		{
-			return tex;
+			return tex.get();
 		}
 	}
 	return nullptr;

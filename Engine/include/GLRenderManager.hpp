@@ -39,7 +39,7 @@ private:
 	GLImGuiManager* imguiManager;
 public:
 	//--------------------Common--------------------//
-	void DeleteWithIndex(int id) override;
+	void ClearTextures() override;
 
 
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
@@ -72,7 +72,7 @@ public:
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
 
 	GLTexture* GetTexture(std::string name);
-	std::vector<GLTexture*> GetTextures() { return textures; }
+	const std::vector<std::unique_ptr<GLTexture>>& GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
 
@@ -80,7 +80,7 @@ public:
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	std::vector<GLTexture*> textures;
+	std::vector<std::unique_ptr<GLTexture>> textures;
 	std::vector<int> samplers;
 
 #ifdef _DEBUG

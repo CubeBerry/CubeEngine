@@ -13,11 +13,12 @@ inline UINT AlignConstantBufferSize(size_t size)
 	return static_cast<UINT>(alignedSize);
 }
 
+// Constant Buffer operates using the concept of a ring buffer
 template<typename Type>
 class DXConstantBuffer
 {
 public:
-	DXConstantBuffer(const ComPtr<ID3D12Device>& device);
+	DXConstantBuffer(const ComPtr<ID3D12Device>& device, const UINT& frameCount);
 	~DXConstantBuffer();
 
 	DXConstantBuffer(const DXConstantBuffer&) = delete;
@@ -25,39 +26,27 @@ public:
 	DXConstantBuffer(const DXConstantBuffer&&) = delete;
 	DXConstantBuffer& operator=(const DXConstantBuffer&&) = delete;
 
-	void InitConstantBuffer(const ComPtr<ID3D12Device>& device);
 	void UpdateConstant(const void* data, const uint32_t frameIndex) const;
 
-	ComPtr<ID3D12Resource> GetConstantBuffer() const { return m_constantBuffer; }
+	[[nodiscard]] ComPtr<ID3D12Resource> GetConstantBuffer() const { return m_constantBuffer; }
+	[[nodiscard]] D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(const uint32_t& frameIndex) const
+	{
+		return m_constantBuffer->GetGPUVirtualAddress() + (static_cast<uint64_t>(frameIndex) * m_alignedSizePerFrame);
+	}
 private:
 	ComPtr<ID3D12Resource> m_constantBuffer;
-	void* m_mappedData{ nullptr };
-	UINT m_alignedSize{ 0 };
+	uint8_t* m_mappedData{ nullptr };
+	UINT m_alignedSizePerFrame{ 0 };
 };
 
 template<typename Type>
-DXConstantBuffer<Type>::DXConstantBuffer(const ComPtr<ID3D12Device>& device)
+DXConstantBuffer<Type>::DXConstantBuffer(const ComPtr<ID3D12Device>& device, const UINT& frameCount)
 {
-	InitConstantBuffer(device);
-}
-
-template<typename Type>
-DXConstantBuffer<Type>::~DXConstantBuffer()
-{
-	if (m_constantBuffer)
-	{
-		m_constantBuffer->Unmap(0, nullptr);
-	}
-	m_mappedData = nullptr;
-}
-
-template<typename Type>
-void DXConstantBuffer<Type>::InitConstantBuffer(const ComPtr<ID3D12Device>& device)
-{
-	m_alignedSize = AlignConstantBufferSize(sizeof(Type));
+	m_alignedSizePerFrame = AlignConstantBufferSize(sizeof(Type));
+	const UINT& totalBufferSize = m_alignedSizePerFrame * frameCount;
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_alignedSize);
+	CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
 
 	HRESULT hr = device->CreateCommittedResource(
 		&heapProps,
@@ -81,8 +70,18 @@ void DXConstantBuffer<Type>::InitConstantBuffer(const ComPtr<ID3D12Device>& devi
 }
 
 template<typename Type>
+DXConstantBuffer<Type>::~DXConstantBuffer()
+{
+	if (m_constantBuffer)
+	{
+		m_constantBuffer->Unmap(0, nullptr);
+	}
+	m_mappedData = nullptr;
+}
+
+template<typename Type>
 void DXConstantBuffer<Type>::UpdateConstant(const void* data, const uint32_t frameIndex) const
 {
-	frameIndex;
-	memcpy(m_mappedData, data, sizeof(Type));
+	uint8_t* dest = m_mappedData + (static_cast<uint64_t>(frameIndex) * m_alignedSizePerFrame);
+	memcpy(dest, data, sizeof(Type));
 }
