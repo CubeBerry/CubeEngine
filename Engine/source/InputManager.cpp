@@ -130,7 +130,7 @@ glm::vec2 InputManager::GetMousePosition()
 	glm::vec2 windowViewSize = Engine::Instance().GetCameraManager().GetViewSize();
 	int w = 0;
 	int h = 0;
-	SDL_GetWindowSize(Engine::Instance().GetWindow().GetWindow(), &w, &h);
+	SDL_GetWindowSizeInPixels(Engine::Instance().GetWindow().GetWindow(), &w, &h);
 	float zoom = Engine::Instance().GetCameraManager().GetZoom();
 
 	pos = { windowViewSize.x / 2.f * (pos.x / (static_cast<float>(w) / 2.f) - 1) / zoom, windowViewSize.y / 2.f * (pos.y / (static_cast<float>(h) / 2.f) - 1) / zoom };

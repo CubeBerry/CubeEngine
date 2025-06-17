@@ -81,14 +81,14 @@ void ThreadManager::QueueSDLEvent(const SDL_Event& event)
 		std::lock_guard<std::mutex> lock(sdlEventMutex);
 		sdlEventQueue.push(event);
 
-		if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
-			event.type == SDL_EVENT_MOUSE_BUTTON_UP || event.type == SDL_EVENT_MOUSE_WHEEL ||
-			event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP ||
-			event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_QUIT)
-		{
+		//if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+		//	event.type == SDL_EVENT_MOUSE_BUTTON_UP || event.type == SDL_EVENT_MOUSE_WHEEL ||
+		//	event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP ||
+		//	event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_QUIT)
+		//{
 			std::lock_guard<std::mutex> mainLock(mainThreadEventMutex);
 			mainThreadEventQueue.push(event);
-		}
+		//}
 	}
 	sdlEventCV.notify_one();
 }
@@ -131,8 +131,11 @@ void ThreadManager::ProcessSDLEventsMainThread()
 		case SDL_EVENT_QUIT:
 			Engine::GetGameStateManager().SetGameState(State::UNLOAD);
 			break;
-		case SDL_EVENT_WINDOW_MOVED:
 		case SDL_EVENT_WINDOW_RESIZED:
+			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
+				dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->OnResize(event.window.data1, event.window.data2);
+			SDL_FALLTHROUGH;
+		case SDL_EVENT_WINDOW_MOVED:
 		case SDL_EVENT_WINDOW_MINIMIZED:
 			Engine::Instance().ResetDeltaTime();
 			break;

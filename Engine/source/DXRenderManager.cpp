@@ -128,7 +128,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	depthStencilDesc.Alignment = 0;
 	int width, height;
-	SDL_GetWindowSize(window, &width, &height);
+	SDL_GetWindowSizeInPixels(window, &width, &height);
 	depthStencilDesc.Width = static_cast<UINT64>(width);
 	depthStencilDesc.Height = static_cast<UINT>(height);
 	depthStencilDesc.DepthOrArraySize = 1;
@@ -248,6 +248,86 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	SDL_ShowWindow(window);
 }
 
+void DXRenderManager::OnResize(int width, int height)
+{
+	WaitForGPU();
+
+	for (int i = 0; i < frameCount; ++i)
+	{
+		m_renderTargets[i].Reset();
+	}
+	m_depthStencil.Reset();
+
+	HRESULT hr = m_swapChain->ResizeBuffers(
+		frameCount,
+		static_cast<UINT>(width),
+		static_cast<UINT>(height),
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		0
+	);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to resize swap chain buffers.");
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	for (UINT i = 0; i < frameCount; ++i)
+	{
+		hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i]));
+		if (FAILED(hr))
+		{
+			throw std::runtime_error("Failed to get swap chain buffer.");
+		}
+		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
+		rtvHandle.ptr += m_rtvDescriptorSize;
+		m_renderTargets[i]->SetName((L"Recreate Render Target " + std::to_wstring(i)).c_str());
+	}
+
+	// Create Depth Stencil Buffer Resource
+	D3D12_RESOURCE_DESC depthStencilDesc = {};
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Alignment = 0;
+	depthStencilDesc.Width = static_cast<UINT64>(width);
+	depthStencilDesc.Height = static_cast<UINT>(height);
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+	// @TODO Use ID3D12Device::CheckFeatureSupport to find supported format
+	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	clearValue.DepthStencil.Depth = 1.0f;
+	clearValue.DepthStencil.Stencil = 0;
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	hr = m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&depthStencilDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&clearValue,
+		IID_PPV_ARGS(&m_depthStencil)
+	);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create depth stencil resource.");
+	}
+	m_depthStencil->SetName(L"Resize Depth/Stencil Resource");
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
 bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	m_commandAllocators[m_frameIndex]->Reset();
@@ -264,7 +344,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 	// Set the viewport and scissor rect
 	int width, height;
-	SDL_GetWindowSize(Engine::GetWindow().GetWindow(), &width, &height);
+	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &width, &height);
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, width, height };
 	m_commandList->RSSetViewports(1, &viewport);
