@@ -76,7 +76,7 @@ endif()
 # Turnn off warning as error due to ImGui DX12
 # set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
-add_executable(${PROJECT_NAME} main.cpp ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
+add_executable(${PROJECT_NAME} main.cpp DebugTools.hpp ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
 
 source_group("Engine"           FILES ${ENGINE_SRC})
 source_group("Game"             FILES ${GAME_SRC})
