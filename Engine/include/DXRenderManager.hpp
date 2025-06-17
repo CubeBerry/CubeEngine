@@ -24,7 +24,7 @@ class DXRenderManager : public RenderManager
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
 	~DXRenderManager() override;
-	void Initialize(SDL_Window* window_);
+	void Initialize(SDL_Window* window);
 
 	bool BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;

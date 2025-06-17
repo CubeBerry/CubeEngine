@@ -15,10 +15,10 @@ DXRenderManager::~DXRenderManager()
 	delete pointLightUniformBuffer;
 }
 
-void DXRenderManager::Initialize(SDL_Window* window_)
+void DXRenderManager::Initialize(SDL_Window* window)
 {
 	// Get HWND (Handle to a Window)
-	SDL_PropertiesID props = SDL_GetWindowProperties(window_);
+	SDL_PropertiesID props = SDL_GetWindowProperties(window);
 	HWND hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 
 	// Initialize Direct3D 12
@@ -56,6 +56,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	{
 		throw std::runtime_error("Failed to create device.");
 	}
+	m_device->SetName(L"Main Device");
 
 	// Create Command Queue
 	// DESC = Description
@@ -67,6 +68,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	{
 		throw std::runtime_error("Failed to create command queue.");
 	}
+	m_commandQueue->SetName(L"Main Command Queue");
 
 	// Create Swap Chain
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -98,7 +100,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	}
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-	// Create Descriptor Heap
+	// Create Descriptor Heaps
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = frameCount; // Double buffering
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -108,6 +110,62 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	{
 		throw std::runtime_error("Failed to create RTV descriptor heap.");
 	}
+	m_rtvHeap->SetName(L"Render Target View Heap");
+
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	hr = m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create DSV descriptor heap.");
+	}
+	m_dsvHeap->SetName(L"Depth/Stencil View Heap");
+
+	// Create Depth Stencil Buffer Resource
+	D3D12_RESOURCE_DESC depthStencilDesc = {};
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Alignment = 0;
+	int width, height;
+	SDL_GetWindowSize(window, &width, &height);
+	depthStencilDesc.Width = static_cast<UINT64>(width);
+	depthStencilDesc.Height = static_cast<UINT>(height);
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+	// @TODO Use ID3D12Device::CheckFeatureSupport to find supported format
+	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	clearValue.DepthStencil.Depth = 1.0f;
+	clearValue.DepthStencil.Stencil = 0;
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	hr = m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&depthStencilDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&clearValue,
+		IID_PPV_ARGS(&m_depthStencil)
+	);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create depth stencil resource.");
+	}
+	m_depthStencil->SetName(L"Depth/Stencil Resource");
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 500;
@@ -118,6 +176,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	{
 		throw std::runtime_error("Failed to create SRV descriptor heap.");
 	}
+	m_srvHeap->SetName(L"Shader Resource View Heap");
 
 	// Create Render Target Views (RTVs)
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -131,6 +190,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		}
 		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
 		rtvHandle.ptr += m_rtvDescriptorSize;
+		m_renderTargets[i]->SetName((L"Render Target " + std::to_wstring(i)).c_str());
 	}
 
 	// Create Command Allocator
@@ -141,6 +201,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		{
 			throw std::runtime_error("Failed to create command allocator.");
 		}
+		m_commandAllocators[i]->SetName((L"Command Allocator " + std::to_wstring(i)).c_str());
 	}
 
 	CreateRootSignature();
@@ -172,6 +233,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	}
 	// @TODO Why do m_fenceValues[m_frameIndex]++?
 	m_fenceValues[m_frameIndex]++;
+	m_fence->SetName(L"Main Fence");
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
@@ -183,7 +245,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		Engine::GetWindow().GetWindow(), m_device, frameCount
 	);
 
-	SDL_ShowWindow(window_);
+	SDL_ShowWindow(window);
 }
 
 bool DXRenderManager::BeginRender(glm::vec3 bgColor)
@@ -212,11 +274,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->ResourceBarrier(1, &barrier);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	// @TODO What does OMSetRenderTargets do?
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -390,6 +455,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	{
 		throw std::runtime_error("Failed to create texture command allocator.");
 	}
+	tempCommandAllocator->SetName(L"Texture Command Allocator");
 
 	// Create Command List
 	ComPtr<ID3D12GraphicsCommandList> tempCommandList;
@@ -398,6 +464,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	{
 		throw std::runtime_error("Failed to create texture command list.");
 	}
+	tempCommandList->SetName(L"Texture Command List");
 
 	// Create Fence
 	ComPtr<ID3D12Fence> tempFence;
@@ -406,6 +473,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	{
 		throw std::runtime_error("Failed to create texture fence.");
 	}
+	tempFence->SetName(L"Texture Fence");
 
 	// Create Fence Event
 	HANDLE tempFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
