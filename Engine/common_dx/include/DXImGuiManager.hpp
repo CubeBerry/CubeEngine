@@ -1,45 +1,28 @@
-////Author: JEYOON YU
-////Project: CubeEngine
-////File: VKImGuiManager.hpp
-//#pragma once
-//#include "imgui.h"
-//#include "backends/imgui_impl_vulkan.h"
-//#include "backends/imgui_impl_sdl3.h"
-//
-//#include <SDL3/SDL_vulkan.h>
-//#include <array>
-//#include <vector>
-//
-//class VKInit;
-//class VKSwapChain;
-//class VKDescriptor;
-//
-//class VKImGuiManager
-//{
-//public:
-//	VKImGuiManager(
-//		VKInit* init_,
-//		SDL_Window* window_,
-//		VkCommandPool* cpool_,
-//		std::array<VkCommandBuffer, 2>* cbuffers_,
-//		VkDescriptorPool* dpool_,
-//		VkRenderPass* pass_,
-//		VkSampleCountFlagBits samples_
-//		);
-//	~VKImGuiManager();
-//
-//	void Initialize(VKInit* init_, SDL_Window* window_, VkSampleCountFlagBits samples);
-//	//void FeedEvent(const SDL_Event& event_);
-//	void Begin();
-//	void End(uint32_t index_);
-//	void Shutdown();
-//	//void CleanSwapChain();
-//	//void RecreateSwapChain(Window* window_);
-//
-//	std::array<VkCommandBuffer, 2>* GetCommandBuffers() { return &vkCommandBuffers; };
-//private:
-//	VkCommandPool vkCommandPool{ VK_NULL_HANDLE };
-//	std::array<VkCommandBuffer, 2> vkCommandBuffers{ VK_NULL_HANDLE };
-//	VkDescriptorPool vkDescriptorPool;
-//	VkRenderPass renderPass{ VK_NULL_HANDLE };
-//};
+//Author: JEYOON YU
+//Project: CubeEngine
+//File: DXImGuiManager.hpp
+#pragma once
+#include <directx/d3dx12.h>
+
+struct SDL_Window;
+
+using Microsoft::WRL::ComPtr;
+
+class DXImGuiManager
+{
+public:
+	DXImGuiManager(
+		SDL_Window* window,
+		const ComPtr<ID3D12Device>& device,
+		int numFramesInFlight
+		);
+	~DXImGuiManager();
+
+	//void FeedEvent(const SDL_Event& event_);
+	void Begin();
+	void End(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void Shutdown();
+private:
+	// Descriptor Heap for the ImGui font texture's Shader Resource View (SRV)
+	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+};

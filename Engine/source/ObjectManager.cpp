@@ -442,26 +442,26 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 
 						if (ImGui::BeginCombo("TextureList", sprite->GetTextureName().c_str()))
 						{
-							//for (auto& tex : renderManagerDX->GetTextures())
-							//{
-							//	int index = 0;
-							//	const bool is_selected = tex->GetName().c_str() == sprite->GetTextureName().c_str();
+							for (auto& tex : renderManagerDX->GetTextures())
+							{
+								int index = 0;
+								const bool is_selected = tex->GetName().c_str() == sprite->GetTextureName().c_str();
 
-							//	//VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(*tex->GetSampler(), *tex->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-							//	//ImGui::Image((ImTextureID)descriptorSet, ImVec2(16, 16), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
-							//	//ImGui::SameLine();
+								//VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(*tex->GetSampler(), *tex->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+								//ImGui::Image((ImTextureID)descriptorSet, ImVec2(16, 16), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+								//ImGui::SameLine();
 
-							//	if (ImGui::Selectable(tex->GetName().c_str()))
-							//	{
-							//		sprite->ChangeTexture(tex->GetName());
-							//	}
-							//	if (is_selected)
-							//	{
-							//		ImGui::SetItemDefaultFocus();
-							//	}
-							//	index++;
-							//}
-							//ImGui::EndCombo();
+								if (ImGui::Selectable(tex->GetName().c_str()))
+								{
+									sprite->ChangeTexture(tex->GetName());
+								}
+								if (is_selected)
+								{
+									ImGui::SetItemDefaultFocus();
+								}
+								index++;
+							}
+							ImGui::EndCombo();
 						}
 						break;
 					}

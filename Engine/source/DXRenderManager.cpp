@@ -1,12 +1,29 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: DXRenderManager.cpp
+
 #include "Engine.hpp"
 
 DXRenderManager::~DXRenderManager()
 {
-	void WaitForGPU();
+	WaitForGPU();
 	CloseHandle(m_fenceEvent);
+
+	//Destroy Buffers
+	delete directionalLightUniformBuffer;
+	delete pointLightUniformBuffer;
+
+	//Destroy Texture
+	for (const auto t : textures)
+		delete t;
+
+//#ifdef _DEBUG
+//	ComPtr<IDXGIDebug1> dxgiDebug;
+//	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+//	{
+//		dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+//	}
+//#endif
 }
 
 void DXRenderManager::Initialize(SDL_Window* window_)
@@ -90,6 +107,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	{
 		throw std::runtime_error("Failed to cast swap chain to IDXGISwapChain3.");
 	}
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
 	// Create Descriptor Heap
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -113,7 +131,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 	}
 
 	// Create Render Target Views (RTVs)
-	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT i = 0; i < frameCount; ++i)
 	{
@@ -123,7 +141,7 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 			throw std::runtime_error("Failed to get swap chain buffer.");
 		}
 		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
-		rtvHandle.ptr += rtvDescriptorSize;
+		rtvHandle.ptr += m_rtvDescriptorSize;
 	}
 
 	// Create Command Allocator
@@ -172,7 +190,9 @@ void DXRenderManager::Initialize(SDL_Window* window_)
 		throw std::runtime_error("Failed to create fence event.");
 	}
 
-	WaitForGPU();
+	m_imguiManager = std::make_unique<DXImGuiManager>(
+		Engine::GetWindow().GetWindow(), m_device, frameCount
+	);
 
 	SDL_ShowWindow(window_);
 }
@@ -181,6 +201,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	m_commandAllocators[m_frameIndex]->Reset();
 	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
+
+	m_commandList->SetPipelineState(m_pipeline2D->GetPipelineState().Get());
 
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
@@ -226,16 +248,20 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
 		m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
 
-		m_commandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+		m_commandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 		m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 	}
+
+	m_imguiManager->Begin();
 
 	return true;
 }
 
 void DXRenderManager::EndRender()
 {
+	m_imguiManager->End(m_commandList);
+
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &barrier);
 
@@ -245,12 +271,13 @@ void DXRenderManager::EndRender()
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-	m_swapChain->Present(1, 0);
+	HRESULT hr = m_swapChain->Present(1, 0);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to present swap chain.");
+	}
 
-	// Wait for the GPU to finish
-	WaitForGPU();
-
-	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+	MoveToNextFrame();
 }
 
 void DXRenderManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter)
@@ -286,7 +313,7 @@ void DXRenderManager::CreateRootSignature()
 	}
 
 	CD3DX12_DESCRIPTOR_RANGE1 srvRange;
-	srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 500, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 500, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
 	// The slot of a root signature version 1.1
 	CD3DX12_ROOT_PARAMETER1 rootParameters[3];
@@ -334,38 +361,83 @@ void DXRenderManager::CreateRootSignature()
 
 void DXRenderManager::WaitForGPU()
 {
-	// Is this a good way to synchronize? -> https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12HelloWorld/src/HelloWindow/D3D12HelloWindow.cpp
-	if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex])))
+	m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]);
+	HRESULT hr = m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
+	if (FAILED(hr))
 	{
-		if (m_fence->GetCompletedValue() < m_fenceValues[m_frameIndex])
-		{
-			if (SUCCEEDED(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent)))
-			{
-				WaitForSingleObject(m_fenceEvent, INFINITE);
-			}
-		}
-		m_fenceValues[m_frameIndex]++;
+		throw std::runtime_error("Failed to set event on fence completion.");
 	}
+
+	WaitForSingleObject(m_fenceEvent, INFINITE);
+	m_fenceValues[m_frameIndex]++;
+}
+
+void DXRenderManager::MoveToNextFrame()
+{
+	const UINT64 currentFenceValue = m_fenceValues[m_frameIndex];
+	m_commandQueue->Signal(m_fence.Get(), currentFenceValue);
+
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+
+	if (m_fence->GetCompletedValue() < m_fenceValues[m_frameIndex])
+	{
+		HRESULT hr = m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
+		if (FAILED(hr))
+		{
+			throw std::runtime_error("Failed to set event on fence completion.");
+		}
+		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+	}
+
+	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
+	// Create Command Allocator
+	ComPtr<ID3D12CommandAllocator> tempCommandAllocator;
+	HRESULT hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&tempCommandAllocator));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create texture command allocator.");
+	}
+
+	// Create Command List
+	ComPtr<ID3D12GraphicsCommandList> tempCommandList;
+	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, tempCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&tempCommandList));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create texture command list.");
+	}
+
+	// Create Fence
+	ComPtr<ID3D12Fence> tempFence;
+	hr = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&tempFence));
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("Failed to create texture fence.");
+	}
+
+	// Create Fence Event
+	HANDLE tempFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (tempFenceEvent == nullptr)
+	{
+		throw std::runtime_error("Failed to create texture fence event.");
+	}
+
 	DXTexture* texture = new DXTexture();
-	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
 	texture->LoadTexture(
 		m_device,
-		m_commandList,
+		tempCommandList,
 		m_srvHeap,
 		m_commandQueue,
-		m_fence,
-		m_fenceEvent,
+		tempFence,
+		tempFenceEvent,
 		false,
 		path_,
 		name_,
 		flip
 	);
-
-	WaitForGPU();
 
 	textures.push_back(texture);
 
@@ -381,17 +453,17 @@ void DXRenderManager::DeleteWithIndex(int /*id*/)
 	textures.erase(textures.begin(), textures.end());
 }
 
-//DXTexture* DXRenderManager::GetTexture(std::string name)
-//{
-//	for (auto& tex : textures)
-//	{
-//		if (tex->GetName() == name)
-//		{
-//			return tex;
-//		}
-//	}
-//	return nullptr;
-//}
+DXTexture* DXRenderManager::GetTexture(const std::string& name) const
+{
+	for (auto& tex : textures)
+	{
+		if (tex->GetName() == name)
+		{
+			return tex;
+		}
+	}
+	return nullptr;
+}
 
 void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 {

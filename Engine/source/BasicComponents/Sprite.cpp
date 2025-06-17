@@ -300,6 +300,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	case GraphicsMode::DX:
+		dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	}
 
@@ -362,6 +363,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	case GraphicsMode::DX:
+		dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	}
 
@@ -375,7 +377,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_)
 		textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	case GraphicsMode::DX:
-		//textureSize = dynamic_cast<DXRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
+		textureSize = dynamic_cast<DXRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	}
 
@@ -438,6 +440,7 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	case GraphicsMode::DX:
+		dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	}
 
@@ -451,7 +454,7 @@ void Sprite::AddQuadWithTexel(std::string name_, glm::vec4 color_)
 		textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	case GraphicsMode::DX:
-		//textureSize = dynamic_cast<DXRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
+		textureSize = dynamic_cast<DXRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
 		break;
 	}
 
@@ -950,42 +953,42 @@ void Sprite::ChangeTexture(std::string name)
 		DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			//if (renderManagerDX->GetTexture(name) != nullptr)
-			//{
-			//	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-			//	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+			if (renderManagerDX->GetTexture(name) != nullptr)
+			{
+				auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 
-			//	fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
-			//	vertexUniform.isTex = true;
-			//	isTex = true;
-			//	textureName = name;
-			//}
-			//else
-			//{
-			//	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
+				vertexUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-			//	vertexUniform.isTex = false;
-			//	isTex = false;
-			//}
+				vertexUniform.isTex = false;
+				isTex = false;
+			}
 		}
 		else
 		{
-			//if (renderManagerDX->GetTexture(name) != nullptr)
-			//{
-			//	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			if (renderManagerDX->GetTexture(name) != nullptr)
+			{
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-			//	fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
-			//	fragmentUniform.isTex = true;
-			//	isTex = true;
-			//	textureName = name;
-			//}
-			//else
-			//{
-			//	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
+				fragmentUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-			//	fragmentUniform.isTex = false;
-			//	isTex = false;
-			//}
+				fragmentUniform.isTex = false;
+				isTex = false;
+			}
 		}
 		break;
 	}

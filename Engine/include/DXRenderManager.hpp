@@ -8,14 +8,12 @@
 
 #include "DXPipeLine.hpp"
 #include "DXTexture.hpp"
+#include "DXImGuiManager.hpp"
 
 // @TODO temporal forward declaration classes for DirectX
 class DXSkybox;
-class DXShader;
 
 using Microsoft::WRL::ComPtr;
-
-class DXSkybox;
 
 class DXRenderManager : public RenderManager
 {
@@ -31,6 +29,9 @@ private:
 	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
 	void CreateRootSignature();
 	void WaitForGPU();
+	void MoveToNextFrame();
+
+	std::unique_ptr<DXImGuiManager> m_imguiManager;
 
 	static constexpr UINT frameCount = 2;
 
@@ -56,7 +57,7 @@ private:
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };
 	ComPtr<ID3D12Fence> m_fence;
-	UINT64 m_fenceValues[frameCount] = {};
+	UINT64 m_fenceValues[frameCount]{};
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
 public:
@@ -70,7 +71,7 @@ public:
 		if (rMode == RenderType::TwoDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), static_cast<UINT>(vertices.size()), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), sizeof(TwoDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = new DXConstantBuffer<TwoDimension::VertexUniform>(m_device);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = new DXConstantBuffer<TwoDimension::FragmentUniform>(m_device);
@@ -78,7 +79,7 @@ public:
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), static_cast<UINT>(vertices.size()), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 #ifdef _DEBUG
 			//bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer();
 #endif
@@ -92,8 +93,8 @@ public:
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
 
-	//DXTexture* GetTexture(std::string name);
-	//std::vector<DXTexture*> GetTextures() { return textures; }
+	DXTexture* GetTexture(const std::string& name) const;
+	std::vector<DXTexture*> GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
 
@@ -112,7 +113,7 @@ private:
 	DXConstantBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
 
 	//Skybox
-	DXVertexBuffer* skyboxVertexBuffer{ nullptr };
+	//DXVertexBuffer* skyboxVertexBuffer{ nullptr };
 	//DXShader skyboxShader;
 	//DXSkybox* skybox;
 };

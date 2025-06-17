@@ -106,18 +106,13 @@ void DXTexture::LoadTexture(
 	ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
 	commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-	// Is this a good way to synchronize? -> https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12HelloWorld/src/HelloWindow/D3D12HelloWindow.cpp
-	const UINT64 fenceValue = 1;
-	if (SUCCEEDED(commandQueue->Signal(fence.Get(), fenceValue)))
+	commandQueue->Signal(fence.Get(), 1);
+	if (fence->GetCompletedValue() < 1)
 	{
-		if (fence->GetCompletedValue() < fenceValue)
-		{
-			if (SUCCEEDED(fence->SetEventOnCompletion(fenceValue, fenceEvent)))
-			{
-				WaitForSingleObject(fenceEvent, INFINITE);
-			}
-		}
+		fence->SetEventOnCompletion(1, fenceEvent);
+		WaitForSingleObject(fenceEvent, INFINITE);
 	}
+	CloseHandle(fenceEvent);
 }
 
 void DXTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
