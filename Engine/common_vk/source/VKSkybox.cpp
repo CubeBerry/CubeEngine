@@ -574,7 +574,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
 		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentDescriptorSets())[0], 0, nullptr);
 		//Push Constant World-To_NDC
-		glm::mat4 transform[2] = { views[f], projection};
+		glm::mat4 transform[2] = { views[f], projection };
 		vkCmdPushConstants(*commandBuffer, *pipelineIBL.GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
 
 		vkCmdDraw(*commandBuffer, 36, 1, 0, 0);

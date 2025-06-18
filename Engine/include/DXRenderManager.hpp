@@ -73,7 +73,7 @@ private:
 	ComPtr<ID3D12Resource> m_depthStencil;
 
 	UINT m_rtvDescriptorSize{ 0 };
-	UINT m_cbvSrvDescriptorSize{ 0 };
+	//UINT m_srvDescriptorSize{ 0 };
 
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };

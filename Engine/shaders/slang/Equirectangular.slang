@@ -1,13 +1,18 @@
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position;
+    float3 o_position : TEXCOORD0;
 };
 
 // Equirectangular Fragment Shader
 static const float2 invAtan = float2(0.1591, 0.3183);
 
+#if defined(__hlsl__)
+SamplerState smp : register(s0, space0);
+Texture2D equirectangularMap : register(t0, space0);
+#else
 [[vk::binding(0, 0)]] Sampler2D equirectangularMap;
+#endif
 
 float2 SampleSphericalMap(float3 v)
 {
@@ -37,7 +42,11 @@ float3 FilmicToneMapping(float3 color) {
 float4 fragmentMain(VSOutput input)
 {
     float2 uv = SampleSphericalMap(normalize(input.o_position));
+#if defined(__hlsl__)
+    float3 color = equirectangularMap.Sample(smp, uv).rgb;
+#else
     float3 color = equirectangularMap.Sample(uv).rgb;
+#endif
 
     color = ReinhardToneMapping(color);
 

@@ -59,7 +59,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_device->SetName(L"Main Device");
 
 	// Create Command Queue
-	// DESC = Description
+	// DESC = Descriptor
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -612,6 +612,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 		throw std::runtime_error("Failed to create texture command list.");
 	}
 	tempCommandList->SetName(L"Texture Command List");
+	tempCommandList->Close();
 
 	// Create Fence
 	ComPtr<ID3D12Fence> tempFence;
@@ -634,6 +635,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	const int texId = static_cast<int>(textures.size() - 1);
 	texture->SetTextureID(texId);
 
+	tempCommandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
 	texture->LoadTexture(
 		m_device,
 		tempCommandList,

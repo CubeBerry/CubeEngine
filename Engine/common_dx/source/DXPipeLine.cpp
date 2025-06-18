@@ -89,6 +89,7 @@ DXPipeLine::DXPipeLine(
 	D3D12_RASTERIZER_DESC& desc = psoDesc.RasterizerState;
 	desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	desc.FillMode = D3D12_FILL_MODE_SOLID;
+	// @TODO Add CULL_MODE_BACK for 3D render
 	desc.CullMode = D3D12_CULL_MODE_NONE;
 
 	psoDesc.InputLayout = { inputElementDescs.data(), static_cast<UINT>(inputElementDescs.size()) };
