@@ -65,22 +65,22 @@ VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPo
 VKSkybox::~VKSkybox()
 {
 	//Destroy Sampler
-	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerEquirectangular, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerCubemap, nullptr);
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerIrradiance, nullptr);
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerPrefilter, nullptr);
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerBRDFLUT, nullptr);
 	//Destroy ImageView
-	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewEquirectangular, nullptr);
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewCubemap, nullptr);
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewIrradiance, nullptr);
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewPrefilter, nullptr);
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewBRDFLUT, nullptr);
 	//Free Memory
-	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryEquirectangular, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryCubemap, nullptr);
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryIrradiance, nullptr);
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryPrefilter, nullptr);
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryBRDFLUT, nullptr);
 	//Destroy Image
-	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageEquirectangular, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageCubemap, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageIrradiance, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImagePrefilter, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageBRDFLUT, nullptr);
@@ -147,7 +147,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageEquirectangular);
+			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageCubemap);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -177,7 +177,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	//Declare a variable which will take memory requirements
 	VkMemoryRequirements requirements{};
 	//Get Memory Requirements for Image
-	vkGetImageMemoryRequirements(*vkInit->GetDevice(), vkTextureImageEquirectangular, &requirements);
+	vkGetImageMemoryRequirements(*vkInit->GetDevice(), vkTextureImageCubemap, &requirements);
 
 	//Create Memory Allocation Info
 	VkMemoryAllocateInfo allocateInfo{};
@@ -190,7 +190,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	try
 	{
 		VkResult result{ VK_SUCCESS };
-		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryEquirectangular);
+		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryCubemap);
 		if (result != VK_SUCCESS)
 		{
 			switch (result)
@@ -223,7 +223,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	try
 	{
 		VkResult result{ VK_SUCCESS };
-		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageEquirectangular, vkTextureDeviceMemoryEquirectangular, 0);
+		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageCubemap, vkTextureDeviceMemoryCubemap, 0);
 		if (result != VK_SUCCESS)
 		{
 			switch (result)
@@ -254,7 +254,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		//Create ImageView Info
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = vkTextureImageEquirectangular;
+		createInfo.image = vkTextureImageCubemap;
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
 		createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -266,7 +266,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewEquirectangular);
+			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewCubemap);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -312,7 +312,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerEquirectangular);
+			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerCubemap);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
@@ -410,7 +410,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 			//Create ImageView Info
 			VkImageViewCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = vkTextureImageEquirectangular;
+			createInfo.image = vkTextureImageCubemap;
 			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

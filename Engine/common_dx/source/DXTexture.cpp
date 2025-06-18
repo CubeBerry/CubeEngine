@@ -13,6 +13,7 @@ void DXTexture::LoadTexture(
 	const ComPtr<ID3D12CommandQueue>& commandQueue,
 	const ComPtr<ID3D12Fence>& fence,
 	const HANDLE& fenceEvent,
+	const INT& offsetIndex,
 	bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	name = name_;
@@ -101,7 +102,7 @@ void DXTexture::LoadTexture(
 		srvDesc.Texture2D.MipLevels = 1;
 
 		UINT descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(srvHeap->GetCPUDescriptorHandleForHeapStart(), texID, descriptorSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(srvHeap->GetCPUDescriptorHandleForHeapStart(), offsetIndex, descriptorSize);
 
 		device->CreateShaderResourceView(m_texture.Get(), &srvDesc, srvHandle);
 	}

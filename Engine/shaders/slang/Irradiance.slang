@@ -3,11 +3,16 @@
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position;
+    float3 o_position : TEXCOORD0;
 };
 
 // Irradiance Fragment Shader
+#if defined(__hlsl__)
+SamplerState smp : register(s0, space0);
+TextureCube environmentMap : register(t0, space0);
+#else
 [[vk::binding(0, 0)]] SamplerCube environmentMap;
+#endif
 
 [shader("fragment")]
 float4 fragmentMain(VSOutput input)
@@ -30,7 +35,11 @@ float4 fragmentMain(VSOutput input)
             // tangent space to world
             float3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N;
 
+#if defined(__hlsl__)
+            irradiance += environmentMap.Sample(smp, sampleVec).rgb * cos(theta) * sin(theta);
+#else
             irradiance += environmentMap.Sample(sampleVec).rgb * cos(theta) * sin(theta);
+#endif
             nrSamples++;
         }
     }

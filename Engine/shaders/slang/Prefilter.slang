@@ -3,17 +3,26 @@
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position;
+    float3 o_position : TEXCOORD0;
 };
 
 // Prefiler Fragment Shader
+#if defined(__hlsl__)
+SamplerState smp : register(s0, space0);
+TextureCube environmentMap : register(t0, space0);
+#else
 [[vk::binding(0, 0)]] SamplerCube environmentMap;
+#endif
 
 struct PrefilterUBO
 {
     float roughness;
 }
+#if defined(__hlsl__)
+ConstantBuffer<PrefilterUBO> roughnessUBO : register(b1, space0);
+#else
 [[vk::binding(1, 0)]] ConstantBuffer<PrefilterUBO> roughnessUBO;
+#endif
 
 // GGX/Trowbridge-Reitz Normal Distribution Function
 float DistributionGGX(float alpha, float3 N, float3 H)
@@ -92,7 +101,11 @@ float4 fragmentMain(VSOutput input)
 
             float mipLevel = roughnessUBO.roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
+#if defined(__hlsl__)
+            prefilteredColor += environmentMap.SampleLevel(smp, L, mipLevel).rgb * NdotL;
+#else
             prefilteredColor += environmentMap.SampleLevel(L, mipLevel).rgb * NdotL;
+#endif
             totalWeight += NdotL;
         }
     }

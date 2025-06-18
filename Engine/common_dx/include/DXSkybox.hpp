@@ -24,13 +24,30 @@ public:
 	void PrefilteredEnvironmentMap();
 	void BRDFLUT();
 
-	//std::pair<VkSampler*, VkImageView*> GetCubeMap() { return { &vkTextureSamplerEquirectangular, &vkTextureImageViewEquirectangular }; }
-	//std::pair<VkSampler*, VkImageView*> GetIrradiance() { return { &vkTextureSamplerIrradiance, &vkTextureImageViewIrradiance }; }
-	//std::pair<VkSampler*, VkImageView*> GetPrefilter() { return { &vkTextureSamplerPrefilter, &vkTextureImageViewPrefilter }; }
-	//std::pair<VkSampler*, VkImageView*> GetBRDF() { return { &vkTextureSamplerBRDFLUT, &vkTextureImageViewBRDFLUT }; }
-	D3D12_GPU_DESCRIPTOR_HANDLE GetIrradianceMapSrv() const;
-	D3D12_GPU_DESCRIPTOR_HANDLE GetPrefilterMapSrv() const;
-	D3D12_GPU_DESCRIPTOR_HANDLE GetBrdfLutSrv() const;
+	D3D12_GPU_DESCRIPTOR_HANDLE GetCubemapSrv() const
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
+		handle.Offset(1, m_srvDescriptorSize);
+		return handle;
+	}
+	D3D12_GPU_DESCRIPTOR_HANDLE GetIrradianceMapSrv() const
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
+		handle.Offset(2, m_srvDescriptorSize);
+		return handle;
+	}
+	D3D12_GPU_DESCRIPTOR_HANDLE GetPrefilterMapSrv() const
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
+		handle.Offset(3, m_srvDescriptorSize);
+		return handle;
+	}
+	D3D12_GPU_DESCRIPTOR_HANDLE GetBrdfLutSrv() const
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
+		handle.Offset(4, m_srvDescriptorSize);
+		return handle;
+	}
 private:
 	std::unique_ptr<DXTexture> m_equirectangularMap;
 
@@ -51,39 +68,15 @@ private:
 	ComPtr<ID3D12Resource> m_prefilterMap;
 	ComPtr<ID3D12Resource> m_brdfLUT;
 
-	//Equirectangular to Cube
+	// Equirectangular to Cube
 	uint32_t faceSize{ 0 };
-	//Irradiance
+	// Irradiance
 	uint32_t irradianceSize{ 64 };
-	//Prefilter
+	// Prefilter
 	uint32_t baseSize{ 512 };
-	uint32_t mipLevels{ 5 };
-	//BRDF LUT
+	UINT16 mipLevels{ 5 };
+	// BRDF LUT
 	uint32_t lutSize{ 512 };
-
-	//CubeMap converted from Equirectangular
-	//VkImage vkTextureImageEquirectangular{ DX_NULL_HANDLE };
-	//VkDeviceMemory vkTextureDeviceMemoryEquirectangular{ DX_NULL_HANDLE };
-	//VkImageView vkTextureImageViewEquirectangular{ DX_NULL_HANDLE };
-	//VkSampler vkTextureSamplerEquirectangular{ DX_NULL_HANDLE };
-
-	//Irradiance Texture
-	//VkImage vkTextureImageIrradiance{ DX_NULL_HANDLE };
-	//VkDeviceMemory vkTextureDeviceMemoryIrradiance{ DX_NULL_HANDLE };
-	//VkImageView vkTextureImageViewIrradiance{ DX_NULL_HANDLE };
-	//VkSampler vkTextureSamplerIrradiance{ DX_NULL_HANDLE };
-
-	//Prefilter Texture
-	//VkImage vkTextureImagePrefilter{ DX_NULL_HANDLE };
-	//VkDeviceMemory vkTextureDeviceMemoryPrefilter{ DX_NULL_HANDLE };
-	//VkImageView vkTextureImageViewPrefilter{ DX_NULL_HANDLE };
-	//VkSampler vkTextureSamplerPrefilter{ DX_NULL_HANDLE };
-
-	//BRDF LUT Texture
-	//VkImage vkTextureImageBRDFLUT{ DX_NULL_HANDLE };
-	//VkDeviceMemory vkTextureDeviceMemoryBRDFLUT{ DX_NULL_HANDLE };
-	//VkImageView vkTextureImageViewBRDFLUT{ DX_NULL_HANDLE };
-	//VkSampler vkTextureSamplerBRDFLUT{ DX_NULL_HANDLE };
 
 	std::vector<glm::vec3> m_skyboxVertices = {
 		{-1.0f, -1.0f, -1.0f},
@@ -128,7 +121,7 @@ private:
 		{-1.0f,  1.0f,  1.0f},
 		{ 1.0f,  1.0f,  1.0f}
 	};
-	//BRDF LUT fullscreen quad texture
+	// BRDF LUT fullscreen quad texture
 	std::vector<glm::vec3> m_fullscreenQuad = {
 	glm::vec3(-1.0f, -1.0f, 0.0f),
 	glm::vec3(1.0f, -1.0f, 0.0f),

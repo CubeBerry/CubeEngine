@@ -24,6 +24,7 @@ public:
 		const ComPtr<ID3D12CommandQueue>& commandQueue,
 		const ComPtr<ID3D12Fence>& fence,
 		const HANDLE& fenceEvent,
+		const INT& offsetIndex,
 		bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip);
 	void LoadSkyBox(
 		bool isHDR,

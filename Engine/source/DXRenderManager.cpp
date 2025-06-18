@@ -643,6 +643,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 		m_commandQueue,
 		tempFence,
 		tempFenceEvent,
+		texture->GetTextrueId(),
 		false,
 		path_,
 		name_,
