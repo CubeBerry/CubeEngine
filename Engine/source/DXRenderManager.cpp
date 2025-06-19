@@ -217,7 +217,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_rootSignature2D->SetName(L"2D Root Signature");
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	
+
 	m_pipeline2D = std::make_unique<DXPipeLine>(
 		m_device,
 		m_rootSignature2D,
@@ -419,14 +419,11 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		for (const auto& sprite : sprites)
 		{
 			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
-			// @TODO Find a way to store two different types of constant buffer
-			//auto& constantBuffer = rMode == RenderType::TwoDimension ?
-			//	sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>() :
-			//	sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
+			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
 
 			// Update Constant Buffer
-			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, m_frameIndex);
-			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, m_frameIndex);
+			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, m_frameIndex);
+			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, m_frameIndex);
 
 			// Bind Vertex Buffer & Index Buffer
 			D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
@@ -434,8 +431,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->IASetVertexBuffers(0, 1, &vbv);
 			m_commandList->IASetIndexBuffer(&ibv);
 			// Bind constant buffers to root signature
-			m_commandList->SetGraphicsRootConstantBufferView(0, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			m_commandList->SetGraphicsRootConstantBufferView(1, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
 			m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 		}
@@ -450,15 +447,12 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		for (const auto& sprite : sprites)
 		{
 			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
-			// @TODO Find a way to store two different types of constant buffer
-			//auto& constantBuffer = rMode == RenderType::TwoDimension ?
-			//	sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>() :
-			//	sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
+			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
 			// Update Constant Buffer
-			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, m_frameIndex);
-			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, m_frameIndex);
-			sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, m_frameIndex);
+			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, m_frameIndex);
+			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, m_frameIndex);
+			constantBuffer.materialUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, m_frameIndex);
 
 			if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
 			{
@@ -488,11 +482,28 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->IASetVertexBuffers(0, 1, &vbv);
 			m_commandList->IASetIndexBuffer(&ibv);
 			// Bind constant buffers to root signature
-			m_commandList->SetGraphicsRootConstantBufferView(0, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			m_commandList->SetGraphicsRootConstantBufferView(1, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			m_commandList->SetGraphicsRootConstantBufferView(2, sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+			m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
 			m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
+		}
+
+		if (skyboxEnabled)
+		{
+			m_commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
+			m_commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
+			ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_srvHeap.Get() };
+			m_commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
+
+			glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
+			m_commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
+			m_commandList->SetGraphicsRootDescriptorTable(1, skybox->GetCubemapSrv());
+
+			D3D12_VERTEX_BUFFER_VIEW vbv = skyboxVertexBuffer->GetView();
+			m_commandList->IASetVertexBuffers(0, 1, &vbv);
+
+			m_commandList->DrawInstanced(36, 1, 0, 0);
 		}
 	}
 	break;
@@ -796,7 +807,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_CULL_MODE_NONE,
-		false
+		true
 	);
 
 	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE, path);
