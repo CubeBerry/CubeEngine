@@ -176,6 +176,7 @@ void DXSkybox::EquirectangularToCube()
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_CULL_MODE_NONE,
 		false,
+		false,
 		texDesc.Format
 	);
 
@@ -329,6 +330,7 @@ void DXSkybox::CalculateIrradiance()
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_CULL_MODE_NONE,
 		false,
+		false,
 		texDesc.Format
 	);
 
@@ -467,6 +469,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		"../Engine/shaders/hlsl/Prefilter.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_CULL_MODE_NONE,
+		false,
 		false,
 		texDesc.Format
 	);
@@ -623,6 +626,7 @@ void DXSkybox::BRDFLUT()
 		"../Engine/shaders/hlsl/BRDF.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout },
 		D3D12_CULL_MODE_NONE,
+		false,
 		false,
 		texDesc.Format
 	);

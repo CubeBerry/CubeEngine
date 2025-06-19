@@ -11,6 +11,7 @@ DXPipeLine::DXPipeLine(
 	const std::filesystem::path& vertexPath, const std::filesystem::path& pixelPath,
 	std::initializer_list<DXAttributeLayout> layout,
 	D3D12_CULL_MODE cullMode,
+	bool isCCW,
 	bool isDepth,
 	DXGI_FORMAT rtvFormat,
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
@@ -94,7 +95,7 @@ DXPipeLine::DXPipeLine(
 	desc.FillMode = D3D12_FILL_MODE_SOLID;
 	desc.CullMode = cullMode;
 	// DirectX basically uses Left-Handed Coordinate System but this makes DirectX use Right-Handed Coordinate System
-	desc.FrontCounterClockwise = TRUE;
+	desc.FrontCounterClockwise = isCCW ? TRUE : FALSE;
 
 	psoDesc.InputLayout = { inputElementDescs.data(), static_cast<UINT>(inputElementDescs.size()) };
 	psoDesc.pRootSignature = rootSignature.Get();

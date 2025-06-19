@@ -225,6 +225,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_CULL_MODE_NONE,
+		true,
 		true
 	);
 
@@ -258,6 +259,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
 		D3D12_CULL_MODE_BACK,
+		true,
 		true
 	);
 
@@ -807,6 +809,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_CULL_MODE_NONE,
+		true,
 		true
 	);
 

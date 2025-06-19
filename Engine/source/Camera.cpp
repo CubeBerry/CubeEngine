@@ -37,7 +37,7 @@ void Camera::Update()
 			projection[1][1] *= -1.0f;
 			break;
 		case GraphicsMode::DX:
-			projection = glm::orthoLH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 			break;
 		}
 		break;
