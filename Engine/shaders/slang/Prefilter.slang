@@ -8,8 +8,8 @@ struct VSOutput
 
 // Prefiler Fragment Shader
 #if defined(__hlsl__)
-SamplerState smp : register(s0, space0);
-TextureCube environmentMap : register(t0, space0);
+SamplerState smp : register(s0, space1);
+TextureCube environmentMap : register(t0, space1);
 #else
 [[vk::binding(0, 0)]] SamplerCube environmentMap;
 #endif
@@ -18,11 +18,7 @@ struct PrefilterUBO
 {
     float roughness;
 }
-#if defined(__hlsl__)
-ConstantBuffer<PrefilterUBO> roughnessUBO : register(b1, space0);
-#else
-[[vk::binding(1, 0)]] ConstantBuffer<PrefilterUBO> roughnessUBO;
-#endif
+[[vk::binding(1, 0)]] ConstantBuffer<PrefilterUBO> roughnessUBO : register(b1, space0);
 
 // GGX/Trowbridge-Reitz Normal Distribution Function
 float DistributionGGX(float alpha, float3 N, float3 H)
@@ -71,7 +67,7 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float alpha)
 }
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
     float3 N = normalize(float3(input.o_position.x, input.o_position.y, input.o_position.z));
     float3 R = N;

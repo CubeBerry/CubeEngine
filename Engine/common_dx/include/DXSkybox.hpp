@@ -2,6 +2,9 @@
 //Project: CubeEngine
 //File: DXSkybox.hpp
 #pragma once
+#include <directx/d3dx12.h>
+#include <wrl.h>
+
 #include <filesystem>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
@@ -10,11 +13,15 @@
 
 class DXTexture;
 
+using Microsoft::WRL::ComPtr;
+
 class DXSkybox
 {
 public:
 	DXSkybox(const ComPtr<ID3D12Device>& device,
 		const ComPtr<ID3D12CommandQueue>& commandQueue,
+		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
+		const UINT& srvHeapStartOffset,
 		const std::filesystem::path& path);
 	~DXSkybox();
 	void ExecuteCommandList();
@@ -24,28 +31,34 @@ public:
 	void PrefilteredEnvironmentMap();
 	void BRDFLUT();
 
+	D3D12_GPU_DESCRIPTOR_HANDLE GetEquirectangularSrv()
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
+		handle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
+		return handle;
+	};
 	D3D12_GPU_DESCRIPTOR_HANDLE GetCubemapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(1, m_srvDescriptorSize);
+		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetIrradianceMapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(2, m_srvDescriptorSize);
+		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 2, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetPrefilterMapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(3, m_srvDescriptorSize);
+		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 3, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetBrdfLutSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(4, m_srvDescriptorSize);
+		handle.Offset(m_srvHeapStartOffset + 4, m_srvDescriptorSize);
 		return handle;
 	}
 private:
@@ -61,6 +74,7 @@ private:
 	UINT64 m_fenceValue{ 1 };
 
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+	UINT m_srvHeapStartOffset;
 	UINT m_srvDescriptorSize;
 
 	ComPtr<ID3D12Resource> m_cubemap;

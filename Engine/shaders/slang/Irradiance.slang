@@ -8,14 +8,14 @@ struct VSOutput
 
 // Irradiance Fragment Shader
 #if defined(__hlsl__)
-SamplerState smp : register(s0, space0);
-TextureCube environmentMap : register(t0, space0);
+SamplerState smp : register(s0, space1);
+TextureCube environmentMap : register(t0, space1);
 #else
 [[vk::binding(0, 0)]] SamplerCube environmentMap;
 #endif
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
     float3 N = normalize(float3(input.o_position.x, input.o_position.y, input.o_position.z));
     float3 irradiance = float3(0.0);

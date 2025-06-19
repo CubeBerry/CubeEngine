@@ -592,6 +592,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	case GraphicsMode::DX:
+		dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	}
 
@@ -700,6 +701,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 		dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	case GraphicsMode::DX:
+		dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 		break;
 	}
 

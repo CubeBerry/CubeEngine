@@ -117,7 +117,7 @@ void DXTexture::LoadTexture(
 		fence->SetEventOnCompletion(1, fenceEvent);
 		WaitForSingleObject(fenceEvent, INFINITE);
 	}
-	CloseHandle(fenceEvent);
+	//CloseHandle(fenceEvent);
 }
 
 void DXTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)

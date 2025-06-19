@@ -1,20 +1,22 @@
 //Author: JEYOON YU
 //Project: CubeEngine
 //File: DXSkybox.cpp
-#include "DXTexture.hpp"
 #include "DXSkybox.hpp"
 #include <filesystem>
 
+#include "DXTexture.hpp"
 #include "DXConstantBuffer.hpp"
 #include "DXPipeLine.hpp"
 #include "DXVertexBuffer.hpp"
 
 DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
-                   const ComPtr<ID3D12CommandQueue>& commandQueue,
-                   const std::filesystem::path& path)
+	const ComPtr<ID3D12CommandQueue>& commandQueue,
+	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
+	const UINT& srvHeapStartOffset,
+	const std::filesystem::path& path) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap), m_srvHeapStartOffset(srvHeapStartOffset)
 {
 	// Create Command Allocator
-	HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator));
+	HRESULT hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create texture command allocator.");
@@ -22,7 +24,7 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	m_commandAllocator->SetName(L"Skybox Texture Command Allocator");
 
 	// Create Command List
-	hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList));
+	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create texture command list.");
@@ -31,7 +33,7 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	m_commandList->Close();
 
 	// Create Fence
-	hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
+	hr = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
 	if (FAILED(hr))
 	{
 		throw std::runtime_error("Failed to create texture fence.");
@@ -45,23 +47,15 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 		throw std::runtime_error("Failed to create texture fence event.");
 	}
 
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 5;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	hr = device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create SRV descriptor heap.");
-	}
-	m_srvHeap->SetName(L"Skybox Shader Resource View Heap");
 	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_equirectangularMap = std::make_unique<DXTexture>();
+	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
 	// Store equirectangular texture in srvHeap index 0
-	m_equirectangularMap->LoadTexture(device, m_commandList, m_srvHeap, commandQueue, m_fence, m_fenceEvent, 0, true, path, "equirectangular", true);
+	m_equirectangularMap->LoadTexture(device, m_commandList, m_srvHeap, m_commandQueue, m_fence, m_fenceEvent, static_cast<UINT>(m_srvHeapStartOffset), true, path, "equirectangular", true);
 	faceSize = m_equirectangularMap->GetHeight();
 
+	// @TODO Fix Exception thrown at 0x00007FFFA80A85EA in Project.exe: Microsoft C++ exception: _com_error at memory location.
 	EquirectangularToCube();
 	CalculateIrradiance();
 	PrefilteredEnvironmentMap();
@@ -106,13 +100,17 @@ void DXSkybox::EquirectangularToCube()
 	texDesc.SampleDesc.Count = 1;
 	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = texDesc.Format;
+	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
+
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
+		&clearValue,
 		IID_PPV_ARGS(&m_cubemap)
 	);
 	m_cubemap->SetName(L"Skybox Cubemap Resource");
@@ -141,7 +139,7 @@ void DXSkybox::EquirectangularToCube()
 
 	// Prepare Pipeline
 	ComPtr<ID3D12RootSignature> rootSignature;
-	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
 	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -152,7 +150,7 @@ void DXSkybox::EquirectangularToCube()
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.ShaderRegister = 0;
-	sampler.RegisterSpace = 0;
+	sampler.RegisterSpace = 1;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
@@ -161,6 +159,7 @@ void DXSkybox::EquirectangularToCube()
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
 	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	rootSignature->SetName(L"Skybox Equirectangular Root Signature");
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -174,7 +173,9 @@ void DXSkybox::EquirectangularToCube()
 		rootSignature,
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Equirectangular.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout }
+		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		false,
+		texDesc.Format
 	);
 
 	// Record Command List
@@ -230,7 +231,7 @@ void DXSkybox::EquirectangularToCube()
 	srvDesc.TextureCube.MipLevels = 1;
 
 	// Store Cubemap texture in srvHeap index 1
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), 1, m_srvDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_cubemap.Get(), &srvDesc, srvHandle);
 
 	ExecuteCommandList();
@@ -249,13 +250,17 @@ void DXSkybox::CalculateIrradiance()
 	texDesc.SampleDesc.Count = 1;
 	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = texDesc.Format;
+	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
+
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
+		&clearValue,
 		IID_PPV_ARGS(&m_irradianceMap)
 	);
 	m_irradianceMap->SetName(L"Skybox Irradiance Map Resource");
@@ -284,7 +289,7 @@ void DXSkybox::CalculateIrradiance()
 
 	// Prepare Pipeline
 	ComPtr<ID3D12RootSignature> rootSignature;
-	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
 	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -295,7 +300,7 @@ void DXSkybox::CalculateIrradiance()
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.ShaderRegister = 0;
-	sampler.RegisterSpace = 0;
+	sampler.RegisterSpace = 1;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
@@ -304,6 +309,7 @@ void DXSkybox::CalculateIrradiance()
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
 	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	rootSignature->SetName(L"Skybox Irradiance Root Signature");
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -317,7 +323,9 @@ void DXSkybox::CalculateIrradiance()
 		rootSignature,
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Irradiance.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout }
+		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		false,
+		texDesc.Format
 	);
 
 	// Record Command List
@@ -334,7 +342,7 @@ void DXSkybox::CalculateIrradiance()
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvHandle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-	cubemapSrvHandle.Offset(1, m_srvDescriptorSize);
+	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
 
 	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
@@ -375,7 +383,7 @@ void DXSkybox::CalculateIrradiance()
 	srvDesc.Texture2D.MipLevels = 1;
 
 	// Store Irradiance texture in srvHeap index 2
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), 2, m_srvDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 2, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_irradianceMap.Get(), &srvDesc, srvHandle);
 
 	ExecuteCommandList();
@@ -394,13 +402,17 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	texDesc.SampleDesc.Count = 1;
 	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = texDesc.Format;
+	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
+
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
+		&clearValue,
 		IID_PPV_ARGS(&m_prefilterMap)
 	);
 	m_prefilterMap->SetName(L"Skybox Prefilter Map Resource");
@@ -414,8 +426,8 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	// Prepare Pipeline
 	ComPtr<ID3D12RootSignature> rootSignature;
-	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
-	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
+	CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstants(1, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -426,7 +438,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.ShaderRegister = 0;
-	sampler.RegisterSpace = 0;
+	sampler.RegisterSpace = 1;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
@@ -435,6 +447,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
 	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	rootSignature->SetName(L"Skybox Prefilter Root Signature");
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -448,7 +461,9 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		rootSignature,
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Prefilter.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout }
+		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		false,
+		texDesc.Format
 	);
 
 	// Record Command List
@@ -461,7 +476,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvHandle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-	cubemapSrvHandle.Offset(1, m_srvDescriptorSize);
+	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
 
 	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
@@ -525,7 +540,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 
 	// Store Prefilter texture in srvHeap index 3
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), 3, m_srvDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 3, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_prefilterMap.Get(), &srvDesc, srvHandle);
 
 	ExecuteCommandList();
@@ -544,13 +559,17 @@ void DXSkybox::BRDFLUT()
 	texDesc.SampleDesc.Count = 1;
 	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = texDesc.Format;
+	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
+
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
+		&clearValue,
 		IID_PPV_ARGS(&m_brdfLUT)
 	);
 	m_brdfLUT->SetName(L"Skybox BRDF LUT Resource");
@@ -575,6 +594,7 @@ void DXSkybox::BRDFLUT()
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
 	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	rootSignature->SetName(L"Skybox BRDF LUT Root Signature");
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -596,7 +616,9 @@ void DXSkybox::BRDFLUT()
 		rootSignature,
 		"../Engine/shaders/hlsl/BRDF.vert.hlsl",
 		"../Engine/shaders/hlsl/BRDF.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout }
+		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout },
+		false,
+		texDesc.Format
 	);
 
 	// Record Command List
@@ -635,7 +657,7 @@ void DXSkybox::BRDFLUT()
 	srvDesc.Texture2D.MipLevels = 1;
 
 	// Store BRDF LUT texture in srvHeap index 4
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), 4, m_srvDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 4, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_brdfLUT.Get(), &srvDesc, srvHandle);
 
 	ExecuteCommandList();

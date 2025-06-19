@@ -21,11 +21,11 @@ cbuffer roughnessUBO_0 : register(b1)
 }
 
 #line 12
-TextureCube<float4 > environmentMap_0 : register(t0);
+TextureCube<float4 > environmentMap_0 : register(t0, space1);
 
 
 #line 11
-SamplerState smp_0 : register(s0);
+SamplerState smp_0 : register(s0, space1);
 
 
 #line 39
@@ -104,7 +104,7 @@ struct VSOutput_0
 
 
 #line 74
-float4 fragmentMain(VSOutput_0 input_0)
+float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
     float3 N_3 = normalize(float3(input_0.o_position_0.x, input_0.o_position_0.y, input_0.o_position_0.z));
 

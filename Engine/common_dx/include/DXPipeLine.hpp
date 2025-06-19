@@ -33,6 +33,8 @@ public:
 		const ComPtr<ID3D12RootSignature>& rootSignature,
 		const std::filesystem::path& vertexPath, const std::filesystem::path& pixelPath,
 		std::initializer_list<DXAttributeLayout> layout,
+		bool isDepth,
+		DXGI_FORMAT rtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 	~DXPipeLine() = default;

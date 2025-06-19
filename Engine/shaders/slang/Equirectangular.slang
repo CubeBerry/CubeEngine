@@ -8,8 +8,8 @@ struct VSOutput
 static const float2 invAtan = float2(0.1591, 0.3183);
 
 #if defined(__hlsl__)
-SamplerState smp : register(s0, space0);
-Texture2D equirectangularMap : register(t0, space0);
+SamplerState smp : register(s0, space1);
+Texture2D equirectangularMap : register(t0, space1);
 #else
 [[vk::binding(0, 0)]] Sampler2D equirectangularMap;
 #endif
@@ -39,7 +39,7 @@ float3 FilmicToneMapping(float3 color) {
 }
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
     float2 uv = SampleSphericalMap(normalize(input.o_position));
 #if defined(__hlsl__)

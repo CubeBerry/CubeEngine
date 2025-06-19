@@ -10,11 +10,11 @@
 
 
 #line 12 "Equirectangular.slang"
-Texture2D<float4 > equirectangularMap_0 : register(t0);
+Texture2D<float4 > equirectangularMap_0 : register(t0, space1);
 
 
 #line 11
-SamplerState smp_0 : register(s0);
+SamplerState smp_0 : register(s0, space1);
 
 
 #line 17
@@ -42,7 +42,7 @@ struct VSOutput_0
 
 
 #line 42
-float4 fragmentMain(VSOutput_0 input_0)
+float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
 #line 56

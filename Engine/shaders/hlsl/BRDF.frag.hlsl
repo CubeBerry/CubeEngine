@@ -162,7 +162,7 @@ struct VSOutput_0
 
 
 #line 118
-float4 fragmentMain(VSOutput_0 input_0)
+float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
     return float4(IntegrateBRDF_0(input_0.uv_0.x, input_0.uv_0.y), 0.0f, 1.0f);

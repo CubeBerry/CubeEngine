@@ -13,9 +13,7 @@
 #include "DXPipeLine.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
-
-// @TODO temporal forward declaration classes for DirectX
-class DXSkybox;
+#include "DXSkybox.hpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -146,7 +144,8 @@ private:
 	} pushConstants;
 
 	//Skybox
-	//DXVertexBuffer* skyboxVertexBuffer{ nullptr };
-	//DXShader skyboxShader;
-	//DXSkybox* skybox;
+	std::unique_ptr<DXVertexBuffer> skyboxVertexBuffer;
+	ComPtr<ID3D12RootSignature> m_rootSignatureSkybox;
+	std::unique_ptr<DXPipeLine> m_pipelineSkybox;
+	std::unique_ptr<DXSkybox> skybox;
 };

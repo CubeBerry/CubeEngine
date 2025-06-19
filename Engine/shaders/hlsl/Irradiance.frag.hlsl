@@ -10,11 +10,11 @@
 
 
 #line 12 "Irradiance.slang"
-TextureCube<float4 > environmentMap_0 : register(t0);
+TextureCube<float4 > environmentMap_0 : register(t0, space1);
 
 
 #line 11
-SamplerState smp_0 : register(s0);
+SamplerState smp_0 : register(s0, space1);
 
 
 #line 3
@@ -26,7 +26,7 @@ struct VSOutput_0
 
 
 #line 18
-float4 fragmentMain(VSOutput_0 input_0)
+float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
     float3 N_0 = normalize(float3(input_0.o_position_0.x, input_0.o_position_0.y, input_0.o_position_0.z));
     float3 _S1 = (float3)0.0f;
