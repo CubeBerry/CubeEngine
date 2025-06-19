@@ -138,6 +138,7 @@ void ThreadManager::ProcessSDLEventsMainThread()
 			SDL_FALLTHROUGH;
 		case SDL_EVENT_WINDOW_MOVED:
 		case SDL_EVENT_WINDOW_MINIMIZED:
+		case SDL_EVENT_WINDOW_MAXIMIZED:
 			Engine::Instance().ResetDeltaTime();
 			break;
 		default:

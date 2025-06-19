@@ -210,7 +210,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
-	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 500, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_OBJECT_SIZE, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[2].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	CreateRootSignature(m_rootSignature2D, rootParameters);
@@ -224,6 +224,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_CULL_MODE_NONE,
 		true
 	);
 
@@ -246,9 +247,9 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_rootSignature3D->SetName(L"3D Root Signature");
 
 	positionLayout.offset = offsetof(ThreeDimension::Vertex, position);
-	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, offsetof(ThreeDimension::Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, offsetof(ThreeDimension::Vertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 3, offsetof(ThreeDimension::Vertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::Vertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::Vertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	m_pipeline3D = std::make_unique<DXPipeLine>(
 		m_device,
@@ -256,6 +257,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+		D3D12_CULL_MODE_BACK,
 		true
 	);
 
@@ -287,8 +289,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		Engine::GetWindow().GetWindow(), m_device, frameCount
 	);
 
-	directionalLightUniformBuffer = new DXConstantBuffer<ThreeDimension::DirectionalLightUniform>(m_device, frameCount);
-	pointLightUniformBuffer = new DXConstantBuffer<ThreeDimension::PointLightUniform>(m_device, frameCount);
+	directionalLightUniformBuffer = new DXConstantBuffer<DirectionalLightBatch>(m_device, frameCount);
+	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
 
 	SDL_ShowWindow(window);
 }
@@ -555,26 +557,43 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
 
-	D3D12_STATIC_SAMPLER_DESC sampler = {};
-	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.MipLODBias = 0.0f;
-	sampler.MaxAnisotropy = 0;
-	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	sampler.MinLOD = 0.0f;
-	sampler.MaxLOD = D3D12_FLOAT32_MAX;
-	sampler.ShaderRegister = 0;
-	sampler.RegisterSpace = 1;
-	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	D3D12_STATIC_SAMPLER_DESC samplers[2];
+
+	// Normal Texture Sampler
+	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[0].MipLODBias = 0.0f;
+	samplers[0].MaxAnisotropy = 16;
+	samplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplers[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	samplers[0].MinLOD = 0.0f;
+	samplers[0].MaxLOD = D3D12_FLOAT32_MAX;
+	samplers[0].ShaderRegister = 0;
+	samplers[0].RegisterSpace = 1;
+	samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// IBL Texture Sampler
+	samplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	samplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[1].MipLODBias = 0.0f;
+	samplers[1].MaxAnisotropy = 0;
+	samplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplers[1].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	samplers[1].MinLOD = 0.0f;
+	samplers[1].MaxLOD = D3D12_FLOAT32_MAX;
+	samplers[1].ShaderRegister = 1;
+	samplers[1].RegisterSpace = 2;
+	samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// @TODO What is root signature?
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init_1_1(
 		static_cast<UINT>(rootParameters.size()), rootParameters.data(),
-		1, &sampler,
+		2, samplers,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
 	);
 
@@ -776,10 +795,11 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		"../Engine/shaders/hlsl/Skybox.vert.hlsl",
 		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_CULL_MODE_NONE,
 		false
 	);
 
-	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, 500, path);
+	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE, path);
 
 	skyboxEnabled = true;
 }

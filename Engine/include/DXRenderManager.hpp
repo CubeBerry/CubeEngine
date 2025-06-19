@@ -15,6 +15,9 @@
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
 
+#define MAX_OBJECT_SIZE 500
+#define MAX_LIGHT_SIZE 10
+
 using Microsoft::WRL::ComPtr;
 
 class DXRenderManager : public RenderManager
@@ -107,7 +110,7 @@ public:
 			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 #ifdef _DEBUG
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::NormalVertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
 #endif
 
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = new DXConstantBuffer<ThreeDimension::VertexUniform>(m_device, frameCount);
@@ -135,8 +138,16 @@ private:
 #endif
 
 	//Lighting
-	DXConstantBuffer<ThreeDimension::DirectionalLightUniform>* directionalLightUniformBuffer{ nullptr };
-	DXConstantBuffer<ThreeDimension::PointLightUniform>* pointLightUniformBuffer{ nullptr };
+	struct DirectionalLightBatch
+	{
+		ThreeDimension::DirectionalLightUniform lights[MAX_LIGHT_SIZE];
+	};
+	struct PointLightBatch
+	{
+		ThreeDimension::PointLightUniform lights[MAX_LIGHT_SIZE];
+	};
+	DXConstantBuffer<DirectionalLightBatch>* directionalLightUniformBuffer{ nullptr };
+	DXConstantBuffer<PointLightBatch>* pointLightUniformBuffer{ nullptr };
 	struct alignas(16) PushConstants
 	{
 		int activeDirectionalLight;

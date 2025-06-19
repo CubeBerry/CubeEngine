@@ -6,7 +6,7 @@ struct VSInput
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position : TEXCOORD0;
+    float3 uvw : TEXCOORD0;
 };
 
 // Cubemap Vertex Shader
@@ -26,7 +26,7 @@ VSOutput vertexMain(VSInput input)
 {
     VSOutput output;
 
-    output.o_position = input.position;
+    output.uvw = input.position;
 
     output.position = mul(worldToNDC.projection, mul(worldToNDC.view, float4(input.position, 1.0)));
     

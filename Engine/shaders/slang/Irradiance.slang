@@ -3,7 +3,7 @@
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position : TEXCOORD0;
+    float3 uvw : TEXCOORD0;
 };
 
 // Irradiance Fragment Shader
@@ -17,7 +17,7 @@ TextureCube environmentMap : register(t0, space1);
 [shader("fragment")]
 float4 fragmentMain(VSOutput input) : SV_Target
 {
-    float3 N = normalize(float3(input.o_position.x, input.o_position.y, input.o_position.z));
+    float3 N = normalize(float3(input.uvw.x, input.uvw.y, input.uvw.z));
     float3 irradiance = float3(0.0);
 
     float3 up = float3(0.0, 1.0, 0.0);

@@ -174,6 +174,7 @@ void DXSkybox::EquirectangularToCube()
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Equirectangular.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_CULL_MODE_NONE,
 		false,
 		texDesc.Format
 	);
@@ -191,7 +192,9 @@ void DXSkybox::EquirectangularToCube()
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-	m_commandList->SetGraphicsRootDescriptorTable(1, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+	CD3DX12_GPU_DESCRIPTOR_HANDLE equirectangularSrvHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+	equirectangularSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
+	m_commandList->SetGraphicsRootDescriptorTable(1, equirectangularSrvHandle);
 
 	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
 
@@ -324,6 +327,7 @@ void DXSkybox::CalculateIrradiance()
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Irradiance.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_CULL_MODE_NONE,
 		false,
 		texDesc.Format
 	);
@@ -380,7 +384,7 @@ void DXSkybox::CalculateIrradiance()
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.TextureCube.MipLevels = 1;
 
 	// Store Irradiance texture in srvHeap index 2
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 2, m_srvDescriptorSize);
@@ -462,6 +466,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Prefilter.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_CULL_MODE_NONE,
 		false,
 		texDesc.Format
 	);
@@ -610,13 +615,14 @@ void DXSkybox::BRDFLUT()
 	}
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, offsetof(VA, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(VA, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
 		m_device,
 		rootSignature,
 		"../Engine/shaders/hlsl/BRDF.vert.hlsl",
 		"../Engine/shaders/hlsl/BRDF.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout },
+		D3D12_CULL_MODE_NONE,
 		false,
 		texDesc.Format
 	);
@@ -635,7 +641,7 @@ void DXSkybox::BRDFLUT()
 
 	D3D12_VERTEX_BUFFER_VIEW vbv = quadVertexBuffer.GetView();
 	m_commandList->IASetVertexBuffers(0, 1, &vbv);
-	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_brdfLUT.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);

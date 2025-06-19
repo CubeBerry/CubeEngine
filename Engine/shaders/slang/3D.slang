@@ -115,6 +115,7 @@ struct fPointLightList
 [[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList : register(b4, space0);
 
 #if defined(__hlsl__)
+SamplerState iblSmp : register(s1, space2);
 TextureCube irradianceMap : register(t0, space2);
 TextureCube prefilterMap : register(t1, space2);
 Texture2D brdfLUT : register(t2, space2);
@@ -314,7 +315,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 Ks = F;
     float3 Kd = (1.0 - f_material.metallic) * (float3(1.0) - Ks);
 #if defined(__hlsl__)
-    float3 irradiance = irradianceMap.Sample(smp, N).rgb;
+    float3 irradiance = irradianceMap.Sample(iblSmp, N).rgb;
 #else
     float3 irradiance = irradianceMap.Sample(N).rgb;
 #endif
@@ -322,8 +323,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
 
     const float MAX_REFLECTION_LOD = 4.0;
 #if defined(__hlsl__)
-    float3 prefilteredColor = prefilterMap.SampleLevel(smp, R, f_material.roughness * MAX_REFLECTION_LOD).rgb;
-    float2 brdf = brdfLUT.Sample(smp, float2(max(dot(N, V), 0.0), f_material.roughness)).rg;
+    float3 prefilteredColor = prefilterMap.SampleLevel(iblSmp, R, f_material.roughness * MAX_REFLECTION_LOD).rgb;
+    float2 brdf = brdfLUT.Sample(iblSmp, float2(max(dot(N, V), 0.0), f_material.roughness)).rg;
 #else
     float3 prefilteredColor = prefilterMap.SampleLevel(R, f_material.roughness * MAX_REFLECTION_LOD).rgb;
     float2 brdf = brdfLUT.Sample(float2(max(dot(N, V), 0.0), f_material.roughness)).rg;

@@ -10,6 +10,7 @@ DXPipeLine::DXPipeLine(
 	const ComPtr<ID3D12RootSignature>& rootSignature,
 	const std::filesystem::path& vertexPath, const std::filesystem::path& pixelPath,
 	std::initializer_list<DXAttributeLayout> layout,
+	D3D12_CULL_MODE cullMode,
 	bool isDepth,
 	DXGI_FORMAT rtvFormat,
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
@@ -91,8 +92,9 @@ DXPipeLine::DXPipeLine(
 	D3D12_RASTERIZER_DESC& desc = psoDesc.RasterizerState;
 	desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	desc.FillMode = D3D12_FILL_MODE_SOLID;
-	// @TODO Add CULL_MODE_BACK for 3D render
-	desc.CullMode = D3D12_CULL_MODE_NONE;
+	desc.CullMode = cullMode;
+	// DirectX basically uses Left-Handed Coordinate System but this makes DirectX use Right-Handed Coordinate System
+	desc.FrontCounterClockwise = TRUE;
 
 	psoDesc.InputLayout = { inputElementDescs.data(), static_cast<UINT>(inputElementDescs.size()) };
 	psoDesc.pRootSignature = rootSignature.Get();

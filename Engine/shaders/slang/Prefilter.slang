@@ -3,7 +3,7 @@
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position : TEXCOORD0;
+    float3 uvw : TEXCOORD0;
 };
 
 // Prefiler Fragment Shader
@@ -69,7 +69,7 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float alpha)
 [shader("fragment")]
 float4 fragmentMain(VSOutput input) : SV_Target
 {
-    float3 N = normalize(float3(input.o_position.x, input.o_position.y, input.o_position.z));
+    float3 N = normalize(float3(input.uvw.x, input.uvw.y, input.uvw.z));
     float3 R = N;
     float3 V = R;
 

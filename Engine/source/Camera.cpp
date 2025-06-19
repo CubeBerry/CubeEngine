@@ -37,7 +37,7 @@ void Camera::Update()
 			projection[1][1] *= -1.0f;
 			break;
 		case GraphicsMode::DX:
-			projection = glm::orthoRH_NO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			projection = glm::orthoLH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 			break;
 		}
 		break;
@@ -110,16 +110,16 @@ void Camera::Update()
 
 			if (isThirdPersonView == true)
 			{
-				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
+				view = glm::lookAtRH({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
 				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, cameraCenter + back, up);
 			}
 			else
 			{
-				view = glm::lookAt(cameraPosition, cameraPosition + back, up);
+				view = glm::lookAtRH(cameraPosition, cameraPosition + back, up);
 				//view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, glm::vec3{ cameraPosition.x, -cameraPosition.y, cameraPosition.z } + back, up);
 			}
 			//projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
-			projection = glm::perspectiveRH_NO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
+			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
 
 			break;
 		}

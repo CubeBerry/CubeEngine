@@ -1,7 +1,7 @@
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float3 o_position : TEXCOORD0;
+    float3 uvw : TEXCOORD0;
 };
 
 // Equirectangular Fragment Shader
@@ -41,7 +41,7 @@ float3 FilmicToneMapping(float3 color) {
 [shader("fragment")]
 float4 fragmentMain(VSOutput input) : SV_Target
 {
-    float2 uv = SampleSphericalMap(normalize(input.o_position));
+    float2 uv = SampleSphericalMap(normalize(input.uvw));
 #if defined(__hlsl__)
     float3 color = equirectangularMap.Sample(smp, uv).rgb;
 #else
