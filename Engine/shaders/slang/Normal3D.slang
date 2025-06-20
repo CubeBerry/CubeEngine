@@ -2,7 +2,7 @@
 
 struct VSInput
 {
-    float3 position;
+    float3 position : POSITION0;
 }
 
 struct VSOutput
@@ -14,7 +14,11 @@ struct PushConstants
 {
     float4x4 modelToNDC;
 }
+#if defined(__hlsl__)
+ConstantBuffer<PushConstants> modelToNDC : register(b0, space0);
+#else
 [[vk::push_constant]] PushConstants modelToNDC;
+#endif
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input)
@@ -27,7 +31,7 @@ VSOutput vertexMain(VSInput input)
 }
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
     return float4(1.0, 1.0, 1.0, 1.0);
 }

@@ -64,9 +64,6 @@ private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
 	ComPtr<ID3D12RootSignature> m_rootSignature3D;
-#ifdef _DEBUG
-	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
-#endif
 	// rtv = Render Target View
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// dsv = Depth Stencil View
@@ -88,6 +85,7 @@ private:
 	std::unique_ptr<DXPipeLine> m_pipeline3D;
 #ifdef _DEBUG
 	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
+	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
 #endif
 
 	std::unique_ptr<DXImGuiManager> m_imguiManager;
@@ -135,10 +133,6 @@ public:
 private:
 	//--------------------Common--------------------//
 	std::vector<std::unique_ptr<DXTexture>> textures;
-
-#ifdef _DEBUG
-	//DXShader glNormal3DShader;
-#endif
 
 	//Lighting
 	struct DirectionalLightBatch

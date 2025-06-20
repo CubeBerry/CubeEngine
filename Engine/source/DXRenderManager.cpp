@@ -225,6 +225,31 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		true
 	);
 
+#ifdef _DEBUG
+	// Create root signature and pipeline for Normal 3D
+	rootParameters.clear();
+	rootParameters.resize(1, {});
+	rootParameters[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+
+	CreateRootSignature(m_rootSignature3DNormal, rootParameters);
+	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
+
+	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
+
+	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
+		m_device,
+		m_rootSignature3DNormal,
+		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.vert.hlsl"),
+		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.frag.hlsl"),
+		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_CULL_MODE_BACK,
+		true,
+		true,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
+	);
+#endif
+
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->Close());
@@ -381,14 +406,13 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:
 	{
 		m_commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
+		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ID3D12DescriptorHeap* ppHeaps2D[] = { m_srvHeap.Get() };
 		m_commandList->SetDescriptorHeaps(_countof(ppHeaps2D), ppHeaps2D);
 		m_commandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -423,6 +447,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 		for (const auto& sprite : sprites)
 		{
+			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
 			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
@@ -464,12 +490,34 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
 			m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
+
+#ifdef _DEBUG
+			if (isDrawNormals)
+			{
+				m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
+				m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
+				m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+				auto& vertexUniform = sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+				glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
+				m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
+
+				vbv = buffer.normalVertexBuffer->GetView();
+				m_commandList->IASetVertexBuffers(0, 1, &vbv);
+
+				m_commandList->DrawInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+
+				m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
+				m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
+			}
+#endif
 		}
 
 		if (skyboxEnabled)
 		{
 			m_commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
 			m_commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
+			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_srvHeap.Get() };
 			m_commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
 
