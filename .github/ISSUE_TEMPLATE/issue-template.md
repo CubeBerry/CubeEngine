@@ -1,7 +1,7 @@
 ---
 name: Issue Template
 about: Classify issue
-title: "[OpenGL/Vulkan/Engine/Game/ETC]Description"
+title: "[OpenGL/Vulkan/DX12/Engine/Game/ETC]Description"
 labels: ''
 assignees: ''
 
