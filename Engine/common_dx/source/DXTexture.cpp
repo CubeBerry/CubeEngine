@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: DXTexture.cpp
 #include "DXTexture.hpp"
+#include "DXHelper.hpp"
 #include <iostream>
 
 #include "stb-master/stb_image.h"
@@ -46,36 +47,28 @@ void DXTexture::LoadTexture(
 		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-		HRESULT hr = device->CreateCommittedResource(
+		DXHelper::ThrowIfFailed(device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			nullptr,
 			IID_PPV_ARGS(&m_texture)
-		);
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to create committed resource for texture.");
-		}
+		));
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_texture.Get(), 0, 1);
 
 		// Create the GPU upload buffer
 		CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC uploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-		hr = device->CreateCommittedResource(
+		DXHelper::ThrowIfFailed(device->CreateCommittedResource(
 			&uploadHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&uploadResourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&textureUploadHeap)
-		);
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to create committed resource for texture upload heap.");
-		}
+		));
 
 		D3D12_SUBRESOURCE_DATA textureData = {};
 		textureData.pData = data;
@@ -107,14 +100,14 @@ void DXTexture::LoadTexture(
 		device->CreateShaderResourceView(m_texture.Get(), &srvDesc, srvHandle);
 	}
 
-	commandList->Close();
+	DXHelper::ThrowIfFailed(commandList->Close());
 	ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
 	commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-	commandQueue->Signal(fence.Get(), 1);
+	DXHelper::ThrowIfFailed(commandQueue->Signal(fence.Get(), 1));
 	if (fence->GetCompletedValue() < 1)
 	{
-		fence->SetEventOnCompletion(1, fenceEvent);
+		DXHelper::ThrowIfFailed(fence->SetEventOnCompletion(1, fenceEvent));
 		WaitForSingleObject(fenceEvent, INFINITE);
 	}
 	//CloseHandle(fenceEvent);

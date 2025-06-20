@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: DXImGuiManager.cpp
 #include "DXImGuiManager.hpp"
+#include "DXHelper.hpp"
 
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_dx12.h"
@@ -26,11 +27,7 @@ DXImGuiManager::DXImGuiManager(
 	srvHeapDesc.NumDescriptors = 1;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	HRESULT hr = device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create ImGui SRV descriptor heap.");
-	}
+	DXHelper::ThrowIfFailed(device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
 
 	ImGui_ImplDX12_Init(device.Get(), numFramesInFlight, DXGI_FORMAT_R8G8B8A8_UNORM, m_srvHeap.Get(),
 		m_srvHeap->GetCPUDescriptorHandleForHeapStart(),

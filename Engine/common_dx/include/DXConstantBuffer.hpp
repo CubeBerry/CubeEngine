@@ -3,6 +3,7 @@
 //File: DXConstantBuffer.hpp
 #pragma once
 #include <directx/d3dx12.h>
+#include "DXHelper.hpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -48,25 +49,17 @@ DXConstantBuffer<Type>::DXConstantBuffer(const ComPtr<ID3D12Device>& device, con
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 	CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
 
-	HRESULT hr = device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&m_constantBuffer)
-	);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create committed resource for constant buffer.");
-	}
+	));
 
 	CD3DX12_RANGE readRange(0, 0);
-	hr = m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedData));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to map constant buffer.");
-	}
+	DXHelper::ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedData)));
 }
 
 template<typename Type>

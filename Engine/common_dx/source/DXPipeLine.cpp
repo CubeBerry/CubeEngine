@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: DXPipeLine.cpp
 #include "DXPipeLine.hpp"
+#include "DXHelper.hpp"
 
 #include <d3dcompiler.h>
 
@@ -23,11 +24,10 @@ DXPipeLine::DXPipeLine(
 	UINT compileFlags = 0;
 #endif
 
-	HRESULT hr;
 	ComPtr<ID3DBlob> errorMessages;
 
 	// Compile vertex shader
-	hr = D3DCompileFromFile(
+	HRESULT hr = D3DCompileFromFile(
 		vertexPath.c_str(),
 		nullptr,
 		nullptr,
@@ -115,9 +115,5 @@ DXPipeLine::DXPipeLine(
 	psoDesc.SampleDesc.Count = 1;
 
 	// Create the Pipeline State Object (PSO)
-	hr = device->CreateGraphicsPipelineState(&psoDesc,IID_PPV_ARGS(&m_pipelineState));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create graphics pipeline state.");
-	}
+	DXHelper::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc,IID_PPV_ARGS(&m_pipelineState)));
 }

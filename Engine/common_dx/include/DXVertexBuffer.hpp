@@ -4,6 +4,7 @@
 #pragma once
 #include <directx/d3dx12.h>
 #include <wrl.h>
+#include "DXHelper.hpp"
 
 #include <stdexcept>
 
@@ -29,26 +30,18 @@ public:
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
 
-		HRESULT hr = device->CreateCommittedResource(
+		DXHelper::ThrowIfFailed(device->CreateCommittedResource(
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&resourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_vertexBuffer)
-		);
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to create committed resource for vertex buffer.");
-		}
+		));
 
 		UINT8* pVertexDataBegin;
 		CD3DX12_RANGE readRange(0, 0);
-		hr = m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to map vertex buffer.");
-		}
+		DXHelper::ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
 		memcpy(pVertexDataBegin, data, totalSize);
 		m_vertexBuffer->Unmap(0, nullptr);
 

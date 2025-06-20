@@ -4,6 +4,7 @@
 #include "DXSkybox.hpp"
 #include <filesystem>
 
+#include "DXHelper.hpp"
 #include "DXTexture.hpp"
 #include "DXConstantBuffer.hpp"
 #include "DXPipeLine.hpp"
@@ -16,29 +17,17 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	const std::filesystem::path& path) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap), m_srvHeapStartOffset(srvHeapStartOffset)
 {
 	// Create Command Allocator
-	HRESULT hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create texture command allocator.");
-	}
-	m_commandAllocator->SetName(L"Skybox Texture Command Allocator");
+	DXHelper::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
+	DXHelper::ThrowIfFailed(m_commandAllocator->SetName(L"Skybox Texture Command Allocator"));
 
 	// Create Command List
-	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create texture command list.");
-	}
-	m_commandList->SetName(L"Skybox Texture Command List");
-	m_commandList->Close();
+	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Skybox Texture Command List"));
+	DXHelper::ThrowIfFailed(m_commandList->Close());
 
 	// Create Fence
-	hr = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create texture fence.");
-	}
-	m_fence->SetName(L"Skybox Texture Fence");
+	DXHelper::ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+	DXHelper::ThrowIfFailed(m_fence->SetName(L"Skybox Texture Fence"));
 
 	// Create Fence Event
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -50,7 +39,7 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_equirectangularMap = std::make_unique<DXTexture>();
-	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 	// Store equirectangular texture in srvHeap index 0
 	m_equirectangularMap->LoadTexture(device, m_commandList, m_srvHeap, m_commandQueue, m_fence, m_fenceEvent, static_cast<UINT>(m_srvHeapStartOffset), true, path, "equirectangular", true);
 	faceSize = m_equirectangularMap->GetHeight();
@@ -76,13 +65,13 @@ DXSkybox::~DXSkybox()
 
 void DXSkybox::ExecuteCommandList()
 {
-	m_commandList->Close();
+	DXHelper::ThrowIfFailed(m_commandList->Close());
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	// Wait for GPU
-	m_commandQueue->Signal(m_fence.Get(), m_fenceValue);
-	m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent);
+	DXHelper::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValue));
+	DXHelper::ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent));
 	WaitForSingleObject(m_fenceEvent, INFINITE);
 	m_fenceValue++;
 }
@@ -105,15 +94,15 @@ void DXSkybox::EquirectangularToCube()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	m_device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&clearValue,
 		IID_PPV_ARGS(&m_cubemap)
-	);
-	m_cubemap->SetName(L"Skybox Cubemap Resource");
+	));
+	DXHelper::ThrowIfFailed(m_cubemap->SetName(L"Skybox Cubemap Resource"));
 
 	// Create Render Target View (RTV) heap for each face
 	ComPtr<ID3D12DescriptorHeap> rtvHeap;
@@ -121,7 +110,7 @@ void DXSkybox::EquirectangularToCube()
 	rtvHeapDesc.NumDescriptors = 6;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
 	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -158,8 +147,8 @@ void DXSkybox::EquirectangularToCube()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	rootSignature->SetName(L"Skybox Equirectangular Root Signature");
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
+	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox Equirectangular Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -181,8 +170,8 @@ void DXSkybox::EquirectangularToCube()
 	);
 
 	// Record Command List
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get());
+	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
 
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(faceSize), static_cast<FLOAT>(faceSize), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(faceSize), static_cast<LONG>(faceSize) };
@@ -259,15 +248,15 @@ void DXSkybox::CalculateIrradiance()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	m_device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&clearValue,
 		IID_PPV_ARGS(&m_irradianceMap)
-	);
-	m_irradianceMap->SetName(L"Skybox Irradiance Map Resource");
+	));
+	DXHelper::ThrowIfFailed(m_irradianceMap->SetName(L"Skybox Irradiance Map Resource"));
 
 	// Create Render Target View (RTV) heap for each face
 	ComPtr<ID3D12DescriptorHeap> rtvHeap;
@@ -275,7 +264,7 @@ void DXSkybox::CalculateIrradiance()
 	rtvHeapDesc.NumDescriptors = 6;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
 	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -312,8 +301,8 @@ void DXSkybox::CalculateIrradiance()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	rootSignature->SetName(L"Skybox Irradiance Root Signature");
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
+	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox Irradiance Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -335,8 +324,8 @@ void DXSkybox::CalculateIrradiance()
 	);
 
 	// Record Command List
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get());
+	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
 
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(irradianceSize), static_cast<FLOAT>(irradianceSize), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(irradianceSize), static_cast<LONG>(irradianceSize) };
@@ -413,21 +402,21 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	m_device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&clearValue,
 		IID_PPV_ARGS(&m_prefilterMap)
-	);
-	m_prefilterMap->SetName(L"Skybox Prefilter Map Resource");
+	));
+	DXHelper::ThrowIfFailed(m_prefilterMap->SetName(L"Skybox Prefilter Map Resource"));
 
 	ComPtr<ID3D12DescriptorHeap> rtvHeap;
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = 6;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
 	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	// Prepare Pipeline
@@ -452,8 +441,8 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	rootSignature->SetName(L"Skybox Prefilter Root Signature");
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
+	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox Prefilter Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -475,8 +464,8 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	);
 
 	// Record Command List
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get());
+	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
 
 	m_commandList->SetGraphicsRootSignature(rootSignature.Get());
 
@@ -572,22 +561,22 @@ void DXSkybox::BRDFLUT()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	m_device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&clearValue,
 		IID_PPV_ARGS(&m_brdfLUT)
-	);
-	m_brdfLUT->SetName(L"Skybox BRDF LUT Resource");
+	));
+	DXHelper::ThrowIfFailed(m_brdfLUT->SetName(L"Skybox BRDF LUT Resource"));
 
 	// Create Render Target View (RTV)
 	ComPtr<ID3D12DescriptorHeap> rtvHeap;
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = 1;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 	rtvDesc.Format = texDesc.Format;
@@ -601,8 +590,8 @@ void DXSkybox::BRDFLUT()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	rootSignature->SetName(L"Skybox BRDF LUT Root Signature");
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
+	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox BRDF LUT Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -632,8 +621,8 @@ void DXSkybox::BRDFLUT()
 	);
 
 	// Record Command List
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get());
+	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
 
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(lutSize), static_cast<FLOAT>(lutSize), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(lutSize), static_cast<LONG>(lutSize) };

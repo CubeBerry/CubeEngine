@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: DXRenderManager.cpp
 #include "DXRenderManager.hpp"
-#include "DXHekper.hpp"
+#include "DXHelper.hpp"
 
 #include "Engine.hpp"
 
