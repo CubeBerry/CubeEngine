@@ -299,7 +299,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 void DXRenderManager::OnResize(int width, int height)
 {
-	WaitForGPU();
+	if (width == 0 || height == 0) return;
+
+	//WaitForGPU();
+	MoveToNextFrame();
 
 	for (int i = 0; i < frameCount; ++i)
 	{

@@ -7,11 +7,11 @@
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
 	std::cout << "0. OpenGL    1. Vulkan	2. DirectX 12";
-	std::cout << std::endl << std::endl;
+	std::cout << "\n\n";
 	std::cout << "Select API number: ";
 	int number{ 0 };
 	std::cin >> number;
-	std::cout << std::endl;
+	std::cout << '\n';
 
 	//Init Window -> Init VKInit -> Init SwapChain -> Init VKRenderManager
 	//window = new Window();
