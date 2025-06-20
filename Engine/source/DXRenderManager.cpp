@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: DXRenderManager.cpp
 #include "DXRenderManager.hpp"
+#include "DXHekper.hpp"
 
 #include "Engine.hpp"
 
@@ -22,53 +23,46 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	HWND hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 
 	// Initialize Direct3D 12
-	HRESULT hr;
 
 	// Enable Debug Layer
 #ifdef _DEBUG
 	{
 		ComPtr<ID3D12Debug> debugController;
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-		{
-			debugController->EnableDebugLayer();
-			ComPtr<ID3D12Debug1> debugController1;
-			if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
-			{
-				debugController1->SetEnableGPUBasedValidation(TRUE);
-			}
-		}
+		DXHelper::ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+		debugController->EnableDebugLayer();
+		ComPtr<ID3D12Debug1> debugController1;
+		DXHelper::ThrowIfFailed(debugController->QueryInterface(IID_PPV_ARGS(&debugController1)));
+		debugController1->SetEnableGPUBasedValidation(TRUE);
+
+		//if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+		//{
+		//	debugController->EnableDebugLayer();
+		//	ComPtr<ID3D12Debug1> debugController1;
+		//	if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
+		//	{
+		//		debugController1->SetEnableGPUBasedValidation(TRUE);
+		//	}
+		//}
 	}
 #endif
 
 	// Create GXDI factory
 	ComPtr<IDXGIFactory4> factory;
-	hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create DXGI factory.");
-	}
+	DXHelper::ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&factory)));
 
 	// Create Device
 	ComPtr<IDXGIAdapter1> hardwareAdapter;
 	GetHardwareAdapter(factory.Get(), &hardwareAdapter);
-	hr = D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create device.");
-	}
-	m_device->SetName(L"Main Device");
+	DXHelper::ThrowIfFailed(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)));
+	DXHelper::ThrowIfFailed(m_device->SetName(L"Main Device"));
 
 	// Create Command Queue
 	// DESC = Descriptor
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	hr = m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create command queue.");
-	}
-	m_commandQueue->SetName(L"Main Command Queue");
+	DXHelper::ThrowIfFailed(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
+	DXHelper::ThrowIfFailed(m_commandQueue->SetName(L"Main Command Queue"));
 
 	// Create Swap Chain
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -81,23 +75,15 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	swapChainDesc.SampleDesc.Count = 1;
 
 	ComPtr<IDXGISwapChain1> swapChain;
-	hr = factory->CreateSwapChainForHwnd(
+	DXHelper::ThrowIfFailed(factory->CreateSwapChainForHwnd(
 		m_commandQueue.Get(),
 		hwnd,
 		&swapChainDesc,
 		nullptr,
 		nullptr,
 		&swapChain
-	);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create swap chain.");
-	}
-	hr = swapChain.As(&m_swapChain);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to cast swap chain to IDXGISwapChain3.");
-	}
+	));
+	DXHelper::ThrowIfFailed(swapChain.As(&m_swapChain));
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
 	// Create Descriptor Heaps
@@ -105,23 +91,15 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	rtvHeapDesc.NumDescriptors = frameCount; // Double buffering
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create RTV descriptor heap.");
-	}
-	m_rtvHeap->SetName(L"Render Target View Heap");
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+	DXHelper::ThrowIfFailed(m_rtvHeap->SetName(L"Render Target View Heap"));
 
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create DSV descriptor heap.");
-	}
-	m_dsvHeap->SetName(L"Depth/Stencil View Heap");
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+	DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
 
 	// Create Depth Stencil Buffer Resource
 	D3D12_RESOURCE_DESC depthStencilDesc = {};
@@ -146,19 +124,15 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	clearValue.DepthStencil.Stencil = 0;
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	hr = m_device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&depthStencilDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&clearValue,
 		IID_PPV_ARGS(&m_depthStencil)
-	);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create depth stencil resource.");
-	}
-	m_depthStencil->SetName(L"Depth/Stencil Resource");
+	));
+	DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"Depth/Stencil Resource"));
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -171,37 +145,25 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	srvHeapDesc.NumDescriptors = 505;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	hr = m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create SRV descriptor heap.");
-	}
-	m_srvHeap->SetName(L"Shader Resource View Heap");
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
+	DXHelper::ThrowIfFailed(m_srvHeap->SetName(L"Shader Resource View Heap"));
 
 	// Create Render Target Views (RTVs)
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT i = 0; i < frameCount; ++i)
 	{
-		hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i]));
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to get swap chain buffer.");
-		}
+		DXHelper::ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i])));
 		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
 		rtvHandle.ptr += m_rtvDescriptorSize;
-		m_renderTargets[i]->SetName((L"Render Target " + std::to_wstring(i)).c_str());
+		DXHelper::ThrowIfFailed(m_renderTargets[i]->SetName((L"Render Target " + std::to_wstring(i)).c_str()));
 	}
 
 	// Create Command Allocator
 	for (UINT i = 0; i < frameCount; ++i)
 	{
-		hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i]));
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to create command allocator.");
-		}
-		m_commandAllocators[i]->SetName((L"Command Allocator " + std::to_wstring(i)).c_str());
+		DXHelper::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i])));
+		DXHelper::ThrowIfFailed(m_commandAllocators[i]->SetName((L"Command Allocator " + std::to_wstring(i)).c_str()));
 	}
 
 	// Create root signature and pipeline for 2D
@@ -214,7 +176,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	rootParameters[2].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	CreateRootSignature(m_rootSignature2D, rootParameters);
-	m_rootSignature2D->SetName(L"2D Root Signature");
+	DXHelper::ThrowIfFailed(m_rootSignature2D->SetName(L"2D Root Signature"));
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
@@ -245,7 +207,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	CreateRootSignature(m_rootSignature3D, rootParameters);
-	m_rootSignature3D->SetName(L"3D Root Signature");
+	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"3D Root Signature"));
 
 	positionLayout.offset = offsetof(ThreeDimension::Vertex, position);
 	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
@@ -264,22 +226,14 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	);
 
 	// Create Command List
-	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create command list.");
-	}
-	m_commandList->Close();
+	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
+	DXHelper::ThrowIfFailed(m_commandList->Close());
 
 	// Create Fence for synchronization
-	hr = m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create fence.");
-	}
+	DXHelper::ThrowIfFailed(m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
 	// @TODO Why do m_fenceValues[m_frameIndex]++?
 	m_fenceValues[m_frameIndex]++;
-	m_fence->SetName(L"Main Fence");
+	DXHelper::ThrowIfFailed(m_fence->SetName(L"Main Fence"));
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
@@ -301,8 +255,7 @@ void DXRenderManager::OnResize(int width, int height)
 {
 	if (width == 0 || height == 0) return;
 
-	//WaitForGPU();
-	MoveToNextFrame();
+	WaitForGPU();
 
 	for (int i = 0; i < frameCount; ++i)
 	{
@@ -310,29 +263,21 @@ void DXRenderManager::OnResize(int width, int height)
 	}
 	m_depthStencil.Reset();
 
-	HRESULT hr = m_swapChain->ResizeBuffers(
+	DXHelper::ThrowIfFailed(m_swapChain->ResizeBuffers(
 		frameCount,
 		static_cast<UINT>(width),
 		static_cast<UINT>(height),
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		0
-	);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to resize swap chain buffers.");
-	}
+	));
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT i = 0; i < frameCount; ++i)
 	{
-		hr = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i]));
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to get swap chain buffer.");
-		}
+		DXHelper::ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i])));
 		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
 		rtvHandle.ptr += m_rtvDescriptorSize;
-		m_renderTargets[i]->SetName((L"Recreate Render Target " + std::to_wstring(i)).c_str());
+		DXHelper::ThrowIfFailed(m_renderTargets[i]->SetName((L"Recreate Render Target " + std::to_wstring(i)).c_str()));
 	}
 
 	// Create Depth Stencil Buffer Resource
@@ -356,19 +301,15 @@ void DXRenderManager::OnResize(int width, int height)
 	clearValue.DepthStencil.Stencil = 0;
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	hr = m_device->CreateCommittedResource(
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&depthStencilDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&clearValue,
 		IID_PPV_ARGS(&m_depthStencil)
-	);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create depth stencil resource.");
-	}
-	m_depthStencil->SetName(L"Resize Depth/Stencil Resource");
+	));
+	DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"Resize Depth/Stencil Resource"));
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -387,7 +328,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ?
 		m_pipeline2D->GetPipelineState().Get() :
 		m_pipeline3D->GetPipelineState().Get();
-	m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState);
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
 	// Set the viewport and scissor rect
 	int width, height;
@@ -526,17 +467,13 @@ void DXRenderManager::EndRender()
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	m_commandList->Close();
+	DXHelper::ThrowIfFailed(m_commandList->Close());
 
 	// Execute the command list
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-	HRESULT hr = m_swapChain->Present(1, 0);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to present swap chain.");
-	}
+	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
 
 	MoveToNextFrame();
 }
@@ -621,21 +558,13 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 		throw std::runtime_error("Failed to serialize root signature.");
 	}
 
-	hr = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create root signature.");
-	}
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
 }
 
 void DXRenderManager::WaitForGPU()
 {
-	m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]);
-	HRESULT hr = m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to set event on fence completion.");
-	}
+	DXHelper::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]));
+	DXHelper::ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent));
 
 	WaitForSingleObject(m_fenceEvent, INFINITE);
 	m_fenceValues[m_frameIndex]++;
@@ -644,17 +573,13 @@ void DXRenderManager::WaitForGPU()
 void DXRenderManager::MoveToNextFrame()
 {
 	const UINT64 currentFenceValue = m_fenceValues[m_frameIndex];
-	m_commandQueue->Signal(m_fence.Get(), currentFenceValue);
+	DXHelper::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), currentFenceValue));
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
 	if (m_fence->GetCompletedValue() < m_fenceValues[m_frameIndex])
 	{
-		HRESULT hr = m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
-		if (FAILED(hr))
-		{
-			throw std::runtime_error("Failed to set event on fence completion.");
-		}
+		DXHelper::ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent));
 		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 	}
 
@@ -665,31 +590,19 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 {
 	// Create Command Allocator
 	ComPtr<ID3D12CommandAllocator> tempCommandAllocator;
-	HRESULT hr = m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&tempCommandAllocator));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create texture command allocator.");
-	}
-	tempCommandAllocator->SetName(L"Texture Command Allocator");
+	DXHelper::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&tempCommandAllocator)));
+	DXHelper::ThrowIfFailed(tempCommandAllocator->SetName(L"Texture Command Allocator"));
 
 	// Create Command List
 	ComPtr<ID3D12GraphicsCommandList> tempCommandList;
-	hr = m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, tempCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&tempCommandList));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create texture command list.");
-	}
-	tempCommandList->SetName(L"Texture Command List");
-	tempCommandList->Close();
+	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, tempCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&tempCommandList)));
+	DXHelper::ThrowIfFailed(tempCommandList->SetName(L"Texture Command List"));
+	DXHelper::ThrowIfFailed(tempCommandList->Close());
 
 	// Create Fence
 	ComPtr<ID3D12Fence> tempFence;
-	hr = m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&tempFence));
-	if (FAILED(hr))
-	{
-		throw std::runtime_error("Failed to create texture fence.");
-	}
-	tempFence->SetName(L"Texture Fence");
+	DXHelper::ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&tempFence)));
+	DXHelper::ThrowIfFailed(tempFence->SetName(L"Texture Fence"));
 
 	// Create Fence Event
 	HANDLE tempFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -703,7 +616,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	const int texId = static_cast<int>(textures.size() - 1);
 	texture->SetTextureID(texId);
 
-	tempCommandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
+	DXHelper::ThrowIfFailed(tempCommandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
 	texture->LoadTexture(
 		m_device,
 		tempCommandList,
