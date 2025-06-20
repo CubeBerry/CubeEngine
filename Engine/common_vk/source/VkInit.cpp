@@ -68,7 +68,7 @@ void VKInit::InitInstance()
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKInit::~VKInit();
 		std::exit(EXIT_FAILURE);
 	}
@@ -89,7 +89,7 @@ void VKInit::SetPhysicalDevice()
 	std::cout << "Input GPU number: ";
 	int deviceNumber{ 0 };
 	std::cin >> deviceNumber;
-	std::cout << std::endl;
+	std::cout << '\n';
 	vkPhysicalDevice = physicalDevices[deviceNumber];
 	//vkPhysicalDevice = GetRequiredDevice(physicalDevices, isDiscrete);
 }
@@ -140,15 +140,15 @@ void VKInit::InitDevice()
 			vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &deviceFeatures);
 			if (deviceFeatures.fillModeNonSolid != VK_TRUE)
 			{
-				std::cout << "Does not support fillModeNonSolid" << std::endl;
-				std::cout << std::endl;
+				std::cout << "Does not support fillModeNonSolid" << '\n';
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Device Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKInit::~VKInit();
 			std::exit(EXIT_FAILURE);
 		}
@@ -200,7 +200,7 @@ void VKInit::InitDevice()
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKInit::~VKInit();
 		std::exit(EXIT_FAILURE);
 	}
@@ -246,7 +246,7 @@ void VKInit::InitSurface(SDL_Window* window)
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKInit::~VKInit();
 		std::exit(EXIT_FAILURE);
 	}
@@ -279,13 +279,13 @@ void VKInit::PrintLayers()
 	vkEnumerateInstanceLayerProperties(&count, &properties[0]);
 
 	//Print layers information
-	std::cout << "--------------------Layer Information--------------------" << std::endl;
+	std::cout << "--------------------Layer Information--------------------" << '\n';
 	for (auto& p : properties)
 	{
 		std::cout << "Layer Name             : " << p.layerName << '\n'
 				  << "Spec Version           : " << p.specVersion << '\n'
 				  << "Implementation Version : " << p.implementationVersion << '\n'
-				  << "Description            : " << p.description << '\n' << std::endl;
+				  << "Description            : " << p.description << '\n' << '\n';
 	}
 }
 
@@ -312,11 +312,11 @@ void VKInit::PrintInstnaceExtensions()
 	std::vector<VkExtensionProperties> properties{ count };
 	vkEnumerateInstanceExtensionProperties(nullptr, &count, &properties[0]);
 
-	std::cout << "--------------------Instance Extension Information--------------------" << std::endl;
+	std::cout << "--------------------Instance Extension Information--------------------" << '\n';
 	for (auto& p : properties)
 	{
 		std::cout << "Extension name : " << p.extensionName << '\n'
-				  << "Spec version   : " << p.specVersion << '\n' << std::endl;
+				  << "Spec version   : " << p.specVersion << '\n' << '\n';
 	}
 }
 
@@ -331,13 +331,13 @@ void VKInit::PrintInstnaceExtensions()
 //	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
 //
 //	//Get physical devices properties
-//	std::cout << "--------------------Physical Device Information--------------------" << std::endl;
+//	std::cout << "--------------------Physical Device Information--------------------" << '\n';
 //	for (auto& device : physicalDevices)
 //	{
 //		VkPhysicalDeviceProperties properties;
 //		vkGetPhysicalDeviceProperties(device, &properties);
 //
-//		std::cout << "Device Name : " << properties.deviceName << '\n' << std::endl;
+//		std::cout << "Device Name : " << properties.deviceName << '\n' << '\n';
 //	}
 //}
 
@@ -351,11 +351,11 @@ void VKInit::PrintDeviceExtensions()
 	std::vector<VkExtensionProperties> properties{ count };
 	vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &count, &properties[0]);
 
-	std::cout << "--------------------Device Extention Information--------------------" << std::endl;
+	std::cout << "--------------------Device Extention Information--------------------" << '\n';
 	for (auto& p : properties)
 	{
 		std::cout << "Extension name : " << p.extensionName << '\n'
-				  << "Spec version   : " << p.specVersion << '\n' << std::endl;
+				  << "Spec version   : " << p.specVersion << '\n' << '\n';
 	}
 }
 
@@ -369,7 +369,7 @@ void VKInit::PrintPresentModes()
 	std::vector<VkPresentModeKHR> modes{ count };
 	vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &count, &modes[0]);
 
-	std::cout << "--------------------Present Mode Information--------------------" << std::endl;
+	std::cout << "--------------------Present Mode Information--------------------" << '\n';
 	for (auto& m : modes)
 	{
 		switch (m)
@@ -389,7 +389,7 @@ void VKInit::PrintPresentModes()
 		default:
 			break;
 		}
-		std::cout << std::endl;
+		std::cout << '\n';
 	}
 }
 
@@ -468,7 +468,7 @@ void VKInit::PrintMemoryProperties()
 	vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &properties);
 
 	//DEVICE == GPU, HOST == CPU
-	std::cout << "--------------------Memory Property Information--------------------" << std::endl;
+	std::cout << "--------------------Memory Property Information--------------------" << '\n';
 	for (auto i = 0; i != VK_MAX_MEMORY_HEAPS; ++i)
 	{
 		auto heapIndex = properties.memoryTypes[i].heapIndex;
@@ -478,7 +478,7 @@ void VKInit::PrintMemoryProperties()
 			//Print Heap Size
 			<< '\t' << properties.memoryHeaps[heapIndex] << '\n';
 	}
-	std::cout << std::endl;
+	std::cout << '\n';
 	/*
 	1. DEVICE_LOCAL: GPU(fast) but CPU cannot access. (Vertex Buffer, Index Buffer, Texture)
 	2. HOST_VISIBLE: Both CPU(update often) and GPU(slow) can access. (Uniform Buffer)
@@ -528,7 +528,7 @@ VkPhysicalDevice VKInit::GetRequiredDevice(std::vector<VkPhysicalDevice>& physic
 		if ((properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && isDiscrete == true) ||
 			(properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU && isDiscrete == false))
 		{
-			std::cout << "Set " << "Device : " << properties.deviceName << std::endl;
+			std::cout << "Set " << "Device : " << properties.deviceName << '\n';
 			return physicalDevices[returnValue];
 		}
 		returnValue++;

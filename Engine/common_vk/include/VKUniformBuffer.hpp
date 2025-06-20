@@ -84,22 +84,22 @@ inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Uniform Buffer Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKUniformBuffer::~VKUniformBuffer();
 			std::exit(EXIT_FAILURE);
 		}
@@ -126,25 +126,25 @@ inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Uniform Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKUniformBuffer::~VKUniformBuffer();
 			std::exit(EXIT_FAILURE);
 		}
@@ -159,22 +159,22 @@ inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKUniformBuffer::~VKUniformBuffer();
 			std::exit(EXIT_FAILURE);
 		}

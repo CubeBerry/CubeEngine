@@ -76,7 +76,7 @@ void PhysicsDemo::Update(float dt)
 				{
 					if (target.second->GetComponent<Physics3D>()->CheckCollision(object.second.get()))
 					{
-						//std::cout << "!" << std::endl;
+						//std::cout << "!" << '\n';
 					}
 				}
 			}

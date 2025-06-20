@@ -41,22 +41,22 @@ public:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Vertex Buffer Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKVertexBuffer::~VKVertexBuffer();
 			std::exit(EXIT_FAILURE);
 		}
@@ -83,25 +83,25 @@ public:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Vertex Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKVertexBuffer::~VKVertexBuffer();
 			std::exit(EXIT_FAILURE);
 		}
@@ -116,22 +116,22 @@ public:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKVertexBuffer::~VKVertexBuffer();
 			std::exit(EXIT_FAILURE);
 		}
@@ -147,25 +147,25 @@ public:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << std::endl;
+					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Map Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKVertexBuffer::~VKVertexBuffer();
 			std::exit(EXIT_FAILURE);
 		}
@@ -201,14 +201,14 @@ public:
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Map Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKVertexBuffer::~VKVertexBuffer();
 			std::exit(EXIT_FAILURE);
 		}

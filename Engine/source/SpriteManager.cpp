@@ -13,7 +13,7 @@ SpriteManager::~SpriteManager()
 	//	{
 	//		//Engine::Instance().GetVKRenderManager().DeleteWithIndex();
 	//		sprites.erase(iterator);
-	//		std::cout << sprites.size() << std::endl;
+	//		std::cout << sprites.size() << '\n'';
 	//	}
 	//}
 }
