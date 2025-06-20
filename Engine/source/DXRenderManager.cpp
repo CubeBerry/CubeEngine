@@ -186,6 +186,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
 		true,
 		true
@@ -220,6 +221,19 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+		D3D12_FILL_MODE_SOLID,
+		D3D12_CULL_MODE_BACK,
+		true,
+		true
+	);
+
+	m_pipeline3DLine = std::make_unique<DXPipeLine>(
+		m_device,
+		m_rootSignature3D,
+		std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
+		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
+		std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+		D3D12_FILL_MODE_WIREFRAME,
 		D3D12_CULL_MODE_BACK,
 		true,
 		true
@@ -242,6 +256,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_BACK,
 		true,
 		true,
@@ -381,9 +396,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 	m_commandAllocators[m_frameIndex]->Reset();
 
-	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ?
-		m_pipeline2D->GetPipelineState().Get() :
-		m_pipeline3D->GetPipelineState().Get();
+	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ? m_pipeline2D->GetPipelineState().Get() :
+		pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
 	// Set the viewport and scissor rect
@@ -507,7 +521,15 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 				m_commandList->DrawInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
 
-				m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
+				switch (pMode)
+				{
+				case PolygonType::FILL:
+					m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
+					break;
+				case PolygonType::LINE:
+					m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
+					break;
+				}
 				m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
 			}
 #endif
@@ -810,6 +832,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		"../Engine/shaders/hlsl/Skybox.vert.hlsl",
 		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
+		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
 		true,
 		true

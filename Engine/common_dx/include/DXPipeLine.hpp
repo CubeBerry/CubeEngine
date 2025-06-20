@@ -33,6 +33,7 @@ public:
 		const ComPtr<ID3D12RootSignature>& rootSignature,
 		const std::filesystem::path& vertexPath, const std::filesystem::path& pixelPath,
 		std::initializer_list<DXAttributeLayout> layout,
+		D3D12_FILL_MODE fillMode,
 		D3D12_CULL_MODE cullMode,
 		bool isCCW,
 		bool isDepth,

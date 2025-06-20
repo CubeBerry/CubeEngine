@@ -83,6 +83,7 @@ private:
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
 	std::unique_ptr<DXPipeLine> m_pipeline3D;
+	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
 #ifdef _DEBUG
 	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
 	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
