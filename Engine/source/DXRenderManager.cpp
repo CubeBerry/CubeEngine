@@ -251,17 +251,33 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	SDL_ShowWindow(window);
 }
 
+void DXRenderManager::SetResize(const int width, const int height)
+{
+	m_width = width;
+	m_height = height;
+	m_isResize = true;
+}
+
 void DXRenderManager::OnResize(int width, int height)
 {
-	if (width == 0 || height == 0) return;
+	//OutputDebugStringA("OnResize: Entered.\n");
 
+	if (width == 0 || height == 0)
+	{
+		//OutputDebugStringA("OnResize: Skipped due to 0 size.\n");
+		return;
+	}
+
+	//OutputDebugStringA("OnResize: Waiting for GPU...\n");
 	WaitForGPU();
+	//OutputDebugStringA("OnResize: GPU wait finished.\n");
 
 	for (int i = 0; i < frameCount; ++i)
 	{
 		m_renderTargets[i].Reset();
 	}
 	m_depthStencil.Reset();
+	//OutputDebugStringA("OnResize: Old resources released.\n");
 
 	DXHelper::ThrowIfFailed(m_swapChain->ResizeBuffers(
 		frameCount,
@@ -270,6 +286,7 @@ void DXRenderManager::OnResize(int width, int height)
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		0
 	));
+	//OutputDebugStringA("OnResize: ResizeBuffers successful.\n");
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT i = 0; i < frameCount; ++i)
@@ -319,10 +336,24 @@ void DXRenderManager::OnResize(int width, int height)
 	m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+	//OutputDebugStringA("OnResize: Finished successfully.\n");
+
+	UINT64 completedValue = m_fence->GetCompletedValue();
+	for (UINT i = 0; i < frameCount; ++i)
+	{
+		m_fenceValues[i] = completedValue;
+	}
 }
 
 bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
+	if (m_isResize)
+	{
+		OnResize(m_width, m_height);
+		m_isResize = false;
+		return false;
+	}
+
 	m_commandAllocators[m_frameIndex]->Reset();
 
 	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ?
@@ -462,20 +493,27 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 void DXRenderManager::EndRender()
 {
+	//OutputDebugStringA("EndRender: Entered.\n");
+
 	m_imguiManager->End(m_commandList);
 
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &barrier);
 
 	DXHelper::ThrowIfFailed(m_commandList->Close());
+	//OutputDebugStringA("EndRender: Command list closed.\n");
 
 	// Execute the command list
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	//OutputDebugStringA("EndRender: Command list executed.\n");
 
+	//OutputDebugStringA("EndRender: Calling Present...\n");
 	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
+	//OutputDebugStringA("EndRender: Present successful.\n");
 
 	MoveToNextFrame();
+	//OutputDebugStringA("EndRender: Finished successfully.\n");
 }
 
 void DXRenderManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter)

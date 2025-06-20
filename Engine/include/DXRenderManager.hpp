@@ -26,7 +26,10 @@ public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
 	~DXRenderManager() override;
 	void Initialize(SDL_Window* window);
-	void OnResize(int width, int height);
+	void SetResize(const int width, const int height);
+	int m_width, m_height;
+	bool m_isResize{ false };
+	void OnResize(const int width, const int height);
 
 	bool BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;

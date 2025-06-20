@@ -134,7 +134,7 @@ void ThreadManager::ProcessSDLEventsMainThread()
 		case SDL_EVENT_WINDOW_RESIZED:
 			// Let DX12 know window is resized
 			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
-				dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->OnResize(event.window.data1, event.window.data2);
+				dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->SetResize(event.window.data1, event.window.data2);
 			SDL_FALLTHROUGH;
 		case SDL_EVENT_WINDOW_MOVED:
 		case SDL_EVENT_WINDOW_MINIMIZED:
