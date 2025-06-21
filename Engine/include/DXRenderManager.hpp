@@ -89,6 +89,12 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
 #endif
 
+	// MSAA
+	UINT m_msaaSampleCount{ 4 };
+	UINT m_msaaQualityLevel;
+	ComPtr<ID3D12Resource> m_msaaRenderTarget;
+	ComPtr<ID3D12DescriptorHeap> m_msaaRtvHeap;
+
 	std::unique_ptr<DXImGuiManager> m_imguiManager;
 public:
 	//--------------------Common--------------------//

@@ -35,6 +35,7 @@ public:
 		std::initializer_list<DXAttributeLayout> layout,
 		D3D12_FILL_MODE fillMode,
 		D3D12_CULL_MODE cullMode,
+		const DXGI_SAMPLE_DESC& sampleDesc,
 		bool isCCW,
 		bool isDepth,
 		DXGI_FORMAT rtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM,

@@ -157,6 +157,11 @@ void DXSkybox::EquirectangularToCube()
 	};
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
+	DXGI_SAMPLE_DESC sampleDesc = {};
+	sampleDesc.Count = 1;
+	sampleDesc.Quality = 0;
+
 	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
 		m_device,
 		rootSignature,
@@ -165,6 +170,7 @@ void DXSkybox::EquirectangularToCube()
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
+		sampleDesc,
 		false,
 		false,
 		texDesc.Format
@@ -312,6 +318,11 @@ void DXSkybox::CalculateIrradiance()
 	};
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
+	DXGI_SAMPLE_DESC sampleDesc = {};
+	sampleDesc.Count = 1;
+	sampleDesc.Quality = 0;
+
 	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
 		m_device,
 		rootSignature,
@@ -320,6 +331,7 @@ void DXSkybox::CalculateIrradiance()
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
+		sampleDesc,
 		false,
 		false,
 		texDesc.Format
@@ -453,6 +465,11 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	};
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
+	DXGI_SAMPLE_DESC sampleDesc = {};
+	sampleDesc.Count = 1;
+	sampleDesc.Quality = 0;
+
 	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
 		m_device,
 		rootSignature,
@@ -461,6 +478,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
+		sampleDesc,
 		false,
 		false,
 		texDesc.Format
@@ -611,6 +629,11 @@ void DXSkybox::BRDFLUT()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(VA, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
+	DXGI_SAMPLE_DESC sampleDesc = {};
+	sampleDesc.Count = 1;
+	sampleDesc.Quality = 0;
+
 	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
 		m_device,
 		rootSignature,
@@ -619,6 +642,7 @@ void DXSkybox::BRDFLUT()
 		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout },
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
+		sampleDesc,
 		false,
 		false,
 		texDesc.Format
