@@ -115,9 +115,9 @@ public:
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 #ifdef _DEBUG
+			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::NormalVertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
 #endif
 
