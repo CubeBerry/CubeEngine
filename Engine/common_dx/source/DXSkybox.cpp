@@ -195,7 +195,6 @@ void DXSkybox::EquirectangularToCube()
 
 	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
 
-	struct WorldToNDC { glm::mat4 view; glm::mat4 projection; };
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
 
 	D3D12_VERTEX_BUFFER_VIEW vbv = cubeVertexBuffer.GetView();
@@ -356,7 +355,6 @@ void DXSkybox::CalculateIrradiance()
 
 	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
 
-	struct WorldToNDC { glm::mat4 view; glm::mat4 projection; };
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
 
 	D3D12_VERTEX_BUFFER_VIEW vbv = cubeVertexBuffer.GetView();
@@ -499,7 +497,6 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
 
-	struct WorldToNDC { glm::mat4 view; glm::mat4 projection; };
 	DXConstantBuffer<float>roughnessConstantBuffer(m_device, 1);
 
 	D3D12_VERTEX_BUFFER_VIEW vbv = cubeVertexBuffer.GetView();

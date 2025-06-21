@@ -36,7 +36,7 @@ public:
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
 		handle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
 		return handle;
-	};
+	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetCubemapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
@@ -150,6 +150,7 @@ private:
 	};
 
 	const float clearColor[4] = { 0.f, 0.f, 0.f, 1.0f };
+	struct WorldToNDC { glm::mat4 view; glm::mat4 projection; };
 	glm::mat4 projection = glm::perspectiveLH_ZO(glm::radians(90.f), 1.f, 0.1f, 10.f);
 	glm::mat4 views[6] = {
 	glm::lookAtLH(glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f)),
