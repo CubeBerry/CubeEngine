@@ -33,16 +33,6 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		ComPtr<ID3D12Debug1> debugController1;
 		DXHelper::ThrowIfFailed(debugController->QueryInterface(IID_PPV_ARGS(&debugController1)));
 		debugController1->SetEnableGPUBasedValidation(TRUE);
-
-		//if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-		//{
-		//	debugController->EnableDebugLayer();
-		//	ComPtr<ID3D12Debug1> debugController1;
-		//	if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
-		//	{
-		//		debugController1->SetEnableGPUBasedValidation(TRUE);
-		//	}
-		//}
 	}
 #endif
 
@@ -356,6 +346,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	directionalLightUniformBuffer = new DXConstantBuffer<DirectionalLightBatch>(m_device, frameCount);
 	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
+
+	WaitForGPU();
 
 	SDL_ShowWindow(window);
 }
@@ -962,6 +954,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 
+	WaitForGPU();
 	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE, path);
 
 	skyboxEnabled = true;
