@@ -44,7 +44,7 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	m_equirectangularMap->LoadTexture(device, m_commandList, m_srvHeap, m_commandQueue, m_fence, m_fenceEvent, static_cast<UINT>(m_srvHeapStartOffset), true, path, "equirectangular", true);
 	faceSize = m_equirectangularMap->GetHeight();
 
-	// @TODO Fix Exception thrown at 0x00007FFFA80A85EA in Project.exe: Microsoft C++ exception: _com_error at memory location.
+	// @TODO Fix Exception thrown when running through RenderDoc or on iGPU
 	EquirectangularToCube();
 	CalculateIrradiance();
 	PrefilteredEnvironmentMap();
