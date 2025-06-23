@@ -223,6 +223,8 @@ void DXSkybox::EquirectangularToCube()
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	ExecuteCommandList();
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
@@ -232,8 +234,6 @@ void DXSkybox::EquirectangularToCube()
 	// Store Cubemap texture in srvHeap index 1
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_cubemap.Get(), &srvDesc, srvHandle);
-
-	ExecuteCommandList();
 }
 
 void DXSkybox::CalculateIrradiance()
@@ -383,6 +383,8 @@ void DXSkybox::CalculateIrradiance()
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	ExecuteCommandList();
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
@@ -392,8 +394,6 @@ void DXSkybox::CalculateIrradiance()
 	// Store Irradiance texture in srvHeap index 2
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 2, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_irradianceMap.Get(), &srvDesc, srvHandle);
-
-	ExecuteCommandList();
 }
 
 void DXSkybox::PrefilteredEnvironmentMap()
@@ -546,6 +546,8 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_prefilterMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	ExecuteCommandList();
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
@@ -557,8 +559,6 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	// Store Prefilter texture in srvHeap index 3
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 3, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_prefilterMap.Get(), &srvDesc, srvHandle);
-
-	ExecuteCommandList();
 }
 
 void DXSkybox::BRDFLUT()
@@ -673,6 +673,8 @@ void DXSkybox::BRDFLUT()
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_brdfLUT.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	ExecuteCommandList();
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
@@ -683,6 +685,4 @@ void DXSkybox::BRDFLUT()
 	// Store BRDF LUT texture in srvHeap index 4
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 4, m_srvDescriptorSize);
 	m_device->CreateShaderResourceView(m_brdfLUT.Get(), &srvDesc, srvHandle);
-
-	ExecuteCommandList();
 }

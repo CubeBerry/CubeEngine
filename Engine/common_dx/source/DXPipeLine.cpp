@@ -74,6 +74,9 @@ DXPipeLine::DXPipeLine(
 		throw std::runtime_error("Failed to compile pixel shader.");
 	}
 
+	//auto vertexShader = DXHelper::ReadShaderFile(vertexPath);
+	//auto pixelShader = DXHelper::ReadShaderFile(pixelPath);
+
 	std::vector<D3D12_INPUT_ELEMENT_DESC> inputElementDescs;
 	inputElementDescs.reserve(layout.size());
 	for (const auto& l : layout)
@@ -101,8 +104,10 @@ DXPipeLine::DXPipeLine(
 
 	psoDesc.InputLayout = { inputElementDescs.data(), static_cast<UINT>(inputElementDescs.size()) };
 	psoDesc.pRootSignature = rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE{ m_vertexShader.Get() };
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get() };
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE{ m_vertexShader.Get()};
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get()};
+	//psoDesc.VS = CD3DX12_SHADER_BYTECODE{ vertexShader.data(), vertexShader.size() };
+	//psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
 	psoDesc.RasterizerState = desc;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
