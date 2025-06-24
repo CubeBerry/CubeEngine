@@ -2,6 +2,8 @@
 //Project: CubeEngine
 //File: ThreadManager.cpp
 #include "Engine.hpp"
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
 
 void ThreadManager::Start()
 {
@@ -14,7 +16,6 @@ void ThreadManager::Stop()
 {
 	running = false;
 	gameUpdateCV.notify_one();
-	sdlEventCV.notify_one();
 	if (gameUpdateThread.joinable()) gameUpdateThread.join();
 	if (sdlEventThread.joinable()) sdlEventThread.join();
 }
@@ -23,7 +24,7 @@ void ThreadManager::QueueGameUpdate(const std::function<void(float)>& updateFunc
 {
 	{
 		std::lock_guard<std::mutex> lock(gameUpdateMutex);
-		gameUpdateQueue.push(std::make_pair(updateFunc, dt));
+		gameUpdateQueue.push({ updateFunc, dt });
 	}
 	gameUpdateCV.notify_one();
 }
@@ -50,12 +51,11 @@ void ThreadManager::GameUpdateLoop()
 		gameUpdateCV.wait(lock, [this] { return !running || !gameUpdateQueue.empty(); });
 
 		while (!gameUpdateQueue.empty()) {
-			auto updatePair = gameUpdateQueue.front();
+			auto [updateFunc, dt] = gameUpdateQueue.front();
 			gameUpdateQueue.pop();
 			lock.unlock();
 
-			// Execute game update function
-			updatePair.first(updatePair.second);
+			updateFunc(dt);
 
 			lock.lock();
 		}
@@ -66,65 +66,21 @@ void ThreadManager::SDLEventLoop()
 {
 	while (running)
 	{
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			QueueSDLEvent(event);
-		}
 		std::this_thread::yield();
 	}
 }
 
-void ThreadManager::QueueSDLEvent(const SDL_Event& event)
+void ThreadManager::ProcessEvents()
 {
+	SDL_Event event;
+	while (SDL_PollEvent(&event))
 	{
-		std::lock_guard<std::mutex> lock(sdlEventMutex);
-		sdlEventQueue.push(event);
+		ImGui_ImplSDL3_ProcessEvent(&event);
 
-		//if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
-		//	event.type == SDL_EVENT_MOUSE_BUTTON_UP || event.type == SDL_EVENT_MOUSE_WHEEL ||
-		//	event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP ||
-		//	event.type == SDL_EVENT_TEXT_INPUT || event.type == SDL_EVENT_QUIT)
-		//{
-			std::lock_guard<std::mutex> mainLock(mainThreadEventMutex);
-			mainThreadEventQueue.push(event);
-		//}
-	}
-	sdlEventCV.notify_one();
-}
-
-void ThreadManager::ProcessSDLEvents()
-{
-	std::queue<SDL_Event> localEventQueue;
-	{
-		std::lock_guard<std::mutex> lock(sdlEventMutex);
-		std::swap(localEventQueue, sdlEventQueue);
-	}
-
-	while (!localEventQueue.empty()) {
-		SDL_Event& event = localEventQueue.front();
-		if(ImGui::IsAnyItemActive() == false)
+		if (ImGui::IsAnyItemActive() == false)
 		{
 			Engine::GetInputManager().InputPollEvent(event);
 		}
-		localEventQueue.pop();
-	}
-
-	ProcessSDLEventsMainThread();
-}
-
-void ThreadManager::ProcessSDLEventsMainThread()
-{
-	std::queue<SDL_Event> localMainThreadEventQueue;
-	{
-		std::lock_guard<std::mutex> lock(mainThreadEventMutex);
-		std::swap(localMainThreadEventQueue, mainThreadEventQueue);
-	}
-
-	while (!localMainThreadEventQueue.empty())
-	{
-		SDL_Event& event = localMainThreadEventQueue.front();
-		ImGui_ImplSDL3_ProcessEvent(&event);
 
 		switch (event.type)
 		{
@@ -132,20 +88,23 @@ void ThreadManager::ProcessSDLEventsMainThread()
 			Engine::GetGameStateManager().SetGameState(State::UNLOAD);
 			break;
 		case SDL_EVENT_WINDOW_RESIZED:
-			// Let DX12 know window is resized
+			Engine::Instance().ResetDeltaTime();
 			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
 				dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->SetResize(event.window.data1, event.window.data2);
 			SDL_FALLTHROUGH;
 		case SDL_EVENT_WINDOW_MOVED:
 		case SDL_EVENT_WINDOW_MINIMIZED:
 		case SDL_EVENT_WINDOW_MAXIMIZED:
+		case SDL_EVENT_WINDOW_RESTORED:
 			Engine::Instance().ResetDeltaTime();
 			break;
 		default:
 			break;
 		}
-		localMainThreadEventQueue.pop();
+
 		if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+		{
 			Engine::GetWindow().UpdateWindowGL(event);
+		}
 	}
 }

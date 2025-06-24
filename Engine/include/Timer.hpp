@@ -26,35 +26,23 @@ public:
 		timeStamp = clock::now();
 		lastTimeStamp = clock::now();
 		fpsCalcTime = lastTimeStamp;
-		framePerTime = 1.f / static_cast<float>(frame);
+
+		if (frame != FrameRate::UNLIMIT)
+		{
+			framePerTime = 1.f / static_cast<float>(frame);
+		}
+		else
+		{
+			framePerTime = 0.f; 
+		}
 	}
 
-	void Update() { timeStamp = clock::now();}
+	void Update() { timeStamp = clock::now(); }
 
-	float Update(double& fps, double fpsCalc)
+	void Reset()
 	{
-		static auto prevTime = clock::now();
-		auto currTime = clock::now();
-
-		std::chrono::duration<float> deltaTime = currTime - prevTime;
-		prevTime = currTime;
-
-		static float count = 0.0f;
-		static auto startTime = clock::now();
-		std::chrono::duration<float> elapsedTime = currTime - startTime;
-		++count;
-
-		fpsCalc = (fpsCalc < 0.0f) ? 0.0f : fpsCalc;
-		fpsCalc = (fpsCalc > 10.0f) ? 10.0f : fpsCalc;
-
-		if (elapsedTime.count() >= fpsCalc) 
-		{
-			fps = count / elapsedTime.count();
-			startTime = currTime;
-			count = 0.0f;
-		}
-
-		return deltaTime.count();
+		timeStamp = clock::now();
+		lastTimeStamp = timeStamp;
 	}
 
 	void ResetLastTimeStamp() noexcept
@@ -80,12 +68,12 @@ public:
 	FrameRate GetFrameRate() { return frame; }
 	float GetFramePerTime() { return framePerTime; }
 private:
-	using clock = std::chrono::system_clock;
-	using second = std::chrono::duration <float>;
+	using clock = std::chrono::steady_clock;
+	using second = std::chrono::duration<float>;
 
-	std::chrono::system_clock::time_point timeStamp;
-	std::chrono::system_clock::time_point lastTimeStamp;
-	std::chrono::system_clock::time_point fpsCalcTime;
+	std::chrono::steady_clock::time_point timeStamp;
+	std::chrono::steady_clock::time_point lastTimeStamp;
+	std::chrono::steady_clock::time_point fpsCalcTime;
 
 	FrameRate frame = FrameRate::FPS_60;
 	float framePerTime = 0.f;

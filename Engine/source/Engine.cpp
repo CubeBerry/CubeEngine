@@ -2,6 +2,7 @@
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: Engine.cpp
+
 #include "Engine.hpp"
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
@@ -13,8 +14,6 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	std::cin >> number;
 	std::cout << '\n';
 
-	//Init Window -> Init VKInit -> Init SwapChain -> Init VKRenderManager
-	//window = new Window();
 	if (number == 0)
 	{
 		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);
@@ -45,17 +44,19 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 
 void Engine::Update()
 {
-	SDL_Event event;
 	while (gameStateManger.GetGameState() != State::SHUTDOWN)
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
+
+		if (deltaTime > 0.1f)
+		{
+			deltaTime = 0.1f;
+		}
 		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
 			Uint64 winFlag = SDL_GetWindowFlags(window.GetWindow());
-			threadManager.ProcessSDLEvents();
-			SDL_PollEvent(&event);
-
+			threadManager.ProcessEvents();
 			timer.ResetLastTimeStamp();
 			frameCount++;
 			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
@@ -70,6 +71,7 @@ void Engine::Update()
 				frameCount = 0;
 
 			}//fps
+
 			gameStateManger.Update(deltaTime);
 		}
 	}
@@ -100,5 +102,6 @@ void Engine::SetFPS(FrameRate fps)
 
 void Engine::ResetDeltaTime()
 {
+	timer.Reset();
 	deltaTime = 0.f;
 }
