@@ -347,6 +347,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
+	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Main Command List"));
 #if USE_NSIGHT_AFTERMATH
 	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(m_commandList.Get(), &m_hAftermathCommandListContext));
 #endif
