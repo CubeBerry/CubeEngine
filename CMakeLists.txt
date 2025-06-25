@@ -42,6 +42,11 @@ add_subdirectory(${DX_DIR})
 add_subdirectory(${COMMON_LIB_DIR}/SDL3-3.2.16)
 
 # Compile Settings
+FILE(GLOB DEBUG_TOOLS_SRC
+    "${ENGINE_INC_DIR}/DebugTools/*.h"
+    "${ENGINE_INC_DIR}/DebugTools/*.hpp"
+    "${ENGINE_SRC_DIR}/DebugTools/*.cpp"
+)
 FILE(GLOB ENGINE_SRC
     "${ENGINE_INC_DIR}/*.hpp"
     "${ENGINE_SRC_DIR}/*.cpp"
@@ -76,8 +81,9 @@ endif()
 # Turnn off warning as error due to ImGui DX12
 # set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
-add_executable(${PROJECT_NAME} main.cpp DebugTools.hpp ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
+add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
 
+source_group("DebugTools"       FILES ${DEBUG_TOOLS_SRC})
 source_group("Engine"           FILES ${ENGINE_SRC})
 source_group("Game"             FILES ${GAME_SRC})
 source_group("ImGui"            FILES ${IMGUI_SRC})
@@ -97,6 +103,10 @@ DESTINATION ${CMAKE_BINARY_DIR}
 FILE(COPY ./Engine/libs/assimp/assimp-vc143-mtd.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
+# NVIDIA Aftermath
+FILE(COPY ./Engine/libs/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.dll
+DESTINATION ${CMAKE_BINARY_DIR}
+)
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE common_gl PRIVATE common_vk PRIVATE common_dx)
@@ -104,6 +114,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
@@ -114,7 +125,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${DX_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_INC_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR} ${ENGINE_INC_DIR}/DebugTools)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL3-3.2.16/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs)
+target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/include)

@@ -2,8 +2,8 @@
 //Project: CubeEngine
 //File: DXRenderManager.cpp
 #include "DXRenderManager.hpp"
-#include "DXHelper.hpp"
 
+#include "DXHelper.hpp"
 #include "Engine.hpp"
 
 DXRenderManager::~DXRenderManager()
@@ -25,7 +25,11 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	// Initialize Direct3D 12
 
 	// Enable Debug Layer
-#ifdef _DEBUG
+	// The D3D debug layer (as well as Microsoft PIX and other graphics debugger
+	// tools using an injection library) is not compatible with Nsight Aftermath!
+	// If Aftermath detects that any of these tools are present it will fail
+	// initialization.
+#if defined(_DEBUG) && !USE_NSIGHT_AFTERMATH
 	{
 		ComPtr<ID3D12Debug> debugController;
 		DXHelper::ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
@@ -40,11 +44,28 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	ComPtr<IDXGIFactory4> factory;
 	DXHelper::ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&factory)));
 
+#if USE_NSIGHT_AFTERMATH
+	m_gpuCrashTracker.Initialize();
+#endif
+
 	// Create Device
 	ComPtr<IDXGIAdapter1> hardwareAdapter;
 	GetHardwareAdapter(factory.Get(), &hardwareAdapter);
 	DXHelper::ThrowIfFailed(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)));
 	DXHelper::ThrowIfFailed(m_device->SetName(L"Main Device"));
+
+#if USE_NSIGHT_AFTERMATH
+	const uint32_t aftermathFlags =
+		GFSDK_Aftermath_FeatureFlags_EnableMarkers |             // Enable event marker tracking.
+		GFSDK_Aftermath_FeatureFlags_EnableResourceTracking |    // Enable tracking of resources.
+		GFSDK_Aftermath_FeatureFlags_CallStackCapturing |        // Capture call stacks for all draw calls, compute dispatches, and resource copies.
+		GFSDK_Aftermath_FeatureFlags_GenerateShaderDebugInfo;    // Generate debug information for shaders.
+
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_Initialize(
+		GFSDK_Aftermath_Version_API,
+		aftermathFlags,
+		m_device.Get()));
+#endif
 
 	// Check MSAA Support
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels = {};
@@ -326,6 +347,9 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
+#if USE_NSIGHT_AFTERMATH
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(m_commandList.Get(), &m_hAftermathCommandListContext));
+#endif
 	DXHelper::ThrowIfFailed(m_commandList->Close());
 
 	// Create Fence for synchronization
@@ -687,7 +711,42 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Command list executed.\n");
 
 	//OutputDebugStringA("EndRender: Calling Present...\n");
+#if USE_NSIGHT_AFTERMATH
+	HRESULT hr = m_swapChain->Present(1, 0);
+	if (FAILED(hr))
+	{
+		auto tdrTerminationTimeout = std::chrono::seconds(3);
+		auto tStart = std::chrono::steady_clock::now();
+		auto tElapsed = std::chrono::milliseconds::zero();
+
+		GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
+		AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+		while (status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed &&
+			status != GFSDK_Aftermath_CrashDump_Status_Finished &&
+			tElapsed < tdrTerminationTimeout)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+			auto tEnd = std::chrono::steady_clock::now();
+			tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
+		}
+
+		if (status != GFSDK_Aftermath_CrashDump_Status_Finished)
+		{
+			std::stringstream err_msg;
+			err_msg << "Unexpected crash dump status: " << status;
+			throw std::runtime_error(err_msg.str());
+		}
+
+		exit(-1);
+	}
+
+	m_frameCounter++;
+#else
 	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
+#endif
 	//OutputDebugStringA("EndRender: Present successful.\n");
 
 	MoveToNextFrame();

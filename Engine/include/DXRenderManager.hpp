@@ -8,6 +8,7 @@
 
 #ifdef _DEBUG
 #include <dxgidebug.h>
+#include "DebugTools.hpp"
 #endif
 
 #include "DXPipeLine.hpp"
@@ -94,6 +95,16 @@ private:
 	UINT m_msaaQualityLevel;
 	ComPtr<ID3D12Resource> m_msaaRenderTarget;
 	ComPtr<ID3D12DescriptorHeap> m_msaaRtvHeap;
+
+#if USE_NSIGHT_AFTERMATH
+	// App-managed marker functionality
+	UINT64 m_frameCounter{ 0 };
+	GpuCrashTracker::MarkerMap m_markerMap;
+
+	// Nsight Aftermath instrumentation
+	GFSDK_Aftermath_ContextHandle m_hAftermathCommandListContext{ nullptr };
+	GpuCrashTracker m_gpuCrashTracker{ m_markerMap };
+#endif
 
 	std::unique_ptr<DXImGuiManager> m_imguiManager;
 public:
