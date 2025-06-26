@@ -4,7 +4,7 @@
 ![Static Badge](https://img.shields.io/badge/platform-Windows-brightgreen)
 ![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)
 
-CubeEngine is a rendering engine written in C++, developed as a personal hobby project and for portfolio purposes. This engine utilizes an integrated renderer based on both OpenGL and Vulkan. The primary objective of this project is to implement features learned from college courses, particularly those focused on OpenGL graphics. Furthermore, the project aims to adapt and apply these OpenGL-based techniques to Vulkan, thereby gaining proficiency in both graphics APIs.
+CubeEngine is a rendering engine written in C++, developed as a personal hobby project and for portfolio purposes. This engine utilizes an integrated renderer based on both OpenGL, Vulkan and DirectX 12. The primary objective of this project is to implement features learned from college courses, particularly those focused on OpenGL graphics. Furthermore, the project aims to adapt and apply these OpenGL-based techniques to Vulkan, DirectX 12, thereby gaining proficiency in three graphics APIs.
 
 ## Minimum Requirements
 1. Latest Graphics Driver
@@ -47,17 +47,18 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 ```
 
 ## Features
-1. Running on OpenGL & Vulkan Graphics APIs.
+1. Running on OpenGL & Vulkan & DirectX 12 Graphics APIs.
 2. [Slang Shading Language](https://shader-slang.org/)
 3. [ImGui](https://github.com/ocornut/imgui) Integrated
-4. SoundManager with ImGui UI
-5. Basic 2D Game Engine Features
-6. 3D Plane, Cube(3D Collision Applied), Sphere, Tours, Cylinder, Cone Meshes + Normal Debugger
-7. Assimp Model Loading
-8. Blinn-Phong Lighting, Physically Based Rendering
-9. PBR Image Based Lighting
-10. Skybox
-11. MSAA
+4. CPU Dump Writer, CRT Memory Leak Detector, [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) (DX12 Only)
+5. SoundManager with ImGui UI
+6. Basic 2D Game Engine Features
+7. 3D Plane, Cube(3D Collision Applied), Sphere, Tours, Cylinder, Cone Meshes + Normal Vector Debugger
+8. Assimp Model Loading
+9. Blinn-Phong Lighting, Physically Based Rendering
+10. PBR Image Based Lighting
+11. Skybox
+12. MSAA
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
@@ -71,7 +72,7 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 ![image](https://github.com/user-attachments/assets/e7221576-5010-48b5-8a58-78bd5f197625)
 
 ## Future Plans
-1. DirectX12
+1. CPU Profiler, Memory Debugger
 2. Deferred Shading
 3. SSAO
 4. Normal / Parallax Mapping
