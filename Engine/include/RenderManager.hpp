@@ -146,33 +146,7 @@ public:
 		bufferData.classifiedData = std::monostate{};
 	}
 	// @TODO Should I use std::unique_ptr of raw pointers?
-	~BufferWrapper()
-	{
-		std::visit([]<typename T>(T & buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf.vertexBuffer;
-#ifdef _DEBUG
-				delete buf.normalVertexBuffer;
-#endif
-				delete buf.indexBuffer;
-			}
-		}, buffer);
-
-		std::visit([]<typename T>(T & buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf.vertexUniformBuffer;
-				delete buf.fragmentUniformBuffer;
-				if constexpr (requires { buf.materialUniformBuffer; })
-				{
-					delete buf.materialUniformBuffer;
-				}
-			}
-		}, uniformBuffer);
-	}
+	~BufferWrapper();
 
 	void Initialize(GraphicsMode mode, RenderType type)
 	{

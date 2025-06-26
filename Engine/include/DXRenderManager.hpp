@@ -31,6 +31,7 @@ public:
 	int m_width, m_height;
 	bool m_isResize{ false };
 	void OnResize(const int width, const int height);
+	void WaitForGPU();
 
 	bool BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;
@@ -38,7 +39,6 @@ private:
 	// Initialize DirectX 12 components
 	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
 	void CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters);
-	void WaitForGPU();
 	void MoveToNextFrame();
 
 	struct LiveObjectReporter
