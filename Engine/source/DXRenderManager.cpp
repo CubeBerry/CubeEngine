@@ -555,8 +555,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
 
 			// Update Constant Buffer
-			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, m_frameIndex);
-			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, m_frameIndex);
+			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
+			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
 
 			// Bind Vertex Buffer & Index Buffer
 			D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
@@ -585,18 +585,18 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
 			// Update Constant Buffer
-			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, m_frameIndex);
-			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, m_frameIndex);
-			constantBuffer.materialUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, m_frameIndex);
+			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
+			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
+			constantBuffer.materialUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
 
 			if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
 			{
-				directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), m_frameIndex);
+				directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
 				m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 			}
 			if (pointLightUniformBuffer && !pointLightUniforms.empty())
 			{
-				pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), m_frameIndex);
+				pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
 				m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 			}
 

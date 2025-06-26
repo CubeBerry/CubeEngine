@@ -27,7 +27,7 @@ public:
 	DXConstantBuffer(const DXConstantBuffer&&) = delete;
 	DXConstantBuffer& operator=(const DXConstantBuffer&&) = delete;
 
-	void UpdateConstant(const void* data, const uint32_t frameIndex) const;
+	void UpdateConstant(const void* data, const size_t& dataSize, const uint32_t frameIndex) const;
 
 	[[nodiscard]] ComPtr<ID3D12Resource> GetConstantBuffer() const { return m_constantBuffer; }
 	[[nodiscard]] D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(const uint32_t& frameIndex) const
@@ -73,8 +73,8 @@ DXConstantBuffer<Type>::~DXConstantBuffer()
 }
 
 template<typename Type>
-void DXConstantBuffer<Type>::UpdateConstant(const void* data, const uint32_t frameIndex) const
+void DXConstantBuffer<Type>::UpdateConstant(const void* data, const size_t& dataSize, const uint32_t frameIndex) const
 {
 	uint8_t* dest = m_mappedData + (static_cast<uint64_t>(frameIndex) * m_alignedSizePerFrame);
-	memcpy(dest, data, sizeof(Type));
+	memcpy(dest, data, dataSize);
 }

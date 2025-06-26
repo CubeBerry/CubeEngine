@@ -52,7 +52,7 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	{
 		vas.push_back({ m_fullscreenQuad[i], m_fullscreenQuadTexCoords[i] });
 	}
-	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(VA), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
+	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(VA)), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
 }
 
 DXSkybox::~DXSkybox()
