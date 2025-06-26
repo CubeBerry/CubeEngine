@@ -170,8 +170,8 @@ private:
 	} pushConstants;
 
 	//Skybox
-	std::unique_ptr<DXVertexBuffer> skyboxVertexBuffer;
+	std::unique_ptr<DXVertexBuffer> m_skyboxVertexBuffer;
 	ComPtr<ID3D12RootSignature> m_rootSignatureSkybox;
 	std::unique_ptr<DXPipeLine> m_pipelineSkybox;
-	std::unique_ptr<DXSkybox> skybox;
+	std::unique_ptr<DXSkybox> m_skybox;
 };

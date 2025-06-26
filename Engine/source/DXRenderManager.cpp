@@ -606,9 +606,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 			m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
-			if (skyboxEnabled && skybox)
+			if (skyboxEnabled && m_skybox)
 			{
-				m_commandList->SetGraphicsRootDescriptorTable(7, skybox->GetIrradianceMapSrv());
+				m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
 			}
 
 			// Bind Vertex Buffer & Index Buffer
@@ -663,9 +663,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 			glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
 			m_commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
-			m_commandList->SetGraphicsRootDescriptorTable(1, skybox->GetCubemapSrv());
+			m_commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
 
-			D3D12_VERTEX_BUFFER_VIEW vbv = skyboxVertexBuffer->GetView();
+			D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
 			m_commandList->IASetVertexBuffers(0, 1, &vbv);
 
 			m_commandList->DrawInstanced(36, 1, 0, 0);
@@ -887,6 +887,11 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 void DXRenderManager::ClearTextures()
 {
+	// Wait until GPU is synchronized before changing state
+	/* @TODO This WaitForGPU() should be called before levelList.at(static_cast<int>(currentLevel))->End() is called
+	 * Take a look at GameStateManager.cpp
+	*/
+	WaitForGPU();
 	textures.clear();
 }
 
@@ -948,7 +953,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		 1.0f, -1.0f,  1.0f
 	};
 
-	skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
 
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2, {});
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -980,14 +985,21 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	);
 
 	WaitForGPU();
-	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE);
-	skybox->Initialize(path);
+	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE);
+	m_skybox->Initialize(path);
 
 	skyboxEnabled = true;
 }
 
 void DXRenderManager::DeleteSkybox()
 {
-	skybox.release();
+	m_skyboxVertexBuffer.reset();
+
+	m_rootSignatureSkybox.Reset();
+
+	m_pipelineSkybox.reset();
+
+	m_skybox.reset();
+
 	skyboxEnabled = false;
 }

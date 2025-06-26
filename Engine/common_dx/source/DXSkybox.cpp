@@ -7,7 +7,6 @@
 #include "DXHelper.hpp"
 #include "DXTexture.hpp"
 #include "DXConstantBuffer.hpp"
-#include "DXPipeLine.hpp"
 
 DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	const ComPtr<ID3D12CommandQueue>& commandQueue,
@@ -37,7 +36,23 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 		throw std::runtime_error("Failed to create texture fence event.");
 	}
 
+	// Create Render Target View (RTV) heap for each face
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = 6;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
 	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(glm::vec3)), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
+	std::vector<VA> vas;
+	for (int i = 0; i < 4; ++i)
+	{
+		vas.push_back({ m_fullscreenQuad[i], m_fullscreenQuadTexCoords[i] });
+	}
+	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(VA), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
 }
 
 DXSkybox::~DXSkybox()
@@ -112,16 +127,7 @@ void DXSkybox::EquirectangularToCube()
 	));
 	DXHelper::ThrowIfFailed(m_cubemap->SetName(L"Skybox Cubemap Resource"));
 
-	// Create Render Target View (RTV) heap for each face
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = 6;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
-	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT f = 0; f < 6; ++f)
 	{
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
@@ -131,11 +137,10 @@ void DXSkybox::EquirectangularToCube()
 		rtvDesc.Texture2DArray.FirstArraySlice = f;
 		rtvDesc.Texture2DArray.ArraySize = 1;
 		m_device->CreateRenderTargetView(m_cubemap.Get(), &rtvDesc, rtvHandle);
-		rtvHandle.ptr += rtvDescriptorSize;
+		rtvHandle.ptr += m_rtvDescriptorSize;
 	}
 
 	// Prepare Pipeline
-	ComPtr<ID3D12RootSignature> rootSignature;
 	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
 	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -155,8 +160,8 @@ void DXSkybox::EquirectangularToCube()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
-	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox Equirectangular Root Signature"));
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignatures[0])));
+	DXHelper::ThrowIfFailed(m_rootSignatures[0]->SetName(L"Skybox Equirectangular Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -170,9 +175,9 @@ void DXSkybox::EquirectangularToCube()
 	sampleDesc.Count = 1;
 	sampleDesc.Quality = 0;
 
-	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
+	m_pipelines[0] = std::make_unique<DXPipeLine>(
 		m_device,
-		rootSignature,
+		m_rootSignatures[0],
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Equirectangular.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
@@ -186,13 +191,13 @@ void DXSkybox::EquirectangularToCube()
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelines[0]->GetPipelineState().Get()));
 
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(faceSize), static_cast<FLOAT>(faceSize), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(faceSize), static_cast<LONG>(faceSize) };
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
-	m_commandList->SetGraphicsRootSignature(rootSignature.Get());
+	m_commandList->SetGraphicsRootSignature(m_rootSignatures[0].Get());
 
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -200,8 +205,6 @@ void DXSkybox::EquirectangularToCube()
 	CD3DX12_GPU_DESCRIPTOR_HANDLE equirectangularSrvHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 	equirectangularSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, equirectangularSrvHandle);
-
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
 
@@ -212,7 +215,7 @@ void DXSkybox::EquirectangularToCube()
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (int f = 0; f < 6; ++f)
 	{
 		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -225,7 +228,7 @@ void DXSkybox::EquirectangularToCube()
 
 		m_commandList->DrawInstanced(36, 1, 0, 0);
 
-		rtvHandle.ptr += rtvDescriptorSize;
+		rtvHandle.ptr += m_rtvDescriptorSize;
 	}
 
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -276,16 +279,7 @@ void DXSkybox::CalculateIrradiance()
 	));
 	DXHelper::ThrowIfFailed(m_irradianceMap->SetName(L"Skybox Irradiance Map Resource"));
 
-	// Create Render Target View (RTV) heap for each face
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = 6;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
-	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT f = 0; f < 6; ++f)
 	{
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
@@ -295,11 +289,10 @@ void DXSkybox::CalculateIrradiance()
 		rtvDesc.Texture2DArray.FirstArraySlice = f;
 		rtvDesc.Texture2DArray.ArraySize = 1;
 		m_device->CreateRenderTargetView(m_irradianceMap.Get(), &rtvDesc, rtvHandle);
-		rtvHandle.ptr += rtvDescriptorSize;
+		rtvHandle.ptr += m_rtvDescriptorSize;
 	}
 
 	// Prepare Pipeline
-	ComPtr<ID3D12RootSignature> rootSignature;
 	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
 	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -319,8 +312,8 @@ void DXSkybox::CalculateIrradiance()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
-	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox Irradiance Root Signature"));
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignatures[1])));
+	DXHelper::ThrowIfFailed(m_rootSignatures[1]->SetName(L"Skybox Irradiance Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -334,9 +327,9 @@ void DXSkybox::CalculateIrradiance()
 	sampleDesc.Count = 1;
 	sampleDesc.Quality = 0;
 
-	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
+	m_pipelines[1] = std::make_unique<DXPipeLine>(
 		m_device,
-		rootSignature,
+		m_rootSignatures[1],
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Irradiance.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
@@ -350,13 +343,13 @@ void DXSkybox::CalculateIrradiance()
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelines[1]->GetPipelineState().Get()));
 
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(irradianceSize), static_cast<FLOAT>(irradianceSize), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(irradianceSize), static_cast<LONG>(irradianceSize) };
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
-	m_commandList->SetGraphicsRootSignature(rootSignature.Get());
+	m_commandList->SetGraphicsRootSignature(m_rootSignatures[1].Get());
 
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -364,8 +357,6 @@ void DXSkybox::CalculateIrradiance()
 	CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvHandle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
 	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
-
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
 
@@ -376,7 +367,7 @@ void DXSkybox::CalculateIrradiance()
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_irradianceMap.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (int f = 0; f < 6; ++f)
 	{
 		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -389,7 +380,7 @@ void DXSkybox::CalculateIrradiance()
 
 		m_commandList->DrawInstanced(36, 1, 0, 0);
 
-		rtvHandle.ptr += rtvDescriptorSize;
+		rtvHandle.ptr += m_rtvDescriptorSize;
 	}
 
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -440,15 +431,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	));
 	DXHelper::ThrowIfFailed(m_prefilterMap->SetName(L"Skybox Prefilter Map Resource"));
 
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = 6;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
-	UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
 	// Prepare Pipeline
-	ComPtr<ID3D12RootSignature> rootSignature;
 	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
 	CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -469,8 +452,8 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
-	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox Prefilter Root Signature"));
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignatures[2])));
+	DXHelper::ThrowIfFailed(m_rootSignatures[2]->SetName(L"Skybox Prefilter Root Signature"));
 
 	// Create Pipeline State Object (PSO)
 	struct VA
@@ -484,9 +467,9 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	sampleDesc.Count = 1;
 	sampleDesc.Quality = 0;
 
-	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
+	m_pipelines[2] = std::make_unique<DXPipeLine>(
 		m_device,
-		rootSignature,
+		m_rootSignatures[2],
 		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
 		"../Engine/shaders/hlsl/Prefilter.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout },
@@ -500,9 +483,9 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelines[2]->GetPipelineState().Get()));
 
-	m_commandList->SetGraphicsRootSignature(rootSignature.Get());
+	m_commandList->SetGraphicsRootSignature(m_rootSignatures[2].Get());
 
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -510,8 +493,6 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvHandle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
 	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
-
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 
 	DXConstantBuffer<float>roughnessConstantBuffer(m_device, 1);
 
@@ -533,7 +514,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		m_commandList->RSSetScissorRects(1, &scissorRect);
 
 		//roughnessConstantBuffer.UpdateConstant(&roughness, 0);
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ rtvHeap->GetCPUDescriptorHandleForHeapStart() };
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart() };
 		for (int f = 0; f < 6; ++f)
 		{
 			D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
@@ -543,7 +524,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 			rtvDesc.Texture2DArray.FirstArraySlice = f;
 			rtvDesc.Texture2DArray.ArraySize = 1;
 
-			CD3DX12_CPU_DESCRIPTOR_HANDLE currentRtvHandle(rtvHandle, f, rtvDescriptorSize);
+			CD3DX12_CPU_DESCRIPTOR_HANDLE currentRtvHandle(rtvHandle, f, m_rtvDescriptorSize);
 			m_device->CreateRenderTargetView(m_prefilterMap.Get(), &rtvDesc, currentRtvHandle);
 
 			m_commandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, nullptr);
@@ -609,41 +590,21 @@ void DXSkybox::BRDFLUT()
 	));
 	DXHelper::ThrowIfFailed(m_brdfLUT->SetName(L"Skybox BRDF LUT Resource"));
 
-	// Create Render Target View (RTV)
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = 1;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
-
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 	rtvDesc.Format = texDesc.Format;
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	m_device->CreateRenderTargetView(m_brdfLUT.Get(), &rtvDesc, rtvHeap->GetCPUDescriptorHandleForHeapStart());
+	m_device->CreateRenderTargetView(m_brdfLUT.Get(), &rtvDesc, m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Prepare Pipeline
-	ComPtr<ID3D12RootSignature> rootSignature;
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.Init_1_1(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> signature, error;
 	D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
-	DXHelper::ThrowIfFailed(rootSignature->SetName(L"Skybox BRDF LUT Root Signature"));
+	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignatures[3])));
+	DXHelper::ThrowIfFailed(m_rootSignatures[3]->SetName(L"Skybox BRDF LUT Root Signature"));
 
 	// Create Pipeline State Object (PSO)
-	struct VA
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-	};
-
-	std::vector<VA> vas;
-	for (int i = 0; i < 4; ++i)
-	{
-		vas.push_back({ m_fullscreenQuad[i], m_fullscreenQuadTexCoords[i] });
-	}
-
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(VA, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
@@ -651,9 +612,9 @@ void DXSkybox::BRDFLUT()
 	sampleDesc.Count = 1;
 	sampleDesc.Quality = 0;
 
-	std::unique_ptr<DXPipeLine> pipeline = std::make_unique<DXPipeLine>(
+	m_pipelines[3] = std::make_unique<DXPipeLine>(
 		m_device,
-		rootSignature,
+		m_rootSignatures[3],
 		"../Engine/shaders/hlsl/BRDF.vert.hlsl",
 		"../Engine/shaders/hlsl/BRDF.frag.hlsl",
 		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout },
@@ -667,15 +628,13 @@ void DXSkybox::BRDFLUT()
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), pipeline->GetPipelineState().Get()));
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelines[3]->GetPipelineState().Get()));
 
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(lutSize), static_cast<FLOAT>(lutSize), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(lutSize), static_cast<LONG>(lutSize) };
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
-	m_commandList->SetGraphicsRootSignature(rootSignature.Get());
-
-	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(VA), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
+	m_commandList->SetGraphicsRootSignature(m_rootSignatures[3].Get());
 
 	D3D12_VERTEX_BUFFER_VIEW vbv = m_quadVertexBuffer->GetView();
 	m_commandList->IASetVertexBuffers(0, 1, &vbv);
@@ -684,7 +643,7 @@ void DXSkybox::BRDFLUT()
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_brdfLUT.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ rtvHeap->GetCPUDescriptorHandleForHeapStart() };
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart() };
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 

@@ -8,6 +8,7 @@
 #include "DebugTools.hpp"
 
 #include "DXVertexBuffer.hpp"
+#include "DXPipeLine.hpp"
 
 #include <filesystem>
 #include <glm/mat4x4.hpp>
@@ -90,6 +91,12 @@ private:
 	ComPtr<ID3D12Resource> m_irradianceMap;
 	ComPtr<ID3D12Resource> m_prefilterMap;
 	ComPtr<ID3D12Resource> m_brdfLUT;
+	// 0 = cubemap, 1 = irradiance, 2 = prefilter, 3 = BRDFLUT
+	ComPtr<ID3D12RootSignature> m_rootSignatures[4];
+	std::unique_ptr<DXPipeLine> m_pipelines[4];
+
+	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	UINT m_rtvDescriptorSize;
 
 	// Equirectangular to Cube
 	uint32_t faceSize{ 0 };
@@ -102,6 +109,11 @@ private:
 	uint32_t lutSize{ 512 };
 
 	std::unique_ptr<DXVertexBuffer> m_skyboxVertexBuffer;
+	struct VA
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+	};
 	std::unique_ptr<DXVertexBuffer> m_quadVertexBuffer;
 	std::vector<glm::vec3> m_skyboxVertices = {
 		{-1.0f, -1.0f, -1.0f},
