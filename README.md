@@ -4,6 +4,10 @@
 ![Static Badge](https://img.shields.io/badge/platform-Windows-brightgreen)
 ![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)
 
+![Static Badge](https://img.shields.io/badge/api-OpenGL-%235586A4?logo=opengl)
+![Static Badge](https://img.shields.io/badge/api-Vulkan-%23A41E22?logo=vulkan)
+![Static Badge](https://img.shields.io/badge/api-DirectX_12-limegreen)
+
 CubeEngine is a rendering engine written in C++, developed as a personal hobby project and for portfolio purposes. This engine utilizes an integrated renderer based on both OpenGL, Vulkan and DirectX 12. The primary objective of this project is to implement features learned from college courses, particularly those focused on OpenGL graphics. Furthermore, the project aims to adapt and apply these OpenGL-based techniques to Vulkan, DirectX 12, thereby gaining proficiency in three graphics APIs.
 
 ## Minimum Requirements
