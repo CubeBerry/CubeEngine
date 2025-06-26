@@ -43,13 +43,10 @@ public:
 
 	// Add Quad
 	void AddQuad(glm::vec4 color_);
-	void AddQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
-	void AddQuadWithTexel(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f });
+	void AddQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f }, bool isTexel_ = false);
 	// Add Mesh
-	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
-	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_);
-	//void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
-	//void RecreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_);
+	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f);
+
 
 	// Animation
 	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
@@ -94,8 +91,7 @@ public:
 	void SetRoughness(float amount) { bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = amount; }
 
 	//For CompFuncQueue
-	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f });
-	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_);
+	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f);
 	void DeleteFromSpriteManagerList();
 	//For CompFuncQueue
 private:
