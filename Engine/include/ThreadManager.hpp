@@ -1,6 +1,7 @@
 //Author: DOYEONG LEE
 //Project: CubeEngine
 //File: ThreadManager.hpp
+#pragma once
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -20,27 +21,21 @@ public:
     void QueueGameUpdate(const std::function<void(float)>& updateFunc, float dt);
     void WaitForGameUpdates();
 
-    void ProcessSDLEvents();
-    void QueueSDLEvent(const SDL_Event& event);
+    void ProcessEvents();
+
 private:
     void GameUpdateLoop();
-
     void SDLEventLoop();
-    void ProcessSDLEventsMainThread();
 
     std::thread gameUpdateThread;
     std::thread sdlEventThread;
 
     std::mutex gameUpdateMutex;
-    std::mutex sdlEventMutex;
-    std::mutex mainThreadEventMutex;
-
     std::condition_variable gameUpdateCV;
-    std::condition_variable sdlEventCV;
-
     std::queue<std::pair<std::function<void(float)>, float>> gameUpdateQueue;
+
+    std::mutex sdlEventMutex;
     std::queue<SDL_Event> sdlEventQueue;
-    std::queue<SDL_Event> mainThreadEventQueue;
-    
+
     std::atomic<bool> running;
 };

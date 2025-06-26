@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-//Debugging
+// Debugging
 void APIENTRY OpenGLDebugMessageCallback(GLenum /*source*/, GLenum /*type*/, GLuint id, GLenum severity,
 	GLsizei /*length*/, const GLchar* message, const void* /*userParam*/)
 {
@@ -55,7 +55,26 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 					static_cast<int>(wSize.y),
 					flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
 				break;
-			};
+			}
+			break;
+		case GraphicsMode::DX:
+			switch (wMode)
+			{
+			case WindowMode::NORMAL:
+				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
+					title,
+					static_cast<int>(wSize.x),
+					static_cast<int>(wSize.y),
+					flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN));
+				break;
+			case WindowMode::BORADLESS:
+				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
+					title,
+					static_cast<int>(wSize.x),
+					static_cast<int>(wSize.y),
+					flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN));
+				break;
+			}
 			break;
 		}
 		SetMainWindowTitle(title);
@@ -65,12 +84,12 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 
 void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 {
-	//Use Modern OpenGL Code Only
+	// Use Modern OpenGL Code Only
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	//Use OpenGL Version 4.6
+	// Use OpenGL Version 4.6
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-	//Use Double Buffer
+	// Use Double Buffer
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, true);
 	//SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -78,11 +97,11 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	//MultiSampling
+	// MultiSampling
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
 
-	//Enable Debug
+	// Enable Debug
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
 	switch (wMode)
@@ -103,23 +122,23 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 		break;
 	}
 
-	//Make Context
+	// Make Context
 	context = SDL_GL_CreateContext(window.get());
 	SDL_GL_MakeCurrent(window.get(), context);
 
-	//Init GLEW
+	// Init GLEW
 	glewExperimental = true;
 	GLenum result = glewInit();
 	if (result != GLEW_OK)
 		std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
 
-	//Debugging
+	// Debugging
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(OpenGLDebugMessageCallback, nullptr);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
-	//VSYNC
+	// VSYNC
 	//constexpr int ADAPTIVE_VSYNC = -1;
 	//constexpr int VSYNC = 1;
 	//if (const auto result = SDL_GL_SetSwapInterval(ADAPTIVE_VSYNC); result != 0)
@@ -127,15 +146,15 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	//	SDL_GL_SetSwapInterval(VSYNC);
 	//}
 
-	//Anti-Aliasing
+	// Anti-Aliasing
 	//glEnable(GL_LINE_SMOOTH);
 	//glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-	//MSAA Anti-Aliasing
+	// MSAA Anti-Aliasing
 	glEnable(GL_MULTISAMPLE);
 
-	//Blend
+	// Blend
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

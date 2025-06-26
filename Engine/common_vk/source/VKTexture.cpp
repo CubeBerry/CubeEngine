@@ -72,8 +72,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		VkImageCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		if (isHDR) createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		else  createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		createInfo.format = isHDR ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_UNORM;
 		createInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 		createInfo.mipLevels = 1;
 		createInfo.arrayLayers = 1;
@@ -94,22 +93,22 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -136,25 +135,25 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Texture Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -169,22 +168,22 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -214,22 +213,22 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Staging Buffer Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -256,25 +255,25 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Staging Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -289,22 +288,22 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -320,25 +319,25 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << std::endl;
+					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Map Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -472,22 +471,22 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -523,25 +522,25 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Sampler Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -608,22 +607,22 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -650,25 +649,25 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Texture Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -683,22 +682,22 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -729,22 +728,22 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Staging Buffer Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -771,25 +770,25 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Staging Memory Allocation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -804,22 +803,22 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Bind Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -835,25 +834,25 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << std::endl;
+					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Memory Map Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1000,22 +999,22 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1051,25 +1050,25 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Sampler Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKTexture::~VKTexture();
 			std::exit(EXIT_FAILURE);
 		}

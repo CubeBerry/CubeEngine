@@ -10,6 +10,37 @@
 
 #include "Engine.hpp"
 
+// Buffer
+BufferWrapper::~BufferWrapper()
+{
+	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
+		dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->WaitForGPU();
+
+	std::visit([]<typename T>(T & buf)
+	{
+		if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+		{
+			delete buf.vertexBuffer;
+#ifdef _DEBUG
+			delete buf.normalVertexBuffer;
+#endif
+			delete buf.indexBuffer;
+		}
+	}, buffer);
+
+	std::visit([]<typename T>(T & buf)
+	{
+		if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
+		{
+			delete buf.vertexUniformBuffer;
+			delete buf.fragmentUniformBuffer;
+			if constexpr (requires { buf.materialUniformBuffer; })
+			{
+				delete buf.materialUniformBuffer;
+			}
+		}
+	}, uniformBuffer);
+};
 
 void RenderManager::CreateMesh(
 	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,

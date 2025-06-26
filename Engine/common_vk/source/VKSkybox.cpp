@@ -35,22 +35,22 @@ VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPo
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Command Buffer Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -65,22 +65,22 @@ VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPo
 VKSkybox::~VKSkybox()
 {
 	//Destroy Sampler
-	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerEquirectangular, nullptr);
+	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerCubemap, nullptr);
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerIrradiance, nullptr);
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerPrefilter, nullptr);
 	vkDestroySampler(*vkInit->GetDevice(), vkTextureSamplerBRDFLUT, nullptr);
 	//Destroy ImageView
-	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewEquirectangular, nullptr);
+	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewCubemap, nullptr);
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewIrradiance, nullptr);
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewPrefilter, nullptr);
 	vkDestroyImageView(*vkInit->GetDevice(), vkTextureImageViewBRDFLUT, nullptr);
 	//Free Memory
-	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryEquirectangular, nullptr);
+	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryCubemap, nullptr);
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryIrradiance, nullptr);
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryPrefilter, nullptr);
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemoryBRDFLUT, nullptr);
 	//Destroy Image
-	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageEquirectangular, nullptr);
+	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageCubemap, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageIrradiance, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImagePrefilter, nullptr);
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImageBRDFLUT, nullptr);
@@ -147,28 +147,28 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageEquirectangular);
+			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageCubemap);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -177,7 +177,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	//Declare a variable which will take memory requirements
 	VkMemoryRequirements requirements{};
 	//Get Memory Requirements for Image
-	vkGetImageMemoryRequirements(*vkInit->GetDevice(), vkTextureImageEquirectangular, &requirements);
+	vkGetImageMemoryRequirements(*vkInit->GetDevice(), vkTextureImageCubemap, &requirements);
 
 	//Create Memory Allocation Info
 	VkMemoryAllocateInfo allocateInfo{};
@@ -190,31 +190,31 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	try
 	{
 		VkResult result{ VK_SUCCESS };
-		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryEquirectangular);
+		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryCubemap);
 		if (result != VK_SUCCESS)
 		{
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Texture Memory Allocation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -223,28 +223,28 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	try
 	{
 		VkResult result{ VK_SUCCESS };
-		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageEquirectangular, vkTextureDeviceMemoryEquirectangular, 0);
+		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageCubemap, vkTextureDeviceMemoryCubemap, 0);
 		if (result != VK_SUCCESS)
 		{
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Memory Bind Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -254,7 +254,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		//Create ImageView Info
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = vkTextureImageEquirectangular;
+		createInfo.image = vkTextureImageCubemap;
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
 		createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -266,28 +266,28 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewEquirectangular);
+			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewCubemap);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -312,31 +312,31 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		try
 		{
 			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerEquirectangular);
+			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerCubemap);
 			if (result != VK_SUCCESS)
 			{
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Sampler Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -381,22 +381,22 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "RenderPass Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -410,7 +410,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 			//Create ImageView Info
 			VkImageViewCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = vkTextureImageEquirectangular;
+			createInfo.image = vkTextureImageCubemap;
 			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -425,22 +425,22 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -470,22 +470,22 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Framebuffer Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -574,7 +574,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
 		vkCmdBindDescriptorSets(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLineLayout(), 0, 1, &(*descriptorIBL.GetFragmentDescriptorSets())[0], 0, nullptr);
 		//Push Constant World-To_NDC
-		glm::mat4 transform[2] = { views[f], projection};
+		glm::mat4 transform[2] = { views[f], projection };
 		vkCmdPushConstants(*commandBuffer, *pipelineIBL.GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
 
 		vkCmdDraw(*commandBuffer, 36, 1, 0, 0);
@@ -639,22 +639,22 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -682,25 +682,25 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Texture Memory Allocation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -715,22 +715,22 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Memory Bind Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -758,22 +758,22 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -804,25 +804,25 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Sampler Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -867,22 +867,22 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "RenderPass Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -911,22 +911,22 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -956,22 +956,22 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Framebuffer Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1125,22 +1125,22 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1168,25 +1168,25 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Texture Memory Allocation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -1201,22 +1201,22 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Memory Bind Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -1244,22 +1244,22 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1294,25 +1294,25 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Sampler Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1357,22 +1357,22 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "RenderPass Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -1480,22 +1480,22 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 					switch (result)
 					{
 					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 						break;
 					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 						break;
 					default:
 						break;
 					}
-					std::cout << std::endl;
+					std::cout << '\n';
 
 					throw std::runtime_error{ "Image View Creation Failed" };
 				}
 			}
 			catch (std::exception& e)
 			{
-				std::cerr << e.what() << std::endl;
+				std::cerr << e.what() << '\n';
 				VKSkybox::~VKSkybox();
 				std::exit(EXIT_FAILURE);
 			}
@@ -1521,22 +1521,22 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 					switch (result)
 					{
 					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 						break;
 					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 						break;
 					default:
 						break;
 					}
-					std::cout << std::endl;
+					std::cout << '\n';
 
 					throw std::runtime_error{ "Framebuffer Creation Failed" };
 				}
 			}
 			catch (std::exception& e)
 			{
-				std::cerr << e.what() << std::endl;
+				std::cerr << e.what() << '\n';
 				VKSkybox::~VKSkybox();
 				std::exit(EXIT_FAILURE);
 			}
@@ -1632,22 +1632,22 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1675,25 +1675,25 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Texture Memory Allocation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -1708,22 +1708,22 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Memory Bind Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -1751,22 +1751,22 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image View Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1797,25 +1797,25 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << std::endl;
+					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Image Sampler Creation Failed" };
 			}
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			VKSkybox::~VKSkybox();
 			std::exit(EXIT_FAILURE);
 		}
@@ -1860,22 +1860,22 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "RenderPass Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}
@@ -1904,22 +1904,22 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "Framebuffer Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSkybox::~VKSkybox();
 		std::exit(EXIT_FAILURE);
 	}

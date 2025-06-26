@@ -23,7 +23,7 @@ public:
 	void PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer);
 	void BRDFLUT(VkCommandBuffer* commandBuffer);
 
-	std::pair<VkSampler*, VkImageView*> GetCubeMap() { return { &vkTextureSamplerEquirectangular, &vkTextureImageViewEquirectangular }; };
+	std::pair<VkSampler*, VkImageView*> GetCubeMap() { return { &vkTextureSamplerCubemap, &vkTextureImageViewCubemap }; };
 	std::pair<VkSampler*, VkImageView*> GetIrradiance() { return { &vkTextureSamplerIrradiance, &vkTextureImageViewIrradiance }; };
 	std::pair<VkSampler*, VkImageView*> GetPrefilter() { return { &vkTextureSamplerPrefilter, &vkTextureImageViewPrefilter }; };
 	std::pair<VkSampler*, VkImageView*> GetBRDF() { return { &vkTextureSamplerBRDFLUT, &vkTextureImageViewBRDFLUT }; };
@@ -48,10 +48,10 @@ private:
 	uint32_t lutSize{ 512 };
 
 	//CubeMap converted from Equirectangular
-	VkImage vkTextureImageEquirectangular{ VK_NULL_HANDLE };
-	VkDeviceMemory vkTextureDeviceMemoryEquirectangular{ VK_NULL_HANDLE };
-	VkImageView vkTextureImageViewEquirectangular{ VK_NULL_HANDLE };
-	VkSampler vkTextureSamplerEquirectangular{ VK_NULL_HANDLE };
+	VkImage vkTextureImageCubemap{ VK_NULL_HANDLE };
+	VkDeviceMemory vkTextureDeviceMemoryCubemap{ VK_NULL_HANDLE };
+	VkImageView vkTextureImageViewCubemap{ VK_NULL_HANDLE };
+	VkSampler vkTextureSamplerCubemap{ VK_NULL_HANDLE };
 
 	//Irradiance Texture
 	VkImage vkTextureImageIrradiance{ VK_NULL_HANDLE };

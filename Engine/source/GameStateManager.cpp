@@ -36,7 +36,7 @@ void GameStateManager::LevelInit(GameLevel currentLevel_)
 	Engine::GetObjectManager().ProcessFunctionQueue();
 	state = State::UPDATE;
 #ifdef _DEBUG
-	std::cout << "Load Complete" << std::endl;
+	std::cout << "Load Complete" << '\n';
 #endif
 }
 
@@ -59,11 +59,11 @@ void GameStateManager::Update(float dt)
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #ifdef _DEBUG
-		std::cout << "Load Complete" << std::endl;
+		std::cout << "Load Complete" << '\n';
 #endif
 		state = State::UPDATE;
 #ifdef _DEBUG
-		std::cout << "Update" << std::endl;
+		std::cout << "Update" << '\n';
 #endif
 		break;
 	case State::UPDATE:
@@ -80,14 +80,14 @@ void GameStateManager::Update(float dt)
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		break;
 	case State::CHANGE:
-		levelList.at(static_cast<int>(currentLevel))->End();
 		// @TODO temporary function to clear all textures
-		Engine::GetRenderManager()->DeleteWithIndex(0);
+		Engine::GetRenderManager()->ClearTextures();
+		levelList.at(static_cast<int>(currentLevel))->End();
 		currentLevel = levelSelected;
 #ifdef _DEBUG
 		Engine::GetRenderManager()->DrawNormals(false);
 		Engine::GetObjectManager().SetIsDrawNormals(false);
-		std::cout << "Level Change" << std::endl;
+		std::cout << "Level Change" << '\n';
 #endif
 		state = State::LOAD;
 		break;
@@ -95,14 +95,14 @@ void GameStateManager::Update(float dt)
 		LevelEnd();
 		state = State::LOAD;
 #ifdef _DEBUG
-		std::cout << "Level Restart" << std::endl;
+		std::cout << "Level Restart" << '\n';
 #endif
 		break;
 	case State::UNLOAD:
 		LevelEnd();
 		state = State::SHUTDOWN;
 #ifdef _DEBUG
-		std::cout << "ShutDown" << std::endl;
+		std::cout << "ShutDown" << '\n';
 #endif
 		break;
 	case State::SHUTDOWN:
@@ -134,8 +134,8 @@ void GameStateManager::DrawWithImGui(float dt)
 	{
 		StateChanger();
 		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+		renderManager->EndRender();
 	}
-	renderManager->EndRender();
 
 	//VK Draw
 	//VKRenderManager* renderManager = &Engine::Instance().GetVKRenderManager();

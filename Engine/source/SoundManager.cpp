@@ -397,7 +397,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 			if (extension == "wav")
 			{
 #ifdef _DEBUG
-				std::cout << "Load Sound Complete : " << fileName << std::endl;
+				std::cout << "Load Sound Complete : " << fileName << '\n';
 #endif
 				LoadFile(filePath, fileName);
 			}
@@ -433,7 +433,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::wstring& folderPath)
 
 			if (extension == L"mp3" || extension == L"ogg")
 			{
-				std::cout << "Load Music Complete : " << ConvertWideStringToUTF8(fileName).c_str() << std::endl;
+				std::cout << "Load Music Complete : " << ConvertWideStringToUTF8(fileName).c_str() << '\n';
 				LoadFile(filePath, fileName);
 			}
 

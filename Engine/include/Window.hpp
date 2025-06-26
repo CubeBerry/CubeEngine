@@ -10,7 +10,7 @@
 
 enum class GraphicsMode
 {
-	GL, VK,
+	GL, VK, DX
 };
 
 enum class WindowMode

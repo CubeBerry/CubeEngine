@@ -43,10 +43,6 @@ VKRenderManager::~VKRenderManager()
 	delete pointLightUniformBuffer;
 	delete directionalLightUniformBuffer;
 
-	//Destroy Texture
-	for (const auto t : textures)
-		delete t;
-
 	//Destroy Batch ImageInfo
 	vkDestroySampler(*vkInit->GetDevice(), immutableSampler, nullptr);
 	//size_t texSize{ textures.size() };
@@ -890,28 +886,21 @@ void VKRenderManager::RecreateSwapChain()
 
 void VKRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
 {
-	VKTexture* texture = new VKTexture(vkInit, &vkCommandPool);
+	const auto& texture = textures.emplace_back(std::make_unique<VKTexture>(vkInit, &vkCommandPool));
 	texture->LoadTexture(false, path_, name_, flip);
 
-	//vkDestroySampler(*vkInit->GetDevice(), imageInfos[textures.size()].sampler, nullptr);
-	textures.push_back(texture);
-
-	int texId = static_cast<int>(textures.size() - 1);
-	textures.at(texId)->SetTextureID(texId);
+	const int texId = static_cast<int>(textures.size() - 1);
+	texture->SetTextureID(texId);
 
 	imageInfos[texId].sampler = *textures[texId]->GetSampler();
 	imageInfos[texId].imageView = *textures[texId]->GetImageView();
 	imageInfos[texId].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
-void VKRenderManager::DeleteWithIndex(int /*id*/)
+void VKRenderManager::ClearTextures()
 {
-	//Destroy Texture
-	for (auto t : textures)
-		delete t;
-
 	//Destroy Batch ImageInfo
-	textures.erase(textures.begin(), textures.end());
+	textures.clear();
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
 
 	const VkDescriptorImageInfo imageInfo
@@ -933,7 +922,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 	{
 		if (tex->GetName() == name)
 		{
-			return tex;
+			return tex.get();
 		}
 	}
 	return nullptr;
@@ -1079,9 +1068,6 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-
-				// @TODO Find a place to update uniform
-				//vertexUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, frameIndex);
 			}
 
 			auto& fragmentUniformBuffer = uniformBuffer2D.fragmentUniformBuffer;
@@ -1111,25 +1097,21 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Update DescriptorSet
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 2, descriptorWrite, 0, nullptr);
-
-				// @TODO Find a place to update uniform
-				//fragmentUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, frameIndex);
 			}
 		}
 		break;
 	case RenderType::ThreeDimension:
-		//for (auto& sprite : sprites)
 		{
 			auto& vertexUniformBuffer = uniformBuffer3D.vertexUniformBuffer;
 			currentVertexDescriptorSet = &(*vkDescriptor3D->GetVertexDescriptorSets())[frameIndex];
 			{
-				//Create Vertex Material DescriptorBuffer Info
+				// Create Vertex Material DescriptorBuffer Info
 				VkDescriptorBufferInfo bufferInfo;
 				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(ThreeDimension::VertexUniform);
 
-				//Define which resource descriptor set will point
+				// Define which resource descriptor set will point
 				VkWriteDescriptorSet descriptorWrite{};
 				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorWrite.dstSet = *currentVertexDescriptorSet;
@@ -1138,17 +1120,13 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 				descriptorWrite.pBufferInfo = &bufferInfo;
 
-				//Update DescriptorSet
-				//DescriptorSet does not have to update every frame since it points same uniform buffer
+				// Update DescriptorSet
+				// DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-
-				// @TODO Find a place to update uniform
-				//vertexUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, frameIndex);
 			}
 
 			auto& fragmentUniformBuffer = uniformBuffer3D.fragmentUniformBuffer;
 			auto& materialUniformBuffer = uniformBuffer3D.materialUniformBuffer;
-			//auto& materialUniformBuffer = std::get<VKUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
 			currentFragmentDescriptorSet = &(*vkDescriptor3D->GetFragmentDescriptorSets())[frameIndex];
 			{
 				std::vector<VkWriteDescriptorSet> descriptorWrites;
@@ -1271,9 +1249,6 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//DescriptorSet does not have to update every frame since it points same uniform buffer
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
-				// @TODO Find a place to update uniform
-				//fragmentUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, frameIndex);
-				//materialUniformBuffer->UpdateUniform(1, &sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, frameIndex);
 				if (!directionalLightUniforms.empty())
 					directionalLightUniformBuffer->UpdateUniform(directionalLightUniforms.size(), directionalLightUniforms.data(), frameIndex);
 				if (!pointLightUniforms.empty())
@@ -1313,18 +1288,18 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 	currentCommandBuffer = &vkCommandBuffers[frameIndex];
 
-	//Reset command buffer
+	// Reset command buffer
 	vkResetCommandBuffer(*currentCommandBuffer, 0);
 
-	//Create command buffer begin info
+	// Create command buffer begin info
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	//Begin command buffer
+	// Begin command buffer
 	vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo);
 
-	//Change image layout to TRANSFER_DST_OPTIMAL
+	// Change image layout to TRANSFER_DST_OPTIMAL
 	{
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1339,16 +1314,16 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.layerCount = 1;
 
-		//Record pipeline barrier for chainging image layout
+		// Record pipeline barrier for chainging image layout
 		vkCmdPipelineBarrier(*currentCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	}
 
-	//Set clear color
+	// Set clear color
 	VkClearValue clearValues[2];
 	clearValues[0].color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
 	clearValues[1].depthStencil = { 1.f, 0 };
 
-	//Create RenderPass begin info
+	// Create RenderPass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};
 	renderpassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderpassBeginInfo.renderPass = vkRenderPass;
@@ -1357,7 +1332,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	renderpassBeginInfo.clearValueCount = 2;
 	renderpassBeginInfo.pClearValues = clearValues;
 
-	//Begin RenderPass
+	// Begin RenderPass
 	vkCmdBeginRenderPass(*currentCommandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	//--------------------Begin Draw--------------------//
@@ -1389,7 +1364,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		for (size_t i = 0; i < sprites.size(); ++i)
 		{
 			auto& buffer = sprites[i]->GetBufferWrapper()->GetBuffer<BufferWrapper::VKBuffer>();
-			//Bind Vertex Buffer
+			// Bind Vertex Buffer
 			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 			// Bind Index Buffer
 			vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);

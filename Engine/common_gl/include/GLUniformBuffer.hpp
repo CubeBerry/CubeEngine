@@ -6,7 +6,7 @@
 #include "glew/glew.h"
 #include "glCheck.hpp"
 
-template <typename Material>
+template <typename Type>
 class GLUniformBuffer
 {
 public:
@@ -23,14 +23,14 @@ private:
     GLuint uniformBindingPoint{ 0 };
 };
 
-template <typename Material>
-GLUniformBuffer<Material>::~GLUniformBuffer()
+template <typename Type>
+GLUniformBuffer<Type>::~GLUniformBuffer()
 {
     glCheck(glDeleteBuffers(1, &uniformHandle));
 }
 
-template <typename Material>
-void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* /*data*/)
+template <typename Type>
+void GLUniformBuffer<Type>::InitUniform(GLuint program, GLuint binding, const char* name, size_t size, void* /*data*/)
 {
     //GLuint uniformBlockIndex = glGetUniformBlockIndex(program, name);
     //GLuint uniformBindingPoint{ binding };
@@ -57,10 +57,10 @@ void GLUniformBuffer<Material>::InitUniform(GLuint program, GLuint binding, cons
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }
 
-template <typename Material>
-void GLUniformBuffer<Material>::UpdateUniform(size_t size, const void* data)
+template <typename Type>
+void GLUniformBuffer<Type>::UpdateUniform(size_t size, const void* data)
 {
-    //glBindBufferRange(GL_UNIFORM_BUFFER, 0, uniformHandle, 0, vector.size() * sizeof(Material));
+    //glBindBufferRange(GL_UNIFORM_BUFFER, 0, uniformHandle, 0, vector.size() * sizeof(Type));
 
     glCheck(glBindBuffer(GL_UNIFORM_BUFFER, uniformHandle));
     // @TODO glBufferData should be used only for light uniforms

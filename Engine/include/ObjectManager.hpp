@@ -61,7 +61,7 @@ public:
     {
         if (component == nullptr)
         {
-            std::cerr << "nullptr component!" << std::endl;
+            std::cerr << "nullptr component!" << '\n';
             return;
         }
 
@@ -76,7 +76,7 @@ public:
     {
         if (object == nullptr) 
         {
-            std::cerr << "nullptr object!" << std::endl;
+            std::cerr << "nullptr object!" << '\n';
             return;
         }
         functionQueue.push_back([object, func]() 

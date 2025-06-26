@@ -18,7 +18,9 @@
 #include "GLUniformBuffer.hpp"
 #include "VKVertexBuffer.hpp"
 #include "VKIndexBuffer.hpp"
-#include "VKUniformBuffer.hpp"
+#include "DXVertexBuffer.hpp"
+#include "DXIndexBuffer.hpp"
+#include "DXConstantBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -31,6 +33,186 @@ enum class RenderType
 {
 	TwoDimension,
 	ThreeDimension,
+};
+
+// Buffer
+struct BufferWrapper
+{
+	//--------------------Common--------------------//
+public:
+	struct BufferData2D
+	{
+		std::vector<TwoDimension::Vertex> vertices;
+		TwoDimension::VertexUniform vertexUniform;
+		TwoDimension::FragmentUniform fragmentUniform;
+	};
+
+	struct BufferData3D
+	{
+		std::vector<ThreeDimension::Vertex> vertices;
+#ifdef _DEBUG
+		std::vector<ThreeDimension::NormalVertex> normalVertices;
+#endif
+		ThreeDimension::VertexUniform vertexUniform;
+		ThreeDimension::FragmentUniform fragmentUniform;
+		ThreeDimension::Material material;
+	};
+private:
+	struct BufferData
+	{
+		std::vector<uint32_t> indices;
+		std::variant<std::monostate, BufferData2D, BufferData3D> classifiedData;
+	} bufferData;
+
+	//--------------------OpenGL--------------------//
+public:
+	struct GLBuffer
+	{
+		GLVertexArray vertexArray;
+		GLVertexBuffer* vertexBuffer;
+#ifdef _DEBUG
+		GLVertexArray normalVertexArray;
+		GLVertexBuffer* normalVertexBuffer;
+#endif
+		GLIndexBuffer* indexBuffer;
+	};
+
+	struct GLUniformBuffer2D
+	{
+		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct GLUniformBuffer3D
+	{
+		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	};
+
+	//--------------------Vulkan--------------------//
+	struct VKBuffer
+	{
+		VKVertexBuffer* vertexBuffer;
+#ifdef _DEBUG
+		VKVertexBuffer* normalVertexBuffer;
+#endif
+		VKIndexBuffer* indexBuffer;
+	};
+
+	//struct VKUniformBuffer2D
+	//{
+	//	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+	//	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	//};
+
+	//struct VKUniformBuffer3D
+	//{
+	//	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+	//	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+	//	VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	//};
+
+	//--------------------DirectX--------------------//
+	struct DXBuffer
+	{
+		DXVertexBuffer* vertexBuffer;
+#ifdef _DEBUG
+		DXVertexBuffer* normalVertexBuffer;
+#endif
+		DXIndexBuffer* indexBuffer;
+	};
+
+	struct DXConstantBuffer2D
+	{
+		DXConstantBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
+		DXConstantBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+	};
+
+	struct DXConstantBuffer3D
+	{
+		DXConstantBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
+		DXConstantBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
+		DXConstantBuffer<ThreeDimension::Material>* materialUniformBuffer;
+	};
+
+private:
+	std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;
+	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, /*, VKUniformBuffer2D, VKUniformBuffer3D*/ DXConstantBuffer2D, DXConstantBuffer3D> uniformBuffer;
+
+public:
+	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
+	{
+		bufferData.classifiedData = std::monostate{};
+	}
+	// @TODO Should I use std::unique_ptr of raw pointers?
+	~BufferWrapper();
+
+	void Initialize(GraphicsMode mode, RenderType type)
+	{
+		switch(mode)
+		{
+			case GraphicsMode::GL:
+				buffer = GLBuffer{};
+				if (type == RenderType::TwoDimension)
+				{
+					uniformBuffer = GLUniformBuffer2D{};
+					bufferData.classifiedData = BufferData2D{};
+
+					std::get<GLBuffer>(buffer).vertexArray.Initialize();
+				}
+				else if (type == RenderType::ThreeDimension)
+				{
+					uniformBuffer = GLUniformBuffer3D{};
+					bufferData.classifiedData = BufferData3D{};
+
+					std::get<GLBuffer>(buffer).vertexArray.Initialize();
+#ifdef _DEBUG
+					std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
+#endif
+				}
+				break;
+			case GraphicsMode::VK:
+				buffer = VKBuffer{};
+				if (type == RenderType::TwoDimension)
+				{
+					//uniformBuffer = VKUniformBuffer2D{};
+					bufferData.classifiedData = BufferData2D{};
+				}
+				else if (type == RenderType::ThreeDimension)
+				{
+					//uniformBuffer = VKUniformBuffer3D{};
+					bufferData.classifiedData = BufferData3D{};
+				}
+				break;
+			case GraphicsMode::DX:
+				buffer = DXBuffer{};
+				if (type == RenderType::TwoDimension)
+				{
+					uniformBuffer = DXConstantBuffer2D{};
+					bufferData.classifiedData = BufferData2D{};
+				}
+				else if (type == RenderType::ThreeDimension)
+				{
+					uniformBuffer = DXConstantBuffer3D{};
+					bufferData.classifiedData = BufferData3D{};
+				}
+				break;
+		}
+	}
+
+	// Getter
+	//--------------------Common--------------------//
+	[[nodiscard]] std::vector<uint32_t>& GetIndices() noexcept { return bufferData.indices; }
+	// ex) T = BufferData::BufferData2D
+	template <typename T>
+	[[nodiscard]] T& GetClassifiedData() noexcept { return std::get<T>(bufferData.classifiedData); }
+	// ex) T = GLBuffer
+	template <typename T>
+	[[nodiscard]] T& GetBuffer() noexcept { return std::get<T>(buffer); }
+	// ex) T = GLUniformBuffer2D
+	template <typename T>
+	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
 };
 
 enum class PolygonType
@@ -53,17 +235,19 @@ enum class MeshType
 class RenderManager
 {
 public:
+	virtual ~RenderManager() = default;
+
 	//--------------------Common--------------------//
 	virtual bool BeginRender(glm::vec3 bgColor) = 0;
 	virtual void EndRender() = 0;
-	virtual void DeleteWithIndex(int id) = 0;
-	void SetRenderType(RenderType type) { rMode = type; };
-	void SetPolygonType(PolygonType type) { pMode = type; };
-	GraphicsMode GetGraphicsMode() { return gMode; };
-	RenderType GetRenderType() { return rMode; };
+	virtual void ClearTextures() = 0;
+	void SetRenderType(RenderType type) { rMode = type; }
+	void SetPolygonType(PolygonType type) { pMode = type; }
+	GraphicsMode GetGraphicsMode() const { return gMode; }
+	RenderType GetRenderType() const { return rMode; }
 
-	//--------------------2D Render--------------------//
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
+	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
 	//--------------------3D Render--------------------//
 	void CreateMesh(
@@ -156,173 +340,3 @@ inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
 
 	return result;
 }
-
-// Buffer
-struct BufferWrapper
-{
-	//--------------------Common--------------------//
-public:
-	struct BufferData2D
-	{
-		std::vector<TwoDimension::Vertex> vertices;
-		TwoDimension::VertexUniform vertexUniform;
-		TwoDimension::FragmentUniform fragmentUniform;
-	};
-
-	struct BufferData3D
-	{
-		std::vector<ThreeDimension::Vertex> vertices;
-#ifdef _DEBUG
-		std::vector<ThreeDimension::NormalVertex> normalVertices;
-#endif
-		ThreeDimension::VertexUniform vertexUniform;
-		ThreeDimension::FragmentUniform fragmentUniform;
-		ThreeDimension::Material material;
-	};
-private:
-	struct BufferData
-	{
-		std::vector<uint32_t> indices;
-		std::variant<std::monostate, BufferData2D, BufferData3D> classifiedData;
-	} bufferData;
-
-	//--------------------OpenGL--------------------//
-public:
-	struct GLBuffer
-	{
-		GLVertexArray vertexArray;
-		GLVertexBuffer* vertexBuffer;
-#ifdef _DEBUG
-		GLVertexArray normalVertexArray;
-		GLVertexBuffer* normalVertexBuffer;
-#endif
-		GLIndexBuffer* indexBuffer;
-	};
-
-	struct GLUniformBuffer2D
-	{
-		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
-	};
-
-	struct GLUniformBuffer3D
-	{
-		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
-	};
-
-	//--------------------Vulkan--------------------//
-public:
-	struct VKBuffer
-	{
-		VKVertexBuffer* vertexBuffer;
-#ifdef _DEBUG
-		VKVertexBuffer* normalVertexBuffer;
-#endif
-		VKIndexBuffer* indexBuffer;
-	};
-
-	//struct VKUniformBuffer2D
-	//{
-	//	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-	//	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
-	//};
-
-	//struct VKUniformBuffer3D
-	//{
-	//	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-	//	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-	//	VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
-	//};
-
-private:
-	std::variant<std::monostate, GLBuffer, VKBuffer> buffer;
-	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D/*, VKUniformBuffer2D, VKUniformBuffer3D*/> uniformBuffer;
-
-public:
-	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
-	{
-		bufferData.classifiedData = std::monostate{};
-	}
-	// @TODO Should I use std::unique_ptr of raw pointers?
-	~BufferWrapper()
-	{
-		std::visit([]<typename T>(T & buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf.vertexBuffer;
-#ifdef _DEBUG
-				delete buf.normalVertexBuffer;
-#endif
-				delete buf.indexBuffer;
-			}
-		}, buffer);
-
-		std::visit([]<typename T>(T& buf)
-		{
-			if constexpr (!std::is_same_v<std::decay_t<T>, std::monostate>)
-			{
-				delete buf.vertexUniformBuffer;
-				delete buf.fragmentUniformBuffer;
-				if constexpr (requires { buf.materialUniformBuffer; })
-				{
-					delete buf.materialUniformBuffer;
-				}
-			}
-		}, uniformBuffer);
-	}
-
-	void Initialize(GraphicsMode mode, RenderType type)
-	{
-		if (mode == GraphicsMode::GL)
-		{
-			buffer = GLBuffer{};
-			if (type == RenderType::TwoDimension)
-			{
-				uniformBuffer = GLUniformBuffer2D{};
-				bufferData.classifiedData = BufferData2D{};
-
-				std::get<GLBuffer>(buffer).vertexArray.Initialize();
-			}
-			else if (type == RenderType::ThreeDimension)
-			{
-				uniformBuffer = GLUniformBuffer3D{};
-				bufferData.classifiedData = BufferData3D{};
-
-				std::get<GLBuffer>(buffer).vertexArray.Initialize();
-#ifdef _DEBUG
-				std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
-#endif
-			}
-		}
-		else
-		{
-			buffer = VKBuffer{};
-			if (type == RenderType::TwoDimension)
-			{
-				//uniformBuffer = VKUniformBuffer2D{};
-				bufferData.classifiedData = BufferData2D{};
-			}
-			else if (type == RenderType::ThreeDimension)
-			{
-				//uniformBuffer = VKUniformBuffer3D{};
-				bufferData.classifiedData = BufferData3D{};
-			}
-		}
-	}
-
-	// Getter
-	//--------------------Common--------------------//
-	[[nodiscard]] std::vector<uint32_t>& GetIndices() noexcept { return bufferData.indices; }
-	// ex) T = BufferData::BufferData2D
-	template <typename T>
-	[[nodiscard]] T& GetClassifiedData() noexcept { return std::get<T>(bufferData.classifiedData); }
-	// ex) T = GLBuffer
-	template <typename T>
-	[[nodiscard]] T& GetBuffer() noexcept { return std::get<T>(buffer); }
-	// ex) T = GLUniformBuffer2D
-	template <typename T>
-	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
-};

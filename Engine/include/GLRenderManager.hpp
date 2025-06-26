@@ -16,7 +16,7 @@ class GLRenderManager : public RenderManager
 {
 public:
 	GLRenderManager() { gMode = GraphicsMode::GL; };
-	~GLRenderManager();
+	~GLRenderManager() override;
 	void Initialize(
 		SDL_Window* window_, SDL_GLContext context_
 	);
@@ -39,35 +39,10 @@ private:
 	GLImGuiManager* imguiManager;
 public:
 	//--------------------Common--------------------//
-	void DeleteWithIndex(int id) override;
-//	GLVertexBuffer<Vertex>* AllocateVertexBuffer(std::vector<Vertex>& vertices) const
-//	{
-//		return new GLVertexBuffer<Vertex>(vkInit, &vertices);
-//	}
-//#ifdef _DEBUG
-//	GLVertexBuffer<ThreeDimension::NormalVertex>* AllocateNormalVertexBuffer(std::vector<ThreeDimension::NormalVertex>& vertices) const
-//	{
-//		return new GLVertexBuffer<ThreeDimension::NormalVertex>(vkInit, &vertices);
-//	}
-//#endif
-//	GLIndexBuffer* AllocateIndexBuffer(std::vector<uint32_t>& indices)
-//	{
-//		return new GLIndexBuffer(vkInit, &vkCommandPool, &indices);
-//	}
-//	[[nodiscard]] GLUniformBuffer<VertexUniform>* AllocateVertexUniformBuffer() const
-//	{
-//		return new GLUniformBuffer<VertexUniform>(vkInit, 1);
-//	}
-//	[[nodiscard]] GLUniformBuffer<FragmentUniform>* AllocateFragmentUniformBuffer() const
-//	{
-//		return new GLUniformBuffer<FragmentUniform>(vkInit, 1);
-//	}
-//	[[nodiscard]] GLUniformBuffer<ThreeDimension::Material>* AllocateMaterialUniformBuffer() const
-//	{
-//		return new GLUniformBuffer<ThreeDimension::Material>(vkInit, 1);
-//	}
+	void ClearTextures() override;
 
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer = new GLVertexBuffer();
@@ -86,9 +61,7 @@ public:
 		{
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().vertexUniformBuffer = new GLUniformBuffer<ThreeDimension::VertexUniform>();
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().fragmentUniformBuffer = new GLUniformBuffer<ThreeDimension::FragmentUniform>();
-
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer = new GLUniformBuffer<ThreeDimension::Material>();
-
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", sizeof(ThreeDimension::VertexUniform), nullptr);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", sizeof(ThreeDimension::FragmentUniform), nullptr);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
@@ -99,7 +72,7 @@ public:
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
 
 	GLTexture* GetTexture(std::string name);
-	std::vector<GLTexture*> GetTextures() { return textures; }
+	const std::vector<std::unique_ptr<GLTexture>>& GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
 
@@ -107,7 +80,7 @@ public:
 	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
-	std::vector<GLTexture*> textures;
+	std::vector<std::unique_ptr<GLTexture>> textures;
 	std::vector<int> samplers;
 
 #ifdef _DEBUG

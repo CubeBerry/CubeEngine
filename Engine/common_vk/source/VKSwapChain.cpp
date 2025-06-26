@@ -82,38 +82,38 @@ void VKSwapChain::InitSwapChain()
 		result = vkCreateSwapchainKHR(*vkInit->GetDevice(), &swapchainInfo, nullptr, &vkSwapChain);
 		if (result != VK_SUCCESS)
 		{
-			std::cout << std::endl;
+			std::cout << '\n';
 			switch (result)
 			{
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 				break;
 			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 				break;
 			case VK_ERROR_DEVICE_LOST:
-				std::cout << "VK_ERROR_DEVICE_LOST" << std::endl;
+				std::cout << "VK_ERROR_DEVICE_LOST" << '\n';
 				break;
 			case VK_ERROR_SURFACE_LOST_KHR:
-				std::cout << "VK_ERROR_SURFACE_LOST_KHR" << std::endl;
+				std::cout << "VK_ERROR_SURFACE_LOST_KHR" << '\n';
 				break;
 			case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
-				std::cout << "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" << std::endl;
+				std::cout << "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" << '\n';
 				break;
 			case VK_ERROR_INITIALIZATION_FAILED:
-				std::cout << "VK_ERROR_INITIALIZATION_FAILED" << std::endl;
+				std::cout << "VK_ERROR_INITIALIZATION_FAILED" << '\n';
 				break;
 			default:
 				break;
 			}
-			std::cout << std::endl;
+			std::cout << '\n';
 
 			throw std::runtime_error{ "SwapChain Creation Failed" };
 		}
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSwapChain::~VKSwapChain();
 		std::exit(EXIT_FAILURE);
 	}
@@ -220,15 +220,15 @@ void VKSwapChain::InitSwapChainImageView()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Swapchain Image View Creation Failed" };
 			}
@@ -236,7 +236,7 @@ void VKSwapChain::InitSwapChainImageView()
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSwapChain::~VKSwapChain();
 		std::exit(EXIT_FAILURE);
 	}
@@ -261,15 +261,15 @@ void VKSwapChain::InitFence()
 				switch (result)
 				{
 				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 					break;
 				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 					break;
 				default:
 					break;
 				}
-				std::cout << std::endl;
+				std::cout << '\n';
 
 				throw std::runtime_error{ "Fence Creation Failed" };
 			}
@@ -277,7 +277,7 @@ void VKSwapChain::InitFence()
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSwapChain::~VKSwapChain();
 		std::exit(EXIT_FAILURE);
 	}
@@ -303,15 +303,15 @@ void VKSwapChain::InitSemaphore()
 					switch (result)
 					{
 					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << std::endl;
+						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
 						break;
 					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << std::endl;
+						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
 						break;
 					default:
 						break;
 					}
-					std::cout << std::endl;
+					std::cout << '\n';
 
 					throw std::runtime_error{ "Semaphore Creation Failed" };
 				}
@@ -320,7 +320,7 @@ void VKSwapChain::InitSemaphore()
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << '\n';
 		VKSwapChain::~VKSwapChain();
 		std::exit(EXIT_FAILURE);
 	}

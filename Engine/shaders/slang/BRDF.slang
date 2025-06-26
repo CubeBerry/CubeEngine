@@ -2,14 +2,14 @@
 
 struct VSInput
 {
-    float3 position;
-    float2 uv;
+    float3 position : POSITION0;
+    float2 uv : TEXCOORD0;
 }
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float2 uv;
+    float2 uv : TEXCOORD0;
 };
 
 [shader("vertex")]
@@ -115,7 +115,7 @@ float2 IntegrateBRDF(float NdotV, float roughness)
 }
 
 [shader("fragment")]
-float4 fragmentMain(VSOutput input)
+float4 fragmentMain(VSOutput input) : SV_Target
 {
     float2 integratedBRDF = IntegrateBRDF(input.uv.x, input.uv.y);
     return float4(integratedBRDF, 0.0, 1.0);

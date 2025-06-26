@@ -97,68 +97,19 @@ void Physics3D::Update(float dt)
 
 void Physics3D::UpdatePhysics(float dt)
 {
+	if (isGravityOn)
 	{
-	//	acceleration.x = force.x / mass;
-	//	velocity.x += acceleration.x * dt;
-	//	velocity.x *= friction;
-
-	//	acceleration.y = force.y / mass;
-	//	velocity.y += acceleration.y * dt;
-	//	if (isGravityOn == false)
-	//	{
-	//		velocity.y *= friction;
-	//	}
-
-	//	acceleration.z = force.z / mass;
-	//	velocity.z += acceleration.z * dt;
-	//	velocity.z *= friction;
-
-	//	force = { 0.f, 0.f, 0.f };
-
-	//	if (std::abs(velocity.x) < velocityMin.x)
-	//	{
-	//		velocity.x = 0.f;
-	//	}
-	//	if (std::abs(velocity.y) < velocityMin.y)
-	//	{
-	//		velocity.y = 0.f;
-	//	}
-	//	if (std::abs(velocity.z) < velocityMin.z)
-	//	{
-	//		velocity.z = 0.f;
-	//	}
-
-	//	// 회전 운동 업데이트
-	//	/*glm::vec3 angularAcceleration = glm::mat3_cast(orientation) * inverseInertia * glm::mat3_cast(glm::conjugate(orientation)) * torque;
-	//	angularVelocity += angularAcceleration * dt;
-	//	angularVelocity *= (1.0f - friction);
-
-	//	glm::quat spin(0, angularVelocity.x * dt * 0.5f, angularVelocity.y * dt * 0.5f, angularVelocity.z * dt * 0.5f);
-	//	orientation = glm::normalize(orientation + spin * orientation);*/
-	//	// 회전 운동 업데이트
-
-	//	Component::GetOwner()->SetXPosition(Component::GetOwner()->GetPosition().x + velocity.x);
-	//	Component::GetOwner()->SetYPosition(Component::GetOwner()->GetPosition().y + velocity.y);
-	//	Component::GetOwner()->SetZPosition(Component::GetOwner()->GetPosition().z + velocity.z);
-
-	//	//orientation = glm::quat(Component::GetOwner()->GetRotate3D());
-	//	//Component::GetOwner()->SetRotate(glm::eulerAngles(orientation));
+		force.x = -velocity.x * friction;
+		force.z = -velocity.z * friction;
+	}
+	else
+	{
+		force = -velocity * friction;
 	}
 
 	acceleration = force / mass;
 	Gravity(dt);
-	velocity += acceleration * dt /** 60.f*/;
-	//float frictionFactor = std::pow(friction, dt /** 60.f*/);
-	
-	if (!isGravityOn)
-	{
-		velocity *= friction;
-	}
-	else
-	{
-		velocity.x *= friction;
-		velocity.z *= friction;
-	}
+	velocity += acceleration * dt;
 
 	velocity = glm::vec3(
 		std::abs(velocity.x) < velocityMin.x ? 0.f : velocity.x,
@@ -166,7 +117,7 @@ void Physics3D::UpdatePhysics(float dt)
 		std::abs(velocity.z) < velocityMin.z ? 0.f : velocity.z
 	);
 
-	Component::GetOwner()->SetPosition(Component::GetOwner()->GetPosition() + velocity);
+	Component::GetOwner()->SetPosition(Component::GetOwner()->GetPosition() + velocity * dt);
 	force = { 0.f, 0.f, 0.f };
 }
 

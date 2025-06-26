@@ -2,19 +2,18 @@
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: Engine.cpp
+
 #include "Engine.hpp"
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
-	std::cout << "0. OpenGL    1. Vulkan";
-	std::cout << std::endl << std::endl;
+	std::cout << "0. OpenGL    1. Vulkan	2. DirectX 12";
+	std::cout << "\n\n";
 	std::cout << "Select API number: ";
 	int number{ 0 };
 	std::cin >> number;
-	std::cout << std::endl;
+	std::cout << '\n';
 
-	//Init Window -> Init VKInit -> Init SwapChain -> Init VKRenderManager
-	//window = new Window();
 	if (number == 0)
 	{
 		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);
@@ -22,14 +21,18 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 		dynamic_cast<GLRenderManager*>(renderManager)->Initialize(
 			window.GetWindow(), window.GetContext()
 		);
-		//renderManager->Initialize(window.GetWindow(), window.GetContext());
 	}
-	else
+	else if (number == 1)
 	{
 		window.Init(GraphicsMode::VK, title, windowWidth, windowHeight, fullScreen, mode);
 		renderManager = new VKRenderManager;
 		dynamic_cast<VKRenderManager*>(renderManager)->Initialize(window.GetWindow());
-		//renderManager->Initialize(window.GetWindow());
+	}
+	else
+	{
+		window.Init(GraphicsMode::DX, title, windowWidth, windowHeight, fullScreen, mode);
+		renderManager = new DXRenderManager;
+		dynamic_cast<DXRenderManager*>(renderManager)->Initialize(window.GetWindow());
 	}
 	timer.Init();
 
@@ -41,17 +44,19 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 
 void Engine::Update()
 {
-	SDL_Event event;
 	while (gameStateManger.GetGameState() != State::SHUTDOWN)
 	{
 		timer.Update();
 		deltaTime = timer.GetDeltaTime();
+
+		if (deltaTime > 0.1f)
+		{
+			deltaTime = 0.1f;
+		}
 		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
 			Uint64 winFlag = SDL_GetWindowFlags(window.GetWindow());
-			threadManager.ProcessSDLEvents();
-			SDL_PollEvent(&event);
-
+			threadManager.ProcessEvents();
 			timer.ResetLastTimeStamp();
 			frameCount++;
 			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
@@ -66,6 +71,7 @@ void Engine::Update()
 				frameCount = 0;
 
 			}//fps
+
 			gameStateManger.Update(deltaTime);
 		}
 	}
@@ -73,10 +79,19 @@ void Engine::Update()
 
 void Engine::End()
 {
-	if (renderManager->GetGraphicsMode() == GraphicsMode::GL)
+	switch (renderManager->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
 		delete dynamic_cast<GLRenderManager*>(renderManager);
-	else
+		break;
+	case GraphicsMode::VK:
 		delete dynamic_cast<VKRenderManager*>(renderManager);
+		break;
+	case GraphicsMode::DX:
+		delete dynamic_cast<DXRenderManager*>(renderManager);
+		break;
+	}
+
 	threadManager.Stop();
 }
 
@@ -87,5 +102,6 @@ void Engine::SetFPS(FrameRate fps)
 
 void Engine::ResetDeltaTime()
 {
+	timer.Reset();
 	deltaTime = 0.f;
 }

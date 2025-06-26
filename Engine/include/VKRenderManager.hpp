@@ -34,7 +34,7 @@ class VKRenderManager : public RenderManager
 {
 public:
 	VKRenderManager() { gMode = GraphicsMode::VK; };
-	~VKRenderManager();
+	~VKRenderManager() override;
 	void Initialize(SDL_Window* window_);
 
 	bool BeginRender(glm::vec3 bgColor) override;
@@ -161,9 +161,9 @@ private:
 	VkDescriptorSet* currentFragmentDescriptorSet{ VK_NULL_HANDLE };
 public:
 	//--------------------Common--------------------//
-	void DeleteWithIndex(int id) override;
+	void ClearTextures() override;
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
 		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = new VKIndexBuffer(vkInit, &vkCommandPool, &indices);
@@ -184,7 +184,7 @@ public:
 	}
 
 	VKTexture* GetTexture(std::string name);
-	std::vector<VKTexture*> GetTextures() { return textures; }
+	const std::vector<std::unique_ptr<VKTexture>>& GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
 	void LoadSkybox(const std::filesystem::path& path) override;
@@ -192,7 +192,7 @@ public:
 private:
 	//--------------------Common--------------------//
 	VkSampler immutableSampler;
-	std::vector<VKTexture*> textures;
+	std::vector<std::unique_ptr<VKTexture>> textures;
 	std::vector<VkDescriptorImageInfo> imageInfos;
 
 #ifdef _DEBUG
