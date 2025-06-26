@@ -23,6 +23,7 @@ inline struct AtExit
 #define CASE(X) case X: return #X
 #include <Windows.h>
 #include <DbgHelp.h>
+#include <iostream>
 
 inline const char* TranslateExceptionCode(long exceptionCode)
 {

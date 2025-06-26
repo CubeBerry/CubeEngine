@@ -8,13 +8,11 @@
 #include "DXTexture.hpp"
 #include "DXConstantBuffer.hpp"
 #include "DXPipeLine.hpp"
-#include "DXVertexBuffer.hpp"
 
 DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	const ComPtr<ID3D12CommandQueue>& commandQueue,
 	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
-	const UINT& srvHeapStartOffset,
-	const std::filesystem::path& path) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap), m_srvHeapStartOffset(srvHeapStartOffset)
+	const UINT& srvHeapStartOffset) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap), m_srvHeapStartOffset(srvHeapStartOffset)
 {
 	// Create Command Allocator
 	DXHelper::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
@@ -23,6 +21,9 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Skybox Texture Command List"));
+#if USE_NSIGHT_AFTERMATH
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(m_commandList.Get(), &m_hAftermathCommandListContext));
+#endif
 	DXHelper::ThrowIfFailed(m_commandList->Close());
 
 	// Create Fence
@@ -37,18 +38,6 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	}
 
 	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	m_equirectangularMap = std::make_unique<DXTexture>();
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
-	// Store equirectangular texture in srvHeap index 0
-	m_equirectangularMap->LoadTexture(device, m_commandList, m_srvHeap, m_commandQueue, m_fence, m_fenceEvent, static_cast<UINT>(m_srvHeapStartOffset), true, path, "equirectangular", true);
-	faceSize = m_equirectangularMap->GetHeight();
-
-	// @TODO Fix Exception thrown when running through RenderDoc or on iGPU
-	EquirectangularToCube();
-	CalculateIrradiance();
-	PrefilteredEnvironmentMap();
-	BRDFLUT();
 }
 
 DXSkybox::~DXSkybox()
@@ -61,6 +50,21 @@ DXSkybox::~DXSkybox()
 	//}
 	//WaitForSingleObject(m_fenceEvent, INFINITE);
 	//CloseHandle(m_fenceEvent);
+}
+
+void DXSkybox::Initialize(const std::filesystem::path& path)
+{
+	m_equirectangularMap = std::make_unique<DXTexture>();
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+	// Store equirectangular texture in srvHeap index 0
+	m_equirectangularMap->LoadTexture(m_device, m_commandList, m_srvHeap, m_commandQueue, m_fence, m_fenceEvent, static_cast<UINT>(m_srvHeapStartOffset), true, path, "equirectangular", true);
+	faceSize = m_equirectangularMap->GetHeight();
+
+	// @TODO Fix Exception thrown when running through RenderDoc or on iGPU
+	EquirectangularToCube();
+	CalculateIrradiance();
+	PrefilteredEnvironmentMap();
+	BRDFLUT();
 }
 
 void DXSkybox::ExecuteCommandList()
@@ -94,6 +98,10 @@ void DXSkybox::EquirectangularToCube()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+#if USE_NSIGHT_AFTERMATH
+	std::string eventMarker = "EquirectangularToCube()";
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_SetEventMarker(m_hAftermathCommandListContext, (void*)eventMarker.c_str(), (unsigned int)eventMarker.size() + 1));
+#endif
 	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
@@ -193,11 +201,11 @@ void DXSkybox::EquirectangularToCube()
 	equirectangularSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, equirectangularSrvHandle);
 
-	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
 
-	D3D12_VERTEX_BUFFER_VIEW vbv = cubeVertexBuffer.GetView();
+	D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
 	m_commandList->IASetVertexBuffers(0, 1, &vbv);
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -254,6 +262,10 @@ void DXSkybox::CalculateIrradiance()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+#if USE_NSIGHT_AFTERMATH
+	std::string eventMarker = "CalculateIrradiance()";
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_SetEventMarker(m_hAftermathCommandListContext, (void*)eventMarker.c_str(), (unsigned int)eventMarker.size() + 1));
+#endif
 	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
@@ -353,11 +365,11 @@ void DXSkybox::CalculateIrradiance()
 	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
 
-	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
 
-	D3D12_VERTEX_BUFFER_VIEW vbv = cubeVertexBuffer.GetView();
+	D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
 	m_commandList->IASetVertexBuffers(0, 1, &vbv);
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -414,6 +426,10 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+#if USE_NSIGHT_AFTERMATH
+	std::string eventMarker = "PrefilterEnvironmentMap()";
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_SetEventMarker(m_hAftermathCommandListContext, (void*)eventMarker.c_str(), (unsigned int)eventMarker.size() + 1));
+#endif
 	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
@@ -495,11 +511,11 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
 
-	DXVertexBuffer cubeVertexBuffer{ m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data() };
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(glm::vec3), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 
 	DXConstantBuffer<float>roughnessConstantBuffer(m_device, 1);
 
-	D3D12_VERTEX_BUFFER_VIEW vbv = cubeVertexBuffer.GetView();
+	D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
 	m_commandList->IASetVertexBuffers(0, 1, &vbv);
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -579,6 +595,10 @@ void DXSkybox::BRDFLUT()
 	memcpy(clearValue.Color, clearColor, sizeof(float) * 4);
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+#if USE_NSIGHT_AFTERMATH
+	std::string eventMarker = "BRDFLUT()";
+	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_SetEventMarker(m_hAftermathCommandListContext, (void*)eventMarker.c_str(), (unsigned int)eventMarker.size() + 1));
+#endif
 	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
@@ -655,9 +675,9 @@ void DXSkybox::BRDFLUT()
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 	m_commandList->SetGraphicsRootSignature(rootSignature.Get());
 
-	DXVertexBuffer quadVertexBuffer{ m_device, sizeof(VA), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data() };
+	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, sizeof(VA), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
 
-	D3D12_VERTEX_BUFFER_VIEW vbv = quadVertexBuffer.GetView();
+	D3D12_VERTEX_BUFFER_VIEW vbv = m_quadVertexBuffer->GetView();
 	m_commandList->IASetVertexBuffers(0, 1, &vbv);
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 

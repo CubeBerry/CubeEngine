@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "DebugTools.hpp"
+
 using Microsoft::WRL::ComPtr;
 
 namespace DXHelper
@@ -29,12 +31,46 @@ namespace DXHelper
     };
 
     // Helper utility converts D3D API failures into exceptions.
-    inline void ThrowIfFailed(HRESULT hr)
+    inline void ThrowIfFailed(HRESULT hr/*, UINT64& frameCounter*/)
     {
+#if USE_NSIGHT_AFTERMATH
         if (FAILED(hr))
         {
-            throw com_exception(hr);
+            auto tdrTerminationTimeout = std::chrono::seconds(3);
+            auto tStart = std::chrono::steady_clock::now();
+            auto tElapsed = std::chrono::milliseconds::zero();
+
+            GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
+            AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+            while (status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed &&
+                status != GFSDK_Aftermath_CrashDump_Status_Finished &&
+                tElapsed < tdrTerminationTimeout)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+                auto tEnd = std::chrono::steady_clock::now();
+                tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
+            }
+
+            if (status != GFSDK_Aftermath_CrashDump_Status_Finished)
+            {
+                std::stringstream err_msg;
+                err_msg << "Unexpected crash dump status: " << status;
+                throw std::runtime_error(err_msg.str());
+            }
+
+            exit(-1);
         }
+
+        //frameCounter++;
+#else
+		if (FAILED(hr))
+		{
+			throw com_exception(hr);
+		}
+#endif
     }
 
     inline std::vector<char> ReadShaderFile(const std::filesystem::path& path)

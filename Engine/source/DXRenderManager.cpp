@@ -344,7 +344,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
 	);
 #endif
-
+	
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Main Command List"));
@@ -712,42 +712,7 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Command list executed.\n");
 
 	//OutputDebugStringA("EndRender: Calling Present...\n");
-#if USE_NSIGHT_AFTERMATH
-	HRESULT hr = m_swapChain->Present(1, 0);
-	if (FAILED(hr))
-	{
-		auto tdrTerminationTimeout = std::chrono::seconds(3);
-		auto tStart = std::chrono::steady_clock::now();
-		auto tElapsed = std::chrono::milliseconds::zero();
-
-		GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
-		AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
-
-		while (status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed &&
-			status != GFSDK_Aftermath_CrashDump_Status_Finished &&
-			tElapsed < tdrTerminationTimeout)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
-			AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
-
-			auto tEnd = std::chrono::steady_clock::now();
-			tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
-		}
-
-		if (status != GFSDK_Aftermath_CrashDump_Status_Finished)
-		{
-			std::stringstream err_msg;
-			err_msg << "Unexpected crash dump status: " << status;
-			throw std::runtime_error(err_msg.str());
-		}
-
-		exit(-1);
-	}
-
-	m_frameCounter++;
-#else
 	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
-#endif
 	//OutputDebugStringA("EndRender: Present successful.\n");
 
 	MoveToNextFrame();
@@ -1015,12 +980,14 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	);
 
 	WaitForGPU();
-	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE, path);
+	skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE);
+	skybox->Initialize(path);
 
 	skyboxEnabled = true;
 }
 
 void DXRenderManager::DeleteSkybox()
 {
+	skybox.release();
 	skyboxEnabled = false;
 }

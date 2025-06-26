@@ -5,6 +5,10 @@
 #include <directx/d3dx12.h>
 #include <wrl.h>
 
+#include "DebugTools.hpp"
+
+#include "DXVertexBuffer.hpp"
+
 #include <filesystem>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
@@ -21,9 +25,9 @@ public:
 	DXSkybox(const ComPtr<ID3D12Device>& device,
 		const ComPtr<ID3D12CommandQueue>& commandQueue,
 		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
-		const UINT& srvHeapStartOffset,
-		const std::filesystem::path& path);
+		const UINT& srvHeapStartOffset);
 	~DXSkybox();
+	void Initialize(const std::filesystem::path& path);
 	void ExecuteCommandList();
 
 	void EquirectangularToCube();
@@ -73,6 +77,11 @@ private:
 	HANDLE m_fenceEvent;
 	UINT64 m_fenceValue{ 1 };
 
+#if USE_NSIGHT_AFTERMATH
+	// Nsight Aftermath instrumentation
+	GFSDK_Aftermath_ContextHandle m_hAftermathCommandListContext{ nullptr };
+#endif
+
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 	UINT m_srvHeapStartOffset;
 	UINT m_srvDescriptorSize;
@@ -92,6 +101,8 @@ private:
 	// BRDF LUT
 	uint32_t lutSize{ 512 };
 
+	std::unique_ptr<DXVertexBuffer> m_skyboxVertexBuffer;
+	std::unique_ptr<DXVertexBuffer> m_quadVertexBuffer;
 	std::vector<glm::vec3> m_skyboxVertices = {
 		{-1.0f, -1.0f, -1.0f},
 		{-1.0f,  1.0f, -1.0f},

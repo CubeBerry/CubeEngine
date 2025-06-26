@@ -14,7 +14,7 @@ if (MSVC)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+# set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 add_library(common_dx STATIC ${DX_SOURCES} ${DX_INCLUDES})
 
@@ -22,6 +22,8 @@ target_include_directories(common_dx PRIVATE ${DX_INC_DIR})
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/SDL3-3.2.16/include)
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/imgui-1.91.9b)
+target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/include)
+target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/DebugTools)
 
 # FetchContent for DirectX-Headers
 include(FetchContent)
