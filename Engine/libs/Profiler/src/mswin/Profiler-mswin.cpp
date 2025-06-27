@@ -12,8 +12,8 @@
 #include <DbgHelp.h>
 
 //Profiler* Profiler::instance = nullptr;
-std::mutex Profiler::instanceMutex;
-bool Profiler::isEnabled = false;
+std::mutex Profiler::m_mutex;
+__declspec(thread) Node* tl_current = nullptr;
 
 int getValue()
 {
@@ -57,11 +57,11 @@ extern "C" void ProfileEnter(void* address)
 {
 	// This function is called when entering a function
 	// This is a placeholder for actual profiling code
-	if (!Profiler::GetInstance()->isEnabled) return;
-	//std::lock_guard<std::mutex> lock(Profiler::GetInstance()->m_mutex);
+	if (!Profiler::GetInstance().isEnabled) return;
+	std::lock_guard<std::mutex> lock(Profiler::m_mutex);
 
-	Node* current = Profiler::GetInstance()->current;
-	if (!current) current = Profiler::GetInstance()->root;
+	Node* current = Profiler::GetInstance().current;
+	if (!current) current = Profiler::GetInstance().root;
 	if (current->address == address)
 	{
 		current->recursion++;
@@ -69,23 +69,23 @@ extern "C" void ProfileEnter(void* address)
 		return;
 	}
 
-	Profiler::GetInstance()->isEnabled = false;
-	current = Profiler::GetInstance()->FindChild(current, address);
-	Profiler::GetInstance()->isEnabled = true;
+	Profiler::GetInstance().isEnabled = false;
+	current = Profiler::GetInstance().FindChild(current, address);
+	Profiler::GetInstance().isEnabled = true;
 	current->startCycle = __rdtsc();
 	current->callCount++;
 
-	Profiler::GetInstance()->current = current;
+	Profiler::GetInstance().current = current;
 }
 
 extern "C" void ProfileExit(void* /*address*/)
 {
 	// This function is called when exiting a function
 	// This is a placeholder for actual profiling code
-	if (!Profiler::GetInstance()->isEnabled) return;
-	//std::lock_guard<std::mutex> lock(Profiler::GetInstance()->m_mutex);
+	if (!Profiler::GetInstance().isEnabled) return;
+	std::lock_guard<std::mutex> lock(Profiler::m_mutex);
 
-	Node* current = Profiler::GetInstance()->current;
+	Node* current = Profiler::GetInstance().current;
 	if (!current) return;
 	if (current->recursion > 0)
 	{
@@ -94,10 +94,10 @@ extern "C" void ProfileExit(void* /*address*/)
 	}
 
 	current->totalCycle += __rdtsc() - current->startCycle;
-	if (current->parent) Profiler::GetInstance()->current = current->parent;
+	if (current->parent) Profiler::GetInstance().current = current->parent;
 }
 
-Profiler* Profiler::GetInstance()
+Profiler& Profiler::GetInstance()
 {
 	//if (instance == nullptr)
 	//{
@@ -107,7 +107,7 @@ Profiler* Profiler::GetInstance()
 	//return instance;
 
 	// @TODO Need to make sure this is thead-safe
-	static Profiler* instance = new Profiler();
+	static Profiler instance;
 	return instance;
 }
 

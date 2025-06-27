@@ -30,11 +30,11 @@ public:
 class Profiler
 {
 public:
-	static Profiler* GetInstance();
+	static Profiler& GetInstance();
 
-	//std::mutex m_mutex;
+	static std::mutex m_mutex;
 
-	static bool isEnabled;
+	bool isEnabled;
 	Node* root{ nullptr };
 	Node* current{ nullptr };
 
@@ -56,7 +56,7 @@ public:
 	Node* FindChild(Node* parent, void* address);
 private:
 	//static Profiler* instance;
-	static std::mutex instanceMutex;
+	//std::mutex instanceMutex;
 
 	Profiler() = default;
 	~Profiler() = default;
