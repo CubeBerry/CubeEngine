@@ -40,6 +40,10 @@ add_subdirectory(${VK_DIR})
 add_subdirectory(${DX_DIR})
 # SDL3
 add_subdirectory(${COMMON_LIB_DIR}/SDL3-3.2.16)
+# Profiler
+add_subdirectory(${COMMON_LIB_DIR}/Profiler)
+# MemoryDebugger
+# add_subdirectory(${COMMON_LIB_DIR}/MemDebugger)
 
 # Compile Settings
 FILE(GLOB DEBUG_TOOLS_SRC
@@ -72,16 +76,18 @@ FILE(GLOB IMGUI_SRC
     "${IMGUI_BACKEND_DIR}/*.cpp"
 )
 
+add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
+
 if (MSVC)
     add_compile_options(/W4)
     add_compile_options(/MP)
+    target_compile_options(${PROJECT_NAME} PRIVATE "/GH" "/Gh")
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+    target_compile_options(${PROJECT_NAME} PRIVATE "-finstrument-functions")
 endif()
 # Turnn off warning as error due to ImGui DX12
 # set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
-
-add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
 
 source_group("DebugTools"       FILES ${DEBUG_TOOLS_SRC})
 source_group("Engine"           FILES ${ENGINE_SRC})
@@ -115,6 +121,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE profiler_static)
+# target_link_libraries(${PROJECT_NAME} PRIVATE MemDebugger)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 

@@ -8,15 +8,17 @@ set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 FILE(GLOB DX_SOURCES "${DX_SRC_DIR}/*.cpp")
 FILE(GLOB DX_INCLUDES "${DX_INC_DIR}/*.hpp")
 
+add_library(common_dx STATIC ${DX_SOURCES} ${DX_INCLUDES})
+
 if (MSVC)
     add_compile_options(/W4)
     add_compile_options(/MP)
+    target_compile_options(common_dx PRIVATE "/GH" "/Gh")
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+    target_compile_options(common_dx PRIVATE "-finstrument-functions")
 endif()
 # set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
-
-add_library(common_dx STATIC ${DX_SOURCES} ${DX_INCLUDES})
 
 target_include_directories(common_dx PRIVATE ${DX_INC_DIR})
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
@@ -24,6 +26,7 @@ target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/imgui-1.91.9b)
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/include)
 target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/DebugTools)
+# target_include_directories(common_dx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libs/MemDebugger/include)
 
 # FetchContent for DirectX-Headers
 include(FetchContent)

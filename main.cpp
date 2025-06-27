@@ -13,6 +13,7 @@
 #include "PBR.hpp"
 
 #include "DebugTools.hpp"
+#include "Profiler.h"
 
 #undef main
 
@@ -21,6 +22,7 @@ int main(void)
 #ifdef _DEBUG
 	DebugTools::EnableMemoryLeakDetection();
     DebugTools::EnableWriteDump();
+    Profiler::GetInstance().InitStart();
 #endif
 
     Engine& engine = Engine::Instance();
@@ -39,6 +41,17 @@ int main(void)
     engine.GetGameStateManager().AddLevel(new PBR);
     engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
 
+#ifdef _DEBUG
+    Profiler::GetInstance().InitEnd();
+    Profiler::GetInstance().Start();
+#endif
     engine.Update();
+#ifdef _DEBUG
+    Profiler::GetInstance().Stop();
+    Profiler::GetInstance().ExitBegin();
+#endif
     engine.End();
+#ifdef _DEBUG
+    Profiler::GetInstance().ExitEnd();
+#endif
 }
