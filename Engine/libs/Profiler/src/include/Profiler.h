@@ -3,6 +3,7 @@
 #include "Profiler_API.h"
 
 #include <list>
+#include <mutex>
 
 namespace ProfilerExample {
 
@@ -29,9 +30,11 @@ public:
 class Profiler
 {
 public:
-	static Profiler& GetInstance();
+	static Profiler* GetInstance();
 
-	bool isEnabled{ false };
+	//std::mutex m_mutex;
+
+	static bool isEnabled;
 	Node* root{ nullptr };
 	Node* current{ nullptr };
 
@@ -52,6 +55,9 @@ public:
 	// Helper Functions
 	Node* FindChild(Node* parent, void* address);
 private:
+	//static Profiler* instance;
+	static std::mutex instanceMutex;
+
 	Profiler() = default;
 	~Profiler() = default;
 };
