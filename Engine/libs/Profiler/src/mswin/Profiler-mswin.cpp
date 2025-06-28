@@ -13,7 +13,8 @@
 
 //Profiler* Profiler::instance = nullptr;
 std::mutex Profiler::m_mutex;
-__declspec(thread) Node* tl_current = nullptr;
+__declspec(thread) bool tl_isInProfiler{ false };
+__declspec(thread) Node* tl_current { nullptr };
 
 int getValue()
 {
@@ -55,46 +56,78 @@ void LogCSV(std::ofstream& logFile, const Node* node)
 
 extern "C" void ProfileEnter(void* address)
 {
+	if (tl_isInProfiler) return;
+
+	struct ProfilerGuard
+	{
+		ProfilerGuard() { tl_isInProfiler = true; }
+		~ProfilerGuard() { tl_isInProfiler = false; }
+	} guard;
+
 	// This function is called when entering a function
 	// This is a placeholder for actual profiling code
 	if (!Profiler::GetInstance().isEnabled) return;
-	std::lock_guard<std::mutex> lock(Profiler::m_mutex);
+	
+	if (tl_current == nullptr) tl_current = Profiler::GetInstance().root;
 
-	Node* current = Profiler::GetInstance().current;
-	if (!current) current = Profiler::GetInstance().root;
-	if (current->address == address)
+	if (tl_current->address == address)
 	{
-		current->recursion++;
-		current->callCount++;
+		Profiler::GetInstance().isEnabled = false;
+		std::lock_guard<std::mutex> lock(Profiler::m_mutex);
+		Profiler::GetInstance().isEnabled = true;
+		tl_current->recursion++;
+		tl_current->callCount++;
 		return;
 	}
 
-	Profiler::GetInstance().isEnabled = false;
-	current = Profiler::GetInstance().FindChild(current, address);
-	Profiler::GetInstance().isEnabled = true;
-	current->startCycle = __rdtsc();
-	current->callCount++;
+	Node* child;
+	{
+		Profiler::GetInstance().isEnabled = false;
+		std::lock_guard<std::mutex> lock(Profiler::m_mutex);
+		child = Profiler::GetInstance().FindChild(tl_current, address);
+		Profiler::GetInstance().isEnabled = true;
+		tl_current->callCount++;
+	}
 
-	Profiler::GetInstance().current = current;
+	tl_current->startCycle = __rdtsc();
+
+	tl_current = child;
 }
 
 extern "C" void ProfileExit(void* /*address*/)
 {
+	if (tl_isInProfiler) return;
+
+	struct ProfilerGuard
+	{
+		ProfilerGuard() { tl_isInProfiler = true; }
+		~ProfilerGuard() { tl_isInProfiler = false; }
+	} guard;
+
 	// This function is called when exiting a function
 	// This is a placeholder for actual profiling code
 	if (!Profiler::GetInstance().isEnabled) return;
-	std::lock_guard<std::mutex> lock(Profiler::m_mutex);
 
-	Node* current = Profiler::GetInstance().current;
+	Node* current = tl_current;
 	if (!current) return;
 	if (current->recursion > 0)
 	{
+		Profiler::GetInstance().isEnabled = false;
+		std::lock_guard<std::mutex> lock(Profiler::m_mutex);
+		Profiler::GetInstance().isEnabled = true;
 		current->recursion--;
 		return;
 	}
 
-	current->totalCycle += __rdtsc() - current->startCycle;
-	if (current->parent) Profiler::GetInstance().current = current->parent;
+	unsigned long long endCycle = __rdtsc();
+	{
+		Profiler::GetInstance().isEnabled = false;
+		std::lock_guard<std::mutex> lock(Profiler::m_mutex);
+		Profiler::GetInstance().isEnabled = true;
+		current->totalCycle += endCycle - current->startCycle;
+	}
+
+	tl_current = current->parent;
 }
 
 Profiler& Profiler::GetInstance()
