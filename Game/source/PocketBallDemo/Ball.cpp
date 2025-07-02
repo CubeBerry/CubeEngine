@@ -31,6 +31,7 @@ Ball::Ball(glm::vec3 pos_, glm::vec3 size_, std::string name, BallType ballType_
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetRestitution(-1.f);
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.2f,0.2f });
+	GetComponent<Physics2D>()->SetMaxVelocity({ 1000.f,1000.f });
 	GetComponent<Physics2D>()->SetMass(1.f);
 	GetComponent<Physics2D>()->SetFriction(0.99f);
 	GetComponent<Physics2D>()->AddCollideCircle(size_.x / 2.f);
