@@ -1,66 +1,123 @@
+// (C) 2025 DigiPen (USA) Corporation
+
 #pragma once
-
-#include "Profiler_API.h"
-
-#include <list>
+#include <deque>
+#include <filesystem>
+#include <fstream>
 #include <mutex>
+#include <unordered_map>
+#include <vector>
 
-namespace ProfilerExample {
 
-    void PROFILER_API DoNothing();
+#define DLLEXPORT __declspec(dllexport)
 
-} // end namespace Profiler
 
-class Node
+extern "C" void DLLEXPORT SyncEngineProfilerEnterFunc(void* address);
+extern "C" void DLLEXPORT SyncEngineProfilerExitFunc(void* address);
+
+
+namespace sync_engine
 {
-public:
-	Node() = default;
-	Node(void* address, Node* parent);
-	~Node();
 
-	void* address{ nullptr };
-	Node* parent{ nullptr };
-	std::list<Node*> children;
-	unsigned long long recursion{ 0 };
-	unsigned long long startCycle{ 0 };
-	unsigned long long totalCycle{ 0 };
-	unsigned long long callCount{ 0 };
-};
+	class Profiler
+	{
+		/*
+		 * nullptr indicates an exit of a function.
+		 *
+		 * For example, given the following code:
+		 *     void f()
+		 *     {
+		 *         g();
+		 *	       h();
+		 *     }
+		 *     void g()
+		 *     {
+		 *         i();
+		 *     }
+		 *     void h() {}
+		 *	   void i() {}
+		 *
+		 *	   f();
+		 *
+		 * The flattened call stack will look like this:
+		 *     f  g  i  nullptr  nullptr  h  nullptr  nullptr
+		 *	               i        g           h        f
+		 */
+		struct FunctionCall
+		{
+			void* address;
+			unsigned long long tsc;
 
-class Profiler
-{
-public:
-	static Profiler& GetInstance();
+			constexpr bool operator==(const FunctionCall& other) const noexcept = default;
+		};
+		using FlattenedCallStack = std::vector<FunctionCall>;
 
-	static std::mutex m_mutex;
 
-	bool isEnabled;
-	Node* root{ nullptr };
-	Node* current{ nullptr };
+	public:
+		DLLEXPORT static /*thread_local*/ Profiler& GetInstance();
 
-	void InitStart();
-	void InitEnd();
+		DLLEXPORT static void Initialize(std::filesystem::path outputDir);
+		DLLEXPORT static void Shutdown();
 
-	void ExitBegin();
-	void ExitEnd();
+		DLLEXPORT static void StartProfiling();
+		DLLEXPORT static void StopProfiling();
 
-	void Start();
-	void Stop();
+		DLLEXPORT static void SetCustomMarkOnly(bool isCustomMarkOnly);
 
-	void FrameBegin(signed int frameCount);
-	void FrameEnd(signed int frameCount);
+		DLLEXPORT void MarkFrame();
 
-	void KeyPressed(unsigned char key);
+		DLLEXPORT void BeginCustomMark(unsigned int index);
+		DLLEXPORT void EndCustomMark();
 
-	// Helper Functions
-	Node* FindChild(Node* parent, void* address);
-private:
-	//static Profiler* instance;
-	//std::mutex instanceMutex;
+		explicit Profiler();
+		Profiler(const Profiler& other) = delete;
+		Profiler(Profiler&& other) noexcept = default;
+		Profiler& operator=(const Profiler& other) = delete;
+		Profiler& operator=(Profiler&& other) noexcept = default;
+		~Profiler();
 
-	Profiler() = default;
-	~Profiler() = default;
-};
+		void EnterFunc(void* address, unsigned long long tsc);
+		void ExitFunc(unsigned long long tsc);
 
-extern "C" void ProfileEnter(void* address);
-extern "C" void ProfileExit(void* address);
+	private:
+		void closeOutputFile();
+
+	private:
+		static void initializePlatformDependent();
+		static void shutdownPlatformDependent();
+		static void createReport();
+
+
+	public:
+		inline static bool mIsInitialized = false;
+
+	private:
+		// Trade-off: Not properly synced between threads, speed is prioritized since it's being checked every function call.
+		inline static bool mIsProfiling = false;
+		inline static bool mIsCustomMarkOnly = false;
+
+		inline static std::filesystem::path mOutputDir;
+		inline static std::atomic<int> mNextThreadID = 1;
+		inline static std::vector<unsigned long long> mHaltedTSCs;
+
+		inline static std::deque<Profiler*> mInstances;
+		inline static std::mutex mInstancesMutex;
+
+		FlattenedCallStack mCurrentCallStack;
+		int mThreadID = 0;
+		std::ofstream mOutputFile;
+
+
+		static inline std::filesystem::path INTERMEDIATE_FILE_EXTENSION = ".seprf";
+		static inline std::filesystem::path REPORT_FILE_EXTENSION = ".txt";
+		static constexpr FunctionCall FRAME_MARKER{ nullptr, 0xFFFFFFFFFFFFFFFFULL };
+
+		static constexpr unsigned int CUSTOM_MARKER_MAX_COUNT = 100;
+		static constexpr size_t CUSTOM_MARKER_ADDRESS_MAX = static_cast<size_t>(-1) - 1;
+		static constexpr size_t CUSTOM_MARKER_ADDRESS_MIN = CUSTOM_MARKER_ADDRESS_MAX - CUSTOM_MARKER_MAX_COUNT - 1;
+	};
+
+}
+
+
+#undef DLLEXPORT

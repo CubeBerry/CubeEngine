@@ -48,7 +48,7 @@ void ThreadManager::GameUpdateLoop()
 	while (running)
 	{
 		std::unique_lock<std::mutex> lock(gameUpdateMutex);
-		gameUpdateCV.wait(lock, [this] { return !running || !gameUpdateQueue.empty(); });
+		//gameUpdateCV.wait(lock, [this] { return !running || !gameUpdateQueue.empty(); });
 
 		while (!gameUpdateQueue.empty()) {
 			auto [updateFunc, dt] = gameUpdateQueue.front();

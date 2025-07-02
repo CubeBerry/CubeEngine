@@ -1,80 +1,72 @@
+; (C) 2025 DigiPen (USA) Corporation
+
 .data
-; declare externs for our Profiler functions
-EXTERNDEF ProfileEnter:PROC
-EXTERNDEF ProfileExit:PROC
+EXTERNDEF SyncEngineProfilerEnterFunc:PROC
+EXTERNDEF SyncEngineProfilerExitFunc:PROC
 
 .code
 
-; Setup _penter
 _penter PROC EXPORT
-	; Perform standard prolog first
-	push RAX
-	push RCX
-	push RDX
-	push r8
-	push r9
-	push r10
-	push r11
-	push RBX ; Pushing an extra register to align stack w/ multiple of 16
+    push RAX
+    push RCX
+    push RDX
+    push r8
+    push r9
+    push r10
+    push r11
+    ; push arbitrary reg for stack alignment
+    push RBX
 
-	; get the retun address off the stack & store to RCX
-	mov RCX, [RSP + 40h]
+    mov RCX, [RSP + 40h]  ; get return address
 
-	; create space on the stack for params [RCX, RDX, R8, R9]  (C calling convention)
-	sub RSP, 20h
-	 
-	call OFFSET ProfileEnter
+    sub RSP, 20h  ; create space for params (RCX, RDX, R8, R9)
 
-	; move RSP back, undo space for params
-	add RSP, 20h
+    call OFFSET SyncEngineProfilerEnterFunc
 
-	; Perform standard epilog
-	pop RBX
-	pop r11
-	pop r10
-	pop r9
-	pop r8
-	pop RDX
-	pop RCX
-	pop RAX
+    add RSP, 20h
 
-	ret
+    pop RBX
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop RDX
+    pop RCX
+    pop RAX
+
+    ret
 _penter ENDP
 
-; Setup _pexit
+
 _pexit PROC EXPORT
-	; Perform standard prolog first
-	push RAX
-	push RCX
-	push RDX
-	push r8
-	push r9
-	push r10
-	push r11
-	push RBX ; Pushing an extra register to align stack w/ multiple of 16
-	
-	; get the retun address off the stack & store to RCX
-	mov RCX, [RSP + 40h]
+    push RAX
+    push RCX
+    push RDX
+    push r8
+    push r9
+    push r10
+    push r11
+    ; push arbitrary reg for stack alignment
+    push RBX
 
-	; create space on the stack for params [RCX, RDX, R8, R9]  (C calling convention)
-	sub RSP, 20h
-	
-	call OFFSET ProfileExit 
+    mov RCX, [RSP + 40h]  ; get return address
 
-	; move RSP back, undo space for params
-	add RSP, 20h
+    sub RSP, 20h  ; create space for params (RCX, RDX, R8, R9)
 
-	; Perform standard epilog
-	pop RBX
-	pop r11
-	pop r10
-	pop r9
-	pop r8
-	pop RDX
-	pop RCX
-	pop RAX
+    call OFFSET SyncEngineProfilerExitFunc
 
-	ret
+    add RSP, 20h
+
+    pop RBX
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop RDX
+    pop RCX
+    pop RAX
+
+    ret
 _pexit ENDP
 
 END

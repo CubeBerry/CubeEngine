@@ -56,7 +56,7 @@ void Engine::Update()
 		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
 			Uint64 winFlag = SDL_GetWindowFlags(window.GetWindow());
-			threadManager.ProcessEvents();
+			//threadManager.ProcessEvents();
 			timer.ResetLastTimeStamp();
 			frameCount++;
 			if (frameCount >= static_cast<int>(timer.GetFrameRate()))

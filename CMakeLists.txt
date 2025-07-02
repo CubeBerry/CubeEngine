@@ -125,7 +125,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE profiler_static)
+target_link_libraries(${PROJECT_NAME} PRIVATE profiler)
 # target_link_libraries(${PROJECT_NAME} PRIVATE MemDebugger)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)

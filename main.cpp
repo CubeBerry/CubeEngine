@@ -20,9 +20,9 @@
 int main(void)
 {
 #ifdef _DEBUG
-	DebugTools::EnableMemoryLeakDetection();
-    DebugTools::EnableWriteDump();
-    Profiler::GetInstance().InitStart();
+	//DebugTools::EnableMemoryLeakDetection();
+ //   DebugTools::EnableWriteDump();
+    sync_engine::Profiler::Initialize("profiler.txt");
 #endif
 
     Engine& engine = Engine::Instance();
@@ -42,16 +42,12 @@ int main(void)
     engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
 
 #ifdef _DEBUG
-    Profiler::GetInstance().InitEnd();
-    Profiler::GetInstance().Start();
+    sync_engine::Profiler::StartProfiling();
 #endif
     engine.Update();
 #ifdef _DEBUG
-    Profiler::GetInstance().Stop();
-    Profiler::GetInstance().ExitBegin();
+	sync_engine::Profiler::StopProfiling();
+	sync_engine::Profiler::Shutdown();
 #endif
     engine.End();
-#ifdef _DEBUG
-    Profiler::GetInstance().ExitEnd();
-#endif
 }
