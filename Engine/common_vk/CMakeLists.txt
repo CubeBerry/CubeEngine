@@ -8,14 +8,19 @@ set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 FILE(GLOB VK_SOURCES "${VK_SRC_DIR}/*.cpp")
 FILE(GLOB VK_INCLUDES "${VK_INC_DIR}/*.hpp")
 
-add_library(common_vk STATIC ${VK_SOURCES} ${VK_INCLUDES})
-
 if (MSVC)
     add_compile_options(/W4)
     add_compile_options(/MP)
-    target_compile_options(common_vk PRIVATE "/GH" "/Gh")
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
+add_library(common_vk STATIC ${VK_SOURCES} ${VK_INCLUDES})
+
+if (MSVC)
+    target_compile_options(common_vk PRIVATE "/GH" "/Gh")
+else()
     target_compile_options(common_vk PRIVATE "-finstrument-functions")
 endif()
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)

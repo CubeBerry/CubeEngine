@@ -8,14 +8,19 @@ set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 FILE(GLOB DX_SOURCES "${DX_SRC_DIR}/*.cpp")
 FILE(GLOB DX_INCLUDES "${DX_INC_DIR}/*.hpp")
 
-add_library(common_dx STATIC ${DX_SOURCES} ${DX_INCLUDES})
-
 if (MSVC)
     add_compile_options(/W4)
     add_compile_options(/MP)
-    target_compile_options(common_dx PRIVATE "/GH" "/Gh")
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+# set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
+add_library(common_dx STATIC ${DX_SOURCES} ${DX_INCLUDES})
+
+if (MSVC)
+    target_compile_options(common_dx PRIVATE "/GH" "/Gh")
+else()
     target_compile_options(common_dx PRIVATE "-finstrument-functions")
 endif()
 # set(CMAKE_COMPILE_WARNING_AS_ERROR ON)

@@ -76,18 +76,22 @@ FILE(GLOB IMGUI_SRC
     "${IMGUI_BACKEND_DIR}/*.cpp"
 )
 
-add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
-
 if (MSVC)
     add_compile_options(/W4)
     add_compile_options(/MP)
-    target_compile_options(${PROJECT_NAME} PRIVATE "/GH" "/Gh")
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
-    target_compile_options(${PROJECT_NAME} PRIVATE "-finstrument-functions")
 endif()
 # Turnn off warning as error due to ImGui DX12
 # set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
+add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
+
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE "/GH" "/Gh")
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE "-finstrument-functions")
+endif()
 
 source_group("DebugTools"       FILES ${DEBUG_TOOLS_SRC})
 source_group("Engine"           FILES ${ENGINE_SRC})
