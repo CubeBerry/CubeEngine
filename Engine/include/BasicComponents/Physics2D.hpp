@@ -65,6 +65,7 @@ public:
 
 	void SetFriction(float f) { friction = f; }
 	void SetGravity(float g, bool isGravityOn_ = true) { gravity = g; isGravityOn = isGravityOn_; }
+	void SetIsGravityOn(bool isGravityOn_) {isGravityOn = isGravityOn_; }
 	void SetMass(float amount) { mass = amount; }
 	void SetRestitution(float amount) { restitution = amount; }
 	void SetBodyType(BodyType type) { bodyType = type; };

@@ -99,23 +99,38 @@ void Physics3D::UpdatePhysics(float dt)
 {
 	if (isGravityOn)
 	{
-		force.x = -velocity.x * friction;
-		force.z = -velocity.z * friction;
-	}
-	else
-	{
-		force = -velocity * friction;
+		Gravity(dt);
 	}
 
+	force -= velocity * friction;
 	acceleration = force / mass;
-	Gravity(dt);
 	velocity += acceleration * dt;
 
-	velocity = glm::vec3(
-		std::abs(velocity.x) < velocityMin.x ? 0.f : velocity.x,
-		std::abs(velocity.y) < velocityMin.y ? 0.f : velocity.y,
-		std::abs(velocity.z) < velocityMin.z ? 0.f : velocity.z
-	);
+	if (std::abs(velocity.x) > velocityMax.x)
+	{
+		velocity.x = velocityMax.x * ((velocity.x < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.y) > velocityMax.y)
+	{
+		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.z) > velocityMax.z)
+	{
+		velocity.z = velocityMax.z * ((velocity.z < 0.f) ? -1.f : 1.f);
+	}
+
+	if (std::abs(velocity.x) < velocityMin.x)
+	{
+		velocity.x = 0.f;
+	}
+	if (std::abs(velocity.y) < velocityMin.y)
+	{
+		velocity.y = 0.f;
+	}
+	if (std::abs(velocity.z) < velocityMin.z)
+	{
+		velocity.z = 0.f;
+	}
 
 	Component::GetOwner()->SetPosition(Component::GetOwner()->GetPosition() + velocity * dt);
 	force = { 0.f, 0.f, 0.f };
