@@ -35,9 +35,6 @@ void VKInit::InitInstance()
 {
 	try
 	{
-		//Layers
-		constexpr auto layerName{ "VK_LAYER_KHRONOS_validation" };
-
 		//Display extensions
 		std::vector<const char*> extensionNames
 		{
@@ -53,8 +50,15 @@ void VKInit::InitInstance()
 		//Create VkInstanceInfo
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+#ifdef _DEBUG
+		//Layers
+		constexpr auto layerName{ "VK_LAYER_KHRONOS_validation" };
 		createInfo.enabledLayerCount = 1;
 		createInfo.ppEnabledLayerNames = &layerName;
+#else
+		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = VK_NULL_HANDLE;
+#endif
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
 		createInfo.ppEnabledExtensionNames = &extensionNames[0];
 		createInfo.pApplicationInfo = &applicationInfo;
