@@ -4,7 +4,7 @@
 //File: VKDescriptor.cpp
 #include "VKDescriptor.hpp"
 #include "VKInit.hpp"
-#include <iostream>
+#include "VKHelper.hpp"
 
 VKDescriptor::VKDescriptor(VKInit* init, std::initializer_list<VKDescriptorLayout> vertexLayout, std::initializer_list<VKDescriptorLayout> fragmentLayout) : vkInit(init)
 {
@@ -54,34 +54,7 @@ void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLa
 		createInfo.pBindings = vertexBindings.data();
 
 		//Create Descriptor Set Layout
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateDescriptorSetLayout(*vkInit->GetDevice(), &createInfo, nullptr, &vkVertexMaterialDescriptorSetLayout);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Vertex Material Descriptor Set Layout Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKDescriptor::~VKDescriptor();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateDescriptorSetLayout(*vkInit->GetDevice(), &createInfo, nullptr, &vkVertexMaterialDescriptorSetLayout));
 
 		vkDescriptorSetLayouts.push_back(vkVertexMaterialDescriptorSetLayout);
 	}
@@ -134,34 +107,7 @@ void VKDescriptor::InitDescriptorSetLayouts(std::initializer_list<VKDescriptorLa
 		createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
 
 		//Create Descriptor Set Layout
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateDescriptorSetLayout(*vkInit->GetDevice(), &createInfo, nullptr, &vkFragmentMaterialDescriptorSetLayout);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Fragment Material Descriptor Set Layout Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKDescriptor::~VKDescriptor();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateDescriptorSetLayout(*vkInit->GetDevice(), &createInfo, nullptr, &vkFragmentMaterialDescriptorSetLayout));
 
 		vkDescriptorSetLayouts.push_back(vkFragmentMaterialDescriptorSetLayout);
 	}
@@ -229,34 +175,7 @@ void VKDescriptor::InitDescriptorPool()
 	//createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
 	//Create DescriptorPool
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateDescriptorPool(*vkInit->GetDevice(), &createInfo, nullptr, &vkDescriptorPool);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Descriptor Pool Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKDescriptor::~VKDescriptor();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateDescriptorPool(*vkInit->GetDevice(), &createInfo, nullptr, &vkDescriptorPool));
 }
 
 void VKDescriptor::InitDescriptorSets()
@@ -273,37 +192,7 @@ void VKDescriptor::InitDescriptorSets()
 			allocateInfo.pSetLayouts = &vkVertexMaterialDescriptorSetLayout;
 
 			//Allocate Material DescriptorSet
-			try
-			{
-				VkResult result{ VK_SUCCESS };
-				result = vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkVertexDescriptorSets[i]);
-				if (result != VK_SUCCESS)
-				{
-					switch (result)
-					{
-					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_POOL_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_POOL_MEMORY" << '\n';
-						break;
-					default:
-						break;
-					}
-					std::cout << '\n';
-
-					throw std::runtime_error{ "Descriptor Set Creation Failed" };
-				}
-			}
-			catch (std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-				VKDescriptor::~VKDescriptor();
-				std::exit(EXIT_FAILURE);
-			}
+			VKHelper::ThrowIfFailed(vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkVertexDescriptorSets[i]));
 		}
 
 		if (fragmentDescriptorCount || lightDescriptorCount || samplerDescriptorCount)
@@ -316,37 +205,7 @@ void VKDescriptor::InitDescriptorSets()
 			allocateInfo.pSetLayouts = &vkFragmentMaterialDescriptorSetLayout;
 
 			//Allocate Material DescriptorSet
-			try
-			{
-				VkResult result{ VK_SUCCESS };
-				result = vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkFragmentDescriptorSets[i]);
-				if (result != VK_SUCCESS)
-				{
-					switch (result)
-					{
-					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_POOL_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_POOL_MEMORY" << '\n';
-						break;
-					default:
-						break;
-					}
-					std::cout << '\n';
-
-					throw std::runtime_error{ "Descriptor Set Creation Failed" };
-				}
-			}
-			catch (std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-				VKDescriptor::~VKDescriptor();
-				std::exit(EXIT_FAILURE);
-			}
+			VKHelper::ThrowIfFailed(vkAllocateDescriptorSets(*vkInit->GetDevice(), &allocateInfo, &vkFragmentDescriptorSets[i]));
 		}
 	}
 }

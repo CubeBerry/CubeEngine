@@ -18,7 +18,7 @@
 
 VKRenderManager::~VKRenderManager()
 {
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//delete ImGui
 	delete imguiManager;
@@ -120,34 +120,7 @@ void VKRenderManager::CreateDepthBuffer()
 		//createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &depthImage);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &depthImage));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements{};
@@ -162,67 +135,10 @@ void VKRenderManager::CreateDepthBuffer()
 		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &depthImageMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Texture Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &depthImageMemory));
 
 		//Bind Image and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), depthImage, depthImageMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), depthImage, depthImageMemory, 0));
 	}
 
 	//To access image from graphics pipeline, Image View is needed
@@ -239,34 +155,7 @@ void VKRenderManager::CreateDepthBuffer()
 	createInfo.subresourceRange.layerCount = 1;
 
 	//Create ImageView
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &depthImageView);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Image View Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &depthImageView));
 }
 
 void VKRenderManager::CreateColorResources()
@@ -291,34 +180,7 @@ void VKRenderManager::CreateColorResources()
 		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &colorImage);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &colorImage));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements{};
@@ -333,67 +195,10 @@ void VKRenderManager::CreateColorResources()
 		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &colorImageMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Texture Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &colorImageMemory));
 
 		//Bind Image and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), colorImage, colorImageMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), colorImage, colorImageMemory, 0));
 	}
 
 	//To access image from graphics pipeline, Image View is needed
@@ -408,34 +213,7 @@ void VKRenderManager::CreateColorResources()
 	createInfo.subresourceRange.layerCount = 1;
 
 	// Create ImageView
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &colorImageView);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Image View Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &colorImageView));
 }
 
 void VKRenderManager::Initialize(SDL_Window* window_)
@@ -558,8 +336,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	VkResult result{ VK_SUCCESS };
-	result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
+	VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler));
 	const VkDescriptorImageInfo imageInfo
 	{
 		.sampler = immutableSampler,
@@ -578,34 +355,7 @@ void VKRenderManager::InitCommandPool()
 	commandPoolInfo.queueFamilyIndex = *vkInit->GetQueueFamilyIndex();
 
 	//Create command pool
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateCommandPool(*vkInit->GetDevice(), &commandPoolInfo, nullptr, &vkCommandPool);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Command Pool Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateCommandPool(*vkInit->GetDevice(), &commandPoolInfo, nullptr, &vkCommandPool));
 }
 
 void VKRenderManager::InitCommandBuffer()
@@ -618,34 +368,7 @@ void VKRenderManager::InitCommandBuffer()
 	allocateInfo.commandBufferCount = 2;
 
 	//Create command buffer
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &vkCommandBuffers[0]);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Command Buffer Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &vkCommandBuffers[0]));
 }
 
 void VKRenderManager::InitRenderPass()
@@ -742,34 +465,7 @@ void VKRenderManager::InitRenderPass()
 	createInfo.pDependencies = &dependencies[0];
 
 	//Create Renderpass
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateRenderPass(*vkInit->GetDevice(), &createInfo, nullptr, &vkRenderPass);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "RenderPass Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateRenderPass(*vkInit->GetDevice(), &createInfo, nullptr, &vkRenderPass));
 }
 
 void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_)
@@ -791,40 +487,8 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 		createInfo.height = swapchainImageExtent_->height;
 		createInfo.layers = 1;
 
-		try
-		{
-			//for (auto i = 0; i != swapchainImageViews_->size(); ++i)
-			//{
-				//createInfo.pAttachments = &(*swapchainImageViews_)[i];
-
-			//Create framebuffer
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateFramebuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkFrameBuffers[i]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Framebuffer Creation Failed" };
-			}
-			//}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		//Create framebuffer
+		VKHelper::ThrowIfFailed(vkCreateFramebuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkFrameBuffers[i]));
 	}
 }
 
@@ -853,7 +517,7 @@ void VKRenderManager::RecreateSwapChain()
 	//}
 	SDL_GetWindowSizeInPixels(window, &width, &height);
 
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//CleanSwapChain();
 
@@ -1297,7 +961,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	// Begin command buffer
-	vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo);
+	VKHelper::ThrowIfFailed(vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo));
 
 	// Change image layout to TRANSFER_DST_OPTIMAL
 	{
@@ -1601,7 +1265,7 @@ void VKRenderManager::EndRender()
 		}
 
 		//End command buffer
-		vkEndCommandBuffer(*currentCommandBuffer);
+		VKHelper::ThrowIfFailed(vkEndCommandBuffer(*currentCommandBuffer));
 
 		//Create submit info
 		VkSubmitInfo submitInfo{};
@@ -1623,10 +1287,10 @@ void VKRenderManager::EndRender()
 		submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
 
 		//Submit queue to command buffer
-		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
+		VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence));
 
 		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*vkInit->GetDevice());
+		VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 		//Create present info
 		VkPresentInfoKHR presentInfo{};

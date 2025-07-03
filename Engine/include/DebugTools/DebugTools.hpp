@@ -57,7 +57,7 @@ inline LONG WINAPI WriteDump(EXCEPTION_POINTERS* pException)
 
 //--------------------NVIDIA Nsight Aftermath--------------------//
 // Enables the Nsight Aftermath code instrumentation for GPU crash dump creation.
-#define USE_NSIGHT_AFTERMATH 1
+#define USE_NSIGHT_AFTERMATH 0
 #if USE_NSIGHT_AFTERMATH
 #include "NsightAftermathHelpers.h"
 #include "NsightAftermathGpuCrashTracker.h"

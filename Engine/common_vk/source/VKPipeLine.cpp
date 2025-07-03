@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: VKPipeLine.cpp
 #include "VKPipeLine.hpp"
+#include "VKHelper.hpp"
 
 #include <iostream>
 #include <array>
@@ -221,34 +222,7 @@ void VKPipeLine::InitPipeLine(
 	createInfo.pDynamicState = &dynamicStateInfo;
 
 	//Create Graphics Pipeline
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &vkPipeline);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Graphics Pipeline Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKPipeLine::~VKPipeLine();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &vkPipeline));
 }
 
 void VKPipeLine::InitPipeLineLayout(bool isPushConstant, uint32_t size, VkShaderStageFlagBits bit)
@@ -271,32 +245,5 @@ void VKPipeLine::InitPipeLineLayout(bool isPushConstant, uint32_t size, VkShader
 	}
 
 	//Create Pipeline Layout
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreatePipelineLayout(*device, &createInfo, nullptr, &vkPipelineLayout);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Graphics Pipeline Layout Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKPipeLine::~VKPipeLine();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreatePipelineLayout(*device, &createInfo, nullptr, &vkPipelineLayout));
 }

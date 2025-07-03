@@ -3,6 +3,7 @@
 //Project: CubeEngine
 //File: VKInit.cpp
 #include "VKInit.hpp"
+#include "VKHelper.hpp"
 
 #include <iostream>
 #include <SDL3/SDL_vulkan.h>
@@ -33,49 +34,36 @@ void VKInit::Initialize(SDL_Window* window)
 
 void VKInit::InitInstance()
 {
-	try
+	//Display extensions
+	std::vector<const char*> extensionNames
 	{
-		//Display extensions
-		std::vector<const char*> extensionNames
-		{
-			"VK_KHR_surface",
-			"VK_KHR_win32_surface",
-			//"VK_KHR_get_physical_device_properties2",
-		};
+		"VK_KHR_surface",
+		"VK_KHR_win32_surface",
+		//"VK_KHR_get_physical_device_properties2",
+	};
 
-		VkApplicationInfo applicationInfo{};
-		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		applicationInfo.apiVersion = VK_API_VERSION_1_3;
+	VkApplicationInfo applicationInfo{};
+	applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
-		//Create VkInstanceInfo
-		VkInstanceCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	//Create VkInstanceInfo
+	VkInstanceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 #ifdef _DEBUG
-		//Layers
-		constexpr auto layerName{ "VK_LAYER_KHRONOS_validation" };
-		createInfo.enabledLayerCount = 1;
-		createInfo.ppEnabledLayerNames = &layerName;
+	//Layers
+	constexpr auto layerName{ "VK_LAYER_KHRONOS_validation" };
+	createInfo.enabledLayerCount = 1;
+	createInfo.ppEnabledLayerNames = &layerName;
 #else
-		createInfo.enabledLayerCount = 0;
-		createInfo.ppEnabledLayerNames = VK_NULL_HANDLE;
+	createInfo.enabledLayerCount = 0;
+	createInfo.ppEnabledLayerNames = VK_NULL_HANDLE;
 #endif
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
-		createInfo.ppEnabledExtensionNames = &extensionNames[0];
-		createInfo.pApplicationInfo = &applicationInfo;
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
+	createInfo.ppEnabledExtensionNames = &extensionNames[0];
+	createInfo.pApplicationInfo = &applicationInfo;
 
-		//Create VkInstance
-		//VkResult result = VK_SUCCESS;
-		if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS)
-		{
-			throw std::runtime_error{ "vkInstance Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKInit::~VKInit();
-		std::exit(EXIT_FAILURE);
-	}
+	//Create VkInstance
+	VKHelper::ThrowIfFailed(vkCreateInstance(&createInfo, nullptr, &vkInstance));
 }
 
 void VKInit::SetPhysicalDevice()
@@ -125,89 +113,68 @@ void VKInit::SetQueueFamilyIndex()
 
 void VKInit::InitDevice()
 {
-	try
+	//Queue Priority
+	constexpr auto priority = 1.0f;
+
+	//Create queue info
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+	queueCreateInfo.queueCount = 1;
+	queueCreateInfo.pQueuePriorities = &priority;
+
+	//Create Physical Device Features (for polygon mode line)
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &deviceFeatures);
+	if (deviceFeatures.fillModeNonSolid != VK_TRUE)
 	{
-		//Queue Priority
-		constexpr auto priority = 1.0f;
+		std::cout << "Does not support fillModeNonSolid" << '\n';
+		std::cout << '\n';
 
-		//Create queue info
-		VkDeviceQueueCreateInfo queueCreateInfo{};
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
-		queueCreateInfo.queueCount = 1;
-		queueCreateInfo.pQueuePriorities = &priority;
-
-		//Create Physical Device Features (for polygon mode line)
-		VkPhysicalDeviceFeatures deviceFeatures{};
-		try
-		{
-			vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &deviceFeatures);
-			if (deviceFeatures.fillModeNonSolid != VK_TRUE)
-			{
-				std::cout << "Does not support fillModeNonSolid" << '\n';
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Device Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKInit::~VKInit();
-			std::exit(EXIT_FAILURE);
-		}
-		//deviceFeatures.fillModeNonSolid = VK_TRUE;
-
-		//Create 12Features info (for descriptor array)
-		VkPhysicalDeviceVulkan12Features version12Features{};
-		version12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-		version12Features.runtimeDescriptorArray = VK_TRUE;
-		version12Features.descriptorIndexing = VK_TRUE; 
-		//versionFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-		//versionFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-		//versionFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
-
-		//Create Robustness2Features info (for nullDescriptor)
-		VkPhysicalDeviceRobustness2FeaturesEXT robustness2Features{};
-		robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
-		robustness2Features.nullDescriptor = VK_TRUE;
-		robustness2Features.pNext = &version12Features;
-
-		//Create device info
-		VkDeviceCreateInfo deviceCreateInfo{};
-		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		deviceCreateInfo.queueCreateInfoCount = 1;
-		deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-		deviceCreateInfo.pNext = &robustness2Features;
-		deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-
-		//--------------------Device Extensions settings--------------------//
-
-		std::vector<const char*> deviceExtensionNames
-		{
-			"VK_KHR_swapchain",
-			"VK_EXT_robustness2",
-			//For vkCmdSetPrimitiveTopology
-			//"VK_EXT_extended_dynamic_state3",
-		};
-
-		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensionNames.size());
-		deviceCreateInfo.ppEnabledExtensionNames = &deviceExtensionNames[0];
-
-		//--------------------Device Extensions settings end--------------------//
-
-		//Create device
-		if (vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkDevice) != VK_SUCCESS)
-		{
-			throw std::runtime_error{ "vkDevice Creation Failed" };
-		}
+		throw std::runtime_error{ "Device Creation Failed" };
 	}
-	catch (std::exception& e)
+	//deviceFeatures.fillModeNonSolid = VK_TRUE;
+
+	//Create 12Features info (for descriptor array)
+	VkPhysicalDeviceVulkan12Features version12Features{};
+	version12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	version12Features.runtimeDescriptorArray = VK_TRUE;
+	version12Features.descriptorIndexing = VK_TRUE;
+	//versionFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+	//versionFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+	//versionFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+
+	//Create Robustness2Features info (for nullDescriptor)
+	VkPhysicalDeviceRobustness2FeaturesEXT robustness2Features{};
+	robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+	robustness2Features.nullDescriptor = VK_TRUE;
+	robustness2Features.pNext = &version12Features;
+
+	//Create device info
+	VkDeviceCreateInfo deviceCreateInfo{};
+	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	deviceCreateInfo.queueCreateInfoCount = 1;
+	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+	deviceCreateInfo.pNext = &robustness2Features;
+	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+
+	//--------------------Device Extensions settings--------------------//
+
+	std::vector<const char*> deviceExtensionNames
 	{
-		std::cerr << e.what() << '\n';
-		VKInit::~VKInit();
-		std::exit(EXIT_FAILURE);
-	}
+		"VK_KHR_swapchain",
+		"VK_EXT_robustness2",
+		//For vkCmdSetPrimitiveTopology
+		//"VK_EXT_extended_dynamic_state3",
+	};
+
+	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensionNames.size());
+	deviceCreateInfo.ppEnabledExtensionNames = &deviceExtensionNames[0];
+
+	//--------------------Device Extensions settings end--------------------//
+
+	//Create device
+	VKHelper::ThrowIfFailed(vkCreateDevice(vkPhysicalDevice, &deviceCreateInfo, nullptr, &vkDevice));
 }
 
 void VKInit::InitQueue()
@@ -218,41 +185,32 @@ void VKInit::InitQueue()
 
 void VKInit::InitSurface(SDL_Window* window)
 {
-	try
+	//Create surface info
+	//VkWin32SurfaceCreateInfoKHR surfaceInfo{};
+	//surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	//surfaceInfo.hinstance = GetModuleHandle(nullptr);
+	//SDL_SysWMinfo winInfo;
+	//SDL_GetWindowWMInfo(window, &winInfo);
+	//surfaceInfo.hwnd = static_cast<HWND>(winInfo.info.win.window);
+
+	//Create surface
+	//if (vkCreateWin32SurfaceKHR(vkInstance, &surfaceInfo, nullptr, &vkSurface) != VK_SUCCESS)
+	//{
+	//	throw std::runtime_error{ "vkSurface Creation Failed" };
+	//}
+
+	//Create sruface using SDL_Vulkan_CreateSurface function
+	if (SDL_Vulkan_CreateSurface(window, vkInstance, nullptr, &vkSurface) == false)
 	{
-		//Create surface info
-		//VkWin32SurfaceCreateInfoKHR surfaceInfo{};
-		//surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		//surfaceInfo.hinstance = GetModuleHandle(nullptr);
-		//SDL_SysWMinfo winInfo;
-		//SDL_GetWindowWMInfo(window, &winInfo);
-		//surfaceInfo.hwnd = static_cast<HWND>(winInfo.info.win.window);
-
-		//Create surface
-		//if (vkCreateWin32SurfaceKHR(vkInstance, &surfaceInfo, nullptr, &vkSurface) != VK_SUCCESS)
-		//{
-		//	throw std::runtime_error{ "vkSurface Creation Failed" };
-		//}
-
-		//Create sruface using SDL_Vulkan_CreateSurface function
-		if (SDL_Vulkan_CreateSurface(window, vkInstance, nullptr, &vkSurface) == false)
-		{
-			throw std::runtime_error{ "vkSurface Creation Failed" };
-		}
-
-		//Check if physical device supports surface
-		VkBool32 isSurfaceSupported;
-		vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, queueFamilyIndex, vkSurface, &isSurfaceSupported);
-		if (isSurfaceSupported != VK_TRUE)
-		{
-			throw std::runtime_error{ "vkSurface Does Not Supported" };
-		}
+		throw std::runtime_error{ "vkSurface Creation Failed" };
 	}
-	catch (std::exception& e)
+
+	//Check if physical device supports surface
+	VkBool32 isSurfaceSupported;
+	VKHelper::ThrowIfFailed(vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, queueFamilyIndex, vkSurface, &isSurfaceSupported));
+	if (isSurfaceSupported != VK_TRUE)
 	{
-		std::cerr << e.what() << '\n';
-		VKInit::~VKInit();
-		std::exit(EXIT_FAILURE);
+		throw std::runtime_error{ "vkSurface Does Not Supported" };
 	}
 }
 
@@ -260,11 +218,11 @@ VkSurfaceFormatKHR VKInit::SetSurfaceFormat()
 {
 	//if pSurfaceFormats == nullptr -> returns numbers of all available surface formats
 	uint32_t count{ 0 };
-	vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &count, nullptr);
+	VKHelper::ThrowIfFailed(vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &count, nullptr));
 
 	//Get surface formats to vector
 	std::vector<VkSurfaceFormatKHR> surfaceFormats{ count };
-	vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &count, &surfaceFormats[0]);
+	VKHelper::ThrowIfFailed(vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &count, &surfaceFormats[0]));
 
 	return surfaceFormats[0];
 }
@@ -276,11 +234,11 @@ void VKInit::PrintLayers()
 {
 	//if pProperties == nullptr -> returns numbers of all available vulkan layers
 	uint32_t count{ 0 };
-	vkEnumerateInstanceLayerProperties(&count, nullptr);
+	VKHelper::ThrowIfFailed(vkEnumerateInstanceLayerProperties(&count, nullptr));
 
 	//Get layers information to vector
 	std::vector<VkLayerProperties> properties{ count };
-	vkEnumerateInstanceLayerProperties(&count, &properties[0]);
+	VKHelper::ThrowIfFailed(vkEnumerateInstanceLayerProperties(&count, &properties[0]));
 
 	//Print layers information
 	std::cout << "--------------------Layer Information--------------------" << '\n';
@@ -310,11 +268,11 @@ void VKInit::PrintInstnaceExtensions()
 	//Get whole extension properties
 	//if pProperties == nullptr -> returns numbers of all available extensions from a layer
 	uint32_t count{ 0 };
-	vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
+	VKHelper::ThrowIfFailed(vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr));
 
 	//Get extention properties to vector
 	std::vector<VkExtensionProperties> properties{ count };
-	vkEnumerateInstanceExtensionProperties(nullptr, &count, &properties[0]);
+	VKHelper::ThrowIfFailed(vkEnumerateInstanceExtensionProperties(nullptr, &count, &properties[0]));
 
 	std::cout << "--------------------Instance Extension Information--------------------" << '\n';
 	for (auto& p : properties)
@@ -349,11 +307,11 @@ void VKInit::PrintDeviceExtensions()
 {
 	//if pProperties == nullptr -> returns numbers of all available device extention properties
 	uint32_t count{ 0 };
-	vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &count, nullptr);
+	VKHelper::ThrowIfFailed(vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &count, nullptr));
 
 	//Get device extentions properties to vector
 	std::vector<VkExtensionProperties> properties{ count };
-	vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &count, &properties[0]);
+	VKHelper::ThrowIfFailed(vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, nullptr, &count, &properties[0]));
 
 	std::cout << "--------------------Device Extention Information--------------------" << '\n';
 	for (auto& p : properties)
@@ -367,11 +325,11 @@ void VKInit::PrintPresentModes()
 {
 	//if pPresentModes == nullptr -> returns numbers of all available present modes
 	uint32_t count{ 0 };
-	vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &count, nullptr);
+	VKHelper::ThrowIfFailed(vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &count, nullptr));
 
 	//Get present modes to vector
 	std::vector<VkPresentModeKHR> modes{ count };
-	vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &count, &modes[0]);
+	VKHelper::ThrowIfFailed(vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &count, &modes[0]));
 
 	std::cout << "--------------------Present Mode Information--------------------" << '\n';
 	for (auto& m : modes)
@@ -501,11 +459,11 @@ void VKInit::PrintPhysicalDevices()
 {
 	//if pPhysicalDevices == nullptr -> returns numbers of all available GPU
 	uint32_t count{ 0 };
-	vkEnumeratePhysicalDevices(vkInstance, &count, nullptr);
+	VKHelper::ThrowIfFailed(vkEnumeratePhysicalDevices(vkInstance, &count, nullptr));
 
 	//Get physical devices to vector
 	std::vector<VkPhysicalDevice> physicalDevices{ count };
-	vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]);
+	VKHelper::ThrowIfFailed(vkEnumeratePhysicalDevices(vkInstance, &count, &physicalDevices[0]));
 
 	//Get physical devices properties
 	std::cout << "--------------------Physical Device Information--------------------" << '\n';
