@@ -12,7 +12,6 @@
 #include "VKIndexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
-#include "VKHelper.hpp"
 
 #include <SDL3/SDL_vulkan.h>
 
