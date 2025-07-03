@@ -16,7 +16,6 @@ public:
 	void UpdateIndexBuffer(std::vector<uint32_t>* indices_);
 	VkBuffer* GetIndexBuffer() { return &vkIndexBuffer; };
 private:
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool;
 

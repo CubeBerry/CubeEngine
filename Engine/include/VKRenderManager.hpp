@@ -93,27 +93,6 @@ private:
 	bool HasStencilComponent(VkFormat format)
 	{
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-	};
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-	{
-		//Get Physical Device Memory Properties
-		VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-		vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-		//Find memory type index which satisfies both requirement and property
-		for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-		{
-			//Check if memory is allocatable at ith memory type
-			if (!(requirements_.memoryTypeBits & (1 << i)))
-				continue;
-
-			//Check if satisfies memory property
-			if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-				continue;
-
-			return i;
-		}
-		return UINT32_MAX;
 	}
 	void CreateDepthBuffer();
 

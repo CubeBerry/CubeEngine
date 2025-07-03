@@ -28,7 +28,6 @@ public:
 	std::pair<VkSampler*, VkImageView*> GetPrefilter() { return { &vkTextureSamplerPrefilter, &vkTextureImageViewPrefilter }; };
 	std::pair<VkSampler*, VkImageView*> GetBRDF() { return { &vkTextureSamplerBRDFLUT, &vkTextureImageViewBRDFLUT }; };
 private:
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool{ VK_NULL_HANDLE };
 	VkCommandBuffer skyboxCommandBuffer{ VK_NULL_HANDLE };

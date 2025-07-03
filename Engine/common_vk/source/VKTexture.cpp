@@ -29,28 +29,6 @@ VKTexture::~VKTexture()
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImage, nullptr);
 }
 
-uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-{
-	//Get Physical Device Memory Properties
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-	//Find memory type index which satisfies both requirement and property
-	for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-	{
-		//Check if memory is allocatable at ith memory type
-		if (!(requirements_.memoryTypeBits & (1 << i)))
-			continue;
-
-		//Check if satisfies memory property
-		if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-			continue;
-
-		return i;
-	}
-	return UINT32_MAX;
-}
-
 void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip)
 {
 	name = name_;
@@ -97,7 +75,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		//Allocate Memory
 		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemory));
@@ -133,7 +111,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which CPU can access and ensures memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		//Allocate Memory
 		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkStagingDeviceMemory));
@@ -356,7 +334,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		//Allocate Memory
 		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemory));
@@ -393,7 +371,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which CPU can access and ensures memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		//Allocate Memory
 		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkStagingDeviceMemory));

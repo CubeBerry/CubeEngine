@@ -5,7 +5,6 @@
 #include <vulkan/vulkan.hpp>
 #include "VKInit.hpp"
 #include "VKHelper.hpp"
-#include <iostream>
 
 template<typename Type>
 class VKUniformBuffer
@@ -35,7 +34,6 @@ public:
 		vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 	}
 private:
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool;
 
@@ -88,7 +86,7 @@ inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Can access from CPU and ensure memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		//Allocate Memory
 		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkUniformDeviceMemories[i]));
@@ -112,27 +110,4 @@ inline void VKUniformBuffer<Type>::UpdateUniform(size_t count_, void* data_, con
 	memcpy(contents, data_, sizeof(Type) * count_);
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
-}
-
-template<typename Type>
-inline uint32_t VKUniformBuffer<Type>::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-{
-	//Get Physical Device Memory Properties
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-	//Find memory type index which satisfies both requirement and property
-	for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-	{
-		//Check if memory is allocatable at ith memory type
-		if (!(requirements_.memoryTypeBits & (1 << i)))
-			continue;
-
-		//Check if satisfies memory property
-		if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-			continue;
-
-		return i;
-	}
-	return UINT32_MAX;
 }

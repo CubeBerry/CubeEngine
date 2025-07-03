@@ -178,4 +178,26 @@ namespace VKHelper
 		}
 #endif
     }
+
+	inline uint32_t FindMemoryTypeIndex(const VkPhysicalDevice& physicalDevice, const VkMemoryRequirements& requirements, const VkMemoryPropertyFlags& properties)
+	{
+		//Get Physical Device Memory Properties
+		VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
+
+		//Find memory type index which satisfies both requirement and property
+		for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
+		{
+			//Check if memory is allocatable at ith memory type
+			if (!(requirements.memoryTypeBits & (1 << i)))
+				continue;
+
+			//Check if satisfies memory property
+			if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties) != properties)
+				continue;
+
+			return i;
+		}
+		return UINT32_MAX;
+	}
 }
