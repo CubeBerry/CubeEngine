@@ -179,6 +179,7 @@ public:
 
 	glm::vec2 GetMousePosition();
 	glm::vec2 GetMouseWheelMotion();
+	void ResetWheelMotion();
 
 	void SetRelativeMouseMode(bool state);
 	bool GetRelativeMouseMode();
