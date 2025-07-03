@@ -9,6 +9,7 @@
 #include "VKPipeLine.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKSkybox.hpp"
+#include "VKHelper.hpp"
 
 #include "Engine.hpp"
 
