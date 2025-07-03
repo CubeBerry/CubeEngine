@@ -11,7 +11,6 @@ InputManager::~InputManager() {}
 
 void InputManager::InputPollEvent(SDL_Event& event)
 {
-	mouseWheelMotion = { 0.f,0.f };
 	switch (event.type)
 	{
 	case SDL_EVENT_KEY_DOWN:
@@ -140,6 +139,11 @@ glm::vec2 InputManager::GetMousePosition()
 glm::vec2 InputManager::GetMouseWheelMotion()
 {
 	return mouseWheelMotion;
+}
+
+void InputManager::ResetWheelMotion()
+{
+	mouseWheelMotion = { 0.f, 0.f };
 }
 
 void InputManager::SetRelativeMouseMode(bool state)

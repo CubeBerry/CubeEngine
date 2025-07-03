@@ -72,6 +72,7 @@ void ThreadManager::SDLEventLoop()
 
 void ThreadManager::ProcessEvents()
 {
+	Engine::GetInputManager().ResetWheelMotion();
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
