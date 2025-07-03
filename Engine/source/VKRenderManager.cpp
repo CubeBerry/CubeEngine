@@ -1072,110 +1072,57 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		for (size_t i = 0; i < sprites.size(); ++i)
 		{
 			auto& buffer = sprites[i]->GetBufferWrapper()->GetBuffer<BufferWrapper::VKBuffer>();
-			switch (pMode)
-			{
-			case PolygonType::FILL:
-			{
-				// Bind Pipeline
-				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
-				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-				// Dynamic Viewport & Scissor
-				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				// Bind Vertex DescriptorSet
-				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
-				size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
+			// Bind Pipeline
+			auto* pipeline = pMode == PolygonType::FILL ? vkPipeline3D : vkPipeline3DLine;
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLine());
+			// Bind Vertex Buffer
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			// Bind Index Buffer
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			// Dynamic Viewport & Scissor
+			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+			// Bind Vertex DescriptorSet
+			size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
+			size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
+			uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-				// Bind Fragment DescriptorSet
-				uint32_t dynamicOffsets[2];
-				// Fragment Uniform Offset
-				uniformSize = sizeof(ThreeDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[0] = dynamicOffset;
+			ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
+			*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+			// @TODO do not use magic number for dynamicOffsetCount
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
 
-				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			// Bind Fragment DescriptorSet
+			uint32_t dynamicOffsets[2];
+			// Fragment Uniform Offset
+			uniformSize = sizeof(ThreeDimension::FragmentUniform);
+			dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+			dynamicOffsets[0] = dynamicOffset;
 
-				// Material Uniform Offset
-				uniformSize = sizeof(ThreeDimension::Material);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[1] = dynamicOffset;
+			ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
+			*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
-				*materialDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material;
+			// Material Uniform Offset
+			uniformSize = sizeof(ThreeDimension::Material);
+			dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+			dynamicOffsets[1] = dynamicOffset;
 
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
+			ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
+			*materialDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material;
 
-				// Change Primitive Topology
-				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-				// Push Constant Active Lights
-				pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-				pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
-				// Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
-			}
-			break;
-			case PolygonType::LINE:
-				// Bind Pipeline
-				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLine());
-				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-				// Dynamic Viewport & Scissor
-				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				// Bind Vertex DescriptorSet
-				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
-				size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+			// @TODO do not use magic number for dynamicOffsetCount
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
 
-				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
-
-				// Bind Fragment DescriptorSet
-				uint32_t dynamicOffsets[2];
-				// Fragment Uniform Offset
-				uniformSize = sizeof(ThreeDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[0] = dynamicOffset;
-
-				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				// Material Uniform Offset
-				uniformSize = sizeof(ThreeDimension::Material);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[1] = dynamicOffset;
-
-				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
-				*materialDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material;
-
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
-
-				// Change Primitive Topology
-				// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
-				// Push Constant Active Lights
-				// vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DLine->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
-				// Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
-				break;
-			}
+			// Change Primitive Topology
+			// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+			// Push Constant Active Lights
+			pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
+			pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
+			vkCmdPushConstants(*currentCommandBuffer, *pipeline->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
+			// Draw
+			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
 			if (isDrawNormals)
