@@ -45,6 +45,19 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 	};
 
+	struct alignas(16) QuantizedPosition
+	{
+		uint16_t position[3];
+	};
+
+	struct alignas(16) QuantizedVertex
+	{
+		QuantizedPosition position;
+		glm::vec3 normal;
+		glm::vec2 uv;
+		int texSubIndex{ 0 };
+	};
+
 #ifdef _DEBUG
 	struct alignas(16) NormalVertex
 	{
@@ -59,6 +72,7 @@ namespace ThreeDimension
 		glm::mat4 transposeInverseModel;
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::mat4 decode;
 		glm::vec4 color;
 		// @TODO move to push constants later
 		glm::vec3 viewPosition;

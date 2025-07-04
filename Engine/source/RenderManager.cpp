@@ -42,13 +42,15 @@ BufferWrapper::~BufferWrapper()
 	}, uniformBuffer);
 };
 
-void RenderManager::CreateMesh(
-	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+glm::mat4 RenderManager::CreateMesh(
+	std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
 	std::vector<ThreeDimension::NormalVertex>& normalVertices,
 #endif
 	MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
+	std::vector<ThreeDimension::Vertex> vertices;
+
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	switch (type)
 	{
@@ -539,6 +541,9 @@ void RenderManager::CreateMesh(
 		}
 #endif
 	}
+
+	// Quantize
+	return Quantize(vertices, quantizedVertices);
 }
 
 void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
@@ -668,4 +673,49 @@ void RenderManager::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, st
 	}
 
 	//return textures;
+}
+
+glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices, std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices)
+{
+	quantizedVertices.resize(vertices.size());
+
+	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	{
+		minPos = glm::min(minPos, glm::vec3(it->position));
+		maxPos = glm::max(maxPos, glm::vec3(it->position));
+	}
+
+	std::vector<ThreeDimension::QuantizedPosition> quantized(vertices.size());
+	glm::vec3 multiplier = {
+		maxPos[0] != minPos[0] ? 65535.f / (maxPos[0] - minPos[0]) : 0.f,
+		maxPos[1] != minPos[1] ? 65535.f / (maxPos[1] - minPos[1]) : 0.f,
+		maxPos[2] != minPos[2] ? 65535.f / (maxPos[2] - minPos[2]) : 0.f
+	};
+
+	glm::mat4 translate(1.f);
+	glm::mat4 scale(1.f);
+	translate = glm::translate(translate, minPos);
+	scale = glm::scale(scale, glm::vec3{
+		(maxPos[0] - minPos[0]) / 65535.f,
+		(maxPos[1] - minPos[1]) / 65535.f,
+		(maxPos[2] - minPos[2]) / 65535.f
+		});
+
+	glm::mat4 decodeMat = translate * scale;
+
+	for (size_t i = 0; i < vertices.size(); ++i)
+	{
+		glm::vec3 position = vertices[i].position;
+		quantized[i].position[0] = static_cast<uint16_t>(std::floor((position.x - minPos.x) * multiplier.x));
+		quantized[i].position[1] = static_cast<uint16_t>(std::floor((position.y - minPos.y) * multiplier.y));
+		quantized[i].position[2] = static_cast<uint16_t>(std::floor((position.z - minPos.z) * multiplier.z));
+
+		quantizedVertices[i].position = quantized[i];
+		quantizedVertices[i].normal = vertices[i].normal;
+		quantizedVertices[i].uv = vertices[i].uv;
+		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
+	}
+
+	return decodeMat;
 }

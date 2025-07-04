@@ -13,7 +13,8 @@ struct GLAttributeLayout
     {
         Float = GL_FLOAT,
         Int = GL_INT,
-        Bool = GL_BOOL
+        Bool = GL_BOOL,
+        UShort = GL_UNSIGNED_SHORT
     };
     ComponentType component_type = ComponentType::Float;
     enum NumComponents : GLint
@@ -21,7 +22,8 @@ struct GLAttributeLayout
         _1 = 1,
         _2 = 2,
         _3 = 3,
-        _4 = 4
+        _4 = 4,
+        _16 = 16
     };
     NumComponents component_dimension = NumComponents::_1;
     // Is this the 1st, 2nd, 3rd... (0, 1, 2...) "in attribute" of the vertex shader?

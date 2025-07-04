@@ -42,13 +42,16 @@ void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::i
 		switch (attribute.component_type)
 		{
 		case GL_FLOAT:
-			//For Float
+			// For Float
 			glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
 			break;
 		case GL_INT:
-			//For Int
+			// For Int
 			glCheck(glVertexArrayAttribIFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.relative_offset));
 			break;
+		case GL_UNSIGNED_SHORT:
+			// For Unsigned Short (Quantized Vertex Position)
+			glCheck(glVertexArrayAttribIFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.relative_offset));
 		}
 		glCheck(glVertexArrayAttribBinding(vaoHandle, attribute.vertex_layout_location, 0));
 	}
