@@ -14,7 +14,8 @@ struct GLAttributeLayout
         Float = GL_FLOAT,
         Int = GL_INT,
         Bool = GL_BOOL,
-        UShort = GL_UNSIGNED_SHORT
+        UShort = GL_UNSIGNED_SHORT,
+        UByte = GL_UNSIGNED_BYTE
     };
     ComponentType component_type = ComponentType::Float;
     enum NumComponents : GLint

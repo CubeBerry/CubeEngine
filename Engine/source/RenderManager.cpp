@@ -688,18 +688,18 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 
 	std::vector<ThreeDimension::QuantizedPosition> quantized(vertices.size());
 	glm::vec3 multiplier = {
-		maxPos.x != minPos.x ? 65535.f / (maxPos.x - minPos.x) : 0.f,
-		maxPos.y != minPos.y ? 65535.f / (maxPos.y - minPos.y) : 0.f,
-		maxPos.z != minPos.z ? 65535.f / (maxPos.z - minPos.z) : 0.f
+		maxPos.x != minPos.x ? 255.f / (maxPos.x - minPos.x) : 0.f,
+		maxPos.y != minPos.y ? 255.f / (maxPos.y - minPos.y) : 0.f,
+		maxPos.z != minPos.z ? 255.f / (maxPos.z - minPos.z) : 0.f
 	};
 
 	glm::mat4 translate(1.f);
 	glm::mat4 scale(1.f);
 	translate = glm::translate(translate, minPos);
 	scale = glm::scale(scale, glm::vec3{
-		(maxPos.x - minPos.x) / 65535.f,
-		(maxPos.y - minPos.y) / 65535.f,
-		(maxPos.z - minPos.z) / 65535.f
+		(maxPos.x - minPos.x) / 255.f,
+		(maxPos.y - minPos.y) / 255.f,
+		(maxPos.z - minPos.z) / 255.f
 		});
 
 	glm::mat4 decodeMat = translate * scale;
@@ -707,9 +707,9 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 	for (size_t i = 0; i < vertices.size(); ++i)
 	{
 		glm::vec3 position = vertices[i].position;
-		quantized[i].position[0] = static_cast<uint16_t>(std::floor((position.x - minPos.x) * multiplier.x));
-		quantized[i].position[1] = static_cast<uint16_t>(std::floor((position.y - minPos.y) * multiplier.y));
-		quantized[i].position[2] = static_cast<uint16_t>(std::floor((position.z - minPos.z) * multiplier.z));
+		quantized[i].position[0] = static_cast<uint8_t>(std::floor((position.x - minPos.x) * multiplier.x));
+		quantized[i].position[1] = static_cast<uint8_t>(std::floor((position.y - minPos.y) * multiplier.y));
+		quantized[i].position[2] = static_cast<uint8_t>(std::floor((position.z - minPos.z) * multiplier.z));
 
 		quantizedVertices[i].position = quantized[i];
 		quantizedVertices[i].normal = vertices[i].normal;
