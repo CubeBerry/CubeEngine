@@ -185,6 +185,14 @@ void Physics3D::Gravity(float dt)
 	}
 }
 
+void Physics3D::SetMass(float m)
+{
+	if(m > 0.f)
+	{
+		mass = m;
+	}
+}
+
 bool Physics3D::CheckCollision(Object* obj)
 {
 	switch (colliderType)
