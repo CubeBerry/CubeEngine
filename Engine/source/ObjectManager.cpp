@@ -769,7 +769,7 @@ void ObjectManager::AddComponentPopUpForImGui()
 					if (currentObj->HasComponent<Sprite>() == false)
 					{
 						currentObj->AddComponent<Sprite>();
-						currentObj->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/partitioned_cube.obj", 1, 1);
+						currentObj->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
 						//TBD
 					}
 					break;
@@ -845,7 +845,7 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 				{ obj->AddComponent<Sprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/partitioned_cube.obj", stacks, slices, color, metallic, roughness); });
+				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Car"))
