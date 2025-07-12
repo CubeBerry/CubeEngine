@@ -437,7 +437,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 
 		//Attributes
 		GLAttributeLayout position_layout;
-		position_layout.component_type = GLAttributeLayout::UByte;
+		position_layout.component_type = GLAttributeLayout::UShort;
 		position_layout.component_dimension = GLAttributeLayout::_3;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;

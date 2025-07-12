@@ -47,7 +47,7 @@ namespace ThreeDimension
 
 	struct alignas(16) QuantizedPosition
 	{
-		uint8_t position[3];
+		uint16_t position[3];
 	};
 
 	struct alignas(16) QuantizedVertex
