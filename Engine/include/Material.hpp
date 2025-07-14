@@ -45,14 +45,14 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 	};
 
-	struct alignas(16) QuantizedPosition
-	{
-		uint16_t position[3];
-	};
+	//struct alignas(16) QuantizedPosition
+	//{
+	//	uint16_t position[3];
+	//};
 
 	struct alignas(16) QuantizedVertex
 	{
-		QuantizedPosition position;
+		uint32_t position;
 		glm::vec3 normal;
 		glm::vec2 uv;
 		int texSubIndex{ 0 };

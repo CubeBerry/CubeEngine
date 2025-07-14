@@ -14,6 +14,7 @@ struct GLAttributeLayout
         Float = GL_FLOAT,
         Int = GL_INT,
         Bool = GL_BOOL,
+		UInt = GL_UNSIGNED_INT,
         UShort = GL_UNSIGNED_SHORT,
         UByte = GL_UNSIGNED_BYTE
     };

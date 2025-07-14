@@ -686,20 +686,25 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 		maxPos = glm::max(maxPos, glm::vec3(it->position));
 	}
 
-	std::vector<ThreeDimension::QuantizedPosition> quantized(vertices.size());
+	// 11, 11, 10
+	const float maxX = static_cast<float>((1 << 11) - 1);
+	const float maxY = static_cast<float>((1 << 11) - 1);
+	const float maxZ = static_cast<float>((1 << 10) - 1);
+
+	//std::vector<ThreeDimension::QuantizedPosition> quantized(vertices.size());
 	glm::vec3 multiplier = {
-		maxPos.x != minPos.x ? 65535.f / (maxPos.x - minPos.x) : 0.f,
-		maxPos.y != minPos.y ? 65535.f / (maxPos.y - minPos.y) : 0.f,
-		maxPos.z != minPos.z ? 65535.f / (maxPos.z - minPos.z) : 0.f
+		maxPos.x != minPos.x ? maxX / (maxPos.x - minPos.x) : 0.f,
+		maxPos.y != minPos.y ? maxY / (maxPos.y - minPos.y) : 0.f,
+		maxPos.z != minPos.z ? maxZ / (maxPos.z - minPos.z) : 0.f
 	};
 
 	glm::mat4 translate(1.f);
 	glm::mat4 scale(1.f);
 	translate = glm::translate(translate, minPos);
 	scale = glm::scale(scale, glm::vec3{
-		(maxPos.x - minPos.x) / 65535.f,
-		(maxPos.y - minPos.y) / 65535.f,
-		(maxPos.z - minPos.z) / 65535.f
+		(maxPos.x - minPos.x) / maxX,
+		(maxPos.y - minPos.y) / maxY,
+		(maxPos.z - minPos.z) / maxZ
 		});
 
 	glm::mat4 decodeMat = translate * scale;
@@ -707,11 +712,17 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 	for (size_t i = 0; i < vertices.size(); ++i)
 	{
 		glm::vec3 position = vertices[i].position;
-		quantized[i].position[0] = static_cast<uint16_t>(std::floor((position.x - minPos.x) * multiplier.x));
-		quantized[i].position[1] = static_cast<uint16_t>(std::floor((position.y - minPos.y) * multiplier.y));
-		quantized[i].position[2] = static_cast<uint16_t>(std::floor((position.z - minPos.z) * multiplier.z));
+		//quantized[i].position[0] = static_cast<uint16_t>(std::floor((position.x - minPos.x) * multiplier.x));
+		//quantized[i].position[1] = static_cast<uint16_t>(std::floor((position.y - minPos.y) * multiplier.y));
+		//quantized[i].position[2] = static_cast<uint16_t>(std::floor((position.z - minPos.z) * multiplier.z));
 
-		quantizedVertices[i].position = quantized[i];
+		uint32_t qx = static_cast<uint32_t>(std::floor((vertices[i].position.x - minPos.x) * multiplier.x));
+		uint32_t qy = static_cast<uint32_t>(std::floor((vertices[i].position.y - minPos.y) * multiplier.y));
+		uint32_t qz = static_cast<uint32_t>(std::floor((vertices[i].position.z - minPos.z) * multiplier.z));
+
+		uint32_t packedPosition = (qz << 22) | (qy << 11) | qx;
+
+		quantizedVertices[i].position = packedPosition;
 		quantizedVertices[i].normal = vertices[i].normal;
 		quantizedVertices[i].uv = vertices[i].uv;
 		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
