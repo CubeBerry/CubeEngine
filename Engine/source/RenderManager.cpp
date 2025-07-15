@@ -679,12 +679,15 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 {
 	quantizedVertices.resize(vertices.size());
 
-	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-	for (auto it = vertices.begin(); it != vertices.end(); ++it)
-	{
-		minPos = glm::min(minPos, glm::vec3(it->position));
-		maxPos = glm::max(maxPos, glm::vec3(it->position));
-	}
+	//glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+	//for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	//{
+	//	minPos = glm::min(minPos, glm::vec3(it->position));
+	//	maxPos = glm::max(maxPos, glm::vec3(it->position));
+	//}
+
+	glm::vec3 minPos{ -1.367188, - 0.984375, - 0.851563 };
+	glm::vec3 maxPos{ 1.367188, 0.984375, 0.851563 };
 
 	// 11, 11, 10
 	const float maxX = static_cast<float>((1 << 11) - 1);
