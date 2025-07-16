@@ -688,6 +688,7 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 
 	// Encode
 	// 1. The largest x, y, and z bounding cube sizes among all partitions.
+	glm::vec3 largestBBoxSize = glm::vec3{ 1.36719, 0.984375, 0.851563 };
 	//glm::vec3 minPos{ -85.985817, 2.090764, -16.188759 };
 	//glm::vec3 maxPos{ 85.985779, 196.458527, 22.100105 };
 
@@ -696,7 +697,6 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 	const float xAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
 	const float yAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
 	const float zAxisSteps = static_cast<float>((1 << 10) - 1); // 1024 - 1
-	glm::vec3 largestBBoxSize = glm::vec3{ 1.36719, 0.984375, 0.851563 };
 	glm::vec3 C{ largestBBoxSize / glm::vec3{ xAxisSteps, yAxisSteps, zAxisSteps } };
 
 	glm::ivec3 minQuantizedPos{ INT_MAX };
