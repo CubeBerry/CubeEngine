@@ -48,6 +48,8 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	glCheck(glEnable(GL_DEPTH_TEST));
 	glCheck(glDepthFunc(GL_LEQUAL));
+	//glCheck(glEnable(GL_POLYGON_OFFSET_FILL));
+	//glCheck(glPolygonOffset(1.0f, 1.0f));
 	GLsizei w, h;
 	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &w, &h);
 	glViewport(0, 0, w, h);

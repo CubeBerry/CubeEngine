@@ -686,50 +686,51 @@ glm::mat4 RenderManager::Quantize(std::vector<ThreeDimension::Vertex>& vertices,
 	//	maxPos = glm::max(maxPos, glm::vec3(it->position));
 	//}
 
-	glm::vec3 minPos{ -1.367188, - 0.984375, - 0.851563 };
-	glm::vec3 maxPos{ 1.367188, 0.984375, 0.851563 };
+	// Encode
+	// 1. The largest x, y, and z bounding cube sizes among all partitions.
+	glm::vec3 minPos{ -85.985817, 2.090764, -16.188759 };
+	glm::vec3 maxPos{ 85.985779, 196.458527, 22.100105 };
 
+	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
 	// 11, 11, 10
-	const float maxX = static_cast<float>((1 << 11) - 1);
-	const float maxY = static_cast<float>((1 << 11) - 1);
-	const float maxZ = static_cast<float>((1 << 10) - 1);
+	const float xAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
+	const float yAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
+	const float zAxisSteps = static_cast<float>((1 << 10) - 1); // 1024 - 1
+	glm::vec3 largestBBoxSize = maxPos - minPos;
+	glm::vec3 C{ largestBBoxSize / glm::vec3{ xAxisSteps, yAxisSteps, zAxisSteps } };
 
-	//std::vector<ThreeDimension::QuantizedPosition> quantized(vertices.size());
-	glm::vec3 multiplier = {
-		maxPos.x != minPos.x ? maxX / (maxPos.x - minPos.x) : 0.f,
-		maxPos.y != minPos.y ? maxY / (maxPos.y - minPos.y) : 0.f,
-		maxPos.z != minPos.z ? maxZ / (maxPos.z - minPos.z) : 0.f
-	};
-
-	glm::mat4 translate(1.f);
-	glm::mat4 scale(1.f);
-	translate = glm::translate(translate, minPos);
-	scale = glm::scale(scale, glm::vec3{
-		(maxPos.x - minPos.x) / maxX,
-		(maxPos.y - minPos.y) / maxY,
-		(maxPos.z - minPos.z) / maxZ
-		});
-
-	glm::mat4 decodeMat = translate * scale;
-
+	glm::ivec3 minQuantizedPos{ INT_MAX };
+	std::vector<glm::ivec3> quantizedPositions(vertices.size());
 	for (size_t i = 0; i < vertices.size(); ++i)
 	{
-		glm::vec3 position = vertices[i].position;
-		//quantized[i].position[0] = static_cast<uint16_t>(std::floor((position.x - minPos.x) * multiplier.x));
-		//quantized[i].position[1] = static_cast<uint16_t>(std::floor((position.y - minPos.y) * multiplier.y));
-		//quantized[i].position[2] = static_cast<uint16_t>(std::floor((position.z - minPos.z) * multiplier.z));
+		// 3. Quantize all vertex positions.
+		glm::ivec3 qp{ static_cast<int32_t>(vertices[i].position.x / C.x), static_cast<int32_t>(vertices[i].position.y / C.y), static_cast<int32_t>(vertices[i].position.z / C.z) };
+		quantizedPositions[i] = qp;
 
-		uint32_t qx = static_cast<uint32_t>(std::floor((vertices[i].position.x - minPos.x) * multiplier.x));
-		uint32_t qy = static_cast<uint32_t>(std::floor((vertices[i].position.y - minPos.y) * multiplier.y));
-		uint32_t qz = static_cast<uint32_t>(std::floor((vertices[i].position.z - minPos.z) * multiplier.z));
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
 
-		uint32_t packedPosition = (qz << 22) | (qy << 11) | qx;
+	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
+	// Then, subtract (Ox, Oy, Oz) from the quantized coordinates of vertices.
+	glm::ivec3 O{ minQuantizedPos };
+	for (size_t i = 0; i < vertices.size(); ++i)
+	{
+		quantizedPositions[i] -= O;
 
+		uint32_t packedPosition = (quantizedPositions[i].z << 22) | (quantizedPositions[i].y << 11) | quantizedPositions[i].x;
 		quantizedVertices[i].position = packedPosition;
 		quantizedVertices[i].normal = vertices[i].normal;
 		quantizedVertices[i].uv = vertices[i].uv;
 		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
 	}
+
+	// Decode
+	glm::mat4 translate{ 1.f };
+	glm::mat4 scale{ 1.f };
+	translate = glm::translate(translate, glm::vec3{ C.x * static_cast<float>(O.x), C.y * static_cast<float>(O.y), C.z * static_cast<float>(O.z) });
+	scale = glm::scale(scale, C);
+
+	glm::mat4 decodeMat = translate * scale;
 
 	return decodeMat;
 }
