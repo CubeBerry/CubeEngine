@@ -53,15 +53,7 @@ VKRenderManager::~VKRenderManager()
 	textures.erase(textures.begin(), textures.end());
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
 
-	//Destroy Depth Buffering
-	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
-
-	//Destroy MSAA
-	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
+	delete vkRenderTarget;
 
 	//Destroy Normal
 #ifdef _DEBUG
@@ -99,124 +91,6 @@ VKRenderManager::~VKRenderManager()
 	delete vkInit;
 }
 
-void VKRenderManager::CreateDepthBuffer()
-{
-	depthFormat = FindDepthFormat();
-
-	{
-		//Define an image to create
-		VkImageCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = depthFormat;
-		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
-		createInfo.mipLevels = 1;
-		createInfo.arrayLayers = 1;
-		createInfo.samples = msaaSamples;
-		//Use Optimal Tiling to make GPU effectively process image
-		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		//Usage for copying and shader
-		createInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		//createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		//Create image
-		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &depthImage));
-
-		//Declare a variable which will take memory requirements
-		VkMemoryRequirements requirements{};
-		//Get Memory Requirements for Image
-		vkGetImageMemoryRequirements(*vkInit->GetDevice(), depthImage, &requirements);
-
-		//Create Memory Allocation Info
-		VkMemoryAllocateInfo allocateInfo{};
-		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocateInfo.allocationSize = requirements.size;
-		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		//Allocate Memory
-		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &depthImageMemory));
-
-		//Bind Image and Memory
-		VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), depthImage, depthImageMemory, 0));
-	}
-
-	//To access image from graphics pipeline, Image View is needed
-	//Create ImageView Info
-	VkImageViewCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = depthImage;
-	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = depthFormat;
-	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-	createInfo.subresourceRange.baseMipLevel = 0;
-	createInfo.subresourceRange.levelCount = 1;
-	createInfo.subresourceRange.baseArrayLayer = 0;
-	createInfo.subresourceRange.layerCount = 1;
-
-	//Create ImageView
-	VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &depthImageView));
-}
-
-void VKRenderManager::CreateColorResources()
-{
-	imageFormat = vkInit->SetSurfaceFormat().format;
-
-	{
-		//Define an image to create
-		VkImageCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = imageFormat;
-		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
-		createInfo.mipLevels = 1;
-		createInfo.arrayLayers = 1;
-		createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		createInfo.samples = msaaSamples;
-		//Use Optimal Tiling to make GPU effectively process image
-		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		//Usage for copying and shader
-		createInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-		//Create image
-		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &colorImage));
-
-		//Declare a variable which will take memory requirements
-		VkMemoryRequirements requirements{};
-		//Get Memory Requirements for Image
-		vkGetImageMemoryRequirements(*vkInit->GetDevice(), colorImage, &requirements);
-
-		//Create Memory Allocation Info
-		VkMemoryAllocateInfo allocateInfo{};
-		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocateInfo.allocationSize = requirements.size;
-		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		//Allocate Memory
-		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &colorImageMemory));
-
-		//Bind Image and Memory
-		VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), colorImage, colorImageMemory, 0));
-	}
-
-	//To access image from graphics pipeline, Image View is needed
-	// Create ImageView Info
-	VkImageViewCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = colorImage;
-	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = imageFormat;
-	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	createInfo.subresourceRange.levelCount = 1;
-	createInfo.subresourceRange.layerCount = 1;
-
-	// Create ImageView
-	VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &colorImageView));
-}
-
 void VKRenderManager::Initialize(SDL_Window* window_)
 {
 	window = window_;
@@ -230,10 +104,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
 	// MSAA
-	msaaSamples = GetMaxUsableSampleCount();
-	CreateColorResources();
 	// Depth Buffering
-	CreateDepthBuffer();
+	vkRenderTarget = new VKRenderTarget(vkInit, vkSwapChain);
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
@@ -288,7 +160,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	position_layout.offset = offsetof(TwoDimension::Vertex, position);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor2D->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
+	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
 
 	// 3D Pipeline
 	position_layout.vertex_layout_location = 0;
@@ -311,16 +183,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	tex_sub_index_layout.offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
 	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3DNormal->GetDescriptorSetLayout());
-	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
 #endif
 
 	// Uniform
@@ -333,7 +205,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, MAX_LIGHT_SIZE);
 	directionalLightUniformBuffer = new VKUniformBuffer<ThreeDimension::DirectionalLightUniform>(vkInit, MAX_LIGHT_SIZE);
 
-	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor2D->GetDescriptorPool(), &vkRenderPass, msaaSamples);
+	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor2D->GetDescriptorPool(), &vkRenderPass, vkRenderTarget->GetMSAASamples());
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -379,7 +251,7 @@ void VKRenderManager::InitRenderPass()
 	//Create Attachment Description
 	VkAttachmentDescription colorAattachmentDescription{};
 	colorAattachmentDescription.format = surfaceFormat.format;
-	colorAattachmentDescription.samples = msaaSamples;
+	colorAattachmentDescription.samples = vkRenderTarget->GetMSAASamples();
 	colorAattachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAattachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	//colorAattachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -394,8 +266,8 @@ void VKRenderManager::InitRenderPass()
 	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription depthAttachmentDescription{};
-	depthAttachmentDescription.format = depthFormat;
-	depthAttachmentDescription.samples = msaaSamples;
+	depthAttachmentDescription.format = vkRenderTarget->GetDepthFormat();
+	depthAttachmentDescription.samples = vkRenderTarget->GetMSAASamples();
 	depthAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	depthAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -476,7 +348,7 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 
 	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		VkImageView attachments[3] = { colorImageView, depthImageView, (*swapchainImageViews_)[i] };
+		VkImageView attachments[3] = { vkRenderTarget->GetColorImageView(), vkRenderTarget->GetDepthImageView(), (*swapchainImageViews_)[i] };
 
 		//Create framebuffer info
 		VkFramebufferCreateInfo createInfo{};
@@ -532,20 +404,10 @@ void VKRenderManager::RecreateSwapChain()
 		vkDestroyFramebuffer(*vkInit->GetDevice(), framebuffer, nullptr);
 	}
 
-	//Destroy Depth Buffering
-	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
-
-	//Destroy MSAA
-	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
-
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
-	CreateDepthBuffer();
-	CreateColorResources();
+	delete vkRenderTarget;
+	vkRenderTarget = new VKRenderTarget(vkInit, vkSwapChain);
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
@@ -657,7 +519,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 	position_layout.offset = 0;
 
 	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKSkybox(path, vkInit, &vkCommandPool);
 

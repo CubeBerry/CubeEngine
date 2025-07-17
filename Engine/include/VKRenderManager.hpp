@@ -12,6 +12,7 @@
 #include "VKIndexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKImGuiManager.hpp"
+#include "VKRenderTarget.hpp"
 
 #include <SDL3/SDL_vulkan.h>
 
@@ -57,66 +58,9 @@ private:
 	VkRenderPass vkRenderPass{ VK_NULL_HANDLE };
 	std::vector<VkFramebuffer> vkFrameBuffers;
 
-	//Depth Buffering
-	VkImage depthImage;
-	VkDeviceMemory depthImageMemory;
-	VkImageView depthImageView;
-	VkFormat depthFormat;
-	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
-	{
-		for (VkFormat format : candidates)
-		{
-			VkFormatProperties properties;
-			vkGetPhysicalDeviceFormatProperties(*vkInit->GetPhysicalDevice(), format, &properties);
-
-			if (tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & features) == features)
-			{
-				return format;
-			}
-			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & features) == features)
-			{
-				return format;
-			}
-		}
-		throw std::runtime_error("Failed To Find Supported Format!");
-	};
-	VkFormat FindDepthFormat()
-	{
-		return FindSupportedFormat
-		(
-			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-		);
-	}
-	bool HasStencilComponent(VkFormat format)
-	{
-		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-	}
-	void CreateDepthBuffer();
-
 	//MSAA
-	VkImage colorImage;
-	VkDeviceMemory colorImageMemory;
-	VkImageView colorImageView;
-	VkFormat imageFormat;
-	VkSampleCountFlagBits msaaSamples{ VK_SAMPLE_COUNT_1_BIT };
-	//This function should be called after VKInit's Initialize() function
-	VkSampleCountFlagBits GetMaxUsableSampleCount() const
-	{
-		VkPhysicalDeviceProperties physicalDeviceProperties;
-		vkGetPhysicalDeviceProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceProperties);
-
-		VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-		if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; };
-		if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; };
-		if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; };
-		if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; };
-		if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; };
-		if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; };
-		return VK_SAMPLE_COUNT_1_BIT;
-	}
-	void CreateColorResources();
+	//Depth Buffering
+	VKRenderTarget* vkRenderTarget{ nullptr };
 
 	VKImGuiManager* imguiManager;
 
