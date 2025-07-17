@@ -67,24 +67,6 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		m_device.Get()));
 #endif
 
-	// Check MSAA Support
-	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels = {};
-	msQualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	msQualityLevels.SampleCount = m_msaaSampleCount;
-	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-
-	DXHelper::ThrowIfFailed(m_device->CheckFeatureSupport(
-		D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
-		&msQualityLevels,
-		sizeof(msQualityLevels)
-	));
-
-	if (msQualityLevels.NumQualityLevels == 0)
-	{
-		throw std::runtime_error("MSAA sample count not supported");
-	}
-	m_msaaQualityLevel = msQualityLevels.NumQualityLevels - 1;
-
 	// Create Command Queue
 	// DESC = Descriptor
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -123,89 +105,14 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
 	DXHelper::ThrowIfFailed(m_rtvHeap->SetName(L"Render Target View Heap"));
 
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
-	DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
+	//D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	//dsvHeapDesc.NumDescriptors = 1;
+	//dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	//dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	//DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+	//DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
 
-	// Create Depth Stencil Buffer Resource
-	D3D12_RESOURCE_DESC depthStencilDesc = {};
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Alignment = 0;
-	int width, height;
-	SDL_GetWindowSizeInPixels(window, &width, &height);
-	depthStencilDesc.Width = static_cast<UINT64>(width);
-	depthStencilDesc.Height = static_cast<UINT>(height);
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	// @TODO Use ID3D12Device::CheckFeatureSupport to find supported format
-	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthStencilDesc.SampleDesc.Count = m_msaaSampleCount;
-	depthStencilDesc.SampleDesc.Quality = m_msaaQualityLevel;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-	D3D12_CLEAR_VALUE clearValue = {};
-	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-	clearValue.DepthStencil.Depth = 1.0f;
-	clearValue.DepthStencil.Stencil = 0;
-
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&depthStencilDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&clearValue,
-		IID_PPV_ARGS(&m_depthStencil)
-	));
-	DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"Depth/Stencil Resource"));
-
-	// MSAA
-	D3D12_DESCRIPTOR_HEAP_DESC msaaRtvHeapDesc = {};
-	msaaRtvHeapDesc.NumDescriptors = 1;
-	msaaRtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	msaaRtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&msaaRtvHeapDesc, IID_PPV_ARGS(&m_msaaRtvHeap)));
-
-	D3D12_RESOURCE_DESC msaaRenderTargetDesc = {};
-	msaaRenderTargetDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	msaaRenderTargetDesc.Width = width;
-	msaaRenderTargetDesc.Height = height;
-	msaaRenderTargetDesc.DepthOrArraySize = 1;
-	msaaRenderTargetDesc.MipLevels = 1;
-	msaaRenderTargetDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	msaaRenderTargetDesc.SampleDesc.Count = m_msaaSampleCount;
-	msaaRenderTargetDesc.SampleDesc.Quality = m_msaaQualityLevel;
-	msaaRenderTargetDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-
-	D3D12_CLEAR_VALUE msaaClearValue = {};
-	msaaClearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	msaaClearValue.Color[0] = 0.f;
-	msaaClearValue.Color[1] = 0.f;
-	msaaClearValue.Color[2] = 0.f;
-	msaaClearValue.Color[3] = 1.f;
-
-	// heapProps(D3D12_HEAP_TYPE_DEFAULT)
-	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&msaaRenderTargetDesc,
-		D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
-		&msaaClearValue,
-		IID_PPV_ARGS(&m_msaaRenderTarget)
-	));
-
-	m_device->CreateRenderTargetView(m_msaaRenderTarget.Get(), nullptr, m_msaaRtvHeap->GetCPUDescriptorHandleForHeapStart());
-
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, window);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 505;
@@ -247,8 +154,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_msaaSampleCount;
-	sampleDesc.Quality = m_msaaQualityLevel;
+	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();
+	sampleDesc.Quality = m_renderTarget->GetMSAAQualityLevel();
 
 	m_pipeline2D = std::make_unique<DXPipeLine>(
 		m_device,
@@ -398,12 +305,10 @@ void DXRenderManager::OnResize(int width, int height)
 	WaitForGPU();
 	//OutputDebugStringA("OnResize: GPU wait finished.\n");
 
-	m_msaaRenderTarget.Reset();
 	for (UINT i = 0; i < frameCount; ++i)
 	{
 		m_renderTargets[i].Reset();
 	}
-	m_depthStencil.Reset();
 	//OutputDebugStringA("OnResize: Old resources released.\n");
 
 	DXHelper::ThrowIfFailed(m_swapChain->ResizeBuffers(
@@ -424,74 +329,8 @@ void DXRenderManager::OnResize(int width, int height)
 		DXHelper::ThrowIfFailed(m_renderTargets[i]->SetName((L"Recreate Render Target " + std::to_wstring(i)).c_str()));
 	}
 
-	// Create Depth Stencil Buffer Resource
-	D3D12_RESOURCE_DESC depthStencilDesc = {};
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Alignment = 0;
-	depthStencilDesc.Width = static_cast<UINT64>(width);
-	depthStencilDesc.Height = static_cast<UINT>(height);
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	// @TODO Use ID3D12Device::CheckFeatureSupport to find supported format
-	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthStencilDesc.SampleDesc.Count = m_msaaSampleCount;
-	depthStencilDesc.SampleDesc.Quality = m_msaaQualityLevel;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-	D3D12_CLEAR_VALUE clearValue = {};
-	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-	clearValue.DepthStencil.Depth = 1.0f;
-	clearValue.DepthStencil.Stencil = 0;
-
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&depthStencilDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&clearValue,
-		IID_PPV_ARGS(&m_depthStencil)
-	));
-	DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"Resize Depth/Stencil Resource"));
-
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-
-	// MSAA
-	D3D12_RESOURCE_DESC msaaRenderTargetDesc = {};
-	msaaRenderTargetDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	msaaRenderTargetDesc.Width = width;
-	msaaRenderTargetDesc.Height = height;
-	msaaRenderTargetDesc.DepthOrArraySize = 1;
-	msaaRenderTargetDesc.MipLevels = 1;
-	msaaRenderTargetDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	msaaRenderTargetDesc.SampleDesc.Count = m_msaaSampleCount;
-	msaaRenderTargetDesc.SampleDesc.Quality = m_msaaQualityLevel;
-	msaaRenderTargetDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-
-	D3D12_CLEAR_VALUE msaaClearValue = {};
-	msaaClearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	msaaClearValue.Color[0] = 0.f;
-	msaaClearValue.Color[1] = 0.f;
-	msaaClearValue.Color[2] = 0.f;
-	msaaClearValue.Color[3] = 1.f;
-
-	// heapProps(D3D12_HEAP_TYPE_DEFAULT)
-	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&msaaRenderTargetDesc,
-		D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
-		&msaaClearValue,
-		IID_PPV_ARGS(&m_msaaRenderTarget)
-	));
-
-	m_device->CreateRenderTargetView(m_msaaRenderTarget.Get(), nullptr, m_msaaRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	m_renderTarget.reset();
+	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, Engine::GetWindow().GetWindow());
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
@@ -526,11 +365,11 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_msaaRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_msaaRtvHeap->GetCPUDescriptorHandleForHeapStart();
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
 	// @TODO What does OMSetRenderTargets do?
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
@@ -684,12 +523,12 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Entered.\n");
 
 	auto preResolveBarriers = {
-	CD3DX12_RESOURCE_BARRIER::Transition(m_msaaRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
+	CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
 	CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
 	};
 	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
-	m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_msaaRenderTarget.Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_commandList->ResourceBarrier(1, &postResolveBarrier);
@@ -966,8 +805,8 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_msaaSampleCount;
-	sampleDesc.Quality = m_msaaQualityLevel;
+	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();
+	sampleDesc.Quality = m_renderTarget->GetMSAAQualityLevel();
 
 	m_pipelineSkybox = std::make_unique<DXPipeLine>(
 		m_device,

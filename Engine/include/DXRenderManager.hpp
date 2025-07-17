@@ -15,6 +15,7 @@
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
+#include "DXRenderTarget.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
@@ -67,12 +68,9 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature3D;
 	// rtv = Render Target View
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
-	// dsv = Depth Stencil View
-	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
-	ComPtr<ID3D12Resource> m_depthStencil;
 
 	UINT m_rtvDescriptorSize{ 0 };
 	//UINT m_srvDescriptorSize{ 0 };
@@ -91,10 +89,8 @@ private:
 #endif
 
 	// MSAA
-	UINT m_msaaSampleCount{ 4 };
-	UINT m_msaaQualityLevel;
-	ComPtr<ID3D12Resource> m_msaaRenderTarget;
-	ComPtr<ID3D12DescriptorHeap> m_msaaRtvHeap;
+	// Depth
+	std::unique_ptr<DXRenderTarget> m_renderTarget;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
