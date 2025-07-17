@@ -114,7 +114,7 @@ public:
 		if (rMode == RenderType::TwoDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(TwoDimension::Vertex), sizeof(TwoDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, m_commandQueue, sizeof(TwoDimension::Vertex), sizeof(TwoDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = new DXConstantBuffer<TwoDimension::VertexUniform>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = new DXConstantBuffer<TwoDimension::FragmentUniform>(m_device, frameCount);
@@ -122,10 +122,10 @@ public:
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, m_commandQueue, sizeof(ThreeDimension::Vertex), sizeof(ThreeDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
 #ifdef _DEBUG
 			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::NormalVertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, m_commandQueue, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::NormalVertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
 #endif
 
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = new DXConstantBuffer<ThreeDimension::VertexUniform>(m_device, frameCount);

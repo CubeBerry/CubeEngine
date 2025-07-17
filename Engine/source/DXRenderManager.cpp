@@ -351,7 +351,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		return false;
 	}
 
-	m_commandAllocators[m_frameIndex]->Reset();
+	DXHelper::ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
 
 	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ? m_pipeline2D->GetPipelineState().Get() :
 		pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
@@ -792,7 +792,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 		 1.0f, -1.0f,  1.0f
 	};
 
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
 
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2, {});
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);

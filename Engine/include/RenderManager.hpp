@@ -100,19 +100,6 @@ public:
 		VKIndexBuffer* indexBuffer;
 	};
 
-	//struct VKUniformBuffer2D
-	//{
-	//	VKUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-	//	VKUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
-	//};
-
-	//struct VKUniformBuffer3D
-	//{
-	//	VKUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-	//	VKUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-	//	VKUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
-	//};
-
 	//--------------------DirectX--------------------//
 	struct DXBuffer
 	{

@@ -71,6 +71,39 @@ namespace DXHelper
 #endif
     }
 
+    inline void CreateFenceSet(
+        const ComPtr<ID3D12Device>& device,
+        std::wstring& targetName,
+		ComPtr<ID3D12CommandAllocator>& commandAllocator,
+		ComPtr<ID3D12GraphicsCommandList>& commandList,
+		ComPtr<ID3D12Fence>& fence,
+		HANDLE& fenceEvent
+    )
+    {
+        // Create Command Allocator
+        DXHelper::ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    	DXHelper::ThrowIfFailed(commandAllocator->SetName((targetName + L" Command Allocator").c_str()));
+
+        // Create Command List
+        DXHelper::ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+        DXHelper::ThrowIfFailed(commandAllocator->SetName((targetName + L" Command List").c_str()));
+#if USE_NSIGHT_AFTERMATH
+        AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(commandList.Get(), &hAftermathCommandListContext));
+#endif
+        DXHelper::ThrowIfFailed(commandList->Close());
+
+        // Create Fence
+        DXHelper::ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+        DXHelper::ThrowIfFailed(commandAllocator->SetName((targetName + L" Fence").c_str()));
+
+        // Create Fence Event
+        fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        if (fenceEvent == nullptr)
+        {
+            throw std::runtime_error("Failed to create texture fence event.");
+        }
+    }
+
     //inline std::vector<char> ReadShaderFile(const std::filesystem::path& path)
     //{
     //    std::ifstream shaderData(path, std::ios::in | std::ios::binary);
