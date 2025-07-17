@@ -24,7 +24,6 @@ public:
 	DXVertexBuffer(const DXVertexBuffer&&) = delete;
 	DXVertexBuffer& operator=(const DXVertexBuffer&&) = delete;
 
-	//@ TODO Implement UPLOAD & DEFAULT heap support
 	void InitVertexBuffer(const ComPtr<ID3D12Device>& device,
 		UINT strideSize, UINT totalSize, const void* data)
 	{
@@ -62,7 +61,7 @@ public:
 		CD3DX12_RANGE readRange(0, 0);
 		DXHelper::ThrowIfFailed(m_uploadBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
 		memcpy(pVertexDataBegin, data, totalSize);
-		m_vertexBuffer->Unmap(0, nullptr);
+		m_uploadBuffer->Unmap(0, nullptr);
 
 		m_commandList->CopyBufferRegion(
 			m_vertexBuffer.Get(),
