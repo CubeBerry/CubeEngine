@@ -1021,33 +1021,9 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 
 	VKDescriptor descriptorIBL{ vkInit, {}, {} };
 
-	struct VA
-	{
-		glm::vec3 position;
-		glm::vec2 texCoord;
-	};
-
-	VKAttributeLayout position_layout;
-	position_layout.vertex_layout_location = 0;
-	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
-	position_layout.offset = offsetof(VA, position);
-
-	VKAttributeLayout texture_layout;
-	texture_layout.vertex_layout_location = 1;
-	texture_layout.format = VK_FORMAT_R32G32_SFLOAT;
-	texture_layout.offset = offsetof(VA, texCoord);
-
 	VKPipeLine pipelineIBL{ vkInit->GetDevice(), descriptorIBL.GetDescriptorSetLayout() };
 	VkExtent2D extentIBL{ lutSize, lutSize };
-	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, sizeof(VA), { position_layout, texture_layout }, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
-
-	std::vector<VA> vas;
-	for (int i = 0; i < 4; ++i)
-	{
-		vas.push_back({ fullscreenQuad[i], fullscreenQuadTexCoords[i] });
-	}
-
-	VKVertexBuffer vertexBufferIBL{ vkInit, sizeof(VA) * vas.size(), vas.data() };
+	pipelineIBL.InitPipeLine(shaderIBL.GetVertexModule(), shaderIBL.GetFragmentModule(), &extentIBL, &renderPassIBL, 0, {}, VK_SAMPLE_COUNT_1_BIT, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
 
 	//Create Viewport and Scissor for Dynamic State
 	VkViewport viewport{};
@@ -1083,8 +1059,6 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 	vkCmdBeginRenderPass(*commandBuffer, &renderpassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	//Bind Vertex Buffer
-	VkDeviceSize vertexBufferOffset{ 0 };
-	vkCmdBindVertexBuffers(*commandBuffer, 0, 1, vertexBufferIBL.GetVertexBuffer(), &vertexBufferOffset);
 	vkCmdBindPipeline(*commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineIBL.GetPipeLine());
 	//Dynamic Viewport & Scissor
 	vkCmdSetViewport(*commandBuffer, 0, 1, &viewport);
