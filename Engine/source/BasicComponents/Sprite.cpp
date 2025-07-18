@@ -244,17 +244,16 @@ void Sprite::UpdateProjection()
 	}
 }
 
-
 void Sprite::AddQuad(glm::vec4 color_)
 {
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, 1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
 
 	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
@@ -285,7 +284,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 		//Attributes
 		GLAttributeLayout position_layout;
 		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.component_dimension = GLAttributeLayout::_2;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
 		position_layout.stride = sizeof(TwoDimension::Vertex);
@@ -314,10 +313,10 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, 1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, 1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(1.f, -1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec3(-1.f, -1.f, 1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
+	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
 
 	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
@@ -348,7 +347,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 		//Attributes
 		GLAttributeLayout position_layout;
 		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.component_dimension = GLAttributeLayout::_2;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
 		position_layout.stride = sizeof(TwoDimension::Vertex);

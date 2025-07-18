@@ -151,7 +151,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	CreateRootSignature(m_rootSignature2D, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature2D->SetName(L"2D Root Signature"));
 
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();

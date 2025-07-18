@@ -4,7 +4,7 @@
 
 struct VSInput
 {
-    float3 position : POSITION0;
+    float2 position : POSITION0;
 }
 
 struct VSOutput
@@ -53,7 +53,7 @@ VSOutput vertexMain(VSInput input)
     output.isTex = matrix.isTex;
     output.color = matrix.color;
 
-    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(input.position, 1.0))));
+    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(input.position, 0.0, 1.0))));
     
     return output;
 }

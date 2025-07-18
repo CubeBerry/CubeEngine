@@ -8,7 +8,7 @@
 #define MAX_MATRICES 20
 #endif
 
-layout(location = 0) in vec3 i_pos;
+layout(location = 0) in vec2 i_pos;
 
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
@@ -57,5 +57,5 @@ void main()
     outIsTex = matrix.isTex;
     o_col = matrix.color;
 
-    gl_Position = matrix.projection * matrix.view * matrix.model * vec4(i_pos, 1.0);
+    gl_Position = matrix.projection * matrix.view * matrix.model * vec4(i_pos, 0.0, 1.0);
 }

@@ -30,20 +30,20 @@ private:
 
     GLuint captureFBO, captureRBO;
 
-	//CubeMap converted from Equirectangular
+	// CubeMap converted from Equirectangular
 	GLuint equirectangular;
 	uint32_t faceSize{ 0 };
 
-	//Irradiance
+	// Irradiance
 	GLuint irradiance;
 	uint32_t irradianceSize{ 64 };
 
-	//Prefilter
+	// Prefilter
 	GLuint prefilter;
 	uint32_t baseSize{ 512 };
 	uint32_t mipLevels{ 5 };
 
-	//BRDFLUT
+	// BRDFLUT
 	GLuint brdflut;
 	uint32_t lutSize{ 512 };
 
@@ -89,19 +89,6 @@ private:
 	{ 1.0f, -1.0f, -1.0f},
 	{-1.0f, -1.0f,  1.0f},
 	{ 1.0f, -1.0f,  1.0f}
-	};
-	//BRDF LUT fullscreen quad texture
-	std::vector<glm::vec3> fullscreenQuad = {
-		glm::vec3(-1.0f, 1.0f, 0.0f),
-		glm::vec3(-1.0f, -1.0f, 0.0f),
-		glm::vec3(1.0f, 1.0f, 0.0f),
-		glm::vec3(1.0f, -1.0f, 0.0f),
-	};
-	std::vector<glm::vec2> fullscreenQuadTexCoords = {
-		glm::vec2(0.0f, 1.0f),
-		glm::vec2(0.0f, 0.0f),
-		glm::vec2(1.0f, 1.0f),
-		glm::vec2(1.0f, 0.0f),
 	};
 
 	glm::mat4 projection = glm::perspective(glm::radians(90.f), 1.f, 0.1f, 10.f);

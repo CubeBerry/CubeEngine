@@ -248,41 +248,6 @@ void GLSkybox::BRDFLUT()
 	GLVertexArray vertexArray;
 	vertexArray.Initialize();
 
-	struct VA
-	{
-		glm::vec3 position;
-		glm::vec2 texCoord;
-	};
-
-	std::vector<VA> vas;
-	for (int i = 0; i < 4; ++i)
-	{
-		vas.push_back({ fullscreenQuad[i], fullscreenQuadTexCoords[i] });
-	}
-
-	GLVertexBuffer vertexBuffer;
-	vertexBuffer.SetData(sizeof(VA) * static_cast<GLsizei>(vas.size()), vas.data());
-
-	GLAttributeLayout position_layout;
-	position_layout.component_type = GLAttributeLayout::Float;
-	position_layout.component_dimension = GLAttributeLayout::_3;
-	position_layout.normalized = false;
-	position_layout.vertex_layout_location = 0;
-	position_layout.stride = sizeof(VA);
-	position_layout.offset = 0;
-	position_layout.relative_offset = offsetof(VA, position);
-
-	GLAttributeLayout texture_layout;
-	texture_layout.component_type = GLAttributeLayout::Float;
-	texture_layout.component_dimension = GLAttributeLayout::_2;
-	texture_layout.normalized = false;
-	texture_layout.vertex_layout_location = 1;
-	texture_layout.stride = sizeof(VA);
-	texture_layout.offset = 0;
-	texture_layout.relative_offset = offsetof(VA, texCoord);
-
-	vertexArray.AddVertexBuffer(std::move(vertexBuffer), sizeof(VA), { position_layout, texture_layout });
-
 	vertexArray.Use(true);
 
 	glViewport(0, 0, lutSize, lutSize);
