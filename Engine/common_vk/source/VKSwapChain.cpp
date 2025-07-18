@@ -3,6 +3,7 @@
 //File: VKSwapChain.cpp
 #include "VKSwapChain.hpp"
 #include "VKInit.hpp"
+#include "VKHelper.hpp"
 
 #include <iostream>
 
@@ -41,7 +42,7 @@ void VKSwapChain::InitSwapChain()
 {
 	//Get Surface Capabilities
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*vkInit->GetPhysicalDevice(), *vkInit->GetSurface(), &surfaceCapabilities);
+	VKHelper::ThrowIfFailed(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*vkInit->GetPhysicalDevice(), *vkInit->GetSurface(), &surfaceCapabilities));
 
 	//Find available composite alpha mode
 	VkCompositeAlphaFlagBitsKHR compositeAlpha{ static_cast<VkCompositeAlphaFlagBitsKHR>(0) };
@@ -76,58 +77,18 @@ void VKSwapChain::InitSwapChain()
 	swapchainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 
 	//Create Swapchain
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateSwapchainKHR(*vkInit->GetDevice(), &swapchainInfo, nullptr, &vkSwapChain);
-		if (result != VK_SUCCESS)
-		{
-			std::cout << '\n';
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			case VK_ERROR_DEVICE_LOST:
-				std::cout << "VK_ERROR_DEVICE_LOST" << '\n';
-				break;
-			case VK_ERROR_SURFACE_LOST_KHR:
-				std::cout << "VK_ERROR_SURFACE_LOST_KHR" << '\n';
-				break;
-			case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
-				std::cout << "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" << '\n';
-				break;
-			case VK_ERROR_INITIALIZATION_FAILED:
-				std::cout << "VK_ERROR_INITIALIZATION_FAILED" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "SwapChain Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSwapChain::~VKSwapChain();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateSwapchainKHR(*vkInit->GetDevice(), &swapchainInfo, nullptr, &vkSwapChain));
 }
 
 void VKSwapChain::InitSwapChainImage()
 {
 	//if pSwapchainImages == nullptr -> returns numbers of all available swapchain images
 	uint32_t count{ 0 };
-	vkGetSwapchainImagesKHR(*vkInit->GetDevice(), vkSwapChain, &count, nullptr);
+	VKHelper::ThrowIfFailed(vkGetSwapchainImagesKHR(*vkInit->GetDevice(), vkSwapChain, &count, nullptr));
 
 	//Get swapchain images to vector
 	vkSwapChainImages.resize(count);
-	vkGetSwapchainImagesKHR(*vkInit->GetDevice(), vkSwapChain, &count, &vkSwapChainImages[0]);
+	VKHelper::ThrowIfFailed(vkGetSwapchainImagesKHR(*vkInit->GetDevice(), vkSwapChain, &count, &vkSwapChainImages[0]));
 
 	//Create command buffer begin info
 	VkCommandBufferBeginInfo beginInfo{};
@@ -142,9 +103,9 @@ void VKSwapChain::InitSwapChainImage()
 	allocateInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer_{};
-	vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer_);
+	VKHelper::ThrowIfFailed(vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer_));
 
-	vkBeginCommandBuffer(commandBuffer_, &beginInfo);
+	VKHelper::ThrowIfFailed(vkBeginCommandBuffer(commandBuffer_, &beginInfo));
 
 	//Change whole swapchain's image layout from UNDEFINED to PRESENT_SRC
 	std::vector<VkImageMemoryBarrier> barriers;
@@ -169,7 +130,7 @@ void VKSwapChain::InitSwapChainImage()
 	vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, static_cast<uint32_t>(barriers.size()), &barriers[0]);
 
 	//End command buffer
-	vkEndCommandBuffer(commandBuffer_);
+	VKHelper::ThrowIfFailed(vkEndCommandBuffer(commandBuffer_));
 
 	//Create submit info
 	VkSubmitInfo submitInfo{};
@@ -178,10 +139,10 @@ void VKSwapChain::InitSwapChainImage()
 	submitInfo.pCommandBuffers = &commandBuffer_;
 
 	//Submit command to queue
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//Deallocate Command Buffers
 	vkFreeCommandBuffers(*vkInit->GetDevice(), *vkCommandPool, 1, &commandBuffer_);
@@ -205,40 +166,13 @@ void VKSwapChain::InitSwapChainImageView()
 	//Allocate memory for imageview
 	vkSwapChainImageViews.resize(vkSwapChainImages.size());
 
-	try
+	for (auto i = 0; i != vkSwapChainImages.size(); ++i)
 	{
-		for (auto i = 0; i != vkSwapChainImages.size(); ++i)
-		{
-			//Define image to create imageview
-			createInfo.image = vkSwapChainImages[i];
+		//Define image to create imageview
+		createInfo.image = vkSwapChainImages[i];
 
-			//Create imageview
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkSwapChainImageViews[i]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Swapchain Image View Creation Failed" };
-			}
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSwapChain::~VKSwapChain();
-		std::exit(EXIT_FAILURE);
+		//Create imageview
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkSwapChainImageViews[i]));
 	}
 }
 
@@ -250,36 +184,9 @@ void VKSwapChain::InitFence()
 	createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	//Create fence
-	try
+	for (auto& fence : vkFences)
 	{
-		for (auto& fence : vkFences)
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateFence(*vkInit->GetDevice(), &createInfo, nullptr, &fence);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Fence Creation Failed" };
-			}
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSwapChain::~VKSwapChain();
-		std::exit(EXIT_FAILURE);
+		VKHelper::ThrowIfFailed(vkCreateFence(*vkInit->GetDevice(), &createInfo, nullptr, &fence));
 	}
 }
 
@@ -290,38 +197,11 @@ void VKSwapChain::InitSemaphore()
 	createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 	//Create semaphore
-	try
+	for (auto& semaphores : vkSemaphores)
 	{
-		for (auto& semaphores : vkSemaphores)
+		for (auto& semaphore : semaphores)
 		{
-			for (auto& semaphore : semaphores)
-			{
-				VkResult result{ VK_SUCCESS };
-				result = vkCreateSemaphore(*vkInit->GetDevice(), &createInfo, nullptr, &semaphore);
-				if (result != VK_SUCCESS)
-				{
-					switch (result)
-					{
-					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-						break;
-					default:
-						break;
-					}
-					std::cout << '\n';
-
-					throw std::runtime_error{ "Semaphore Creation Failed" };
-				}
-			}
+			VKHelper::ThrowIfFailed(vkCreateSemaphore(*vkInit->GetDevice(), &createInfo, nullptr, &semaphore));
 		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSwapChain::~VKSwapChain();
-		std::exit(EXIT_FAILURE);
 	}
 }

@@ -5,6 +5,7 @@
 #include "VKInit.hpp"
 #include "VKDescriptor.hpp"
 #include "VKShader.hpp"
+#include "VKHelper.hpp"
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -26,28 +27,6 @@ VKTexture::~VKTexture()
 	vkFreeMemory(*vkInit->GetDevice(), vkTextureDeviceMemory, nullptr);
 	//Destroy Image
 	vkDestroyImage(*vkInit->GetDevice(), vkTextureImage, nullptr);
-}
-
-uint32_t VKTexture::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-{
-	//Get Physical Device Memory Properties
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-	//Find memory type index which satisfies both requirement and property
-	for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-	{
-		//Check if memory is allocatable at ith memory type
-		if (!(requirements_.memoryTypeBits & (1 << i)))
-			continue;
-
-		//Check if satisfies memory property
-		if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-			continue;
-
-		return i;
-	}
-	return UINT32_MAX;
 }
 
 void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip)
@@ -84,34 +63,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImage);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImage));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements{};
@@ -123,70 +75,13 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Texture Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemory));
 
 		//Bind Image and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImage, vkTextureDeviceMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), vkTextureImage, vkTextureDeviceMemory, 0));
 	}
 
 	//--------------------Staging Buffer--------------------//
@@ -204,34 +99,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		createInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		//Create Staging Buffer
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkStagingBuffer);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Staging Buffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkStagingBuffer));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements;
@@ -243,104 +111,17 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which CPU can access and ensures memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkStagingDeviceMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Staging Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkStagingDeviceMemory));
 
 		//Bind Buffer and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindBufferMemory(*vkInit->GetDevice(), vkStagingBuffer, vkStagingDeviceMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindBufferMemory(*vkInit->GetDevice(), vkStagingBuffer, vkStagingDeviceMemory, 0));
 
 		//Get Virtual Address for CPU to access Memory
 		void* contents;
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, imageSize, 0, &contents);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Map Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, imageSize, 0, &contents));
 
 		//Copy Bitmap Info to Memory
 		memcpy(contents, data, imageSize);
@@ -363,7 +144,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 
 		//Create CommandBuffer
 		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer);
+		VKHelper::ThrowIfFailed(vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer));
 
 		//Create CommandBuffer Begin Info
 		VkCommandBufferBeginInfo beginInfo{};
@@ -371,7 +152,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		//Begin CommandBuffer
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		VKHelper::ThrowIfFailed(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
 		{
 			//Create Image Memory Barrier
@@ -424,7 +205,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		}
 
 		//End CommandBuffer
-		vkEndCommandBuffer(commandBuffer);
+		VKHelper::ThrowIfFailed(vkEndCommandBuffer(commandBuffer));
 
 		//Create submit info
 		VkSubmitInfo submitInfo{};
@@ -433,10 +214,10 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		submitInfo.pCommandBuffers = &commandBuffer;
 
 		//Submit queue to command buffer
-		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+		VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*vkInit->GetDevice());
+		VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 		//Free CommandBuffer
 		vkFreeCommandBuffers(*vkInit->GetDevice(), *vkCommandPool, 1, &commandBuffer);
@@ -462,34 +243,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		createInfo.subresourceRange.layerCount = 1;
 
 		//Create ImageView
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageView);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageView));
 	}
 
 	{
@@ -513,37 +267,7 @@ void VKTexture::LoadTexture(bool isHDR, const std::filesystem::path& path_, std:
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSampler);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Sampler Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSampler));
 	}
 }
 
@@ -598,34 +322,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		createInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImage);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImage));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements{};
@@ -637,70 +334,13 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Texture Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemory));
 
 		//Bind Image and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImage, vkTextureDeviceMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), vkTextureImage, vkTextureDeviceMemory, 0));
 	}
 
 	//--------------------Staging Buffer--------------------//
@@ -719,34 +359,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		createInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		//Create Staging Buffer
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkStagingBuffer);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Staging Buffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkStagingBuffer));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements;
@@ -758,104 +371,17 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Select memory type which CPU can access and ensures memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkStagingDeviceMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Staging Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkStagingDeviceMemory));
 
 		//Bind Buffer and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindBufferMemory(*vkInit->GetDevice(), vkStagingBuffer, vkStagingDeviceMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindBufferMemory(*vkInit->GetDevice(), vkStagingBuffer, vkStagingDeviceMemory, 0));
 
 		//Get Virtual Address for CPU to access Memory
 		void* contents;
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, totalSize, 0, &contents);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Map Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkMapMemory(*vkInit->GetDevice(), vkStagingDeviceMemory, 0, totalSize, 0, &contents));
 
 		//Copy Bitmap Info to Memory
 		for (int i = 0; i < 6; ++i)
@@ -882,7 +408,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 
 		//Create CommandBuffer
 		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer);
+		VKHelper::ThrowIfFailed(vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &commandBuffer));
 
 		//Create CommandBuffer Begin Info
 		VkCommandBufferBeginInfo beginInfo{};
@@ -890,7 +416,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		//Begin CommandBuffer
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		VKHelper::ThrowIfFailed(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
 		{
 			//Create Image Memory Barrier
@@ -951,7 +477,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		}
 
 		//End CommandBuffer
-		vkEndCommandBuffer(commandBuffer);
+		VKHelper::ThrowIfFailed(vkEndCommandBuffer(commandBuffer));
 
 		//Create submit info
 		VkSubmitInfo submitInfo{};
@@ -960,10 +486,10 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		submitInfo.pCommandBuffers = &commandBuffer;
 
 		//Submit queue to command buffer
-		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+		VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*vkInit->GetDevice());
+		VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 		//Free CommandBuffer
 		vkFreeCommandBuffers(*vkInit->GetDevice(), *vkCommandPool, 1, &commandBuffer);
@@ -990,34 +516,7 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		createInfo.subresourceRange.baseArrayLayer = 0;
 
 		//Create ImageView
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageView);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageView));
 	}
 
 	{
@@ -1041,36 +540,6 @@ void VKTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSampler);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Sampler Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKTexture::~VKTexture();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSampler));
 	}
 }

@@ -3,11 +3,9 @@
 //File: VKImGuiManager.cpp
 #include "VKImGuiManager.hpp"
 
-#include <iostream>
 #include "VKInit.hpp"
 #include "VKSwapChain.hpp"
 #include "VKDescriptor.hpp"
-#include "VKPipeLine.hpp"
 
 VKImGuiManager::VKImGuiManager(VKInit* init_, SDL_Window* window_, VkCommandPool* cpool_, std::array<VkCommandBuffer, 2>* cbuffers_, VkDescriptorPool* dpool_, VkRenderPass* pass_, VkSampleCountFlagBits samples_)
 {

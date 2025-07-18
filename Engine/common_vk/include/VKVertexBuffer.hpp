@@ -3,9 +3,9 @@
 //File: VKVertexBuffer.hpp
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include <iostream>
 
 #include "VKInit.hpp"
+#include "VKHelper.hpp"
 
 class VKVertexBuffer
 {
@@ -32,34 +32,7 @@ public:
 		createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		// Create Vertex Buffer
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkVertexBuffer);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Vertex Buffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKVertexBuffer::~VKVertexBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkVertexBuffer));
 
 		// Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements;
@@ -71,104 +44,17 @@ public:
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		// Select memory type which CPU can access and ensures memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		// Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkVertexDeviceMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Vertex Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKVertexBuffer::~VKVertexBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkVertexDeviceMemory));
 
 		// Bind Buffer and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindBufferMemory(*vkInit->GetDevice(), vkVertexBuffer, vkVertexDeviceMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKVertexBuffer::~VKVertexBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindBufferMemory(*vkInit->GetDevice(), vkVertexBuffer, vkVertexDeviceMemory, 0));
 
 		// Get Virtual Address for CPU to access Memory
 		void* contents;
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, size_, 0, &contents);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Map Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKVertexBuffer::~VKVertexBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, size_, 0, &contents));
 
 		// Copy Vertex Info to Memory
 		memcpy(contents, data, size_);
@@ -181,37 +67,7 @@ public:
 	{
 		// Get Virtual Address for CPU to access Memory
 		void* contents;
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, size_, 0, &contents);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_MEMORY_MAP_FAILED:
-					std::cout << "VK_ERROR_MEMORY_MAP_FAILED" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Map Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKVertexBuffer::~VKVertexBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkMapMemory(*vkInit->GetDevice(), vkVertexDeviceMemory, 0, size_, 0, &contents));
 
 		// Copy Vertex Info to Memory
 		memcpy(contents, data, size_);
@@ -222,27 +78,6 @@ public:
 
 	VkBuffer* GetVertexBuffer() { return &vkVertexBuffer; }
 private:
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-	{
-		// Get Physical Device Memory Properties
-		VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-		vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-		// Find memory type index which satisfies both requirement and property
-		for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-		{
-			// Check if memory is allocatable at ith memory type
-			if (!(requirements_.memoryTypeBits & (1 << i)))
-				continue;
-
-			// Check if satisfies memory property
-			if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-				continue;
-
-			return i;
-		}
-		return UINT32_MAX;
-	}
 	VKInit* vkInit;
 
 	VkBuffer vkVertexBuffer{ VK_NULL_HANDLE };

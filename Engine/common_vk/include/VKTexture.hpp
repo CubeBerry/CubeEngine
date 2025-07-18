@@ -36,7 +36,6 @@ public:
 	std::string GetName() const { return name; };
 	int GetTextrueId() { return texID; };
 private:
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool{ VK_NULL_HANDLE };
 

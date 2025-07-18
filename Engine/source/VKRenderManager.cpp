@@ -9,6 +9,7 @@
 #include "VKPipeLine.hpp"
 #include "VKUniformBuffer.hpp"
 #include "VKSkybox.hpp"
+#include "VKHelper.hpp"
 
 #include "Engine.hpp"
 
@@ -18,7 +19,7 @@
 
 VKRenderManager::~VKRenderManager()
 {
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//delete ImGui
 	delete imguiManager;
@@ -52,15 +53,7 @@ VKRenderManager::~VKRenderManager()
 	textures.erase(textures.begin(), textures.end());
 	imageInfos.erase(imageInfos.begin(), imageInfos.end());
 
-	//Destroy Depth Buffering
-	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
-
-	//Destroy MSAA
-	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
+	delete vkRenderTarget;
 
 	//Destroy Normal
 #ifdef _DEBUG
@@ -98,346 +91,6 @@ VKRenderManager::~VKRenderManager()
 	delete vkInit;
 }
 
-void VKRenderManager::CreateDepthBuffer()
-{
-	depthFormat = FindDepthFormat();
-
-	{
-		//Define an image to create
-		VkImageCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = depthFormat;
-		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
-		createInfo.mipLevels = 1;
-		createInfo.arrayLayers = 1;
-		createInfo.samples = msaaSamples;
-		//Use Optimal Tiling to make GPU effectively process image
-		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		//Usage for copying and shader
-		createInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		//createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &depthImage);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
-
-		//Declare a variable which will take memory requirements
-		VkMemoryRequirements requirements{};
-		//Get Memory Requirements for Image
-		vkGetImageMemoryRequirements(*vkInit->GetDevice(), depthImage, &requirements);
-
-		//Create Memory Allocation Info
-		VkMemoryAllocateInfo allocateInfo{};
-		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocateInfo.allocationSize = requirements.size;
-		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &depthImageMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Texture Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
-
-		//Bind Image and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), depthImage, depthImageMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
-	}
-
-	//To access image from graphics pipeline, Image View is needed
-	//Create ImageView Info
-	VkImageViewCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = depthImage;
-	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = depthFormat;
-	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-	createInfo.subresourceRange.baseMipLevel = 0;
-	createInfo.subresourceRange.levelCount = 1;
-	createInfo.subresourceRange.baseArrayLayer = 0;
-	createInfo.subresourceRange.layerCount = 1;
-
-	//Create ImageView
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &depthImageView);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Image View Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
-}
-
-void VKRenderManager::CreateColorResources()
-{
-	imageFormat = vkInit->SetSurfaceFormat().format;
-
-	{
-		//Define an image to create
-		VkImageCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		createInfo.imageType = VK_IMAGE_TYPE_2D;
-		createInfo.format = imageFormat;
-		createInfo.extent = { vkSwapChain->GetSwapChainImageExtent()->width, vkSwapChain->GetSwapChainImageExtent()->height, 1 };
-		createInfo.mipLevels = 1;
-		createInfo.arrayLayers = 1;
-		createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		createInfo.samples = msaaSamples;
-		//Use Optimal Tiling to make GPU effectively process image
-		createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		//Usage for copying and shader
-		createInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &colorImage);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
-
-		//Declare a variable which will take memory requirements
-		VkMemoryRequirements requirements{};
-		//Get Memory Requirements for Image
-		vkGetImageMemoryRequirements(*vkInit->GetDevice(), colorImage, &requirements);
-
-		//Create Memory Allocation Info
-		VkMemoryAllocateInfo allocateInfo{};
-		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocateInfo.allocationSize = requirements.size;
-		//Select memory type which has fast access from GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &colorImageMemory);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Texture Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
-
-		//Bind Image and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindImageMemory(*vkInit->GetDevice(), colorImage, colorImageMemory, 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
-	}
-
-	//To access image from graphics pipeline, Image View is needed
-	// Create ImageView Info
-	VkImageViewCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = colorImage;
-	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = imageFormat;
-	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	createInfo.subresourceRange.levelCount = 1;
-	createInfo.subresourceRange.layerCount = 1;
-
-	// Create ImageView
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &colorImageView);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Image View Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
-}
-
 void VKRenderManager::Initialize(SDL_Window* window_)
 {
 	window = window_;
@@ -451,10 +104,8 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
 
 	// MSAA
-	msaaSamples = GetMaxUsableSampleCount();
-	CreateColorResources();
 	// Depth Buffering
-	CreateDepthBuffer();
+	vkRenderTarget = new VKRenderTarget(vkInit, vkSwapChain);
 
 	InitRenderPass();
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
@@ -509,7 +160,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	position_layout.offset = offsetof(TwoDimension::Vertex, position);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor2D->GetDescriptorSetLayout());
-	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
+	vkPipeline2D->InitPipeLine(vkShader2D->GetVertexModule(), vkShader2D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(TwoDimension::Vertex), { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, false);
 
 	// 3D Pipeline
 	position_layout.vertex_layout_location = 0;
@@ -532,16 +183,16 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	tex_sub_index_layout.offset = offsetof(ThreeDimension::Vertex, texSubIndex);
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
 	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3DNormal->GetDescriptorSetLayout());
-	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
 #endif
 
 	// Uniform
@@ -554,12 +205,11 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	pointLightUniformBuffer = new VKUniformBuffer<ThreeDimension::PointLightUniform>(vkInit, MAX_LIGHT_SIZE);
 	directionalLightUniformBuffer = new VKUniformBuffer<ThreeDimension::DirectionalLightUniform>(vkInit, MAX_LIGHT_SIZE);
 
-	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor2D->GetDescriptorPool(), &vkRenderPass, msaaSamples);
+	imguiManager = new VKImGuiManager(vkInit, window, &vkCommandPool, &vkCommandBuffers, vkDescriptor2D->GetDescriptorPool(), &vkRenderPass, vkRenderTarget->GetMSAASamples());
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	VkResult result{ VK_SUCCESS };
-	result = vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler);
+	VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &samplerInfo, nullptr, &immutableSampler));
 	const VkDescriptorImageInfo imageInfo
 	{
 		.sampler = immutableSampler,
@@ -578,34 +228,7 @@ void VKRenderManager::InitCommandPool()
 	commandPoolInfo.queueFamilyIndex = *vkInit->GetQueueFamilyIndex();
 
 	//Create command pool
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateCommandPool(*vkInit->GetDevice(), &commandPoolInfo, nullptr, &vkCommandPool);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Command Pool Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateCommandPool(*vkInit->GetDevice(), &commandPoolInfo, nullptr, &vkCommandPool));
 }
 
 void VKRenderManager::InitCommandBuffer()
@@ -618,34 +241,7 @@ void VKRenderManager::InitCommandBuffer()
 	allocateInfo.commandBufferCount = 2;
 
 	//Create command buffer
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &vkCommandBuffers[0]);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Command Buffer Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &vkCommandBuffers[0]));
 }
 
 void VKRenderManager::InitRenderPass()
@@ -655,7 +251,7 @@ void VKRenderManager::InitRenderPass()
 	//Create Attachment Description
 	VkAttachmentDescription colorAattachmentDescription{};
 	colorAattachmentDescription.format = surfaceFormat.format;
-	colorAattachmentDescription.samples = msaaSamples;
+	colorAattachmentDescription.samples = vkRenderTarget->GetMSAASamples();
 	colorAattachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAattachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	//colorAattachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -670,8 +266,8 @@ void VKRenderManager::InitRenderPass()
 	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription depthAttachmentDescription{};
-	depthAttachmentDescription.format = depthFormat;
-	depthAttachmentDescription.samples = msaaSamples;
+	depthAttachmentDescription.format = vkRenderTarget->GetDepthFormat();
+	depthAttachmentDescription.samples = vkRenderTarget->GetMSAASamples();
 	depthAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	depthAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -742,34 +338,7 @@ void VKRenderManager::InitRenderPass()
 	createInfo.pDependencies = &dependencies[0];
 
 	//Create Renderpass
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateRenderPass(*vkInit->GetDevice(), &createInfo, nullptr, &vkRenderPass);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "RenderPass Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKRenderManager::~VKRenderManager();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateRenderPass(*vkInit->GetDevice(), &createInfo, nullptr, &vkRenderPass));
 }
 
 void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::vector<VkImageView>* swapchainImageViews_)
@@ -779,7 +348,7 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 
 	for (int i = 0; i < swapchainImageViews_->size(); ++i)
 	{
-		VkImageView attachments[3] = { colorImageView, depthImageView, (*swapchainImageViews_)[i] };
+		VkImageView attachments[3] = { vkRenderTarget->GetColorImageView(), vkRenderTarget->GetDepthImageView(), (*swapchainImageViews_)[i] };
 
 		//Create framebuffer info
 		VkFramebufferCreateInfo createInfo{};
@@ -791,40 +360,8 @@ void VKRenderManager::InitFrameBuffer(VkExtent2D* swapchainImageExtent_, std::ve
 		createInfo.height = swapchainImageExtent_->height;
 		createInfo.layers = 1;
 
-		try
-		{
-			//for (auto i = 0; i != swapchainImageViews_->size(); ++i)
-			//{
-				//createInfo.pAttachments = &(*swapchainImageViews_)[i];
-
-			//Create framebuffer
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateFramebuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkFrameBuffers[i]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Framebuffer Creation Failed" };
-			}
-			//}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKRenderManager::~VKRenderManager();
-			std::exit(EXIT_FAILURE);
-		}
+		//Create framebuffer
+		VKHelper::ThrowIfFailed(vkCreateFramebuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkFrameBuffers[i]));
 	}
 }
 
@@ -853,7 +390,7 @@ void VKRenderManager::RecreateSwapChain()
 	//}
 	SDL_GetWindowSizeInPixels(window, &width, &height);
 
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//CleanSwapChain();
 
@@ -867,20 +404,10 @@ void VKRenderManager::RecreateSwapChain()
 		vkDestroyFramebuffer(*vkInit->GetDevice(), framebuffer, nullptr);
 	}
 
-	//Destroy Depth Buffering
-	vkDestroyImageView(*vkInit->GetDevice(), depthImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), depthImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), depthImage, nullptr);
-
-	//Destroy MSAA
-	vkDestroyImageView(*vkInit->GetDevice(), colorImageView, nullptr);
-	vkFreeMemory(*vkInit->GetDevice(), colorImageMemory, nullptr);
-	vkDestroyImage(*vkInit->GetDevice(), colorImage, nullptr);
-
 	delete vkSwapChain;
 	vkSwapChain = new VKSwapChain(vkInit, &vkCommandPool);
-	CreateDepthBuffer();
-	CreateColorResources();
+	delete vkRenderTarget;
+	vkRenderTarget = new VKRenderTarget(vkInit, vkSwapChain);
 	InitFrameBuffer(vkSwapChain->GetSwapChainImageExtent(), vkSwapChain->GetSwapChainImageViews());
 }
 
@@ -992,7 +519,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 	position_layout.offset = 0;
 
 	vkPipeline3DSkybox = new VKPipeLine(vkInit->GetDevice(), skyboxDescriptor->GetDescriptorSetLayout());
-	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, msaaSamples, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DSkybox->InitPipeLine(skyboxShader->GetVertexModule(), skyboxShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(float) * 3, { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_NONE, POLYGON_MODE::FILL, true, sizeof(glm::mat4) * 2, VK_SHADER_STAGE_VERTEX_BIT);
 
 	skybox = new VKSkybox(path, vkInit, &vkCommandPool);
 
@@ -1297,7 +824,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	// Begin command buffer
-	vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo);
+	VKHelper::ThrowIfFailed(vkBeginCommandBuffer(*currentCommandBuffer, &beginInfo));
 
 	// Change image layout to TRANSFER_DST_OPTIMAL
 	{
@@ -1408,110 +935,57 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		for (size_t i = 0; i < sprites.size(); ++i)
 		{
 			auto& buffer = sprites[i]->GetBufferWrapper()->GetBuffer<BufferWrapper::VKBuffer>();
-			switch (pMode)
-			{
-			case PolygonType::FILL:
-			{
-				// Bind Pipeline
-				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLine());
-				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-				// Dynamic Viewport & Scissor
-				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				// Bind Vertex DescriptorSet
-				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
-				size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
+			// Bind Pipeline
+			auto* pipeline = pMode == PolygonType::FILL ? vkPipeline3D : vkPipeline3DLine;
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLine());
+			// Bind Vertex Buffer
+			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+			// Bind Index Buffer
+			vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			// Dynamic Viewport & Scissor
+			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+			// Bind Vertex DescriptorSet
+			size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
+			size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
+			uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-				// Bind Fragment DescriptorSet
-				uint32_t dynamicOffsets[2];
-				// Fragment Uniform Offset
-				uniformSize = sizeof(ThreeDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[0] = dynamicOffset;
+			ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
+			*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+			// @TODO do not use magic number for dynamicOffsetCount
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
 
-				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			// Bind Fragment DescriptorSet
+			uint32_t dynamicOffsets[2];
+			// Fragment Uniform Offset
+			uniformSize = sizeof(ThreeDimension::FragmentUniform);
+			dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+			dynamicOffsets[0] = dynamicOffset;
 
-				// Material Uniform Offset
-				uniformSize = sizeof(ThreeDimension::Material);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[1] = dynamicOffset;
+			ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
+			*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
-				*materialDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material;
+			// Material Uniform Offset
+			uniformSize = sizeof(ThreeDimension::Material);
+			dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+			dynamicOffsets[1] = dynamicOffset;
 
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
+			ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
+			*materialDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material;
 
-				// Change Primitive Topology
-				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-				// Push Constant Active Lights
-				pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-				pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
-				// Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
-			}
-			break;
-			case PolygonType::LINE:
-				// Bind Pipeline
-				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLine());
-				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-				// Dynamic Viewport & Scissor
-				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				// Bind Vertex DescriptorSet
-				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
-				size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+			// @TODO do not use magic number for dynamicOffsetCount
+			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
 
-				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
-
-				// Bind Fragment DescriptorSet
-				uint32_t dynamicOffsets[2];
-				// Fragment Uniform Offset
-				uniformSize = sizeof(ThreeDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[0] = dynamicOffset;
-
-				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				// Material Uniform Offset
-				uniformSize = sizeof(ThreeDimension::Material);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[1] = dynamicOffset;
-
-				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
-				*materialDest = sprites[i]->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material;
-
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DLine->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
-
-				// Change Primitive Topology
-				// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
-				// Push Constant Active Lights
-				// vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3D->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) * 2, &activeLights[0]);
-				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DLine->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
-				// Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
-				break;
-			}
+			// Change Primitive Topology
+			// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+			// Push Constant Active Lights
+			pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
+			pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
+			vkCmdPushConstants(*currentCommandBuffer, *pipeline->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
+			// Draw
+			vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(sprites[i]->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
 			if (isDrawNormals)
@@ -1601,7 +1075,7 @@ void VKRenderManager::EndRender()
 		}
 
 		//End command buffer
-		vkEndCommandBuffer(*currentCommandBuffer);
+		VKHelper::ThrowIfFailed(vkEndCommandBuffer(*currentCommandBuffer));
 
 		//Create submit info
 		VkSubmitInfo submitInfo{};
@@ -1623,10 +1097,10 @@ void VKRenderManager::EndRender()
 		submitInfo.pSignalSemaphores = &vkSemaphores[RENDERING_DONE_INDEX];
 
 		//Submit queue to command buffer
-		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence);
+		VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, *currentFence));
 
 		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*vkInit->GetDevice());
+		VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 		//Create present info
 		VkPresentInfoKHR presentInfo{};

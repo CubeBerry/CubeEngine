@@ -4,7 +4,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include "VKInit.hpp"
-#include <iostream>
+#include "VKHelper.hpp"
 
 template<typename Type>
 class VKUniformBuffer
@@ -24,7 +24,7 @@ public:
 
 		//Get Virtual Address for CPU to access Memory
 		void* contents;
-		vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Type), 0, &contents);
+		VKHelper::ThrowIfFailed(vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Type), 0, &contents));
 
 		return contents;
 	}
@@ -34,7 +34,6 @@ public:
 		vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
 	}
 private:
-	uint32_t FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_);
 	VKInit* vkInit;
 	VkCommandPool* vkCommandPool;
 
@@ -75,34 +74,7 @@ inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 		createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		//Create Uniform Buffer
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkUniformBuffers[i]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Uniform Buffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKUniformBuffer::~VKUniformBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateBuffer(*vkInit->GetDevice(), &createInfo, nullptr, &vkUniformBuffers[i]));
 
 		//Declare a variable which will take memory requirements
 		VkMemoryRequirements requirements;
@@ -114,70 +86,13 @@ inline void VKUniformBuffer<Type>::InitUniformBuffer(const int count_)
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = requirements.size;
 		//Can access from CPU and ensure memory sync between CPU and GPU
-		allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		//Allocate Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkUniformDeviceMemories[i]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Uniform Memory Allocation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKUniformBuffer::~VKUniformBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkUniformDeviceMemories[i]));
 
 		//Bind Buffer and Memory
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkBindBufferMemory(*vkInit->GetDevice(), vkUniformBuffers[i], vkUniformDeviceMemories[i], 0);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Memory Bind Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKUniformBuffer::~VKUniformBuffer();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkBindBufferMemory(*vkInit->GetDevice(), vkUniformBuffers[i], vkUniformDeviceMemories[i], 0));
 	}
 }
 
@@ -188,34 +103,11 @@ inline void VKUniformBuffer<Type>::UpdateUniform(size_t count_, void* data_, con
 
 	//Get Virtual Address for CPU to access Memory
 	void* contents;
-	vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Type) * count_, 0, &contents);
+	VKHelper::ThrowIfFailed(vkMapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory, 0, sizeof(Type) * count_, 0, &contents));
 
 	//auto material = static_cast<Type*>(contents);
 	//*material = *material_;
 	memcpy(contents, data_, sizeof(Type) * count_);
 
 	vkUnmapMemory(*vkInit->GetDevice(), vkUniformDeviceMemory);
-}
-
-template<typename Type>
-inline uint32_t VKUniformBuffer<Type>::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-{
-	//Get Physical Device Memory Properties
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-	//Find memory type index which satisfies both requirement and property
-	for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-	{
-		//Check if memory is allocatable at ith memory type
-		if (!(requirements_.memoryTypeBits & (1 << i)))
-			continue;
-
-		//Check if satisfies memory property
-		if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-			continue;
-
-		return i;
-	}
-	return UINT32_MAX;
 }

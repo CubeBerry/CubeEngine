@@ -9,6 +9,7 @@
 #include "VKShader.hpp"
 #include "VKVertexBuffer.hpp"
 #include "VKUniformBuffer.hpp"
+#include "VKHelper.hpp"
 #include <iostream>
 #include <filesystem>
 
@@ -26,34 +27,7 @@ VKSkybox::VKSkybox(const std::filesystem::path& path, VKInit* init_, VkCommandPo
 	allocateInfo.commandBufferCount = 1;
 
 	//Create command buffer
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &skyboxCommandBuffer);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Command Buffer Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateCommandBuffers(*vkInit->GetDevice(), &allocateInfo, &skyboxCommandBuffer));
 
 	//projection[1][1] *= -1.0f;
 	EquirectangularToCube(&skyboxCommandBuffer);
@@ -102,28 +76,6 @@ VKSkybox::~VKSkybox()
 	vkFreeCommandBuffers(*vkInit->GetDevice(), *vkCommandPool, 1, &skyboxCommandBuffer);
 }
 
-uint32_t VKSkybox::FindMemoryTypeIndex(const VkMemoryRequirements requirements_, VkMemoryPropertyFlags properties_)
-{
-	//Get Physical Device Memory Properties
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(*vkInit->GetPhysicalDevice(), &physicalDeviceMemoryProperties);
-
-	//Find memory type index which satisfies both requirement and property
-	for (uint32_t i = 0; i != physicalDeviceMemoryProperties.memoryTypeCount; ++i)
-	{
-		//Check if memory is allocatable at ith memory type
-		if (!(requirements_.memoryTypeBits & (1 << i)))
-			continue;
-
-		//Check if satisfies memory property
-		if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties_) != properties_)
-			continue;
-
-		return i;
-	}
-	return UINT32_MAX;
-}
-
 void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 {
 	{
@@ -144,34 +96,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		createInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageCubemap);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageCubemap));
 	}
 
 	//Declare a variable which will take memory requirements
@@ -184,70 +109,13 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = requirements.size;
 	//Select memory type which has fast access from GPU
-	allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//Allocate Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryCubemap);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Texture Memory Allocation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryCubemap));
 
 	//Bind Image and Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageCubemap, vkTextureDeviceMemoryCubemap, 0);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Memory Bind Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageCubemap, vkTextureDeviceMemoryCubemap, 0));
 
 	{
 		//To access image from graphics pipeline, Image View is needed
@@ -263,34 +131,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		createInfo.subresourceRange.baseArrayLayer = 0;
 
 		//Create ImageView
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewCubemap);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewCubemap));
 	}
 
 	{
@@ -309,37 +150,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerCubemap);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Sampler Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerCubemap));
 	}
 
 	//Prepare RenderPass
@@ -372,78 +183,24 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	rpCreateInfo.pSubpasses = &subpassDescription;
 
 	//Create Renderpass
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "RenderPass Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL));
 
 	for (uint32_t f = 0; f < 6; ++f)
 	{
 		//Create ImageView
-		try
-		{
-			//To access image from graphics pipeline, Image View is needed
-			//Create ImageView Info
-			VkImageViewCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = vkTextureImageCubemap;
-			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			createInfo.subresourceRange.levelCount = 1;
-			createInfo.subresourceRange.layerCount = 1;
-			createInfo.subresourceRange.baseArrayLayer = f;
+		//To access image from graphics pipeline, Image View is needed
+		//Create ImageView Info
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = vkTextureImageCubemap;
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.layerCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = f;
 
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]));
 	}
 
 	for (uint32_t f = 0; f < 6; ++f)
@@ -460,35 +217,8 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		fbCreateInfo.height = faceSize;
 		fbCreateInfo.layers = 1;
 
-		try
-		{
-			//Create framebuffer
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Framebuffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		//Create framebuffer
+		VKHelper::ThrowIfFailed(vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]));
 	}
 
 	//Render Images to Cube
@@ -548,7 +278,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	//Begin command buffer
-	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
+	VKHelper::ThrowIfFailed(vkBeginCommandBuffer(*commandBuffer, &beginInfo));
 
 	//Create renderpass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};
@@ -582,7 +312,7 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 		vkCmdEndRenderPass(*commandBuffer);
 	}
 
-	vkEndCommandBuffer(*commandBuffer);
+	VKHelper::ThrowIfFailed(vkEndCommandBuffer(*commandBuffer));
 
 	//Create submit info
 	VkSubmitInfo submitInfo{};
@@ -591,10 +321,10 @@ void VKSkybox::EquirectangularToCube(VkCommandBuffer* commandBuffer)
 	submitInfo.pCommandBuffers = commandBuffer;
 
 	//Submit queue to command buffer
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//Deallocate Resources
 	for (auto& view : cubeFaceViews)
@@ -630,34 +360,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 		createInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageIrradiance);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageIrradiance));
 	}
 
 	//Declare a variable which will take memory requirements
@@ -670,70 +373,13 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = requirements.size;
 	//Select memory type which has fast access from GPU
-	allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//Allocate Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryIrradiance);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Texture Memory Allocation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryIrradiance));
 
 	//Bind Image and Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageIrradiance, vkTextureDeviceMemoryIrradiance, 0);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Memory Bind Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageIrradiance, vkTextureDeviceMemoryIrradiance, 0));
 
 	{
 		//To access image from graphics pipeline, Image View is needed
@@ -749,34 +395,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 		createInfo.subresourceRange.baseArrayLayer = 0;
 
 		//Create ImageView
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewIrradiance);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewIrradiance));
 	}
 
 	{
@@ -795,37 +414,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerIrradiance);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Sampler Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerIrradiance));
 	}
 
 	//Prepare RenderPass
@@ -858,78 +447,24 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	rpCreateInfo.pSubpasses = &subpassDescription;
 
 	//Create Renderpass
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "RenderPass Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL));
 
 	for (uint32_t f = 0; f < 6; ++f)
 	{
 		//Create ImageView
-		try
-		{
-			//To access image from graphics pipeline, Image View is needed
-			//Create ImageView Info
-			VkImageViewCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = vkTextureImageIrradiance;
-			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			createInfo.subresourceRange.levelCount = 1;
-			createInfo.subresourceRange.layerCount = 1;
-			createInfo.subresourceRange.baseArrayLayer = f;
+		//To access image from graphics pipeline, Image View is needed
+		//Create ImageView Info
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = vkTextureImageIrradiance;
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.layerCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = f;
 
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]));
 	}
 
 	for (uint32_t f = 0; f < 6; ++f)
@@ -946,35 +481,8 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 		fbCreateInfo.height = irradianceSize;
 		fbCreateInfo.layers = 1;
 
-		try
-		{
-			//Create framebuffer
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Framebuffer Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		//Create framebuffer
+		VKHelper::ThrowIfFailed(vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]));
 	}
 
 	//Render Images to Cube
@@ -1034,7 +542,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	//Begin command buffer
-	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
+	VKHelper::ThrowIfFailed(vkBeginCommandBuffer(*commandBuffer, &beginInfo));
 
 	//Create renderpass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};
@@ -1068,7 +576,7 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 		vkCmdEndRenderPass(*commandBuffer);
 	}
 
-	vkEndCommandBuffer(*commandBuffer);
+	VKHelper::ThrowIfFailed(vkEndCommandBuffer(*commandBuffer));
 
 	//Create submit info
 	VkSubmitInfo submitInfo{};
@@ -1077,10 +585,10 @@ void VKSkybox::CalculateIrradiance(VkCommandBuffer* commandBuffer)
 	submitInfo.pCommandBuffers = commandBuffer;
 
 	//Submit queue to command buffer
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//Deallocate Resources
 	for (auto& view : cubeFaceViews)
@@ -1116,34 +624,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		createInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImagePrefilter);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImagePrefilter));
 	}
 
 	//Declare a variable which will take memory requirements
@@ -1156,70 +637,13 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = requirements.size;
 	//Select memory type which has fast access from GPU
-	allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//Allocate Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryPrefilter);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Texture Memory Allocation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryPrefilter));
 
 	//Bind Image and Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImagePrefilter, vkTextureDeviceMemoryPrefilter, 0);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Memory Bind Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), vkTextureImagePrefilter, vkTextureDeviceMemoryPrefilter, 0));
 
 	{
 		//To access image from graphics pipeline, Image View is needed
@@ -1235,34 +659,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		createInfo.subresourceRange.baseArrayLayer = 0;
 
 		//Create ImageView
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewPrefilter);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewPrefilter));
 	}
 
 	{
@@ -1285,37 +682,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerPrefilter);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Sampler Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerPrefilter));
 	}
 
 	//Prepare RenderPass
@@ -1348,34 +715,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 	rpCreateInfo.pSubpasses = &subpassDescription;
 
 	//Create Renderpass
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "RenderPass Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL));
 
 	//Render Images to Cube
 	VKShader shaderIBL{ vkInit->GetDevice() };
@@ -1444,7 +784,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		//Begin command buffer
-		vkBeginCommandBuffer(*commandBuffer, &beginInfo);
+		VKHelper::ThrowIfFailed(vkBeginCommandBuffer(*commandBuffer, &beginInfo));
 
 		//Create renderpass begin info
 		VkRenderPassBeginInfo renderpassBeginInfo{};
@@ -1458,47 +798,20 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		for (uint32_t f = 0; f < 6; ++f)
 		{
 			//Create ImageView
-			try
-			{
-				//To access image from graphics pipeline, Image View is needed
-				//Create ImageView Info
-				VkImageViewCreateInfo createInfo{};
-				createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				createInfo.image = vkTextureImagePrefilter;
-				createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-				createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-				createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				createInfo.subresourceRange.levelCount = 1;
-				createInfo.subresourceRange.layerCount = 1;
-				createInfo.subresourceRange.baseArrayLayer = f;
-				createInfo.subresourceRange.baseMipLevel = mip;
+			//To access image from graphics pipeline, Image View is needed
+			//Create ImageView Info
+			VkImageViewCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = vkTextureImagePrefilter;
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.layerCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = f;
+			createInfo.subresourceRange.baseMipLevel = mip;
 
-				VkResult result{ VK_SUCCESS };
-				result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]);
-				if (result != VK_SUCCESS)
-				{
-					switch (result)
-					{
-					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-						break;
-					default:
-						break;
-					}
-					std::cout << '\n';
-
-					throw std::runtime_error{ "Image View Creation Failed" };
-				}
-			}
-			catch (std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-				VKSkybox::~VKSkybox();
-				std::exit(EXIT_FAILURE);
-			}
+			VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &cubeFaceViews[f]));
 
 			//Create framebuffer info
 			VkImageView attachments[] = { cubeFaceViews[f] };
@@ -1511,35 +824,8 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			fbCreateInfo.height = dim;
 			fbCreateInfo.layers = 1;
 
-			try
-			{
-				//Create framebuffer
-				VkResult result{ VK_SUCCESS };
-				result = vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]);
-				if (result != VK_SUCCESS)
-				{
-					switch (result)
-					{
-					case VK_ERROR_OUT_OF_HOST_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-						break;
-					case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-						std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-						break;
-					default:
-						break;
-					}
-					std::cout << '\n';
-
-					throw std::runtime_error{ "Framebuffer Creation Failed" };
-				}
-			}
-			catch (std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-				VKSkybox::~VKSkybox();
-				std::exit(EXIT_FAILURE);
-			}
+			//Create framebuffer
+			VKHelper::ThrowIfFailed(vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &cubeFaceFramebuffers[f]));
 
 			//Create Viewport and Scissor for Dynamic State
 			VkViewport viewport{};
@@ -1575,7 +861,7 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 			vkCmdEndRenderPass(*commandBuffer);
 		}
 
-		vkEndCommandBuffer(*commandBuffer);
+		VKHelper::ThrowIfFailed(vkEndCommandBuffer(*commandBuffer));
 
 		//Create submit info
 		VkSubmitInfo submitInfo{};
@@ -1584,10 +870,10 @@ void VKSkybox::PrefilteredEnvironmentMap(VkCommandBuffer* commandBuffer)
 		submitInfo.pCommandBuffers = commandBuffer;
 
 		//Submit queue to command buffer
-		vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+		VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 		//Wait until all submitted command buffers are handled
-		vkDeviceWaitIdle(*vkInit->GetDevice());
+		VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 		//Deallocate Resources
 		for (auto& view : cubeFaceViews)
@@ -1623,34 +909,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 		createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		//Create image
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageBRDFLUT);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImage(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageBRDFLUT));
 	}
 
 	//Declare a variable which will take memory requirements
@@ -1663,70 +922,13 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = requirements.size;
 	//Select memory type which has fast access from GPU
-	allocateInfo.memoryTypeIndex = FindMemoryTypeIndex(requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocateInfo.memoryTypeIndex = VKHelper::FindMemoryTypeIndex(*vkInit->GetPhysicalDevice(), requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//Allocate Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryBRDFLUT);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			case VK_ERROR_TOO_MANY_OBJECTS:
-				std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Texture Memory Allocation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkAllocateMemory(*vkInit->GetDevice(), &allocateInfo, nullptr, &vkTextureDeviceMemoryBRDFLUT));
 
 	//Bind Image and Memory
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageBRDFLUT, vkTextureDeviceMemoryBRDFLUT, 0);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Memory Bind Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkBindImageMemory(*vkInit->GetDevice(), vkTextureImageBRDFLUT, vkTextureDeviceMemoryBRDFLUT, 0));
 
 	{
 		//To access image from graphics pipeline, Image View is needed
@@ -1742,34 +944,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 		createInfo.subresourceRange.baseArrayLayer = 0;
 
 		//Create ImageView
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewBRDFLUT);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image View Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateImageView(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureImageViewBRDFLUT));
 	}
 
 	{
@@ -1788,37 +963,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 		createInfo.unnormalizedCoordinates = VK_FALSE;
 
 		//Create Sampler
-		try
-		{
-			VkResult result{ VK_SUCCESS };
-			result = vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerBRDFLUT);
-			if (result != VK_SUCCESS)
-			{
-				switch (result)
-				{
-				case VK_ERROR_OUT_OF_HOST_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-					break;
-				case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-					std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-					break;
-				case VK_ERROR_TOO_MANY_OBJECTS:
-					std::cout << "VK_ERROR_TOO_MANY_OBJECTS" << '\n';
-					break;
-				default:
-					break;
-				}
-				std::cout << '\n';
-
-				throw std::runtime_error{ "Image Sampler Creation Failed" };
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			VKSkybox::~VKSkybox();
-			std::exit(EXIT_FAILURE);
-		}
+		VKHelper::ThrowIfFailed(vkCreateSampler(*vkInit->GetDevice(), &createInfo, nullptr, &vkTextureSamplerBRDFLUT));
 	}
 
 	//Prepare RenderPass
@@ -1851,34 +996,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 	rpCreateInfo.pSubpasses = &subpassDescription;
 
 	//Create Renderpass
-	try
-	{
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "RenderPass Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	VKHelper::ThrowIfFailed(vkCreateRenderPass(*vkInit->GetDevice(), &rpCreateInfo, nullptr, &renderPassIBL));
 
 	VkImageView attachments[] = { vkTextureImageViewBRDFLUT };
 
@@ -1894,35 +1012,8 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 
 	VkFramebuffer fb;
 
-	try
-	{
-		//Create framebuffer
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &fb);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
-
-			throw std::runtime_error{ "Framebuffer Creation Failed" };
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKSkybox::~VKSkybox();
-		std::exit(EXIT_FAILURE);
-	}
+	//Create framebuffer
+	VKHelper::ThrowIfFailed(vkCreateFramebuffer(*vkInit->GetDevice(), &fbCreateInfo, nullptr, &fb));
 
 	//Render Images to Cube
 	VKShader shaderIBL{ vkInit->GetDevice() };
@@ -1977,7 +1068,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	//Begin command buffer
-	vkBeginCommandBuffer(*commandBuffer, &beginInfo);
+	VKHelper::ThrowIfFailed(vkBeginCommandBuffer(*commandBuffer, &beginInfo));
 
 	//Create renderpass begin info
 	VkRenderPassBeginInfo renderpassBeginInfo{};
@@ -2003,7 +1094,7 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 
 	vkCmdEndRenderPass(*commandBuffer);
 
-	vkEndCommandBuffer(*commandBuffer);
+	VKHelper::ThrowIfFailed(vkEndCommandBuffer(*commandBuffer));
 
 	//Create submit info
 	VkSubmitInfo submitInfo{};
@@ -2012,10 +1103,10 @@ void VKSkybox::BRDFLUT(VkCommandBuffer* commandBuffer)
 	submitInfo.pCommandBuffers = commandBuffer;
 
 	//Submit queue to command buffer
-	vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	VKHelper::ThrowIfFailed(vkQueueSubmit(*vkInit->GetQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	//Wait until all submitted command buffers are handled
-	vkDeviceWaitIdle(*vkInit->GetDevice());
+	VKHelper::ThrowIfFailed(vkDeviceWaitIdle(*vkInit->GetDevice()));
 
 	//Deallocate Resources
 	vkDestroyRenderPass(*vkInit->GetDevice(), renderPassIBL, nullptr);

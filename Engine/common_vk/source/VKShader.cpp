@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: VKShader.cpp
 #include "VKShader.hpp"
+#include "VKHelper.hpp"
 
 #include <fstream>
 
@@ -49,53 +50,16 @@ VkShaderModule VKShader::LoadModule(const std::filesystem::path& spirvPath)
 	createInfo.pCode = shaderCode.data();
 
 	//Create Shader Module
-	try
-	{
-		VkShaderModule shaderModule;
-		VkResult result{ VK_SUCCESS };
-		result = vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule);
-		if (result != VK_SUCCESS)
-		{
-			switch (result)
-			{
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY" << '\n';
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY" << '\n';
-				break;
-			default:
-				break;
-			}
-			std::cout << '\n';
+	VkShaderModule shaderModule;
+	VKHelper::ThrowIfFailed(vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule));
 
-			throw std::runtime_error{ "Shader Module Creation Failed" };
-		}
-		return shaderModule;
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKShader::~VKShader();
-		std::exit(EXIT_FAILURE);
-	}
+	return shaderModule;
 }
 
 const std::filesystem::path VKShader::GLSLtoSPIRV(const std::filesystem::path& glslPath)
 {
-	try
-	{
-		std::string command = "glslangValidator -V -o " + glslPath.string() + ".spv " + glslPath.string();
-		int result = std::system(command.c_str());
-		if (result == 0)
-			return glslPath.string() + ".spv";
-		else
-			throw std::runtime_error{ "Shader Creation Failed" };
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		VKShader::~VKShader();
-		std::exit(EXIT_FAILURE);
-	}
+	std::string command = "glslangValidator -V -o " + glslPath.string() + ".spv " + glslPath.string();
+	int result = std::system(command.c_str());
+	if (result == 0) return glslPath.string() + ".spv";
+	throw std::runtime_error{ "Shader Creation Failed" };
 }
