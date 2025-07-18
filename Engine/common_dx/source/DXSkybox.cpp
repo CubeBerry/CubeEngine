@@ -13,28 +13,8 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 	const UINT& srvHeapStartOffset) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap), m_srvHeapStartOffset(srvHeapStartOffset)
 {
-	// Create Command Allocator
-	DXHelper::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
-	DXHelper::ThrowIfFailed(m_commandAllocator->SetName(L"Skybox Texture Command Allocator"));
-
-	// Create Command List
-	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
-	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Skybox Texture Command List"));
-#if USE_NSIGHT_AFTERMATH
-	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(m_commandList.Get(), &m_hAftermathCommandListContext));
-#endif
-	DXHelper::ThrowIfFailed(m_commandList->Close());
-
-	// Create Fence
-	DXHelper::ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-	DXHelper::ThrowIfFailed(m_fence->SetName(L"Skybox Texture Fence"));
-
-	// Create Fence Event
-	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (m_fenceEvent == nullptr)
-	{
-		throw std::runtime_error("Failed to create texture fence event.");
-	}
+	std::wstring targetName{ L"Skybox Texture" };
+	DXHelper::CreateFenceSet(m_device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
 
 	// Create Render Target View (RTV) heap for each face
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -46,13 +26,13 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 
 	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(glm::vec3)), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
+	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(glm::vec3)), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 	std::vector<VA> vas;
 	for (int i = 0; i < 4; ++i)
 	{
 		vas.push_back({ m_fullscreenQuad[i], m_fullscreenQuadTexCoords[i] });
 	}
-	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, static_cast<UINT>(sizeof(VA)), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
+	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(VA)), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
 }
 
 DXSkybox::~DXSkybox()
