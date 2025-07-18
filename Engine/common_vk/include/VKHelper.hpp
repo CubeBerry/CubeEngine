@@ -8,6 +8,11 @@
 
 namespace VKHelper
 {
+	/*
+	@TODO This occurs error with Github Actions (Workflow) Vulkan SDK 1.3.296.0.
+	VK_ERROR_NOT_PERMITTED and some other enums are not defined in 1.3.296.0.
+	Using Vulkan SDK 1.4.304.0 temporarily fixes this issue.
+	*/
 	inline const char* GetResultString(const VkResult& result)
 	{
 		switch (result)
