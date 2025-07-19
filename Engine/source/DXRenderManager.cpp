@@ -190,6 +190,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	CreateRootSignature(m_rootSignature3D, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"3D Root Signature"));
 
+	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::Vertex, position);
 	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::Vertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
