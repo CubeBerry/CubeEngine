@@ -109,12 +109,6 @@ private:
 	uint32_t lutSize{ 512 };
 
 	std::unique_ptr<DXVertexBuffer> m_skyboxVertexBuffer;
-	struct VA
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-	};
-	std::unique_ptr<DXVertexBuffer> m_quadVertexBuffer;
 	std::vector<glm::vec3> m_skyboxVertices = {
 		{-1.0f, -1.0f, -1.0f},
 		{-1.0f,  1.0f, -1.0f},
@@ -157,19 +151,6 @@ private:
 		{ 1.0f,  1.0f, -1.0f},
 		{-1.0f,  1.0f,  1.0f},
 		{ 1.0f,  1.0f,  1.0f}
-	};
-	// BRDF LUT fullscreen quad texture
-	std::vector<glm::vec3> m_fullscreenQuad = {
-	glm::vec3(-1.0f, -1.0f, 0.0f),
-	glm::vec3(1.0f, -1.0f, 0.0f),
-	glm::vec3(-1.0f, 1.0f, 0.0f),
-	glm::vec3(1.0f, 1.0f, 0.0f),
-	};
-	std::vector<glm::vec2> m_fullscreenQuadTexCoords = {
-		glm::vec2(0.0f, 0.0f),
-		glm::vec2(1.0f, 0.0f),
-		glm::vec2(0.0f, 1.0f),
-		glm::vec2(1.0f, 1.0f),
 	};
 
 	const float clearColor[4] = { 0.f, 0.f, 0.f, 1.0f };

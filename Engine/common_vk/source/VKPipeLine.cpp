@@ -106,7 +106,7 @@ void VKPipeLine::InitPipeLine(
 	vertexInputStateInfo.vertexBindingDescriptionCount = 1;
 	vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBinding;
 	vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
-	vertexInputStateInfo.pVertexAttributeDescriptions = &vertexInputAttributes[0];
+	vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
 	//Create Pipeline Input Assembly State Info
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};

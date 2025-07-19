@@ -113,19 +113,6 @@ private:
 		{-1.0f,  1.0f,  1.0f},
 		{ 1.0f,  1.0f,  1.0f}
 	};
-	//BRDF LUT fullscreen quad texture
-	std::vector<glm::vec3> fullscreenQuad = {
-	glm::vec3(-1.0f, -1.0f, 0.0f),
-	glm::vec3(1.0f, -1.0f, 0.0f),
-	glm::vec3(-1.0f, 1.0f, 0.0f),
-	glm::vec3(1.0f, 1.0f, 0.0f),
-	};
-	std::vector<glm::vec2> fullscreenQuadTexCoords = {
-		glm::vec2(0.0f, 0.0f),
-		glm::vec2(1.0f, 0.0f),
-		glm::vec2(0.0f, 1.0f),
-		glm::vec2(1.0f, 1.0f),
-	};
 
 	VkClearValue clearColor = { 0.f,0.f,0.f,1.f };
 	glm::mat4 projection = glm::perspective(glm::radians(90.f), 1.f, 0.1f, 10.f);

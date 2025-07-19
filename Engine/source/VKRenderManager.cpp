@@ -156,7 +156,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	// 2D Pipeline
 	VKAttributeLayout position_layout;
 	position_layout.vertex_layout_location = 0;
-	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
+	position_layout.format = VK_FORMAT_R32G32_SFLOAT;
 	position_layout.offset = offsetof(TwoDimension::Vertex, position);
 
 	vkPipeline2D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor2D->GetDescriptorSetLayout());

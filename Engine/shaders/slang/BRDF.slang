@@ -1,11 +1,5 @@
 #define PI 3.14159265358979323846f
 
-struct VSInput
-{
-    float3 position : POSITION0;
-    float2 uv : TEXCOORD0;
-}
-
 struct VSOutput
 {
     float4 position : SV_POSITION;
@@ -13,13 +7,32 @@ struct VSOutput
 };
 
 [shader("vertex")]
-VSOutput vertexMain(VSInput input)
+VSOutput vertexMain(uint id : SV_VertexID)
 {
     VSOutput output;
 
-    output.uv = input.uv;
+// DirectX uses a Top-Left texture coordinate system, while OpenGL uses a Bottom-Left texture coordinate system.
+// DirectX Piepline FrontCounterClockwise is set to false for IBL processing, so we need to adjust the texture coordinates accordingly.
+#if defined(__hlsl__)
+    const float2 positions[3] =
+        {
+            float2(-1.0f, 1.0f),
+            float2(3.0f, 1.0f),
+            float2(-1.0f, -3.0f)
+        };
+#else
+    const float2 positions[3] =
+        {
+            float2(-1.0f, -1.0f),   // Bottom-Left
+            float2(3.0f, -1.0f),    // Right
+            float2(-1.0f, 3.0f)     // Top-Left
+        };
+#endif
+    float2 position = positions[id];
 
-    output.position = float4(input.position, 1.0);
+    output.uv = position * 0.5 + 0.5;
+
+    output.position = float4(position, 0.0, 1.0);
     
     return output;
 }

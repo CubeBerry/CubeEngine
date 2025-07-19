@@ -13,7 +13,7 @@ namespace TwoDimension
 {
 	struct alignas(16) Vertex
 	{
-		glm::vec3 position;
+		glm::vec2 position;
 	};
 
 	struct alignas(16) VertexUniform

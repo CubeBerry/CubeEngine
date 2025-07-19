@@ -42,7 +42,7 @@ struct VSOutput_0
 #line 5
 struct VSInput_0
 {
-    float3 position_1 : POSITION0;
+    float2 position_1 : POSITION0;
 };
 
 
@@ -83,7 +83,7 @@ VSOutput_0 vertexMain(VSInput_0 input_0)
     output_0.isTex_1 = matrix_0.isTex_0;
     output_0.color_1 = matrix_0.color_0;
 
-    output_0.position_0 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, float4(_S1.position_1, 1.0f))));
+    output_0.position_0 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, float4(_S1.position_1, 0.0f, 1.0f))));
 
     return output_0;
 }

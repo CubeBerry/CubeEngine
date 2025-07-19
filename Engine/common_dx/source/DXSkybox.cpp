@@ -27,12 +27,6 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(glm::vec3)), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
-	std::vector<VA> vas;
-	for (int i = 0; i < 4; ++i)
-	{
-		vas.push_back({ m_fullscreenQuad[i], m_fullscreenQuadTexCoords[i] });
-	}
-	m_quadVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(VA)), static_cast<UINT>(sizeof(VA) * vas.size()), vas.data());
 }
 
 DXSkybox::~DXSkybox()
@@ -585,9 +579,6 @@ void DXSkybox::BRDFLUT()
 	DXHelper::ThrowIfFailed(m_rootSignatures[3]->SetName(L"Skybox BRDF LUT Root Signature"));
 
 	// Create Pipeline State Object (PSO)
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(VA, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = 1;
 	sampleDesc.Quality = 0;
@@ -597,7 +588,7 @@ void DXSkybox::BRDFLUT()
 		m_rootSignatures[3],
 		"../Engine/shaders/hlsl/BRDF.vert.hlsl",
 		"../Engine/shaders/hlsl/BRDF.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout, uvLayout },
+		std::initializer_list<DXAttributeLayout>{},
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
@@ -616,8 +607,6 @@ void DXSkybox::BRDFLUT()
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 	m_commandList->SetGraphicsRootSignature(m_rootSignatures[3].Get());
 
-	D3D12_VERTEX_BUFFER_VIEW vbv = m_quadVertexBuffer->GetView();
-	m_commandList->IASetVertexBuffers(0, 1, &vbv);
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_brdfLUT.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
