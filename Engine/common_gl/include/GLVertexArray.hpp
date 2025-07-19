@@ -13,6 +13,7 @@ struct GLAttributeLayout
     {
         Float = GL_FLOAT,
         Int = GL_INT,
+		UInt = GL_UNSIGNED_INT,
         Bool = GL_BOOL
     };
     ComponentType component_type = ComponentType::Float;

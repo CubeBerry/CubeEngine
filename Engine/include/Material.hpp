@@ -13,7 +13,10 @@ namespace TwoDimension
 {
 	struct alignas(16) Vertex
 	{
-		glm::vec2 position;
+		//glm::vec2 position;
+
+		// vec2 -> uint32_t quantization
+		uint32_t position;
 	};
 
 	struct alignas(16) VertexUniform
@@ -21,6 +24,7 @@ namespace TwoDimension
 		glm::mat4 model;
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::mat4 decode;
 		glm::vec4 color;
 		glm::vec3 frameSize;
 		float isTex;

@@ -249,11 +249,68 @@ void Sprite::AddQuad(glm::vec4 color_)
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
+	// Quantization
+	// https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
+	// Encode
+	// 1. The largest x, y, and z bounding cube sizes among all partitions.
+	glm::vec2 largestBBoxSize{ 2.f };
+
+	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
+	// 16, 16
+	const float xAxisSteps = static_cast<float>((1 << 16) - 1);
+	const float yAxisSteps = static_cast<float>((1 << 16) - 1);
+	glm::vec2 C{ largestBBoxSize / glm::vec2{ xAxisSteps, yAxisSteps } };
+
+	glm::ivec2 minQuantizedPos{ INT_MAX };
+
+	std::vector<glm::ivec2> quantizedPositions(4);
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(-1.f / C.x), static_cast<int32_t>(1.f / C.y) };
+		quantizedPositions[0] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(1.f / C.x), static_cast<int32_t>(1.f / C.y) };
+		quantizedPositions[1] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(1.f / C.x), static_cast<int32_t>(-1.f / C.y) };
+		quantizedPositions[2] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(-1.f / C.x), static_cast<int32_t>(-1.f / C.y) };
+		quantizedPositions[3] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+
+	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
+	// Then, subtract (Ox, Oy, Oz) from the quantized coordinates of vertices.
+	glm::ivec2 O{ minQuantizedPos };
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
+	for (size_t i = 0; i < 4; ++i)
+	{
+		quantizedPositions[i] -= O;
+
+		uint32_t packedPosition = (quantizedPositions[i].y << 16) | quantizedPositions[i].x;
+		vertices.emplace_back(TwoDimension::Vertex{ packedPosition });
+	}
+
+	// Decode
+	glm::mat4 translate{ 1.f };
+	glm::mat4 scale{ 1.f };
+	translate = glm::translate(translate, glm::vec3{ static_cast<float>(O.x) * C.x, static_cast<float>(O.y) * C.y, 0.f });
+	scale = glm::scale(scale, glm::vec3{ C.x, C.y, 1.f });
+	glm::mat4 decodeMat = translate * scale;
 
 	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
@@ -267,6 +324,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = decodeMat;
 	vertexUniform.color = color_;
 	vertexUniform.isTex = 0.f;
 	vertexUniform.isTexel = 0.f;
@@ -283,8 +341,8 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 		//Attributes
 		GLAttributeLayout position_layout;
-		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_2;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
 		position_layout.stride = sizeof(TwoDimension::Vertex);
@@ -312,11 +370,68 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
+	// Quantization
+	// https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
+	// Encode
+	// 1. The largest x, y, and z bounding cube sizes among all partitions.
+	glm::vec2 largestBBoxSize{ 2.f };
+
+	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
+	// 16, 16
+	const float xAxisSteps = static_cast<float>((1 << 16) - 1);
+	const float yAxisSteps = static_cast<float>((1 << 16) - 1);
+	glm::vec2 C{ largestBBoxSize / glm::vec2{ xAxisSteps, yAxisSteps } };
+
+	glm::ivec2 minQuantizedPos{ INT_MAX };
+
+	std::vector<glm::ivec2> quantizedPositions(4);
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(-1.f / C.x), static_cast<int32_t>(1.f / C.y) };
+		quantizedPositions[0] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(1.f / C.x), static_cast<int32_t>(1.f / C.y) };
+		quantizedPositions[1] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(1.f / C.x), static_cast<int32_t>(-1.f / C.y) };
+		quantizedPositions[2] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(-1.f / C.x), static_cast<int32_t>(-1.f / C.y) };
+		quantizedPositions[3] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+
+	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
+	// Then, subtract (Ox, Oy, Oz) from the quantized coordinates of vertices.
+	glm::ivec2 O{ minQuantizedPos };
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
+	//vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
+	for (size_t i = 0; i < 4; ++i)
+	{
+		quantizedPositions[i] -= O;
+
+		uint32_t packedPosition = (quantizedPositions[i].y << 16) | quantizedPositions[i].x;
+		vertices.emplace_back(TwoDimension::Vertex{ packedPosition });
+	}
+
+	// Decode
+	glm::mat4 translate{ 1.f };
+	glm::mat4 scale{ 1.f };
+	translate = glm::translate(translate, glm::vec3{ static_cast<float>(O.x) * C.x, static_cast<float>(O.y) * C.y, 0.f });
+	scale = glm::scale(scale, glm::vec3{ C.x, C.y, 1.f });
+	glm::mat4 decodeMat = translate * scale;
 
 	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
@@ -330,6 +445,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = decodeMat;
 	vertexUniform.color = color_;
 	vertexUniform.isTex = 0.f;
 	vertexUniform.isTexel = isTexel_;
@@ -346,8 +462,8 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 
 		//Attributes
 		GLAttributeLayout position_layout;
-		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_2;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
 		position_layout.stride = sizeof(TwoDimension::Vertex);
