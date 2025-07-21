@@ -63,6 +63,7 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 10. PBR Image Based Lighting
 11. Skybox
 12. MSAA
+13. Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit))
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
