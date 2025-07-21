@@ -464,26 +464,25 @@ glm::mat4 RenderManager::CreateMesh(
 		//	}
 		//}
 
-		// @TODO How to unit scale quantized mesh?
-		//glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-		//for (auto it = vertices.begin(); it != vertices.end(); ++it)
-		//{
-		//	minPos = glm::min(minPos, glm::vec3(it->position));
-		//	maxPos = glm::max(maxPos, glm::vec3(it->position));
-		//}
+		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+		for (auto it = vertices.begin(); it != vertices.end(); ++it)
+		{
+			minPos = glm::min(minPos, glm::vec3(it->position));
+			maxPos = glm::max(maxPos, glm::vec3(it->position));
+		}
 
-		//glm::vec3 center;
-		//float unitScale;
+		glm::vec3 center;
+		float unitScale;
 
-		//center = (minPos + maxPos) / 2.f;
-		//glm::vec3 size = maxPos - minPos;
-		//float extent = glm::max(size.x, glm::max(size.y, size.z));
-		//unitScale = 1.f / extent;
+		center = (minPos + maxPos) / 2.f;
+		glm::vec3 size = maxPos - minPos;
+		float extent = glm::max(size.x, glm::max(size.y, size.z));
+		unitScale = 1.f / extent;
 
 		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
-			//it->position -= center;
-			//it->position *= glm::vec3(unitScale, unitScale, unitScale);
+			it->position -= center;
+			it->position *= glm::vec3(unitScale, unitScale, unitScale);
 
 #ifdef _DEBUG
 			glm::vec3 start = it->position;
