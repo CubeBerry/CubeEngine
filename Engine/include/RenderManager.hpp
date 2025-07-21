@@ -236,6 +236,9 @@ public:
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
+	//--------------------2D Render--------------------//
+	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
+
 	//--------------------3D Render--------------------//
 	glm::mat4 CreateMesh(
 		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,

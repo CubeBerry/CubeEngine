@@ -42,6 +42,71 @@ BufferWrapper::~BufferWrapper()
 	}, uniformBuffer);
 };
 
+// 2D Mesh Creation
+glm::mat4 RenderManager::CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices)
+{
+	// Quantization
+	// https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
+	// Encode
+	// 1. The largest x, y, and z bounding cube sizes among all partitions.
+	glm::vec2 largestBBoxSize{ 2.f };
+
+	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
+	// 16, 16
+	const float xAxisSteps = static_cast<float>((1 << 16) - 1);
+	const float yAxisSteps = static_cast<float>((1 << 16) - 1);
+	glm::vec2 C{ largestBBoxSize / glm::vec2{ xAxisSteps, yAxisSteps } };
+
+	glm::ivec2 minQuantizedPos{ INT_MAX };
+
+	std::vector<glm::ivec2> quantizedPositions(4);
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(-1.f / C.x), static_cast<int32_t>(1.f / C.y) };
+		quantizedPositions[0] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(1.f / C.x), static_cast<int32_t>(1.f / C.y) };
+		quantizedPositions[1] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(1.f / C.x), static_cast<int32_t>(-1.f / C.y) };
+		quantizedPositions[2] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec2 qp{ static_cast<int32_t>(-1.f / C.x), static_cast<int32_t>(-1.f / C.y) };
+		quantizedPositions[3] = qp;
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+
+	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
+	// Then, subtract (Ox, Oy, Oz) from the quantized coordinates of vertices.
+	glm::ivec2 O{ minQuantizedPos };
+	for (size_t i = 0; i < 4; ++i)
+	{
+		quantizedPositions[i] -= O;
+
+		uint32_t packedPosition = (quantizedPositions[i].y << 16) | quantizedPositions[i].x;
+		quantizedVertices.emplace_back(TwoDimension::Vertex{ packedPosition });
+	}
+
+	// Decode
+	glm::mat4 translate{ 1.f };
+	glm::mat4 scale{ 1.f };
+	translate = glm::translate(translate, glm::vec3{ static_cast<float>(O.x) * C.x, static_cast<float>(O.y) * C.y, 0.f });
+	scale = glm::scale(scale, glm::vec3{ C.x, C.y, 1.f });
+	glm::mat4 decodeMat = translate * scale;
+
+	return decodeMat;
+}
+
+// 3D Mesh Creation
 glm::mat4 RenderManager::CreateMesh(
 	std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
