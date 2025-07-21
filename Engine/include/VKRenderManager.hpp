@@ -98,7 +98,7 @@ public:
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::Vertex) * vertices.size(), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::QuantizedVertex) * vertices.size(), vertices.data());
 #ifdef _DEBUG
 			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = new VKVertexBuffer(vkInit, sizeof(ThreeDimension::NormalVertex) * normalVertices.size(), normalVertices.data());
