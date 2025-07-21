@@ -42,13 +42,15 @@ BufferWrapper::~BufferWrapper()
 	}, uniformBuffer);
 };
 
-void RenderManager::CreateMesh(
-	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+glm::mat4 RenderManager::CreateMesh(
+	std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
 	std::vector<ThreeDimension::NormalVertex>& normalVertices,
 #endif
 	MeshType type, const std::filesystem::path& path, int stacks, int slices)
 {
+	std::vector<ThreeDimension::Vertex> vertices;
+
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	switch (type)
 	{
@@ -397,25 +399,26 @@ void RenderManager::CreateMesh(
 		//	}
 		//}
 
-		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+		// @TODO How to unit scale quantized mesh?
+		//glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+		//for (auto it = vertices.begin(); it != vertices.end(); ++it)
+		//{
+		//	minPos = glm::min(minPos, glm::vec3(it->position));
+		//	maxPos = glm::max(maxPos, glm::vec3(it->position));
+		//}
+
+		//glm::vec3 center;
+		//float unitScale;
+
+		//center = (minPos + maxPos) / 2.f;
+		//glm::vec3 size = maxPos - minPos;
+		//float extent = glm::max(size.x, glm::max(size.y, size.z));
+		//unitScale = 1.f / extent;
+
 		for (auto it = vertices.begin(); it != vertices.end(); ++it)
 		{
-			minPos = glm::min(minPos, glm::vec3(it->position));
-			maxPos = glm::max(maxPos, glm::vec3(it->position));
-		}
-
-		glm::vec3 center;
-		float unitScale;
-
-		center = (minPos + maxPos) / 2.f;
-		glm::vec3 size = maxPos - minPos;
-		float extent = glm::max(size.x, glm::max(size.y, size.z));
-		unitScale = 1.f / extent;
-
-		for (auto it = vertices.begin(); it != vertices.end(); ++it)
-		{
-			it->position -= center;
-			it->position *= glm::vec3(unitScale, unitScale, unitScale);
+			//it->position -= center;
+			//it->position *= glm::vec3(unitScale, unitScale, unitScale);
 
 #ifdef _DEBUG
 			glm::vec3 start = it->position;
@@ -539,6 +542,8 @@ void RenderManager::CreateMesh(
 		}
 #endif
 	}
+
+	return Quantize(quantizedVertices, vertices);
 }
 
 void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
@@ -668,4 +673,68 @@ void RenderManager::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, st
 	}
 
 	//return textures;
+}
+
+glm::mat4 RenderManager::Quantize(
+	std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
+	std::vector<ThreeDimension::Vertex>& vertices)
+{
+	// Quantization
+	// https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
+	quantizedVertices.resize(vertices.size());
+
+	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	{
+		minPos = glm::min(minPos, it->position);
+		maxPos = glm::max(maxPos, it->position);
+	}
+
+	// Encode
+	// 1. The largest x, y, and z bounding cube sizes among all partitions.
+	glm::vec3 largestBBoxSize{ maxPos - minPos };
+
+	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
+	// 16, 16
+	const float xAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
+	const float yAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
+	const float zAxisSteps = static_cast<float>((1 << 10) - 1); // 1024 - 1
+	glm::vec3 C{ largestBBoxSize / glm::vec3{ xAxisSteps, yAxisSteps, zAxisSteps } };
+
+	glm::ivec3 minQuantizedPos{ INT_MAX };
+
+	std::vector<glm::ivec3> quantizedPositions(vertices.size());
+	for (size_t i = 0; i < vertices.size(); ++i)
+	{
+		// 3. Quantize all vertex positions.
+		glm::ivec3 qp{ static_cast<int32_t>(vertices[i].position.x / C.x),
+					  static_cast<int32_t>(vertices[i].position.y / C.y),
+					  static_cast<int32_t>(vertices[i].position.z / C.z) };
+		quantizedPositions[i] = qp;
+
+		minQuantizedPos = glm::min(minQuantizedPos, qp);
+	}
+
+	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
+	// Then, subtract (Ox, Oy, Oz) from the quantized coordinates of vertices.
+	glm::ivec3 O{ minQuantizedPos };
+	for (size_t i = 0; i < vertices.size(); ++i)
+	{
+		quantizedPositions[i] -= O;
+
+		uint32_t packedPosition = (quantizedPositions[i].z << 22) | (quantizedPositions[i].y << 11) | quantizedPositions[i].x;
+		quantizedVertices[i].position = packedPosition;
+		quantizedVertices[i].normal = vertices[i].normal;
+		quantizedVertices[i].uv = vertices[i].uv;
+		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
+	}
+
+	// Decode
+	glm::mat4 translate{ 1.f };
+	glm::mat4 scale{ 1.f };
+	translate = glm::translate(translate, glm::vec3{ C.x * static_cast<float>(O.x), C.y * static_cast<float>(O.y), C.z * static_cast<float>(O.z) });
+	scale = glm::scale(scale, C);
+	glm::mat4 decodeMat = translate * scale;
+
+	return decodeMat;
 }

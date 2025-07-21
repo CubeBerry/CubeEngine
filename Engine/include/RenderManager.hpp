@@ -49,7 +49,7 @@ public:
 
 	struct BufferData3D
 	{
-		std::vector<ThreeDimension::Vertex> vertices;
+		std::vector<ThreeDimension::QuantizedVertex> vertices;
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex> normalVertices;
 #endif
@@ -237,8 +237,8 @@ public:
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
 	//--------------------3D Render--------------------//
-	void CreateMesh(
-		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+	glm::mat4 CreateMesh(
+		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex>& normalVertices,
 #endif
@@ -314,6 +314,10 @@ private:
 		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 		const aiMesh* mesh, const aiScene* scene, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
+
+	glm::mat4 Quantize(
+		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
+		std::vector<ThreeDimension::Vertex>& vertices);
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)
