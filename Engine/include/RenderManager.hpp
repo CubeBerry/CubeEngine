@@ -320,7 +320,8 @@ private:
 
 	glm::mat4 Quantize(
 		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
-		std::vector<ThreeDimension::Vertex>& vertices);
+		const std::vector<ThreeDimension::Vertex>& vertices,
+		glm::vec3 largestBBoxSize);
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)

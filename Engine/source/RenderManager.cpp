@@ -464,35 +464,6 @@ glm::mat4 RenderManager::CreateMesh(
 		//	}
 		//}
 
-		glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-		for (auto it = vertices.begin(); it != vertices.end(); ++it)
-		{
-			minPos = glm::min(minPos, glm::vec3(it->position));
-			maxPos = glm::max(maxPos, glm::vec3(it->position));
-		}
-
-		glm::vec3 center;
-		float unitScale;
-
-		center = (minPos + maxPos) / 2.f;
-		glm::vec3 size = maxPos - minPos;
-		float extent = glm::max(size.x, glm::max(size.y, size.z));
-		unitScale = 1.f / extent;
-
-		for (auto it = vertices.begin(); it != vertices.end(); ++it)
-		{
-			it->position -= center;
-			it->position *= glm::vec3(unitScale, unitScale, unitScale);
-
-#ifdef _DEBUG
-			glm::vec3 start = it->position;
-			glm::vec3 end = it->position + it->normal * 0.1f;
-
-			normalVertices.push_back(ThreeDimension::NormalVertex{ start });
-			normalVertices.push_back(ThreeDimension::NormalVertex{ end });
-#endif
-		}
-
 		//Custom Model Load
 		//std::ifstream file(path);
 		//if (!file.is_open())
@@ -593,21 +564,39 @@ glm::mat4 RenderManager::CreateMesh(
 	break;
 	}
 
-	if (type != MeshType::OBJ)
+	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
 	{
-#ifdef _DEBUG
-		for (size_t v = 0; v < vertices.size(); ++v)
-		{
-			glm::vec3 start = vertices[v].position;
-			glm::vec3 end = vertices[v].position + vertices[v].normal * 0.1f;
+		minPos = glm::min(minPos, glm::vec3(it->position));
+		maxPos = glm::max(maxPos, glm::vec3(it->position));
+	}
 
-			normalVertices.push_back(ThreeDimension::NormalVertex{ start });
-			normalVertices.push_back(ThreeDimension::NormalVertex{ end });
+	glm::vec3 center;
+	float unitScale;
+
+	center = (minPos + maxPos) / 2.f;
+	glm::vec3 size = maxPos - minPos;
+	float extent = glm::max(size.x, glm::max(size.y, size.z));
+	unitScale = 1.f / extent;
+
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	{
+		if (type == MeshType::OBJ)
+		{
+			it->position -= center;
+			it->position *= glm::vec3(unitScale, unitScale, unitScale);
 		}
+
+#ifdef _DEBUG
+		glm::vec3 start = it->position;
+		glm::vec3 end = it->position + it->normal * 0.1f;
+
+		normalVertices.push_back(ThreeDimension::NormalVertex{ start });
+		normalVertices.push_back(ThreeDimension::NormalVertex{ end });
 #endif
 	}
 
-	return Quantize(quantizedVertices, vertices);
+	return Quantize(quantizedVertices, vertices, size * unitScale);
 }
 
 void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
@@ -739,24 +728,16 @@ void RenderManager::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, st
 	//return textures;
 }
 
+// Quantization
+// https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
 glm::mat4 RenderManager::Quantize(
 	std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
-	std::vector<ThreeDimension::Vertex>& vertices)
-{
-	// Quantization
-	// https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
-	quantizedVertices.resize(vertices.size());
-
-	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-	for (auto it = vertices.begin(); it != vertices.end(); ++it)
-	{
-		minPos = glm::min(minPos, it->position);
-		maxPos = glm::max(maxPos, it->position);
-	}
-
+	const std::vector<ThreeDimension::Vertex>& vertices,
 	// Encode
 	// 1. The largest x, y, and z bounding cube sizes among all partitions.
-	glm::vec3 largestBBoxSize{ maxPos - minPos };
+	glm::vec3 largestBBoxSize)
+{
+	quantizedVertices.resize(vertices.size());
 
 	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
 	// 16, 16
