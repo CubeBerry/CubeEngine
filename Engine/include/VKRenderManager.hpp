@@ -27,8 +27,6 @@ class VKInit;
 class VKSwapChain;
 class VKShader;
 class VKPipeLine;
-template<typename Material>
-class VKUniformBuffer;
 class VKSkybox;
 
 class VKRenderManager : public RenderManager

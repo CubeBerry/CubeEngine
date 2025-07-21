@@ -57,7 +57,7 @@ void main()
     o_tex_sub_index = tex_sub_index;
     //Lighting
     // o_normal = vec3(transpose(inverse(matrix[object_index].model)) * vec4(i_normal, 0.0));
-    o_normal = mat3(transpose(inverse(matrix.model))) * i_normal;
+    o_normal = mat3(matrix.transposeInverseModel) * i_normal;
     //o_normal = mat3(matrix[object_index].model) * i_normal;
     o_fragment_position = vec3(matrix.model * vec4(decoded_position, 1.0));
     o_view_position = inverse(matrix.view)[3].xyz;
