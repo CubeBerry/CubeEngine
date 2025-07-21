@@ -164,28 +164,28 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	// 3D Pipeline
 	position_layout.vertex_layout_location = 0;
-	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
-	position_layout.offset = offsetof(ThreeDimension::Vertex, position);
+	position_layout.format = VK_FORMAT_R32_UINT;
+	position_layout.offset = offsetof(ThreeDimension::QuantizedVertex, position);
 
 	VKAttributeLayout normal_layout;
 	normal_layout.vertex_layout_location = 1;
 	normal_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	normal_layout.offset = offsetof(ThreeDimension::Vertex, normal);
+	normal_layout.offset = offsetof(ThreeDimension::QuantizedVertex, normal);
 
 	VKAttributeLayout uv_layout;
 	uv_layout.vertex_layout_location = 2;
 	uv_layout.format = VK_FORMAT_R32G32_SFLOAT;
-	uv_layout.offset = offsetof(ThreeDimension::Vertex, uv);
+	uv_layout.offset = offsetof(ThreeDimension::QuantizedVertex, uv);
 
 	VKAttributeLayout tex_sub_index_layout;
 	tex_sub_index_layout.vertex_layout_location = 3;
 	tex_sub_index_layout.format = VK_FORMAT_R32_SINT;
-	tex_sub_index_layout.offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+	tex_sub_index_layout.offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;

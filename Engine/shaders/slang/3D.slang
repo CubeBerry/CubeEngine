@@ -6,7 +6,7 @@
 
 struct VSInput
 {
-    float3 position : POSITION0;
+    uint position : POSITION0;
     float3 normal : NORMAL0;
     float2 uv : TEXCOORD0;
     int tex_sub_index : TEXCOORD1;
@@ -31,6 +31,7 @@ struct vMatrix
     float4x4 transposeInverseModel;
     float4x4 view;
     float4x4 projection;
+    float4x4 decode;
     float4 color;
     // @TODO move to push constants
     float3 viewPosition;
@@ -42,16 +43,22 @@ VSOutput vertexMain(VSInput input)
 {
     VSOutput output;
 
+    // 11, 11, 10
+    float x = float(input.position & 0x7FFu);
+    float y = float((input.position >> 11) & 0x7FFu);
+    float z = float((input.position >> 22) & 0x3FFu);
+    float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
+
     output.uv = input.uv;
     output.color = matrix.color;
     output.tex_sub_index = input.tex_sub_index;
 
     // Lighting
     output.normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
-    output.fragmentPosition = mul(matrix.model, float4(input.position, 1.0f)).xyz;
+    output.fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
     output.viewPosition = matrix.viewPosition;
 
-    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(input.position, 1.0))));
+    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
     
     return output;
 }
