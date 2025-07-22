@@ -46,6 +46,7 @@ void GLVertexArray::AddVertexBuffer(GLVertexBuffer&& buffer, size_t size, std::i
 			glCheck(glVertexArrayAttribFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.normalized, attribute.relative_offset));
 			break;
 		case GL_INT:
+		case GL_UNSIGNED_INT:
 			//For Int
 			glCheck(glVertexArrayAttribIFormat(vaoHandle, attribute.vertex_layout_location, attribute.component_dimension, attribute.component_type, attribute.relative_offset));
 			break;

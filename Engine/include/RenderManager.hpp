@@ -49,7 +49,7 @@ public:
 
 	struct BufferData3D
 	{
-		std::vector<ThreeDimension::Vertex> vertices;
+		std::vector<ThreeDimension::QuantizedVertex> vertices;
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex> normalVertices;
 #endif
@@ -236,9 +236,12 @@ public:
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
+	//--------------------2D Render--------------------//
+	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
+
 	//--------------------3D Render--------------------//
-	void CreateMesh(
-		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
+	glm::mat4 CreateMesh(
+		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex>& normalVertices,
 #endif
@@ -314,6 +317,11 @@ private:
 		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
 		const aiMesh* mesh, const aiScene* scene, int childCount);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
+
+	glm::mat4 Quantize(
+		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
+		const std::vector<ThreeDimension::Vertex>& vertices,
+		glm::vec3 largestBBoxSize);
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)

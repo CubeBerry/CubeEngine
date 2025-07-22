@@ -250,10 +250,6 @@ void Sprite::AddQuad(glm::vec4 color_)
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
 
 	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
@@ -263,10 +259,13 @@ void Sprite::AddQuad(glm::vec4 color_)
 	indices.push_back(3);
 	indices.push_back(0);
 
+	glm::mat4 decodeMat = renderManager->CreateMesh(vertices);
+
 	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = decodeMat;
 	vertexUniform.color = color_;
 	vertexUniform.isTex = 0.f;
 	vertexUniform.isTexel = 0.f;
@@ -283,8 +282,8 @@ void Sprite::AddQuad(glm::vec4 color_)
 
 		//Attributes
 		GLAttributeLayout position_layout;
-		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_2;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
 		position_layout.stride = sizeof(TwoDimension::Vertex);
@@ -313,10 +312,6 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
 	auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, 1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(1.f, -1.f) });
-	vertices.emplace_back(TwoDimension::Vertex{ glm::vec2(-1.f, -1.f) });
 
 	auto& indices = bufferWrapper.GetIndices();
 	indices.push_back(0);
@@ -326,10 +321,13 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	indices.push_back(3);
 	indices.push_back(0);
 
+	glm::mat4 decodeMat = renderManager->CreateMesh(vertices);
+
 	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = decodeMat;
 	vertexUniform.color = color_;
 	vertexUniform.isTex = 0.f;
 	vertexUniform.isTexel = isTexel_;
@@ -346,8 +344,8 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 
 		//Attributes
 		GLAttributeLayout position_layout;
-		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_2;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
 		position_layout.stride = sizeof(TwoDimension::Vertex);
@@ -404,9 +402,9 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 #ifdef _DEBUG
 	auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
-	renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
+	glm::mat4 decode = renderManager->CreateMesh(vertices, indices, normalVertices, type, path, stacks, slices);
 #else
-	renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
+	glm::mat4 decode = renderManager->CreateMesh(vertices, indices, type, path, stacks, slices);
 #endif
 
 	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
@@ -414,6 +412,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
 	vertexUniform.color = color;
+	vertexUniform.decode = decode;
 
 	auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 	fragmentUniform.texIndex = 0;
@@ -428,49 +427,49 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	{
 		dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
 
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::Vertex) * vertices.size()), vertices.data());
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::QuantizedVertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
 		GLAttributeLayout position_layout;
-		position_layout.component_type = GLAttributeLayout::Float;
-		position_layout.component_dimension = GLAttributeLayout::_3;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
 		position_layout.normalized = false;
 		position_layout.vertex_layout_location = 0;
-		position_layout.stride = sizeof(ThreeDimension::Vertex);
+		position_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
 		position_layout.offset = 0;
-		position_layout.relative_offset = offsetof(ThreeDimension::Vertex, position);
+		position_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, position);
 
 		GLAttributeLayout normal_layout;
 		normal_layout.component_type = GLAttributeLayout::Float;
 		normal_layout.component_dimension = GLAttributeLayout::_3;
 		normal_layout.normalized = false;
 		normal_layout.vertex_layout_location = 1;
-		normal_layout.stride = sizeof(ThreeDimension::Vertex);
+		normal_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
 		normal_layout.offset = 0;
-		normal_layout.relative_offset = offsetof(ThreeDimension::Vertex, normal);
+		normal_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, normal);
 
 		GLAttributeLayout uv_layout;
 		uv_layout.component_type = GLAttributeLayout::Float;
 		uv_layout.component_dimension = GLAttributeLayout::_2;
 		uv_layout.normalized = false;
 		uv_layout.vertex_layout_location = 2;
-		uv_layout.stride = sizeof(ThreeDimension::Vertex);
+		uv_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
 		uv_layout.offset = 0;
-		uv_layout.relative_offset = offsetof(ThreeDimension::Vertex, uv);
+		uv_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, uv);
 
 		GLAttributeLayout tex_sub_index_layout;
 		tex_sub_index_layout.component_type = GLAttributeLayout::Int;
 		tex_sub_index_layout.component_dimension = GLAttributeLayout::_1;
 		tex_sub_index_layout.normalized = false;
 		tex_sub_index_layout.vertex_layout_location = 3;
-		tex_sub_index_layout.stride = sizeof(ThreeDimension::Vertex);
+		tex_sub_index_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
 		tex_sub_index_layout.offset = 0;
-		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::Vertex, texSubIndex);
+		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::Vertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 #ifdef _DEBUG

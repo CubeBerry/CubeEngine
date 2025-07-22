@@ -13,7 +13,10 @@ namespace TwoDimension
 {
 	struct alignas(16) Vertex
 	{
-		glm::vec2 position;
+		//glm::vec2 position;
+
+		// vec2 -> uint32_t quantization (16, 16)
+		uint32_t position;
 	};
 
 	struct alignas(16) VertexUniform
@@ -21,6 +24,7 @@ namespace TwoDimension
 		glm::mat4 model;
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::mat4 decode;
 		glm::vec4 color;
 		glm::vec3 frameSize;
 		float isTex;
@@ -45,6 +49,17 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 	};
 
+	struct alignas(16) QuantizedVertex
+	{
+		//glm::vec3 position;
+
+		// vec2 -> uint32_t quantization (11, 11, 10)
+		uint32_t position;
+		glm::vec3 normal;
+		glm::vec2 uv;
+		int texSubIndex{ 0 };
+	};
+
 #ifdef _DEBUG
 	struct alignas(16) NormalVertex
 	{
@@ -59,6 +74,7 @@ namespace ThreeDimension
 		glm::mat4 transposeInverseModel;
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::mat4 decode;
 		glm::vec4 color;
 		// @TODO move to push constants later
 		glm::vec3 viewPosition;
@@ -100,27 +116,3 @@ namespace ThreeDimension
 		float specularStrength;
 	};
 }
-
-// Union
-//union alignas(16) Vertex
-//{
-//	Vertex() {}
-//	Vertex(const TwoDimension::Vertex& vertex) : vertex2D(vertex) {}
-//	Vertex(const ThreeDimension::Vertex& vertex) : vertex3D(vertex) {}
-//	TwoDimension::Vertex vertex2D;
-//	ThreeDimension::Vertex vertex3D;
-//};
-//
-//union alignas(16) VertexUniform
-//{
-//	VertexUniform() {}
-//	TwoDimension::VertexUniform vertex2D;
-//	ThreeDimension::VertexUniform vertex3D;
-//};
-//
-//union alignas(16) FragmentUniform
-//{
-//	FragmentUniform() {}
-//	TwoDimension::FragmentUniform frag2D;
-//	ThreeDimension::FragmentUniform frag3D;
-//};

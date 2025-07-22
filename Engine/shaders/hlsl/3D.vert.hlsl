@@ -16,6 +16,7 @@ struct vMatrix_0
     float4x4 transposeInverseModel_0;
     float4x4 view_0;
     float4x4 projection_0;
+    float4x4 decode_0;
     float4 color_0;
     float3 viewPosition_0;
 };
@@ -42,27 +43,33 @@ struct VSOutput_0
 #line 7
 struct VSInput_0
 {
-    float3 position_1 : POSITION0;
+    uint position_1 : POSITION0;
     float3 normal_1 : NORMAL0;
     float2 uv_1 : TEXCOORD0;
     int tex_sub_index_1 : TEXCOORD1;
 };
 
 
-#line 41
+#line 42
 VSOutput_0 vertexMain(VSInput_0 input_0)
 {
+
+#line 50
+    float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float((input_0.position_1) & 2047U), float(((input_0.position_1) >> int(11)) & 2047U), float(((input_0.position_1) >> int(22)) & 1023U)), 1.0f)).xyz;
+
+#line 44
     VSOutput_0 output_0;
 
+#line 52
     output_0.uv_0 = input_0.uv_1;
     output_0.color_1 = matrix_0.color_0;
     output_0.tex_sub_index_0 = input_0.tex_sub_index_1;
 
 
     output_0.normal_0 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_1);
-    float4 _S1 = float4(input_0.position_1, 1.0f);
+    float4 _S1 = float4(decoded_position_0, 1.0f);
 
-#line 51
+#line 58
     output_0.fragmentPosition_0 = mul(matrix_0.model_0, _S1).xyz;
     output_0.viewPosition_1 = matrix_0.viewPosition_0;
 

@@ -4,7 +4,7 @@
 
 struct VSInput
 {
-    float2 position : POSITION0;
+    uint position : POSITION0;
 }
 
 struct VSOutput
@@ -20,6 +20,7 @@ struct vMatrix
     float4x4 model;
     float4x4 view;
     float4x4 projection;
+    float4x4 decode;
     float4 color;
     float3 frameSize;
     float isTex;
@@ -33,6 +34,11 @@ VSOutput vertexMain(VSInput input)
 {
     VSOutput output;
 
+    // 16, 16
+    float x = float(input.position & 0xFFFFu);
+    float y = float((input.position >> 16) & 0xFFFFu);
+    float2 decoded_position = mul(matrix.decode, float4(float2(x, y), 0.0, 1.0)).xy;
+
     // output.uv.x = ((input.position.x + 1) / 2);
     // output.uv.y = ((input.position.y + 1) / 2);
 
@@ -41,19 +47,19 @@ VSOutput vertexMain(VSInput input)
 
     if (matrix.isTexel == 1.0)
     {
-        output.uv.x = lerp((input.position.x + 1.0) / 2.0, ((input.position.x + 1.0) / 2.0) * matrix.frameSize.x + matrix.texelPos.x, matrix.isTexel);
-        output.uv.y = lerp((input.position.y + 1.0) / 2.0, ((input.position.y + 1.0) / 2.0) * matrix.frameSize.y + matrix.texelPos.y, matrix.isTexel);
+        output.uv.x = lerp((decoded_position.x + 1.0) / 2.0, ((decoded_position.x + 1.0) / 2.0) * matrix.frameSize.x + matrix.texelPos.x, matrix.isTexel);
+        output.uv.y = lerp((decoded_position.y + 1.0) / 2.0, ((decoded_position.y + 1.0) / 2.0) * matrix.frameSize.y + matrix.texelPos.y, matrix.isTexel);
     }
     else
     {
-        output.uv.x = ((input.position.x + 1.0) / 2.0);
-        output.uv.y = ((input.position.y + 1.0) / 2.0);
+        output.uv.x = ((decoded_position.x + 1.0) / 2.0);
+        output.uv.y = ((decoded_position.y + 1.0) / 2.0);
     }
 
     output.isTex = matrix.isTex;
     output.color = matrix.color;
 
-    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(input.position, 0.0, 1.0))));
+    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 0.0, 1.0))));
     
     return output;
 }

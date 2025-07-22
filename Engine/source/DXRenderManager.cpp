@@ -151,7 +151,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	CreateRootSignature(m_rootSignature2D, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature2D->SetName(L"2D Root Signature"));
 
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();
@@ -190,10 +190,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	CreateRootSignature(m_rootSignature3D, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"3D Root Signature"));
 
-	positionLayout.offset = offsetof(ThreeDimension::Vertex, position);
-	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::Vertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::Vertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::Vertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	positionLayout.offset = offsetof(ThreeDimension::QuantizedVertex, position);
+	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	m_pipeline3D = std::make_unique<DXPipeLine>(
 		m_device,
