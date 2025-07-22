@@ -234,6 +234,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	CreateRootSignature(m_rootSignature3DNormal, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
 
+	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
 	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
