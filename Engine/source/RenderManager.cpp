@@ -131,7 +131,24 @@ void RenderManager::CreateMesh(
 			std::exit(EXIT_FAILURE);
 		}
 
-		ProcessNode(subMeshes, scene->mRootNode, scene, 0, color, metallic, roughness);
+		glm::vec3 globalMinPos{ FLT_MAX }, globalMaxPos{ FLT_MIN };
+		for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
+		{
+			aiMesh* mesh = scene->mMeshes[m];
+			for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
+			{
+				aiVector3D vertex = mesh->mVertices[v];
+				globalMinPos = glm::min(globalMinPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+				globalMaxPos = glm::max(globalMaxPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+			}
+		}
+
+		glm::vec3 center = (globalMinPos + globalMaxPos) / 2.f;
+		glm::vec3 size = globalMaxPos - globalMinPos;
+		float extent = glm::max(size.x, glm::max(size.y, size.z));
+		float unitScale = 1.f / extent;
+
+		ProcessNode(subMeshes, scene->mRootNode, scene, 0, globalMaxPos - globalMinPos, center, unitScale, color, metallic, roughness);
 		return;
 	}
 
@@ -579,23 +596,25 @@ void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& vert
 void RenderManager::ProcessNode(
 	std::vector<SubMesh>& subMeshes,
 	const aiNode* node, const aiScene* scene, int childCount,
+	glm::vec3 size, glm::vec3 center, float unitScale,
 	glm::vec4 color, float metallic, float roughness)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(subMeshes, mesh, scene, childCount, color, metallic, roughness);
+		ProcessMesh(subMeshes, mesh, scene, childCount, size, center, unitScale, color, metallic, roughness);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(subMeshes, node->mChildren[i], scene, i, color, metallic, roughness);
+		ProcessNode(subMeshes, node->mChildren[i], scene, i, size, center, unitScale, color, metallic, roughness);
 	}
 }
 
 void RenderManager::ProcessMesh(
 	std::vector<SubMesh>& subMeshes,
 	const aiMesh* mesh, const aiScene* scene, int childCount,
+	glm::vec3 size, glm::vec3 center, float unitScale,
 	glm::vec4 color, float metallic, float roughness)
 {
 	SubMesh subMesh;
@@ -637,26 +656,10 @@ void RenderManager::ProcessMesh(
 		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	}
 
-	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
 	for (auto it = vertices.begin(); it != vertices.end(); ++it)
 	{
-		minPos = glm::min(minPos, glm::vec3(it->position));
-		maxPos = glm::max(maxPos, glm::vec3(it->position));
-	}
-
-	//glm::vec3 center;
-	//float unitScale;
-
-	//center = (minPos + maxPos) / 2.f;
-	//glm::vec3 size = maxPos - minPos;
-	//float extent = glm::max(size.x, glm::max(size.y, size.z));
-	//unitScale = 1.f / extent;
-
-	for (auto it = vertices.begin(); it != vertices.end(); ++it)
-	{
-		// @TODO Find a way to apply unit scale
-		//it->position -= center;
-		//it->position *= glm::vec3(unitScale, unitScale, unitScale);
+		it->position -= center;
+		it->position *= glm::vec3(unitScale, unitScale, unitScale);
 
 #ifdef _DEBUG
 		glm::vec3 start = it->position;
@@ -672,7 +675,7 @@ void RenderManager::ProcessMesh(
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
-	vertexUniform.decode = Quantize(quantizedVertices, vertices, maxPos - minPos);
+	vertexUniform.decode = Quantize(quantizedVertices, vertices, size * unitScale);
 	vertexUniform.color = color;
 
 	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;

@@ -330,10 +330,12 @@ private:
 	void ProcessNode(
 		std::vector<SubMesh>& subMeshes,
 		const aiNode* node, const aiScene* scene, int childCount,
+		glm::vec3 size, glm::vec3 center, float unitScale,
 		glm::vec4 color, float metallic, float roughness);
 	void ProcessMesh(
 		std::vector<SubMesh>& subMeshes,
 		const aiMesh* mesh, const aiScene* scene, int childCount,
+		glm::vec3 size, glm::vec3 center, float unitScale,
 		glm::vec4 color, float metallic, float roughness);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
