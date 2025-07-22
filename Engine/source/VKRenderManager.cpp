@@ -935,9 +935,10 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		void* materialMappedMemory = uniformBuffer3D.materialUniformBuffer->GetMappedMemory(frameIndex);
 
 		// @TODO Can I use dynamic polygon type (FILL or LINE)?
-		for (size_t i = 0; i < sprites.size(); ++i)
+		uint64_t subMeshIndex{ 0 };
+		for (const auto& sprite : sprites)
 		{
-			for (auto& subMesh : sprites[i]->GetSubMeshes())
+			for (auto& subMesh : sprite->GetSubMeshes())
 			{
 				auto& buffer = subMesh.bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>();
 
@@ -954,7 +955,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				// Bind Vertex DescriptorSet
 				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
 				size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+				uint32_t dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
 				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
 				*vertexDest = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
@@ -965,7 +966,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				uint32_t dynamicOffsets[2];
 				// Fragment Uniform Offset
 				uniformSize = sizeof(ThreeDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+				dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 				dynamicOffsets[0] = dynamicOffset;
 
 				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
@@ -973,7 +974,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 				// Material Uniform Offset
 				uniformSize = sizeof(ThreeDimension::Material);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+				dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 				dynamicOffsets[1] = dynamicOffset;
 
 				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
@@ -1013,6 +1014,8 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 					vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
 				}
 #endif
+
+				subMeshIndex++;
 			}
 		}
 
