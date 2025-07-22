@@ -137,7 +137,7 @@ void RenderManager::CreateMesh(
 		}
 
 		//Indices
-		BuildIndices(vertices, indices, stacks, slices);
+		//BuildIndices(vertices, indices, stacks, slices);
 	}
 	break;
 	case MeshType::CUBE:
