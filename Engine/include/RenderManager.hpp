@@ -315,7 +315,7 @@ private:
 		const aiNode* node, const aiScene* scene, int childCount);
 	void ProcessMesh(
 		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
-		const aiMesh* mesh, const aiScene* scene, int childCount);
+		const aiMesh* mesh, const aiScene* scene, int childCount, uint32_t vertexOffset);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 	glm::mat4 Quantize(

@@ -647,8 +647,10 @@ void RenderManager::ProcessNode(
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
+		uint32_t vertexOffset = static_cast<uint32_t>(vertices.size());
+
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(vertices, indices, mesh, scene, childCount);
+		ProcessMesh(vertices, indices, mesh, scene, childCount, vertexOffset);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
@@ -659,7 +661,7 @@ void RenderManager::ProcessNode(
 
 void RenderManager::ProcessMesh(
 	std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
-	const aiMesh* mesh, const aiScene* scene, int childCount)
+	const aiMesh* mesh, const aiScene* scene, int childCount, uint32_t vertexOffset)
 {
 	//Vertices
 	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
@@ -680,7 +682,7 @@ void RenderManager::ProcessMesh(
 		aiFace face = mesh->mFaces[f];
 		for (unsigned int i = 0; i < face.mNumIndices; i++)
 		{
-			indices.push_back(static_cast<uint32_t>(face.mIndices[i]));
+			indices.push_back(static_cast<uint32_t>(face.mIndices[i]) + vertexOffset);
 		}
 	}
 
@@ -690,10 +692,6 @@ void RenderManager::ProcessMesh(
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	}
-
-	vertices.insert(vertices.end(), vertices.begin(), vertices.end());
-	indices.insert(indices.end(), indices.begin(), indices.end());
-
 }
 
 //@TODO This function is incomplete.

@@ -25,7 +25,7 @@ private:
 	MeshType currentMesh{ MeshType::PLANE };
 
 	//ImGui - Projection
-	float cNear{ 0.05f }, cFar{ 45.f };
+	float cNear{ 0.001f }, cFar{ 45.f };
 	float cFov{ 22.5f };
 	//ImGui - Object
 	std::filesystem::path objPath = "";
