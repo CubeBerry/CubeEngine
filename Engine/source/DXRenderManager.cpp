@@ -497,25 +497,26 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				}
 #endif
 			}
-
-			if (skyboxEnabled)
-			{
-				m_commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
-				m_commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
-				m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_srvHeap.Get() };
-				m_commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
-
-				glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
-				m_commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
-				m_commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
-
-				D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
-				m_commandList->IASetVertexBuffers(0, 1, &vbv);
-
-				m_commandList->DrawInstanced(36, 1, 0, 0);
-			}
 		}
+
+		if (skyboxEnabled)
+		{
+			m_commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
+			m_commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
+			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_srvHeap.Get() };
+			m_commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
+
+			glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
+			m_commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
+			m_commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
+
+			D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
+			m_commandList->IASetVertexBuffers(0, 1, &vbv);
+
+			m_commandList->DrawInstanced(36, 1, 0, 0);
+		}
+
 	}
 	break;
 	}

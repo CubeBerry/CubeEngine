@@ -426,38 +426,6 @@ void RenderManager::CreateMesh(
 	}
 	break;
 	}
-
-	//glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
-	//for (auto it = vertices.begin(); it != vertices.end(); ++it)
-	//{
-	//	minPos = glm::min(minPos, glm::vec3(it->position));
-	//	maxPos = glm::max(maxPos, glm::vec3(it->position));
-	//}
-
-	//glm::vec3 center;
-	//float unitScale;
-
-	//center = (minPos + maxPos) / 2.f;
-	//glm::vec3 size = maxPos - minPos;
-	//float extent = glm::max(size.x, glm::max(size.y, size.z));
-	//unitScale = 1.f / extent;
-
-	for (auto it = vertices.begin(); it != vertices.end(); ++it)
-	{
-		//if (type == MeshType::OBJ)
-		//{
-		//	it->position -= center;
-		//	it->position *= glm::vec3(unitScale, unitScale, unitScale);
-		//}
-
-#ifdef _DEBUG
-		glm::vec3 start = it->position;
-		glm::vec3 end = it->position + it->normal * 0.1f;
-
-		//normalVertices.push_back(ThreeDimension::NormalVertex{ start });
-		//normalVertices.push_back(ThreeDimension::NormalVertex{ end });
-#endif
-	}
 }
 
 void RenderManager::BuildIndices(const std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices, const int stacks, const int slices)
@@ -568,6 +536,29 @@ void RenderManager::ProcessMesh(
 	{
 		minPos = glm::min(minPos, glm::vec3(it->position));
 		maxPos = glm::max(maxPos, glm::vec3(it->position));
+	}
+
+	//glm::vec3 center;
+	//float unitScale;
+
+	//center = (minPos + maxPos) / 2.f;
+	//glm::vec3 size = maxPos - minPos;
+	//float extent = glm::max(size.x, glm::max(size.y, size.z));
+	//unitScale = 1.f / extent;
+
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	{
+		// @TODO Find a way to apply unit scale
+		//it->position -= center;
+		//it->position *= glm::vec3(unitScale, unitScale, unitScale);
+
+#ifdef _DEBUG
+		glm::vec3 start = it->position;
+		glm::vec3 end = it->position + it->normal * 0.1f;
+
+		normalVertices.push_back(ThreeDimension::NormalVertex{ start });
+		normalVertices.push_back(ThreeDimension::NormalVertex{ end });
+#endif
 	}
 
 	// Uniform

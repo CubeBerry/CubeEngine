@@ -169,7 +169,7 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 	VKAttributeLayout normal_layout;
 	normal_layout.vertex_layout_location = 1;
-	normal_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	normal_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	normal_layout.offset = offsetof(ThreeDimension::QuantizedVertex, normal);
 
 	VKAttributeLayout uv_layout;
