@@ -258,140 +258,124 @@ void Sprite::UpdateProjection()
 
 void Sprite::AddQuad(glm::vec4 color_)
 {
-	//RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	//bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
+	SubMesh subMesh;
 
-	//auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	subMesh.bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
-	//auto& indices = bufferWrapper.GetIndices();
-	//indices.push_back(0);
-	//indices.push_back(1);
-	//indices.push_back(2);
-	//indices.push_back(2);
-	//indices.push_back(3);
-	//indices.push_back(0);
+	auto& vertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 
-	//glm::mat4 decodeMat = renderManager->CreateMesh(vertices);
+	auto& indices = subMesh.bufferWrapper.GetIndices();
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(2);
+	indices.push_back(3);
+	indices.push_back(0);
 
-	//auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-	//vertexUniform.model = glm::mat4(1.f);
-	//vertexUniform.view = glm::mat4(1.f);
-	//vertexUniform.projection = glm::mat4(1.f);
-	//vertexUniform.decode = decodeMat;
-	//vertexUniform.color = color_;
-	//vertexUniform.isTex = 0.f;
-	//vertexUniform.isTexel = 0.f;
+	auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = renderManager->CreateMesh(vertices);
+	vertexUniform.color = color_;
+	vertexUniform.isTex = 0.f;
+	vertexUniform.isTexel = 0.f;
 
-	//auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
-	//fragmentUniform.texIndex = 0;
+	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
-	//switch (Engine::Instance().GetRenderManager()->GetGraphicsMode())
-	//{
-	//case GraphicsMode::GL:
-	//{
-	//	dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	//	bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+	renderManager->InitializeBuffers(subMesh.bufferWrapper, indices);
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
-	//	//Attributes
-	//	GLAttributeLayout position_layout;
-	//	position_layout.component_type = GLAttributeLayout::UInt;
-	//	position_layout.component_dimension = GLAttributeLayout::_1;
-	//	position_layout.normalized = false;
-	//	position_layout.vertex_layout_location = 0;
-	//	position_layout.stride = sizeof(TwoDimension::Vertex);
-	//	position_layout.offset = 0;
-	//	position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(TwoDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-	//	bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-	//	bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
-	//}
-	//break;
-	//case GraphicsMode::VK:
-	//	dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	//	break;
-	//case GraphicsMode::DX:
-	//	dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	//	break;
-	//}
+		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
+	}
 
-	//SetSpriteDrawType(SpriteDrawType::TwoDimension);
-	//AddSpriteToManager();
+	subMeshes.push_back(std::move(subMesh));
+
+	SetSpriteDrawType(SpriteDrawType::TwoDimension);
+	AddSpriteToManager();
 }
 
 void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexel_)
 {
-	//RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	//bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
+	SubMesh subMesh;
 
-	//auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	subMesh.bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
-	//auto& indices = bufferWrapper.GetIndices();
-	//indices.push_back(0);
-	//indices.push_back(1);
-	//indices.push_back(2);
-	//indices.push_back(2);
-	//indices.push_back(3);
-	//indices.push_back(0);
+	auto& vertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
 
-	//glm::mat4 decodeMat = renderManager->CreateMesh(vertices);
+	auto& indices = subMesh.bufferWrapper.GetIndices();
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(2);
+	indices.push_back(3);
+	indices.push_back(0);
 
-	//auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-	//vertexUniform.model = glm::mat4(1.f);
-	//vertexUniform.view = glm::mat4(1.f);
-	//vertexUniform.projection = glm::mat4(1.f);
-	//vertexUniform.decode = decodeMat;
-	//vertexUniform.color = color_;
-	//vertexUniform.isTex = 0.f;
-	//vertexUniform.isTexel = isTexel_;
+	auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = renderManager->CreateMesh(vertices);
+	vertexUniform.color = color_;
+	vertexUniform.isTex = 0.f;
+	vertexUniform.isTexel = isTexel_;
 
-	//auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
-	//fragmentUniform.texIndex = 0;
+	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
 
-	//switch (Engine::Instance().GetRenderManager()->GetGraphicsMode())
-	//{
-	//case GraphicsMode::GL:
-	//{
-	//	dynamic_cast<GLRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	//	bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+	renderManager->InitializeBuffers(subMesh.bufferWrapper, indices);
+	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
-	//	//Attributes
-	//	GLAttributeLayout position_layout;
-	//	position_layout.component_type = GLAttributeLayout::UInt;
-	//	position_layout.component_dimension = GLAttributeLayout::_1;
-	//	position_layout.normalized = false;
-	//	position_layout.vertex_layout_location = 0;
-	//	position_layout.stride = sizeof(TwoDimension::Vertex);
-	//	position_layout.offset = 0;
-	//	position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
+		//Attributes
+		GLAttributeLayout position_layout;
+		position_layout.component_type = GLAttributeLayout::UInt;
+		position_layout.component_dimension = GLAttributeLayout::_1;
+		position_layout.normalized = false;
+		position_layout.vertex_layout_location = 0;
+		position_layout.stride = sizeof(TwoDimension::Vertex);
+		position_layout.offset = 0;
+		position_layout.relative_offset = offsetof(TwoDimension::Vertex, position);
 
-	//	bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.AddVertexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
-	//	bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray.SetIndexBuffer(std::move(*bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
-	//}
-	//break;
-	//case GraphicsMode::VK:
-	//	dynamic_cast<VKRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	//	break;
-	//case GraphicsMode::DX:
-	//	dynamic_cast<DXRenderManager*>(renderManager)->InitializeBuffers(bufferWrapper, indices);
-	//	break;
-	//}
+		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(TwoDimension::Vertex), { position_layout });
+		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
+	}
 
-	//ChangeTexture(name_);
-	//switch (renderManager->GetGraphicsMode())
-	//{
-	//case GraphicsMode::GL:
-	//	textureSize = dynamic_cast<GLRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
-	//	break;
-	//case GraphicsMode::VK:
-	//	textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
-	//	break;
-	//case GraphicsMode::DX:
-	//	textureSize = dynamic_cast<DXRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
-	//	break;
-	//}
+	subMeshes.push_back(std::move(subMesh));
 
-	//SetSpriteDrawType(SpriteDrawType::TwoDimension);
-	//AddSpriteToManager();
+	ChangeTexture(name_);
+	switch (renderManager->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
+		textureSize = dynamic_cast<GLRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
+		break;
+	case GraphicsMode::VK:
+		textureSize = dynamic_cast<VKRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
+		break;
+	case GraphicsMode::DX:
+		textureSize = dynamic_cast<DXRenderManager*>(renderManager)->GetTexture(name_)->GetSize();
+		break;
+	}
+
+	SetSpriteDrawType(SpriteDrawType::TwoDimension);
+	AddSpriteToManager();
 }
 
 void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
@@ -553,155 +537,155 @@ void Sprite::PlayAnimation(int anim)
 
 void Sprite::UpdateAnimation(float dt)
 {
-	//if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
-	//{
-	//	animations[currAnim]->Update(dt);
-	//	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-	//	vertexUniform.frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
-	//	vertexUniform.texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
-	//}
+	if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
+	{
+		animations[currAnim]->Update(dt);
+		auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+		vertexUniform.frameSize = glm::vec3(GetFrameSize() / textureSize, 0.f);
+		vertexUniform.texelPos = glm::vec3(GetFrameTexel(animations[currAnim]->GetDisplayFrame()) / textureSize, 0.f);
+	}
 }
 
 void Sprite::ChangeTexture(std::string name)
 {
-	//RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	//switch (renderManager->GetGraphicsMode())
-	//{
-	//case GraphicsMode::GL:
-	//{
-	//	GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-	//	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//	{
-	//		if (renderManagerGL->GetTexture(name) != nullptr)
-	//		{
-	//			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	switch (renderManager->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
+	{
+		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			if (renderManagerGL->GetTexture(name) != nullptr)
+			{
+				auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 
-	//			fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-	//			vertexUniform.isTex = true;
-	//			isTex = true;
-	//			textureName = name;
-	//		}
-	//		else
-	//		{
-	//			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				vertexUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//			vertexUniform.isTex = false;
-	//			isTex = false;
-	//		}
-	//	}
-	//	else
-	//	{
-	//		if (renderManagerGL->GetTexture(name) != nullptr)
-	//		{
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				vertexUniform.isTex = false;
+				isTex = false;
+			}
+		}
+		else
+		{
+			if (renderManagerGL->GetTexture(name) != nullptr)
+			{
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//			fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-	//			fragmentUniform.isTex = true;
-	//			isTex = true;
-	//			textureName = name;
-	//		}
-	//		else
-	//		{
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
+				fragmentUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//			fragmentUniform.isTex = false;
-	//			isTex = false;
-	//		}
-	//	}
-	//	break;
-	//}
-	//case GraphicsMode::VK:
-	//{
-	//	VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
-	//	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//	{
-	//		if (renderManagerVK->GetTexture(name) != nullptr)
-	//		{
-	//			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+				fragmentUniform.isTex = false;
+				isTex = false;
+			}
+		}
+		break;
+	}
+	case GraphicsMode::VK:
+	{
+		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			if (renderManagerVK->GetTexture(name) != nullptr)
+			{
+				auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 
-	//			fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-	//			vertexUniform.isTex = true;
-	//			isTex = true;
-	//			textureName = name;
-	//		}
-	//		else
-	//		{
-	//			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				vertexUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//			vertexUniform.isTex = false;
-	//			isTex = false;
-	//		}
-	//	}
-	//	else
-	//	{
-	//		if (renderManagerVK->GetTexture(name) != nullptr)
-	//		{
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				vertexUniform.isTex = false;
+				isTex = false;
+			}
+		}
+		else
+		{
+			if (renderManagerVK->GetTexture(name) != nullptr)
+			{
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//			fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-	//			fragmentUniform.isTex = true;
-	//			isTex = true;
-	//			textureName = name;
-	//		}
-	//		else
-	//		{
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
+				fragmentUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//			fragmentUniform.isTex = false;
-	//			isTex = false;
-	//		}
-	//	}
-	//	break;
-	//}
-	//case GraphicsMode::DX:
-	//{
-	//	DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
-	//	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//	{
-	//		if (renderManagerDX->GetTexture(name) != nullptr)
-	//		{
-	//			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+				fragmentUniform.isTex = false;
+				isTex = false;
+			}
+		}
+		break;
+	}
+	case GraphicsMode::DX:
+	{
+		DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			if (renderManagerDX->GetTexture(name) != nullptr)
+			{
+				auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 
-	//			fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
-	//			vertexUniform.isTex = true;
-	//			isTex = true;
-	//			textureName = name;
-	//		}
-	//		else
-	//		{
-	//			auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
+				vertexUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//			vertexUniform.isTex = false;
-	//			isTex = false;
-	//		}
-	//	}
-	//	else
-	//	{
-	//		if (renderManagerDX->GetTexture(name) != nullptr)
-	//		{
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				vertexUniform.isTex = false;
+				isTex = false;
+			}
+		}
+		else
+		{
+			if (renderManagerDX->GetTexture(name) != nullptr)
+			{
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//			fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
-	//			fragmentUniform.isTex = true;
-	//			isTex = true;
-	//			textureName = name;
-	//		}
-	//		else
-	//		{
-	//			auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
+				fragmentUniform.isTex = true;
+				isTex = true;
+				textureName = name;
+			}
+			else
+			{
+				auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//			fragmentUniform.isTex = false;
-	//			isTex = false;
-	//		}
-	//	}
-	//	break;
-	//}
-	//default:
-	//	break;
-	//}
+				fragmentUniform.isTex = false;
+				isTex = false;
+			}
+		}
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 void Sprite::AddSpriteToManager()
@@ -711,18 +695,18 @@ void Sprite::AddSpriteToManager()
 
 void Sprite::SetColor(glm::vec4 color)
 {
-	//if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//{
-	//	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+	{
+		auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//	vertexUniform.color = color;
-	//}
-	//else
-	//{
-	//	auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+		vertexUniform.color = color;
+	}
+	else
+	{
+		auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
 
-	//	vertexUniform.color = color;
-	//}
+		vertexUniform.color = color;
+	}
 }
 
 glm::vec4 Sprite::GetColor()
@@ -743,64 +727,64 @@ glm::vec4 Sprite::GetColor()
 
 void Sprite::SetIsTex(bool state)
 {
-	//isTex = state;
-	//RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	//switch (renderManager->GetGraphicsMode())
-	//{
-	//case GraphicsMode::GL:
-	//{
-	//	//GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-	//	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//	{
-	//		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+	isTex = state;
+	RenderManager* renderManager = Engine::Instance().GetRenderManager();
+	switch (renderManager->GetGraphicsMode())
+	{
+	case GraphicsMode::GL:
+	{
+		//GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//		vertexUniform.isTex = state;
-	//	}
-	//	else
-	//	{
-	//		auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			vertexUniform.isTex = state;
+		}
+		else
+		{
+			auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//		fragmentUniform.isTex = state;
-	//	}
-	//	break;
-	//}
-	//case GraphicsMode::DX:
-	//{
-	//	//DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
-	//	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//	{
-	//		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+			fragmentUniform.isTex = state;
+		}
+		break;
+	}
+	case GraphicsMode::DX:
+	{
+		//DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//		vertexUniform.isTex = state;
-	//	}
-	//	else
-	//	{
-	//		auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			vertexUniform.isTex = state;
+		}
+		else
+		{
+			auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//		fragmentUniform.isTex = state;
-	//	}
-	//	break;
-	//}
-	//case GraphicsMode::VK:
-	//{
-	//	//VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
-	//	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	//	{
-	//		auto& vertexUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+			fragmentUniform.isTex = state;
+		}
+		break;
+	}
+	case GraphicsMode::VK:
+	{
+		//VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
+		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
+		{
+			auto& vertexUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
 
-	//		vertexUniform.isTex = state;
-	//	}
-	//	else
-	//	{
-	//		auto& fragmentUniform = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			vertexUniform.isTex = state;
+		}
+		else
+		{
+			auto& fragmentUniform = subMeshes[0].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 
-	//		fragmentUniform.isTex = state;
-	//	}
-	//	break;
-	//}
-	//default:
-	//	break;
-	//}
+			fragmentUniform.isTex = state;
+		}
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 glm::vec2 Sprite::GetFrameTexel(int frameNum) const
