@@ -12,7 +12,6 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
-#include "GLVertexArray.hpp"
 #include "RenderManager.hpp"
 
 enum class SpriteDrawType
@@ -66,28 +65,22 @@ public:
 	int GetSlices() const { return slices; };
 	std::string GetTextureName() { return textureName; }
 	bool GetIsTex() const { return isTex; }
-	glm::vec3 GetSpecularColor() { return bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.specularColor; }
-	float GetShininess() { return bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.shininess; }
-	float GetMetallic() { return bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic;
-	}
-	float GetRoughness() { return bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness; }
+	glm::vec3 GetSpecularColor(int index = 0) { return subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.specularColor; }
+	float GetShininess(int index = 0) { return subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.shininess; }
+	float GetMetallic(int index = 0) { return subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic; }
+	float GetRoughness(int index = 0) { return subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness; }
 	// Buffer
-	//VertexBufferWrapper* GetVertexBuffer() { return &vertexBuffer; }
-	//IndexBufferWrapper* GetIndexBuffer() { return &indexBuffer; }
-	//VertexUniformBufferWrapper* GetVertexUniformBuffer() { return &vertexUniformBuffer; }
-	//FragmentUniformBufferWrapper* GetFragmentUniformBuffer() { return &fragmentUniformBuffer; }
-	//MaterialUniformBufferWrapper* GetMaterialUniformBuffer() { return &materialUniformBuffer; }
-	BufferWrapper* GetBufferWrapper() { return &bufferWrapper; };
+	std::vector<SubMesh>& GetSubMeshes() { return subMeshes; }
 
 	//Setter
 	void AddSpriteToManager();
 	void SetColor(glm::vec4 color);
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	void SetIsTex(bool state);
-	void SetSpecularColor(glm::vec3 sColor) { bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.specularColor = sColor; }
-	void SetShininess(float amount) { bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.shininess = amount; }
-	void SetMetallic(float amount) { bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = amount; }
-	void SetRoughness(float amount) { bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = amount; }
+	void SetSpecularColor(glm::vec3 sColor, int index = 0) { subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.specularColor = sColor; }
+	void SetShininess(float amount, int index = 0) { subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.shininess = amount; }
+	void SetMetallic(float amount, int index = 0) { subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = amount; }
+	void SetRoughness(float amount, int index = 0) { subMeshes[index].bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = amount; }
 
 	//For CompFuncQueue
 	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f);
@@ -116,10 +109,5 @@ private:
 	std::string textureName = "";
 
 	// Buffer
-	//VertexBufferWrapper vertexBuffer;
-	//IndexBufferWrapper indexBuffer;
-	//VertexUniformBufferWrapper vertexUniformBuffer;
-	//FragmentUniformBufferWrapper fragmentUniformBuffer;
-	//MaterialUniformBufferWrapper materialUniformBuffer;
-	BufferWrapper bufferWrapper;
+	std::vector<SubMesh> subMeshes;
 };

@@ -68,59 +68,59 @@ private:
 public:
 	struct GLBuffer
 	{
-		GLVertexArray vertexArray;
-		GLVertexBuffer* vertexBuffer;
+		std::unique_ptr<GLVertexArray> vertexArray;
+		std::unique_ptr<GLVertexBuffer> vertexBuffer;
 #ifdef _DEBUG
-		GLVertexArray normalVertexArray;
-		GLVertexBuffer* normalVertexBuffer;
+		std::unique_ptr<GLVertexArray> normalVertexArray;
+		std::unique_ptr<GLVertexBuffer> normalVertexBuffer;
 #endif
-		GLIndexBuffer* indexBuffer;
+		std::unique_ptr<GLIndexBuffer> indexBuffer;
 	};
 
 	struct GLUniformBuffer2D
 	{
-		GLUniformBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-		GLUniformBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+		std::unique_ptr<GLUniformBuffer<TwoDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<GLUniformBuffer<TwoDimension::FragmentUniform>> fragmentUniformBuffer;
 	};
 
 	struct GLUniformBuffer3D
 	{
-		GLUniformBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-		GLUniformBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-		GLUniformBuffer<ThreeDimension::Material>* materialUniformBuffer;
+		std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<GLUniformBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
+		std::unique_ptr<GLUniformBuffer<ThreeDimension::Material>> materialUniformBuffer;
 	};
 
 	//--------------------Vulkan--------------------//
 	struct VKBuffer
 	{
-		VKVertexBuffer* vertexBuffer;
+		std::unique_ptr<VKVertexBuffer> vertexBuffer;
 #ifdef _DEBUG
-		VKVertexBuffer* normalVertexBuffer;
+		std::unique_ptr<VKVertexBuffer> normalVertexBuffer;
 #endif
-		VKIndexBuffer* indexBuffer;
+		std::unique_ptr<VKIndexBuffer> indexBuffer;
 	};
 
 	//--------------------DirectX--------------------//
 	struct DXBuffer
 	{
-		DXVertexBuffer* vertexBuffer;
+		std::unique_ptr<DXVertexBuffer> vertexBuffer;
 #ifdef _DEBUG
-		DXVertexBuffer* normalVertexBuffer;
+		std::unique_ptr<DXVertexBuffer> normalVertexBuffer;
 #endif
-		DXIndexBuffer* indexBuffer;
+		std::unique_ptr<DXIndexBuffer> indexBuffer;
 	};
 
 	struct DXConstantBuffer2D
 	{
-		DXConstantBuffer<TwoDimension::VertexUniform>* vertexUniformBuffer;
-		DXConstantBuffer<TwoDimension::FragmentUniform>* fragmentUniformBuffer;
+		std::unique_ptr<DXConstantBuffer<TwoDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<DXConstantBuffer<TwoDimension::FragmentUniform>> fragmentUniformBuffer;
 	};
 
 	struct DXConstantBuffer3D
 	{
-		DXConstantBuffer<ThreeDimension::VertexUniform>* vertexUniformBuffer;
-		DXConstantBuffer<ThreeDimension::FragmentUniform>* fragmentUniformBuffer;
-		DXConstantBuffer<ThreeDimension::Material>* materialUniformBuffer;
+		std::unique_ptr<DXConstantBuffer<ThreeDimension::VertexUniform>> vertexUniformBuffer;
+		std::unique_ptr<DXConstantBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
+		std::unique_ptr<DXConstantBuffer<ThreeDimension::Material>> materialUniformBuffer;
 	};
 
 private:
@@ -132,8 +132,12 @@ public:
 	{
 		bufferData.classifiedData = std::monostate{};
 	}
-	// @TODO Should I use std::unique_ptr of raw pointers?
-	~BufferWrapper();
+	~BufferWrapper() = default;
+
+	BufferWrapper(const BufferWrapper&) = delete;
+	BufferWrapper& operator=(const BufferWrapper&) = delete;
+	BufferWrapper(BufferWrapper&&) = default;
+	BufferWrapper& operator=(BufferWrapper&&) = default;
 
 	void Initialize(GraphicsMode mode, RenderType type)
 	{
@@ -146,16 +150,19 @@ public:
 					uniformBuffer = GLUniformBuffer2D{};
 					bufferData.classifiedData = BufferData2D{};
 
-					std::get<GLBuffer>(buffer).vertexArray.Initialize();
+					std::get<GLBuffer>(buffer).vertexArray = std::make_unique<GLVertexArray>();
+					std::get<GLBuffer>(buffer).vertexArray->Initialize();
 				}
 				else if (type == RenderType::ThreeDimension)
 				{
 					uniformBuffer = GLUniformBuffer3D{};
 					bufferData.classifiedData = BufferData3D{};
 
-					std::get<GLBuffer>(buffer).vertexArray.Initialize();
+					std::get<GLBuffer>(buffer).vertexArray = std::make_unique<GLVertexArray>();
+					std::get<GLBuffer>(buffer).vertexArray->Initialize();
 #ifdef _DEBUG
-					std::get<GLBuffer>(buffer).normalVertexArray.Initialize();
+					std::get<GLBuffer>(buffer).normalVertexArray = std::make_unique<GLVertexArray>();
+					std::get<GLBuffer>(buffer).normalVertexArray->Initialize();
 #endif
 				}
 				break;
@@ -202,6 +209,12 @@ public:
 	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
 };
 
+struct SubMesh
+{
+	BufferWrapper bufferWrapper;
+	ThreeDimension::Material material;
+};
+
 enum class PolygonType
 {
 	FILL,
@@ -246,12 +259,10 @@ public:
 	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
 
 	//--------------------3D Render--------------------//
-	glm::mat4 CreateMesh(
-		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices, std::vector<uint32_t>& indices,
-#ifdef _DEBUG
-		std::vector<ThreeDimension::NormalVertex>& normalVertices,
-#endif
-		MeshType type, const std::filesystem::path& path, int stacks, int slices
+	void CreateMesh(
+		std::vector<SubMesh>& subMeshes,
+		MeshType type, const std::filesystem::path& path, int stacks, int slices,
+		glm::vec4 color, float metallic, float roughness
 	);
 	void AddDirectionalLight(const ThreeDimension::DirectionalLightUniform& light)
 	{
@@ -317,11 +328,13 @@ private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp
 	void ProcessNode(
-		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
-		const aiNode* node, const aiScene* scene, int childCount);
+		std::vector<SubMesh>& subMeshes,
+		const aiNode* node, const aiScene* scene, int childCount,
+		glm::vec4 color, float metallic, float roughness);
 	void ProcessMesh(
-		std::vector<ThreeDimension::Vertex>& vertices, std::vector<uint32_t>& indices,
-		const aiMesh* mesh, const aiScene* scene, int childCount, uint32_t vertexOffset);
+		std::vector<SubMesh>& subMeshes,
+		const aiMesh* mesh, const aiScene* scene, int childCount,
+		glm::vec4 color, float metallic, float roughness);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 	glm::mat4 Quantize(
