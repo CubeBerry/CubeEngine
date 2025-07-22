@@ -5,7 +5,6 @@
 #pragma once
 #include "Component.hpp"
 #include "Animation.hpp"
-#include "../Material.hpp"
 
 #include <filesystem>
 #include <string>

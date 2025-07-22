@@ -26,6 +26,12 @@ class DXRenderManager : public RenderManager
 {
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
+
+	DXRenderManager(const DXRenderManager&) = delete;
+	DXRenderManager& operator=(const DXRenderManager&) = delete;
+	DXRenderManager(const DXRenderManager&&) = delete;
+	DXRenderManager& operator=(const DXRenderManager&&) = delete;
+
 	~DXRenderManager() override;
 	void Initialize(SDL_Window* window);
 	void SetResize(const int width, const int height);

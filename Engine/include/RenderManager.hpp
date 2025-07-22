@@ -222,6 +222,12 @@ enum class MeshType
 class RenderManager
 {
 public:
+	RenderManager() = default;
+	RenderManager(const RenderManager&) = delete;
+	RenderManager& operator=(const RenderManager&) = delete;
+	RenderManager(const RenderManager&&) = delete;
+	RenderManager& operator=(const RenderManager&&) = delete;
+
 	virtual ~RenderManager() = default;
 
 	//--------------------Common--------------------//
