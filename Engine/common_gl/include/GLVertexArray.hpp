@@ -5,7 +5,6 @@
 #include "glew/glew.h"
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
-#include <vector>
 
 struct GLAttributeLayout
 {

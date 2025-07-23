@@ -234,6 +234,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	CreateRootSignature(m_rootSignature3DNormal, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
 
+	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
 	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
@@ -390,23 +391,26 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 		for (const auto& sprite : sprites)
 		{
-			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
-			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
+			for (auto& subMesh : sprite->GetSubMeshes())
+			{
+				auto& buffer = subMesh.bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+				auto& constantBuffer = subMesh.bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
 
-			// Update Constant Buffer
-			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
-			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
+				// Update Constant Buffer
+				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
+				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
 
-			// Bind Vertex Buffer & Index Buffer
-			D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
-			D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
-			m_commandList->IASetVertexBuffers(0, 1, &vbv);
-			m_commandList->IASetIndexBuffer(&ibv);
-			// Bind constant buffers to root signature
-			m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				// Bind Vertex Buffer & Index Buffer
+				D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
+				D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
+				m_commandList->IASetVertexBuffers(0, 1, &vbv);
+				m_commandList->IASetIndexBuffer(&ibv);
+				// Bind constant buffers to root signature
+				m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
-			m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper.GetIndices().size()), 1, 0, 0, 0);
+			}
 		}
 	}
 	break;
@@ -418,78 +422,81 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 		for (const auto& sprite : sprites)
 		{
-			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-			auto& buffer = sprite->GetBufferWrapper()->GetBuffer<BufferWrapper::DXBuffer>();
-			auto& constantBuffer = sprite->GetBufferWrapper()->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
-
-			// Update Constant Buffer
-			constantBuffer.vertexUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-			constantBuffer.fragmentUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-			constantBuffer.materialUniformBuffer->UpdateConstant(&sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
-
-			if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
+			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
-				m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			}
-			if (pointLightUniformBuffer && !pointLightUniforms.empty())
-			{
-				pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
-				m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			}
+				m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-			pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-			m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
+				auto& buffer = subMesh.bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+				auto& constantBuffer = subMesh.bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
-			m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+				// Update Constant Buffer
+				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
+				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
+				constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
 
-			if (skyboxEnabled && m_skybox)
-			{
-				m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
-			}
+				if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
+				{
+					directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
+					m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				}
+				if (pointLightUniformBuffer && !pointLightUniforms.empty())
+				{
+					pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
+					m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				}
 
-			// Bind Vertex Buffer & Index Buffer
-			D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
-			D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
-			m_commandList->IASetVertexBuffers(0, 1, &vbv);
-			m_commandList->IASetIndexBuffer(&ibv);
-			// Bind constant buffers to root signature
-			m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-			m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
+				pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
+				m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
 
-			m_commandList->DrawIndexedInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+
+				if (skyboxEnabled && m_skybox)
+				{
+					m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
+				}
+
+				// Bind Vertex Buffer & Index Buffer
+				D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
+				D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
+				m_commandList->IASetVertexBuffers(0, 1, &vbv);
+				m_commandList->IASetIndexBuffer(&ibv);
+				// Bind constant buffers to root signature
+				m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper.GetIndices().size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
-			if (isDrawNormals)
-			{
-				m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
-				m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
-				m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-				auto& vertexUniform = sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-				glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-				m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
-
-				vbv = buffer.normalVertexBuffer->GetView();
-				m_commandList->IASetVertexBuffers(0, 1, &vbv);
-
-				m_commandList->DrawInstanced(static_cast<UINT>(sprite->GetBufferWrapper()->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
-
-				switch (pMode)
+				if (isDrawNormals)
 				{
-				case PolygonType::FILL:
-					m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
-					break;
-				case PolygonType::LINE:
-					m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
-					break;
+					m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
+					m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
+					m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+					auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
+					m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
+
+					vbv = buffer.normalVertexBuffer->GetView();
+					m_commandList->IASetVertexBuffers(0, 1, &vbv);
+
+					m_commandList->DrawInstanced(static_cast<UINT>(subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+
+					switch (pMode)
+					{
+					case PolygonType::FILL:
+						m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
+						break;
+					case PolygonType::LINE:
+						m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
+						break;
+					}
+					m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
 				}
-				m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
-			}
 #endif
+			}
 		}
 
 		if (skyboxEnabled)
@@ -509,6 +516,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 			m_commandList->DrawInstanced(36, 1, 0, 0);
 		}
+
 	}
 	break;
 	}

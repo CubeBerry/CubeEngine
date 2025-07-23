@@ -26,6 +26,12 @@ class DXRenderManager : public RenderManager
 {
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
+
+	DXRenderManager(const DXRenderManager&) = delete;
+	DXRenderManager& operator=(const DXRenderManager&) = delete;
+	DXRenderManager(const DXRenderManager&&) = delete;
+	DXRenderManager& operator=(const DXRenderManager&&) = delete;
+
 	~DXRenderManager() override;
 	void Initialize(SDL_Window* window);
 	void SetResize(const int width, const int height);
@@ -110,27 +116,27 @@ public:
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
-		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().indexBuffer = new DXIndexBuffer(m_device, m_commandQueue, &indices);
+		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().indexBuffer = std::make_unique<DXIndexBuffer>(m_device, m_commandQueue, &indices);
 		if (rMode == RenderType::TwoDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, m_commandQueue, sizeof(TwoDimension::Vertex), sizeof(TwoDimension::Vertex) * static_cast<UINT>(vertices.size()), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(TwoDimension::Vertex)), static_cast<UINT>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
 
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = new DXConstantBuffer<TwoDimension::VertexUniform>(m_device, frameCount);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = new DXConstantBuffer<TwoDimension::FragmentUniform>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = std::make_unique<DXConstantBuffer<TwoDimension::VertexUniform>>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<TwoDimension::FragmentUniform>>(m_device, frameCount);
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
 			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = new DXVertexBuffer(m_device, m_commandQueue, sizeof(ThreeDimension::QuantizedVertex), sizeof(ThreeDimension::QuantizedVertex) * static_cast<UINT>(vertices.size()), vertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::QuantizedVertex)), static_cast<UINT>(sizeof(ThreeDimension::QuantizedVertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
 			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = new DXVertexBuffer(m_device, m_commandQueue, sizeof(ThreeDimension::NormalVertex), sizeof(ThreeDimension::NormalVertex) * static_cast<UINT>(normalVertices.size()), normalVertices.data());
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::NormalVertex)), static_cast<UINT>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = new DXConstantBuffer<ThreeDimension::VertexUniform>(m_device, frameCount);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = new DXConstantBuffer<ThreeDimension::FragmentUniform>(m_device, frameCount);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = new DXConstantBuffer<ThreeDimension::Material>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::VertexUniform>>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount);
+			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
 		}
 	}
 
