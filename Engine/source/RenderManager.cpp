@@ -650,11 +650,8 @@ void RenderManager::ProcessMesh(
 	}
 
 	// Material
-	if (mesh->mMaterialIndex >= 0)
-	{
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-		LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-	}
+	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+	LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 
 	for (auto it = vertices.begin(); it != vertices.end(); ++it)
 	{
