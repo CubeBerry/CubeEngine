@@ -66,13 +66,7 @@ inline LONG WINAPI WriteDump(EXCEPTION_POINTERS* pException)
 namespace DebugTools
 {
 	//--------------------Dump Memory Leaks--------------------//
-	inline void EnableMemoryLeakDetection()
-	{
-		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-		//_CrtSetBreakAlloc(341);
-		//_crtBreakAlloc = 157;
-		//_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-	}
+	void EnableMemoryLeakDetection();
 
 	//--------------------CPU Dump Writer--------------------//
 	inline void EnableWriteDump()
