@@ -47,9 +47,9 @@ layout(std140, binding = 2) uniform vUniformMatrix
 void main()
 {
     // 11, 11, 10
-    float x = float(i_pos & 0x7FFu);
-    float y = float((i_pos >> 11) & 0x7FFu);
-    float z = float((i_pos >> 22) & 0x3FFu);
+    float z = float(i_pos & 0x3FFu);
+    float y = float((i_pos >> 10) & 0x7FFu);
+    float x = float((i_pos >> 21) & 0x7FFu);
     vec3 decoded_position = (matrix.decode * vec4(vec3(x, y, z), 1.0)).xyz;
 
     o_uv = i_uv;

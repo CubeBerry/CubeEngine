@@ -10,6 +10,7 @@ struct GLAttributeLayout
 {
     enum ComponentType : GLenum
     {
+		UShort = GL_UNSIGNED_SHORT,
         Float = GL_FLOAT,
         Int = GL_INT,
 		UInt = GL_UNSIGNED_INT,

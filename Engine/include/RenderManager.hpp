@@ -341,8 +341,10 @@ private:
 
 	glm::mat4 Quantize(
 		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
-		const std::vector<ThreeDimension::Vertex>& vertices,
-		glm::vec3 largestBBoxSize);
+		// Encode
+		// 1. The largest x, y, and z bounding cube sizes among all partitions.
+		float precision,
+		glm::vec3 offset);
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)

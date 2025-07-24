@@ -114,41 +114,206 @@ void RenderManager::CreateMesh(
 {
 	if (type == MeshType::OBJ)
 	{
-		//Assimp Model Load
-		const aiScene* scene = importer.ReadFile(path.string(),
-			aiProcess_Triangulate |
-			aiProcess_GenSmoothNormals |
-			aiProcess_CalcTangentSpace |
-			aiProcess_FlipUVs |
-			aiProcess_JoinIdenticalVertices |
-			aiProcess_TransformUVCoords |
-			aiProcess_PreTransformVertices
-		);
+		////Assimp Model Load
+		//const aiScene* scene = importer.ReadFile(path.string(),
+		//	aiProcess_Triangulate |
+		//	aiProcess_GenSmoothNormals |
+		//	aiProcess_CalcTangentSpace |
+		//	aiProcess_FlipUVs |
+		//	aiProcess_JoinIdenticalVertices |
+		//	aiProcess_TransformUVCoords |
+		//	aiProcess_PreTransformVertices
+		//);
 
-		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+		//if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+		//{
+		//	std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
+		//	std::exit(EXIT_FAILURE);
+		//}
+
+		//glm::vec3 globalMinPos{ FLT_MAX }, globalMaxPos{ FLT_MIN };
+		//for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
+		//{
+		//	aiMesh* mesh = scene->mMeshes[m];
+		//	for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
+		//	{
+		//		aiVector3D vertex = mesh->mVertices[v];
+		//		globalMinPos = glm::min(globalMinPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+		//		globalMaxPos = glm::max(globalMaxPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+		//	}
+		//}
+
+		//glm::vec3 center = (globalMinPos + globalMaxPos) / 2.f;
+		//glm::vec3 size = globalMaxPos - globalMinPos;
+		//float extent = glm::max(size.x, glm::max(size.y, size.z));
+		//float unitScale = 1.f / extent;
+
+		std::ifstream binaryFile(path, std::ios::binary | std::ios::in);
+		if (!binaryFile.is_open())
 		{
-			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
-			std::exit(EXIT_FAILURE);
+			printf("Error during opening binary output file for testing");
+			return;
 		}
 
-		glm::vec3 globalMinPos{ FLT_MAX }, globalMaxPos{ FLT_MIN };
-		for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
+
+		// Read in magic number
+		char magic;
+		binaryFile.read(reinterpret_cast<char*>(&magic), sizeof(char));
+		if (magic != 'Z')
 		{
-			aiMesh* mesh = scene->mMeshes[m];
-			for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
+			printf("Wrong magic during binary export.\n");
+			return;
+		}
+
+		// Read in bits
+		std::vector<int8_t> bits(3);
+		for (int dim = 0; dim < 3; dim++)
+		{
+			binaryFile.read(reinterpret_cast<char*>(&bits[dim]), sizeof(bits[dim]));
+		}
+
+		// Read in precision & number of meshes
+		float precision;
+		binaryFile.read(reinterpret_cast<char*>(&precision), sizeof(precision));
+		int numMeshes;
+		binaryFile.read(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
+
+		// Read in each mesh
+		for (int m = 0; m < numMeshes; ++m)
+		{
+			SubMesh subMesh;
+			subMesh.bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+			auto& quantizedVertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+#ifdef _DEBUG
+			auto& normalVertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+#endif
+			auto& indices = subMesh.bufferWrapper.GetIndices();
+
+			glm::ivec3 offset;
+			int numVertices, numIndices;
+			for (int dim = 0; dim < 3; ++dim)
 			{
-				aiVector3D vertex = mesh->mVertices[v];
-				globalMinPos = glm::min(globalMinPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
-				globalMaxPos = glm::max(globalMaxPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+				binaryFile.read(reinterpret_cast<char*>(&offset[dim]), sizeof(offset[dim]));
 			}
+			binaryFile.read(reinterpret_cast<char*>(&numVertices), sizeof(numVertices));
+			binaryFile.read(reinterpret_cast<char*>(&numIndices), sizeof(numIndices));
+
+			// Read in Quantized Vertex Positions
+			for (int v = 0; v < numVertices; ++v)
+			{
+				if (bits[0] == 16 && bits[1] == 16 && bits[2] == 16)
+				{
+					uint16_t quantized[3];
+					for (int dim = 0; dim < 3; ++dim)
+					{
+						binaryFile.read(reinterpret_cast<char*>(&quantized[dim]), sizeof(quantized[dim]));
+					}
+					//quantizedVertices.emplace_back(ThreeDimension::QuantizedVertex{ {quantized[0], quantized[1], quantized[2] } });
+				}
+				else if (bits[0] + bits[1] + bits[2] == 32)
+				{
+					uint32_t quantized;
+					binaryFile.read(reinterpret_cast<char*>(&quantized), sizeof(quantized));
+					quantizedVertices.emplace_back(ThreeDimension::QuantizedVertex{ quantized });
+				}
+				else
+				{
+					return;
+				}
+			}
+
+			// Read in Indices
+			for (int i = 0; i < numIndices; ++i)
+			{
+				uint32_t index;
+				binaryFile.read(reinterpret_cast<char*>(&index), sizeof(index));
+				indices.push_back(index);
+			}
+
+			// Uniform
+			auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+			vertexUniform.model = glm::mat4(1.f);
+			vertexUniform.view = glm::mat4(1.f);
+			vertexUniform.projection = glm::mat4(1.f);
+			vertexUniform.decode = Quantize(quantizedVertices, precision, offset);
+			vertexUniform.color = color;
+
+			auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			fragmentUniform.texIndex = 0;
+
+			auto& material = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material;
+			material.metallic = metallic;
+			material.roughness = roughness;
+
+			// Initialize Buffers
+			RenderManager* renderManager = Engine::Instance().GetRenderManager();
+			renderManager->InitializeBuffers(subMesh.bufferWrapper, indices);
+
+			if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+			{
+				subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::QuantizedVertex) * quantizedVertices.size()), quantizedVertices.data());
+#ifdef _DEBUG
+				subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
+#endif
+
+				//Attributes
+				GLAttributeLayout position_layout;
+				position_layout.component_type = GLAttributeLayout::UInt;
+				position_layout.component_dimension = GLAttributeLayout::_1;
+				position_layout.normalized = false;
+				position_layout.vertex_layout_location = 0;
+				position_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+				position_layout.offset = 0;
+				position_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, position);
+
+				GLAttributeLayout normal_layout;
+				normal_layout.component_type = GLAttributeLayout::Float;
+				normal_layout.component_dimension = GLAttributeLayout::_3;
+				normal_layout.normalized = false;
+				normal_layout.vertex_layout_location = 1;
+				normal_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+				normal_layout.offset = 0;
+				normal_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, normal);
+
+				GLAttributeLayout uv_layout;
+				uv_layout.component_type = GLAttributeLayout::Float;
+				uv_layout.component_dimension = GLAttributeLayout::_2;
+				uv_layout.normalized = false;
+				uv_layout.vertex_layout_location = 2;
+				uv_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+				uv_layout.offset = 0;
+				uv_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, uv);
+
+				GLAttributeLayout tex_sub_index_layout;
+				tex_sub_index_layout.component_type = GLAttributeLayout::Int;
+				tex_sub_index_layout.component_dimension = GLAttributeLayout::_1;
+				tex_sub_index_layout.normalized = false;
+				tex_sub_index_layout.vertex_layout_location = 3;
+				tex_sub_index_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+				tex_sub_index_layout.offset = 0;
+				tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
+
+				subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+				subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
+
+#ifdef _DEBUG
+				GLAttributeLayout normal_position_layout;
+				normal_position_layout.component_type = GLAttributeLayout::Float;
+				normal_position_layout.component_dimension = GLAttributeLayout::_3;
+				normal_position_layout.normalized = false;
+				normal_position_layout.vertex_layout_location = 0;
+				normal_position_layout.stride = sizeof(ThreeDimension::NormalVertex);
+				normal_position_layout.offset = 0;
+				normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
+
+				subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
+#endif
+			}
+
+			subMeshes.push_back(std::move(subMesh));
 		}
 
-		glm::vec3 center = (globalMinPos + globalMaxPos) / 2.f;
-		glm::vec3 size = globalMaxPos - globalMinPos;
-		float extent = glm::max(size.x, glm::max(size.y, size.z));
-		float unitScale = 1.f / extent;
-
-		ProcessNode(subMeshes, scene->mRootNode, scene, 0, globalMaxPos - globalMinPos, center, unitScale, color, metallic, roughness);
+		//ProcessNode(subMeshes, numMeshes, precision, center, unitScale, color, metallic, roughness);
 		return;
 	}
 
@@ -473,7 +638,7 @@ void RenderManager::CreateMesh(
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
-	vertexUniform.decode = Quantize(quantizedVertices, vertices, maxPos - minPos);
+	//vertexUniform.decode = Quantize(quantizedVertices, vertices, maxPos - minPos);
 	vertexUniform.color = color;
 
 	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
@@ -672,7 +837,7 @@ void RenderManager::ProcessMesh(
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
-	vertexUniform.decode = Quantize(quantizedVertices, vertices, size * unitScale);
+	//vertexUniform.decode = Quantize(quantizedVertices, vertices, size * unitScale);
 	vertexUniform.color = color;
 
 	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
@@ -786,47 +951,18 @@ void RenderManager::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, st
 // https://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
 glm::mat4 RenderManager::Quantize(
 	std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
-	const std::vector<ThreeDimension::Vertex>& vertices,
 	// Encode
 	// 1. The largest x, y, and z bounding cube sizes among all partitions.
-	glm::vec3 largestBBoxSize)
+	float precision,
+	glm::vec3 offset)
 {
-	quantizedVertices.resize(vertices.size());
-
 	// 2. Calculate (Cx, Cy, Cz), the x, y, and z sizes of the quantized cell.
 	// 16, 16
-	const float xAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
-	const float yAxisSteps = static_cast<float>((1 << 11) - 1); // 2048 - 1
-	const float zAxisSteps = static_cast<float>((1 << 10) - 1); // 1024 - 1
-	glm::vec3 C{ largestBBoxSize / glm::vec3{ xAxisSteps, yAxisSteps, zAxisSteps } };
-
-	glm::ivec3 minQuantizedPos{ INT_MAX };
-
-	std::vector<glm::ivec3> quantizedPositions(vertices.size());
-	for (size_t i = 0; i < vertices.size(); ++i)
-	{
-		// 3. Quantize all vertex positions.
-		glm::ivec3 qp{ static_cast<int32_t>(vertices[i].position.x / C.x),
-					  static_cast<int32_t>(vertices[i].position.y / C.y),
-					  static_cast<int32_t>(vertices[i].position.z / C.z) };
-		quantizedPositions[i] = qp;
-
-		minQuantizedPos = glm::min(minQuantizedPos, qp);
-	}
+	glm::vec3 C{ precision };
 
 	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
 	// Then, subtract (Ox, Oy, Oz) from the quantized coordinates of vertices.
-	glm::ivec3 O{ minQuantizedPos };
-	for (size_t i = 0; i < vertices.size(); ++i)
-	{
-		quantizedPositions[i] -= O;
-
-		uint32_t packedPosition = (quantizedPositions[i].z << 22) | (quantizedPositions[i].y << 11) | quantizedPositions[i].x;
-		quantizedVertices[i].position = packedPosition;
-		quantizedVertices[i].normal = vertices[i].normal;
-		quantizedVertices[i].uv = vertices[i].uv;
-		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
-	}
+	glm::ivec3 O{ offset };
 
 	// Decode
 	glm::mat4 translate{ 1.f };
