@@ -9,7 +9,10 @@
 #define MAX_MATRICES 20
 #endif
 
-layout(location = 0) in uint i_pos;
+// 11, 11, 10
+// layout(location = 0) in uint i_pos;
+// 16, 16, 16
+layout(location = 0) in uvec3 i_pos;
 layout(location = 1) in vec3 i_normal;
 layout(location = 2) in vec2 i_uv;
 layout(location = 3) in int tex_sub_index;
@@ -46,11 +49,21 @@ layout(std140, binding = 2) uniform vUniformMatrix
 
 void main()
 {
+    // 10, 10, 10
+    float alpha = float(i_pos & 0x3u);
+    float z = float((i_pos >> 2) & 0x3FFu);
+    float y = float((i_pos >> 12) & 0x3FFu);
+    float x = float((i_pos >> 22) & 0x3FFu);
+    vec3 decoded_position = (matrix.decode * vec4(vec3(x, y, z), 1.0)).xyz;
+
     // 11, 11, 10
     float z = float(i_pos & 0x3FFu);
     float y = float((i_pos >> 10) & 0x7FFu);
     float x = float((i_pos >> 21) & 0x7FFu);
     vec3 decoded_position = (matrix.decode * vec4(vec3(x, y, z), 1.0)).xyz;
+
+    //16, 16, 16
+    // vec3 decoded_position = (matrix.decode * vec4(i_pos, 1.0)).xyz;
 
     o_uv = i_uv;
     o_col = matrix.color;

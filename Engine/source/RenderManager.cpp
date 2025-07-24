@@ -210,7 +210,7 @@ void RenderManager::CreateMesh(
 					}
 					//quantizedVertices.emplace_back(ThreeDimension::QuantizedVertex{ {quantized[0], quantized[1], quantized[2] } });
 				}
-				else if (bits[0] + bits[1] + bits[2] == 32)
+				else if (bits[0] + bits[1] + bits[2] == 32 || bits[0] + bits[1] + bits[2] == 30)
 				{
 					uint32_t quantized;
 					binaryFile.read(reinterpret_cast<char*>(&quantized), sizeof(quantized));
@@ -265,6 +265,16 @@ void RenderManager::CreateMesh(
 				position_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
 				position_layout.offset = 0;
 				position_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, position);
+
+				// 16, 16, 16
+				//GLAttributeLayout position_layout;
+				//position_layout.component_type = GLAttributeLayout::UShort;
+				//position_layout.component_dimension = GLAttributeLayout::_3;
+				//position_layout.normalized = false;
+				//position_layout.vertex_layout_location = 0;
+				//position_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+				//position_layout.offset = 0;
+				//position_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, position);
 
 				GLAttributeLayout normal_layout;
 				normal_layout.component_type = GLAttributeLayout::Float;

@@ -54,7 +54,12 @@ namespace ThreeDimension
 		//glm::vec3 position;
 
 		// vec2 -> uint32_t quantization (11, 11, 10)
+		// 10, 10, 10, 2 for alpha
 		uint32_t position;
+
+		// 16, 16, 16
+		//uint16_t position[3];
+
 		glm::vec3 normal;
 		glm::vec2 uv;
 		int texSubIndex{ 0 };
