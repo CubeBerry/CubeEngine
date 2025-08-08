@@ -43,6 +43,7 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
+	std::cout << GetComponent<Physics2D>()->GetVelocity().y << std::endl;
 	isGrounded = false;
 	for (auto& obj : Engine::GetObjectManager().GetObjectMap())
 	{
@@ -58,10 +59,9 @@ void PPlayer::Update(float dt)
 		}
 	}
 
-	Object::Update(dt);
-	//GetComponent<Physics2D>()->Gravity(dt);
-	Jumping();
 	Control(dt);
+	Object::Update(dt);
+	Jumping();
 
 
 	if (canAttack == false)
