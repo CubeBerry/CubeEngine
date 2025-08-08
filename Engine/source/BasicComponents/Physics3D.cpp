@@ -102,9 +102,23 @@ void Physics3D::UpdatePhysics(float dt)
 		Gravity(dt);
 	}
 
-	force -= velocity * friction;
 	acceleration = force / mass;
 	velocity += acceleration * dt;
+
+	if (friction > 0.f)
+	{
+		if (isGravityOn)
+		{
+			velocity.x *= (1.f - friction * dt);
+			velocity.z *= (1.f - friction * dt);
+		}
+		else
+		{
+			velocity *= (1.f - friction * dt);
+		}
+	}
+
+	force = { 0.f, 0.f, 0.f };
 
 	if (std::abs(velocity.x) > velocityMax.x)
 	{
@@ -133,27 +147,45 @@ void Physics3D::UpdatePhysics(float dt)
 	}
 
 	Component::GetOwner()->SetPosition(Component::GetOwner()->GetPosition() + velocity * dt);
-	force = { 0.f, 0.f, 0.f };
 }
 
 void Physics3D::UpdateForParticle(float dt, glm::vec3& pos)
 {
-	acceleration.x = force.x / mass;
-	velocity.x += acceleration.x * dt;
-	velocity.x *= friction;
-
-	acceleration.y = force.y / mass;
-	velocity.y += acceleration.y * dt;
-	if (isGravityOn == false)
+	if (isGravityOn)
 	{
-		velocity.y *= friction;
+		Gravity(dt);
 	}
 
-	acceleration.z = force.z / mass;
-	velocity.z += acceleration.z * dt;
-	velocity.z *= friction;
+	acceleration = force / mass;
+	velocity += acceleration * dt;
+
+	if (friction > 0.f)
+	{
+		if (isGravityOn)
+		{
+			velocity.x *= (1.f - friction * dt);
+			velocity.z *= (1.f - friction * dt);
+		}
+		else
+		{
+			velocity *= (1.f - friction * dt);
+		}
+	}
 
 	force = { 0.f, 0.f, 0.f };
+
+	if (std::abs(velocity.x) > velocityMax.x)
+	{
+		velocity.x = velocityMax.x * ((velocity.x < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.y) > velocityMax.y)
+	{
+		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.z) > velocityMax.z)
+	{
+		velocity.z = velocityMax.z * ((velocity.z < 0.f) ? -1.f : 1.f);
+	}
 
 	if (std::abs(velocity.x) < velocityMin.x)
 	{
@@ -168,9 +200,7 @@ void Physics3D::UpdateForParticle(float dt, glm::vec3& pos)
 		velocity.z = 0.f;
 	}
 
-	pos.x = (pos.x + velocity.x);
-	pos.y = (pos.y + velocity.y);
-	pos.z = (pos.z + velocity.z);
+	pos += velocity * dt;
 }
 
 void Physics3D::Gravity(float dt)

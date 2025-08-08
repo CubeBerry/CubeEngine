@@ -459,6 +459,6 @@ void PEnemy::UpdateEnemyAirShip(float dt)
 	else
 	{
 		GetComponent<Physics2D>()->SetVelocityX(-80.f);
-		//GetComponent<Physics2D>()->AddForceY(-15.f);
+		GetComponent<Physics2D>()->AddForceY(-650.f);
 	}
 }
