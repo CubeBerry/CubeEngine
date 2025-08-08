@@ -43,7 +43,6 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
-	std::cout << GetComponent<Physics2D>()->GetVelocity().y << std::endl;
 	isGrounded = false;
 	for (auto& obj : Engine::GetObjectManager().GetObjectMap())
 	{
