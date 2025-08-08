@@ -29,9 +29,9 @@ BEUEnemy::BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDe
 
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.0f, 0.f });
-	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,0.5f });
-	GetComponent<Physics2D>()->SetGravity(2.0f);
-	GetComponent<Physics2D>()->SetFriction(1.f);
+	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,50.f });
+	GetComponent<Physics2D>()->SetGravity(75.0f);
+	GetComponent<Physics2D>()->SetFriction(0.f);
 	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 4.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	beatEmUpDemoSystem = sys;
@@ -55,14 +55,14 @@ void BEUEnemy::Update(float dt)
 	{
 		isInvincible = true;
 		SetStateOn(BEUObjectStates::KNOCKBACK);
-		GetComponent<Physics2D>()->SetVelocityY(0.3f);
+		GetComponent<Physics2D>()->SetVelocityY(20.f);
 		if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 		{
-			GetComponent<Physics2D>()->AddForceX(-10.f);
+			GetComponent<Physics2D>()->SetVelocityX(-7.f);
 		}
 		else //Left
 		{
-			GetComponent<Physics2D>()->AddForceX(10.f);
+			GetComponent<Physics2D>()->SetVelocityX(7.f);
 		}
 	}
 	else
@@ -186,27 +186,27 @@ void BEUEnemy::CollideObject(Object* obj)
 				SetStateOn(BEUObjectStates::KNOCKBACK);
 				if (IsStateOn(BEUObjectStates::FALLING) == true || IsStateOn(BEUObjectStates::JUMPING) == true)
 				{
-					GetComponent<Physics2D>()->SetVelocityY(0.3f);
+					GetComponent<Physics2D>()->SetVelocityY(20.f);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 					{
-						GetComponent<Physics2D>()->AddForceX(-10.f);
+						GetComponent<Physics2D>()->SetVelocityX(-7.f);
 					}
 					else //Left
 					{
-						GetComponent<Physics2D>()->AddForceX(10.f);
+						GetComponent<Physics2D>()->SetVelocityX(7.f);
 					}
 				}
 				else
 				{
 					Object::SetYPosition(Object::GetPosition().y + 1.f);
-					GetComponent<Physics2D>()->SetVelocityY(0.3f);
+					GetComponent<Physics2D>()->SetVelocityY(20.f);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true) //Right
 					{
-						GetComponent<Physics2D>()->AddForceX(-10.f);
+						GetComponent<Physics2D>()->SetVelocityX(-7.f);
 					}
 					else //Left
 					{
-						GetComponent<Physics2D>()->AddForceX(10.f);
+						GetComponent<Physics2D>()->SetVelocityX(7.f);
 					}
 				}
 				break;
@@ -451,6 +451,7 @@ void BEUEnemy::Jumping()
 				GetComponent<Sprite>()->PlayAnimation(0);
 			}
 		}
+		SetYPosition(0.f);
 		GetComponent<Physics2D>()->SetVelocityX(0.f);
 		GetComponent<Physics2D>()->SetVelocityY(0.f);
 	}
@@ -494,6 +495,7 @@ void BEUEnemy::KnockBack(float dt)
 		}
 		if (IsStateOn(BEUObjectStates::LAYING) == true)
 		{
+			SetYPosition(0.f);
 			layingDelay += dt;
 			if (hp <= 0.f)
 			{

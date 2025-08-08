@@ -49,6 +49,7 @@ private:
 
 	bool isInvincible = false;
 	bool canAttack = true;
+	bool isGrounded = false;
 
 	float attackDelay = 0.f;
 	float invincibleDelay = 0.f;

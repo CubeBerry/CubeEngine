@@ -99,46 +99,39 @@ void Physics3D::UpdatePhysics(float dt)
 {
 	if (isGravityOn)
 	{
-		force.x = -velocity.x * friction;
-		force.z = -velocity.z * friction;
-	}
-	else
-	{
-		force = -velocity * friction;
+		Gravity(dt);
 	}
 
 	acceleration = force / mass;
-	Gravity(dt);
 	velocity += acceleration * dt;
 
-	velocity = glm::vec3(
-		std::abs(velocity.x) < velocityMin.x ? 0.f : velocity.x,
-		std::abs(velocity.y) < velocityMin.y ? 0.f : velocity.y,
-		std::abs(velocity.z) < velocityMin.z ? 0.f : velocity.z
-	);
-
-	Component::GetOwner()->SetPosition(Component::GetOwner()->GetPosition() + velocity * dt);
-	force = { 0.f, 0.f, 0.f };
-}
-
-void Physics3D::UpdateForParticle(float dt, glm::vec3& pos)
-{
-	acceleration.x = force.x / mass;
-	velocity.x += acceleration.x * dt;
-	velocity.x *= friction;
-
-	acceleration.y = force.y / mass;
-	velocity.y += acceleration.y * dt;
-	if (isGravityOn == false)
+	if (friction > 0.f)
 	{
-		velocity.y *= friction;
+		if (isGravityOn)
+		{
+			velocity.x *= (1.f - friction * dt);
+			velocity.z *= (1.f - friction * dt);
+		}
+		else
+		{
+			velocity *= (1.f - friction * dt);
+		}
 	}
 
-	acceleration.z = force.z / mass;
-	velocity.z += acceleration.z * dt;
-	velocity.z *= friction;
-
 	force = { 0.f, 0.f, 0.f };
+
+	if (std::abs(velocity.x) > velocityMax.x)
+	{
+		velocity.x = velocityMax.x * ((velocity.x < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.y) > velocityMax.y)
+	{
+		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.z) > velocityMax.z)
+	{
+		velocity.z = velocityMax.z * ((velocity.z < 0.f) ? -1.f : 1.f);
+	}
 
 	if (std::abs(velocity.x) < velocityMin.x)
 	{
@@ -153,9 +146,61 @@ void Physics3D::UpdateForParticle(float dt, glm::vec3& pos)
 		velocity.z = 0.f;
 	}
 
-	pos.x = (pos.x + velocity.x);
-	pos.y = (pos.y + velocity.y);
-	pos.z = (pos.z + velocity.z);
+	Component::GetOwner()->SetPosition(Component::GetOwner()->GetPosition() + velocity * dt);
+}
+
+void Physics3D::UpdateForParticle(float dt, glm::vec3& pos)
+{
+	if (isGravityOn)
+	{
+		Gravity(dt);
+	}
+
+	acceleration = force / mass;
+	velocity += acceleration * dt;
+
+	if (friction > 0.f)
+	{
+		if (isGravityOn)
+		{
+			velocity.x *= (1.f - friction * dt);
+			velocity.z *= (1.f - friction * dt);
+		}
+		else
+		{
+			velocity *= (1.f - friction * dt);
+		}
+	}
+
+	force = { 0.f, 0.f, 0.f };
+
+	if (std::abs(velocity.x) > velocityMax.x)
+	{
+		velocity.x = velocityMax.x * ((velocity.x < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.y) > velocityMax.y)
+	{
+		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
+	}
+	if (std::abs(velocity.z) > velocityMax.z)
+	{
+		velocity.z = velocityMax.z * ((velocity.z < 0.f) ? -1.f : 1.f);
+	}
+
+	if (std::abs(velocity.x) < velocityMin.x)
+	{
+		velocity.x = 0.f;
+	}
+	if (std::abs(velocity.y) < velocityMin.y)
+	{
+		velocity.y = 0.f;
+	}
+	if (std::abs(velocity.z) < velocityMin.z)
+	{
+		velocity.z = 0.f;
+	}
+
+	pos += velocity * dt;
 }
 
 void Physics3D::Gravity(float dt)
@@ -167,6 +212,14 @@ void Physics3D::Gravity(float dt)
 		{
 			velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
 		}
+	}
+}
+
+void Physics3D::SetMass(float m)
+{
+	if(m > 0.f)
+	{
+		mass = m;
 	}
 }
 
@@ -327,58 +380,58 @@ bool Physics3D::CollisionSS(Object* obj, Object* obj2)
 
 bool Physics3D::CollisionPS(Object* poly, Object* sph)
 {
-	std::vector<glm::vec3> polyVertices;
-	glm::mat4 transformPoly = glm::translate(glm::mat4(1.0f), poly->GetPosition()) * glm::mat4_cast(glm::quat(-glm::radians(poly->GetRotate3D())));
-	for (const auto& point : poly->GetComponent<Physics3D>()->GetCollidePolyhedron())
+	Physics3D* polyPhysics = poly->GetComponent<Physics3D>();
+	Physics3D* sphPhysics = sph->GetComponent<Physics3D>();
+
+	const glm::vec3 polyPosition = poly->GetPosition();
+	const glm::quat polyOrientation = glm::quat(glm::radians(-poly->GetRotate3D()));
+
+	const glm::vec3 sphereCenter = sph->GetPosition();
+	const float sphereRadius = sphPhysics->sphere.radius / 2.f;
+
+	glm::vec3 minExtent = polyPhysics->GetCollidePolyhedron()[0];
+	glm::vec3 maxExtent = polyPhysics->GetCollidePolyhedron()[6];
+
+	glm::vec3 sphereCenterInLocal = glm::inverse(polyOrientation) * (sphereCenter - polyPosition);
+
+	glm::vec3 closestPointInLocal;
+	closestPointInLocal.x = std::max(minExtent.x, std::min(sphereCenterInLocal.x, maxExtent.x));
+	closestPointInLocal.y = std::max(minExtent.y, std::min(sphereCenterInLocal.y, maxExtent.y));
+	closestPointInLocal.z = std::max(minExtent.z, std::min(sphereCenterInLocal.z, maxExtent.z));
+
+	float distanceSquared = glm::length2(closestPointInLocal - sphereCenterInLocal);
+
+	if (distanceSquared <= (sphereRadius * sphereRadius))
 	{
-		polyVertices.emplace_back(glm::vec3(transformPoly * glm::vec4(point, 1.0f)));
-	}
-
-	glm::vec3 sphereCenter = sph->GetPosition();
-	float sphereRadius = sph->GetComponent<Physics3D>()->sphere.radius / 2.f;
-
-	glm::vec3 closestPoint = FindClosestPointOnSegment(sphereCenter, polyVertices);
-	glm::vec3 normal = glm::normalize(sphereCenter - closestPoint);
-
-	std::vector<glm::vec3> axes = {
-		glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1),
-		normal
-	};
-	float minDepth = INFINITY;
-	glm::vec3 collisionNormal;
-
-	for (const auto& axis : axes)
-	{
-		float depth, min1, max1, min2, max2;
-		if (IsSeparatingAxis(axis, polyVertices, sphereCenter, sphereRadius, &depth, &min1, &max1, &min2, &max2))
+		if (!polyPhysics->GetIsGhostCollision() && !sphPhysics->GetIsGhostCollision())
 		{
-			return false;
+			glm::vec3 collisionNormalInLocal = sphereCenterInLocal - closestPointInLocal;
+			if (glm::length2(collisionNormalInLocal) < 0.0001f)
+			{
+				collisionNormalInLocal = -sphereCenterInLocal;
+			}
+
+			float distance = std::sqrt(distanceSquared);
+			float depth = sphereRadius - distance;
+
+			glm::vec3 collisionNormal = glm::normalize(polyOrientation * collisionNormalInLocal);
+			glm::vec3 moveVector = collisionNormal * depth;
+
+			if (polyPhysics->GetBodyType() == BodyType3D::RIGID)
+			{
+				poly->SetPosition(poly->GetPosition() - moveVector * 0.5f);
+			}
+			if (sphPhysics->GetBodyType() == BodyType3D::RIGID)
+			{
+				sph->SetPosition(sph->GetPosition() + moveVector * 0.5f);
+			}
+
+			CalculateLinearVelocity(*polyPhysics, *sphPhysics, collisionNormal, &depth);
 		}
-		if (depth < minDepth)
-		{
-			minDepth = depth;
-			collisionNormal = axis;
-		}
+		return true;
 	}
 
-	if (glm::dot(sphereCenter - closestPoint, collisionNormal) < 0)
-	{
-		collisionNormal = -collisionNormal;
-	}
-
-	if (!poly->GetComponent<Physics3D>()->GetIsGhostCollision() && !sph->GetComponent<Physics3D>()->GetIsGhostCollision())
-	{
-		glm::vec3 moveVector = collisionNormal * (minDepth / 2.0f);
-
-		if (poly->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID)
-			poly->SetPosition(poly->GetPosition() - moveVector);
-		if (sph->GetComponent<Physics3D>()->GetBodyType() == BodyType3D::RIGID)
-			sph->SetPosition(sph->GetPosition() + moveVector);
-
-		CalculateLinearVelocity(*poly->GetComponent<Physics3D>(), *sph->GetComponent<Physics3D>(), collisionNormal, &minDepth);
-	}
-
-	return true;
+	return false;
 }
 
 void Physics3D::AddCollidePolyhedron(glm::vec3 position)

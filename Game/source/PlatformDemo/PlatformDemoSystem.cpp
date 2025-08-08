@@ -146,8 +146,8 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			if (isEditorMod == false)
 			{
 				Engine::GetObjectManager().AddObject<Object>(glm::vec3{ posX, posY, 0.1f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
-				Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-				Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });
+				/*Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+				Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });*/
 
 				Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
 				Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,  Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f });

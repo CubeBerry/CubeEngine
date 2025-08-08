@@ -234,7 +234,7 @@ void BackgroundManager::Update(float dt)
 					}
 				}
 
-				parallax.position.x -= parallax.speed.x;
+				parallax.position.x -= parallax.speed.x * dt;
 				if (parallax.position.x <= -(Engine::GetCameraManager().GetViewSize().x / 2.f)
 					+ Engine::GetCameraManager().GetCenter().x - parallax.size.x / 2.f)
 				{

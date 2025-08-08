@@ -137,7 +137,7 @@ void PocketBallSystem::Control(float dt)
 		}
 		if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::SPACE))
 		{
-			Engine::GetObjectManager().FindObjectWithName("White")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle), power * -sin(shotAngle) });
+			Engine::GetObjectManager().FindObjectWithName("White")->GetComponent<Physics2D>()->AddForce({ power * -cos(shotAngle) * 500.f, power * -sin(shotAngle) * 500.f });
 			isShot = true;
 		}
 	}

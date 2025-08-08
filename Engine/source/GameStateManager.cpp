@@ -212,6 +212,40 @@ void GameStateManager::StateChanger()
 			}
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("FPS"))
+		{
+			if (ImGui::MenuItem("30"))
+			{
+				SetGameState(State::RESTART);
+				Engine::Instance().SetFPS(FrameRate::FPS_30);
+			}
+			if (ImGui::MenuItem("60"))
+			{
+				SetGameState(State::RESTART);
+				Engine::Instance().SetFPS(FrameRate::FPS_60);
+			}
+			if (ImGui::MenuItem("120"))
+			{
+				SetGameState(State::RESTART);
+				Engine::Instance().SetFPS(FrameRate::FPS_120);
+			}
+			if (ImGui::MenuItem("144"))
+			{
+				SetGameState(State::RESTART);
+				Engine::Instance().SetFPS(FrameRate::FPS_144);
+			}
+			if (ImGui::MenuItem("240"))
+			{
+				SetGameState(State::RESTART);
+				Engine::Instance().SetFPS(FrameRate::FPS_240);
+			}
+			if (ImGui::MenuItem("UNLIMIT"))
+			{
+				SetGameState(State::RESTART);
+				Engine::Instance().SetFPS(FrameRate::UNLIMIT);
+			}
+			ImGui::EndMenu();
+		}
 		if (ImGui::BeginMenu("Help"))
 		{
 			if (ImGui::MenuItem("How To Control"))
