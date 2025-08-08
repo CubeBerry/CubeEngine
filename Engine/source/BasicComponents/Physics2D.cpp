@@ -29,15 +29,24 @@ void Physics2D::Update(float dt)
 	if (isGravityOn)
 	{
 		Gravity(dt);
-		force.x -= velocity.x * friction;
-	}
-	else
-	{
-		force -= velocity * friction;
 	}
 
 	acceleration = force / mass;
 	velocity += acceleration * dt;
+
+	if (friction > 0.f)
+	{
+		if (isGravityOn)
+		{
+			velocity.x *= (1.f - friction * dt);
+		}
+		else
+		{
+			velocity *= (1.f - friction * dt);
+		}
+	}
+
+	force = { 0.f, 0.f };
 
 	if (std::abs(velocity.y) > velocityMax.y)
 	{
@@ -59,8 +68,6 @@ void Physics2D::Update(float dt)
 
 	Component::GetOwner()->SetXPosition(Component::GetOwner()->GetPosition().x + velocity.x * dt);
 	Component::GetOwner()->SetYPosition(Component::GetOwner()->GetPosition().y + velocity.y * dt);
-
-	force = { 0.f, 0.f };
 
 #ifdef _DEBUG
 	/*std::vector<glm::vec2> rotatedPoints1;
