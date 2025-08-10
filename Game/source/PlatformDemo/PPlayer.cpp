@@ -27,9 +27,9 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, PlatformDemo
 
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
-	GetComponent<Physics2D>()->SetGravity(40.f);
-	GetComponent<Physics2D>()->SetFriction(0.9f);
-	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,10.f });
+	GetComponent<Physics2D>()->SetGravity(700.f);
+	GetComponent<Physics2D>()->SetFriction(3.f);
+	GetComponent<Physics2D>()->SetMaxVelocity({ 400.f,800.f });
 	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 2.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	GetComponent<Sprite>()->PlayAnimation(0);
@@ -43,10 +43,25 @@ void PPlayer::Init()
 
 void PPlayer::Update(float dt)
 {
-	Object::Update(dt);
-	GetComponent<Physics2D>()->Gravity(dt);
-	Jumping();
+	isGrounded = false;
+	for (auto& obj : Engine::GetObjectManager().GetObjectMap())
+	{
+		if (obj.second->GetObjectType() == ObjectType::WALL)
+		{
+			if (GetPosition().y >= obj.second->GetPosition().y && GetComponent<Physics2D>()->CollisionPPWithoutPhysics(this, obj.second.get()))
+			{
+				isGrounded = true;
+				SetStateOff(PlayerStates::JUMPING);
+				SetStateOff(PlayerStates::FALLING);
+				break;
+			}
+		}
+	}
+
 	Control(dt);
+	Object::Update(dt);
+	Jumping();
+
 
 	if (canAttack == false)
 	{
@@ -112,7 +127,7 @@ void PPlayer::Control(float /*dt*/)
 			Object::SetXSize(-Object::GetSize().x);
 		}
 		SetStateOff(PlayerStates::DIRECTION);
-		GetComponent<Physics2D>()->AddForceX(-20.f);
+		GetComponent<Physics2D>()->AddForceX(-300.f);
 	}
 	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
@@ -121,13 +136,13 @@ void PPlayer::Control(float /*dt*/)
 			Object::SetXSize(-Object::GetSize().x);
 		}
 		SetStateOn(PlayerStates::DIRECTION);
-		GetComponent<Physics2D>()->AddForceX(20.f);
+		GetComponent<Physics2D>()->AddForceX(300.f);
 	}
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::X)
 		&& IsStateOn(PlayerStates::FALLING) == false && IsStateOn(PlayerStates::JUMPING) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
-		GetComponent<Physics2D>()->SetVelocityY(40.f);
+		GetComponent<Physics2D>()->SetVelocityY(400.f);
 	}
 	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Z))
 	{
@@ -153,51 +168,34 @@ void PPlayer::Control(float /*dt*/)
 
 void PPlayer::Jumping()
 {
-	if (GetComponent<Physics2D>()->GetVelocity().y > 0.f)
+	if (isGrounded == false)
 	{
-		if (IsStateOn(PlayerStates::JUMPING) == false)
+		if (GetComponent<Physics2D>()->GetVelocity().y > 0.f)
 		{
-			if (canAttack == true)
-			{
-				GetComponent<Sprite>()->PlayAnimation(2);
-			}
-
+			if (canAttack == true) GetComponent<Sprite>()->PlayAnimation(2);
 			SetStateOn(PlayerStates::JUMPING);
 			SetStateOff(PlayerStates::FALLING);
 		}
-	}
-	else if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
-		GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
-	{
-		if (IsStateOn(PlayerStates::FALLING) == true)
+		else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 		{
-			SetStateOff(PlayerStates::FALLING);
-			SetStateOff(PlayerStates::JUMPING);
-			if (canAttack == true)
-			{
-				if (GetComponent<Physics2D>()->GetVelocity().x < 0.5f ||
-					GetComponent<Physics2D>()->GetVelocity().x > -0.5f)
-				{
-					GetComponent<Sprite>()->PlayAnimation(0);
-				}
-				else
-				{
-					GetComponent<Sprite>()->PlayAnimation(1);
-				}
-			}
-		}
-	}
-	else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
-	{
-		if (canAttack == true)
-		{
-			GetComponent<Sprite>()->PlayAnimation(2);
-		}
-
-		if (IsStateOn(PlayerStates::FALLING) == false)
-		{
+			if (canAttack == true) GetComponent<Sprite>()->PlayAnimation(2);
 			SetStateOn(PlayerStates::FALLING);
 			SetStateOff(PlayerStates::JUMPING);
 		}
 	}
+	else
+	{
+		if (canAttack == true)
+		{
+			if (abs(GetComponent<Physics2D>()->GetVelocity().x) < 5.f)
+			{
+				GetComponent<Sprite>()->PlayAnimation(0);
+			}
+			else
+			{
+				GetComponent<Sprite>()->PlayAnimation(1);
+			}
+		}
+	}
+
 }

@@ -15,9 +15,9 @@ PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type
 	eType = type;
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
-	GetComponent<Physics2D>()->SetGravity(40.f);
-	GetComponent<Physics2D>()->SetFriction(0.9f);
-	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,20.f });
+	GetComponent<Physics2D>()->SetGravity(700.f);
+	GetComponent<Physics2D>()->SetFriction(3.f);
+	GetComponent<Physics2D>()->SetMaxVelocity({ 200.f,800.f });
 	GetComponent<Physics2D>()->AddCollidePolygonAABB(size_ / 2.f);
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 
@@ -34,8 +34,9 @@ PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type
 		GetComponent<Sprite>()->PlayAnimation(0);
 
 		GetComponent<Physics2D>()->SetIsGhostCollision(true);
-		GetComponent<Physics2D>()->SetMaxVelocity({ 5.f,4.f });
+		GetComponent<Physics2D>()->SetMaxVelocity({ 500.f,400.f });
 		GetComponent<Physics2D>()->SetFriction(1.f);
+		GetComponent<Physics2D>()->SetGravity(0.f, false);
 		size.x = -size.x;
 		hp = 2.f;
 		break;
@@ -328,11 +329,11 @@ void PEnemy::UpdateEnemyBig(float dt)
 
 					if (IsStateOn(EnemyStates::DIRECTION) == false)
 					{
-						GetComponent<Physics2D>()->SetVelocityX(-1.5f);
+						GetComponent<Physics2D>()->SetVelocityX(-100.f);
 					}
 					else
 					{
-						GetComponent<Physics2D>()->SetVelocityX(1.5f);
+						GetComponent<Physics2D>()->SetVelocityX(100.f);
 					}
 				}
 
@@ -369,12 +370,12 @@ void PEnemy::UpdateEnemyBig(float dt)
 						if (IsStateOn(EnemyStates::DIRECTION) == true)
 						{
 							Engine::GetObjectManager().GetLastObject()->SetYSpeed(dirY);
-							Engine::GetObjectManager().GetLastObject()->SetXSpeed(1000.f);
+							Engine::GetObjectManager().GetLastObject()->SetXSpeed(200.f);
 						}
 						else
 						{
 							Engine::GetObjectManager().GetLastObject()->SetYSpeed(dirY);
-							Engine::GetObjectManager().GetLastObject()->SetXSpeed(-1000.f);
+							Engine::GetObjectManager().GetLastObject()->SetXSpeed(-200.f);
 						}
 						GetComponent<Sprite>()->PlayAnimation(3);
 					}
@@ -390,10 +391,16 @@ void PEnemy::UpdateEnemyBig(float dt)
 		else
 		{
 			GetComponent<Physics2D>()->Gravity(dt);
-			if (GetComponent<Physics2D>()->GetVelocity().y > -0.9f &&
-				GetComponent<Physics2D>()->GetVelocity().y < 0.0f)
+			for (auto& obj : Engine::GetObjectManager().GetObjectMap())
 			{
-				SetStateOn(EnemyStates::ONGROUND);
+				if (obj.second->GetObjectType() == ObjectType::WALL)
+				{
+					if (GetPosition().y >= obj.second->GetPosition().y && GetComponent<Physics2D>()->CollisionPPWithoutPhysics(this, obj.second.get()))
+					{
+						SetStateOn(EnemyStates::ONGROUND);
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -430,7 +437,7 @@ void PEnemy::UpdateEnemyAirShip(float dt)
 	Object::Update(dt);
 	if (IsStateOn(EnemyStates::DEATH) == false)
 	{
-		GetComponent<Physics2D>()->SetVelocityX(-5.f);
+		GetComponent<Physics2D>()->SetVelocityX(-160.f);
 		Hit(dt);
 		if (IsStateOn(EnemyStates::ATTACK) == false)
 		{
@@ -446,12 +453,12 @@ void PEnemy::UpdateEnemyAirShip(float dt)
 		}
 		else
 		{
-			GetComponent<Physics2D>()->AddForceY(7.5f);
+			GetComponent<Physics2D>()->AddForceY(160.f);
 		}
 	}
 	else
 	{
-		GetComponent<Physics2D>()->SetVelocityX(-2.5f);
-		GetComponent<Physics2D>()->AddForceY(-15.f);
+		GetComponent<Physics2D>()->SetVelocityX(-80.f);
+		GetComponent<Physics2D>()->AddForceY(-650.f);
 	}
 }

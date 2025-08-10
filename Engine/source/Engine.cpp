@@ -97,6 +97,7 @@ void Engine::End()
 
 void Engine::SetFPS(FrameRate fps)
 {
+	ResetDeltaTime();
 	timer.Init(fps);
 }
 
