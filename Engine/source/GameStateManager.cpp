@@ -132,6 +132,10 @@ void GameStateManager::DrawWithImGui(float dt)
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	if (renderManager->BeginRender({ 0.0f, 0.0f, 0.0f }))
 	{
+		if (showFPSHistory)
+		{
+			Engine::Instance().GetTimer().ShowFpsGraph();
+		}
 		StateChanger();
 		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
 		renderManager->EndRender();
@@ -243,6 +247,11 @@ void GameStateManager::StateChanger()
 			{
 				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::UNLIMIT);
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Toggle FPS History"))
+			{
+				showFPSHistory = (showFPSHistory ? false : true);
 			}
 			ImGui::EndMenu();
 		}

@@ -61,12 +61,7 @@ void Engine::Update()
 			frameCount++;
 			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
 			{
-				if (!(winFlag & SDL_WINDOW_MINIMIZED))
-				{
-					int averageFrameRate = static_cast<int>(frameCount / timer.GetFrameRateCalculateTime());
-					windowTitleWithFrameCount = " (fps: " + std::to_string(averageFrameRate) + ")";
-					window.SetSubWindowTitle(windowTitleWithFrameCount);
-				}
+				timer.AddFrameHistory(frameCount / timer.GetFrameRateCalculateTime());
 				timer.ResetFPSCalculateTime();
 				frameCount = 0;
 

@@ -53,4 +53,5 @@ private:
 	State state = State::START;
 
 	bool showDescription = false;
+	bool showFPSHistory = true;
 };
