@@ -961,7 +961,3 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 	ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::End();
 }
-
-
-
-
