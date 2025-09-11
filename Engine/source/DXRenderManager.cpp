@@ -6,6 +6,29 @@
 #include "DXHelper.hpp"
 #include "Engine.hpp"
 
+void DXRenderManager::ProcessDeletionQueue()
+{
+	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
+
+	auto it = m_deletionQueue.begin();
+	while (it != m_deletionQueue.end())
+	{
+		if (it->second <= gpuCompletedFrame)
+		{
+			WaitForGPU();
+			Engine::GetObjectManager().ProcessFunctionQueue();
+			Engine::GetObjectManager().DeleteObjectsFromList();
+			delete it->first;
+
+			it = m_deletionQueue.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
 DXRenderManager::~DXRenderManager()
 {
 	WaitForGPU();

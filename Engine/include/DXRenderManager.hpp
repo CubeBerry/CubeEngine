@@ -17,6 +17,8 @@
 #include "DXSkybox.hpp"
 #include "DXRenderTarget.hpp"
 
+#include "BasicComponents/Sprite.hpp"
+
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
 
@@ -26,13 +28,13 @@ class DXRenderManager : public RenderManager
 {
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
+	~DXRenderManager() override;
 
 	DXRenderManager(const DXRenderManager&) = delete;
 	DXRenderManager& operator=(const DXRenderManager&) = delete;
 	DXRenderManager(const DXRenderManager&&) = delete;
 	DXRenderManager& operator=(const DXRenderManager&&) = delete;
 
-	~DXRenderManager() override;
 	void Initialize(SDL_Window* window);
 	void SetResize(const int width, const int height);
 	int m_width, m_height;
@@ -139,6 +141,48 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
 		}
 	}
+
+	// Deferred Deletion
+	std::vector<std::pair<Sprite*, UINT64>> m_deletionQueue;
+	void SafeDelete(Sprite* sprite)
+	{
+		if (sprite) m_deletionQueue.emplace_back(std::pair<Sprite*, UINT64>{ sprite, m_frameIndex });
+	}
+	//void ProcessDeletionQueue()
+	//{
+	//	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
+
+	//	m_deletionQueue.erase(
+	//		std::remove_if(m_deletionQueue.begin(), m_deletionQueue.end(),
+	//			[gpuCompletedFrame](const auto& item)
+	//			{
+	//				return item.second <= gpuCompletedFrame;
+	//			}
+	//		),
+	//		m_deletionQueue.end()
+	//	);
+	//}
+	void ProcessDeletionQueue();
+	//{
+	//	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
+
+	//	auto it = m_deletionQueue.begin();
+	//	while (it != m_deletionQueue.end())
+	//	{
+	//		if (it->second <= gpuCompletedFrame)
+	//		{
+	//			delete it->first;
+	//			Engine::GetObjectManager().ProcessFunctionQueue();
+	//			Engine::GetObjectManager().DeleteObjectsFromList();
+
+	//			it = m_deletionQueue.erase(it);
+	//		}
+	//		else
+	//		{
+	//			++it;
+	//		}
+	//	}
+	//}
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

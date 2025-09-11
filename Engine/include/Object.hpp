@@ -91,7 +91,7 @@ public:
 		{
 			if (typeid(*list).name() == typeid(ComponentTypes).name())
 			{
-				delete list;
+				//delete list;
 				componentList.erase(iterator);
 				break;
 			}
