@@ -17,9 +17,12 @@
 Sprite::~Sprite()
 {
 	RenderManager* renderManager = Engine::GetRenderManager();
-	for (auto& subMesh : subMeshes)
+	if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
 	{
-		dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(std::move(subMesh.bufferWrapper));
+		for (auto& subMesh : subMeshes)
+		{
+			dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(std::move(subMesh.bufferWrapper));
+		}
 	}
 	for (Animation* anim : animations)
 	{
