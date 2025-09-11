@@ -143,46 +143,12 @@ public:
 	}
 
 	// Deferred Deletion
-	std::vector<std::pair<Sprite*, UINT64>> m_deletionQueue;
-	void SafeDelete(Sprite* sprite)
+	std::vector<std::pair<BufferWrapper*, UINT64>> m_deletionQueue;
+	void SafeDelete(BufferWrapper* bufferWrapper)
 	{
-		if (sprite) m_deletionQueue.emplace_back(std::pair<Sprite*, UINT64>{ sprite, m_frameIndex });
+		if (bufferWrapper) m_deletionQueue.emplace_back(std::pair<BufferWrapper*, UINT64>{ bufferWrapper, m_frameIndex });
 	}
-	//void ProcessDeletionQueue()
-	//{
-	//	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
-
-	//	m_deletionQueue.erase(
-	//		std::remove_if(m_deletionQueue.begin(), m_deletionQueue.end(),
-	//			[gpuCompletedFrame](const auto& item)
-	//			{
-	//				return item.second <= gpuCompletedFrame;
-	//			}
-	//		),
-	//		m_deletionQueue.end()
-	//	);
-	//}
 	void ProcessDeletionQueue();
-	//{
-	//	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
-
-	//	auto it = m_deletionQueue.begin();
-	//	while (it != m_deletionQueue.end())
-	//	{
-	//		if (it->second <= gpuCompletedFrame)
-	//		{
-	//			delete it->first;
-	//			Engine::GetObjectManager().ProcessFunctionQueue();
-	//			Engine::GetObjectManager().DeleteObjectsFromList();
-
-	//			it = m_deletionQueue.erase(it);
-	//		}
-	//		else
-	//		{
-	//			++it;
-	//		}
-	//	}
-	//}
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

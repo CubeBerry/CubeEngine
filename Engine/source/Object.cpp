@@ -3,7 +3,6 @@
 //File: Object.cpp
 #include "Object.hpp"
 
-#include <algorithm>
 #include <iostream>
 
 Object::Object(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType objectType)

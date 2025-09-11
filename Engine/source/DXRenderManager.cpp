@@ -6,29 +6,6 @@
 #include "DXHelper.hpp"
 #include "Engine.hpp"
 
-void DXRenderManager::ProcessDeletionQueue()
-{
-	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
-
-	auto it = m_deletionQueue.begin();
-	while (it != m_deletionQueue.end())
-	{
-		if (it->second <= gpuCompletedFrame)
-		{
-			WaitForGPU();
-			Engine::GetObjectManager().ProcessFunctionQueue();
-			Engine::GetObjectManager().DeleteObjectsFromList();
-			delete it->first;
-
-			it = m_deletionQueue.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
-}
-
 DXRenderManager::~DXRenderManager()
 {
 	WaitForGPU();
@@ -416,12 +393,12 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				auto& buffer = subMesh.bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
-				auto& constantBuffer = subMesh.bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
+				auto& buffer = subMesh.bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>();
+				auto& constantBuffer = subMesh.bufferWrapper->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
 
 				// Update Constant Buffer
-				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
-				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
+				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
+				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
 
 				// Bind Vertex Buffer & Index Buffer
 				D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
@@ -432,7 +409,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
-				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper.GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper->GetIndices().size()), 1, 0, 0, 0);
 			}
 		}
 	}
@@ -449,13 +426,13 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			{
 				m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				auto& buffer = subMesh.bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
-				auto& constantBuffer = subMesh.bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
+				auto& buffer = subMesh.bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>();
+				auto& constantBuffer = subMesh.bufferWrapper->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
 				// Update Constant Buffer
-				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-				constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
+				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
+				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
+				constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
 
 				if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
 				{
@@ -489,7 +466,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 				m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
-				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper.GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper->GetIndices().size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
 				if (isDrawNormals)
@@ -498,14 +475,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
 					m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-					auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+					auto& vertexUniform = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
 					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
 					m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
 
 					vbv = buffer.normalVertexBuffer->GetView();
 					m_commandList->IASetVertexBuffers(0, 1, &vbv);
 
-					m_commandList->DrawInstanced(static_cast<UINT>(subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+					m_commandList->DrawInstanced(static_cast<UINT>(subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
 
 					switch (pMode)
 					{
@@ -695,6 +672,28 @@ void DXRenderManager::MoveToNextFrame()
 	}
 
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
+}
+
+// Deferred Deletion
+void DXRenderManager::ProcessDeletionQueue()
+{
+	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
+
+	auto it = m_deletionQueue.begin();
+	while (it != m_deletionQueue.end())
+	{
+		if (it->second <= gpuCompletedFrame)
+		{
+			WaitForGPU();
+			delete it->first;
+
+			it = m_deletionQueue.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)

@@ -153,12 +153,13 @@ void RenderManager::CreateMesh(
 	}
 
 	SubMesh subMesh;
-	subMesh.bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
-	auto& quantizedVertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+	subMesh.bufferWrapper = new BufferWrapper;
+	subMesh.bufferWrapper->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	auto& quantizedVertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
 #ifdef _DEBUG
-	auto& normalVertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+	auto& normalVertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 #endif
-	auto& indices = subMesh.bufferWrapper.GetIndices();
+	auto& indices = subMesh.bufferWrapper->GetIndices();
 
 	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
 	std::vector<ThreeDimension::Vertex> vertices;
@@ -469,29 +470,29 @@ void RenderManager::CreateMesh(
 	}
 
 	// Uniform
-	auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+	auto& vertexUniform = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
 	vertexUniform.decode = Quantize(quantizedVertices, vertices, maxPos - minPos);
 	vertexUniform.color = color;
 
-	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+	auto& fragmentUniform = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 	fragmentUniform.texIndex = 0;
 
-	auto& material = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material;
+	auto& material = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material;
 	material.metallic = metallic;
 	material.roughness = roughness;
 
 	// Initialize Buffers
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->InitializeBuffers(subMesh.bufferWrapper, indices);
+	renderManager->InitializeBuffers(*subMesh.bufferWrapper, indices);
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::QuantizedVertex) * quantizedVertices.size()), quantizedVertices.data());
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::QuantizedVertex) * quantizedVertices.size()), quantizedVertices.data());
 #ifdef _DEBUG
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -531,8 +532,8 @@ void RenderManager::CreateMesh(
 		tex_sub_index_layout.offset = 0;
 		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 #ifdef _DEBUG
 		GLAttributeLayout normal_position_layout;
@@ -544,7 +545,7 @@ void RenderManager::CreateMesh(
 		normal_position_layout.offset = 0;
 		normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
 
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
 #endif
 	}
 
@@ -618,12 +619,13 @@ void RenderManager::ProcessMesh(
 	glm::vec4 color, float metallic, float roughness)
 {
 	SubMesh subMesh;
-	subMesh.bufferWrapper.Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
-	auto& quantizedVertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+	subMesh.bufferWrapper = new BufferWrapper;
+	subMesh.bufferWrapper->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	auto& quantizedVertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
 #ifdef _DEBUG
-	auto& normalVertices = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+	auto& normalVertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
 #endif
-	auto& indices = subMesh.bufferWrapper.GetIndices();
+	auto& indices = subMesh.bufferWrapper->GetIndices();
 
 	// Vertices
 	std::vector<ThreeDimension::Vertex> vertices;
@@ -668,29 +670,29 @@ void RenderManager::ProcessMesh(
 	}
 
 	// Uniform
-	auto& vertexUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+	auto& vertexUniform = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
 	vertexUniform.model = glm::mat4(1.f);
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
 	vertexUniform.decode = Quantize(quantizedVertices, vertices, size * unitScale);
 	vertexUniform.color = color;
 
-	auto& fragmentUniform = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+	auto& fragmentUniform = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
 	fragmentUniform.texIndex = 0;
 
-	auto& material = subMesh.bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().material;
+	auto& material = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material;
 	material.metallic = metallic;
 	material.roughness = roughness;
 
 	// Initialize Buffers
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->InitializeBuffers(subMesh.bufferWrapper, indices);
+	renderManager->InitializeBuffers(*subMesh.bufferWrapper, indices);
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::QuantizedVertex) * quantizedVertices.size()), quantizedVertices.data());
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::QuantizedVertex) * quantizedVertices.size()), quantizedVertices.data());
 #ifdef _DEBUG
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer->SetData(static_cast<GLsizei>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
 		//Attributes
@@ -730,8 +732,8 @@ void RenderManager::ProcessMesh(
 		tex_sub_index_layout.offset = 0;
 		tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().vertexArray->SetIndexBuffer(std::move(*subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().indexBuffer));
 
 #ifdef _DEBUG
 		GLAttributeLayout normal_position_layout;
@@ -743,7 +745,7 @@ void RenderManager::ProcessMesh(
 		normal_position_layout.offset = 0;
 		normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
 
-		subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
+		subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray->AddVertexBuffer(std::move(*subMesh.bufferWrapper->GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
 #endif
 	}
 

@@ -211,7 +211,7 @@ public:
 
 struct SubMesh
 {
-	BufferWrapper bufferWrapper;
+	BufferWrapper* bufferWrapper;
 	ThreeDimension::Material material;
 };
 
@@ -253,6 +253,7 @@ public:
 	RenderType GetRenderType() const { return rMode; }
 
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
+	// @TODO Change BufferWrapper& -> BufferWrapper*
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
 	//--------------------2D Render--------------------//
