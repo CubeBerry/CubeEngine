@@ -649,6 +649,7 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
 }
 
+// @TODO Should understand how this synchronization process works!
 void DXRenderManager::WaitForGPU()
 {
 	DXHelper::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValues[m_frameIndex]));
@@ -658,6 +659,7 @@ void DXRenderManager::WaitForGPU()
 	m_fenceValues[m_frameIndex]++;
 }
 
+// @TODO Should understand how this synchronization process works!
 void DXRenderManager::MoveToNextFrame()
 {
 	const UINT64 currentFenceValue = m_fenceValues[m_frameIndex];
