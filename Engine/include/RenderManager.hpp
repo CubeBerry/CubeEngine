@@ -211,7 +211,7 @@ public:
 
 struct SubMesh
 {
-	BufferWrapper* bufferWrapper;
+	std::unique_ptr<BufferWrapper> bufferWrapper;
 	ThreeDimension::Material material;
 };
 

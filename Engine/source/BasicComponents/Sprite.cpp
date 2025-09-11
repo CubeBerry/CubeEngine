@@ -19,7 +19,7 @@ Sprite::~Sprite()
 	RenderManager* renderManager = Engine::GetRenderManager();
 	for (auto& subMesh : subMeshes)
 	{
-		dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(subMesh.bufferWrapper);
+		dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(std::move(subMesh.bufferWrapper));
 	}
 	for (Animation* anim : animations)
 	{
@@ -266,7 +266,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 	SubMesh subMesh;
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	subMesh.bufferWrapper = new BufferWrapper;
+	subMesh.bufferWrapper = std::make_unique<BufferWrapper>();
 	subMesh.bufferWrapper->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
 	auto& vertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
@@ -321,7 +321,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	SubMesh subMesh;
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	subMesh.bufferWrapper = new BufferWrapper;
+	subMesh.bufferWrapper = std::make_unique<BufferWrapper>();
 	subMesh.bufferWrapper->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::TwoDimension);
 
 	auto& vertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData2D>().vertices;

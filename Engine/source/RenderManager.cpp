@@ -153,7 +153,7 @@ void RenderManager::CreateMesh(
 	}
 
 	SubMesh subMesh;
-	subMesh.bufferWrapper = new BufferWrapper;
+	subMesh.bufferWrapper = std::make_unique<BufferWrapper>();
 	subMesh.bufferWrapper->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
 	auto& quantizedVertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
 #ifdef _DEBUG
@@ -619,7 +619,7 @@ void RenderManager::ProcessMesh(
 	glm::vec4 color, float metallic, float roughness)
 {
 	SubMesh subMesh;
-	subMesh.bufferWrapper = new BufferWrapper;
+	subMesh.bufferWrapper = std::make_unique<BufferWrapper>();
 	subMesh.bufferWrapper->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
 	auto& quantizedVertices = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
 #ifdef _DEBUG

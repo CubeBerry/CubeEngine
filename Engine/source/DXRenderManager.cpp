@@ -685,7 +685,9 @@ void DXRenderManager::ProcessDeletionQueue()
 		if (it->second <= gpuCompletedFrame)
 		{
 			WaitForGPU();
-			delete it->first;
+			// unique_ptr's release() == give up ownership, does not deallocate memory
+			// unique_ptr's reset() == deallocate the memory
+			it->first.reset();
 
 			it = m_deletionQueue.erase(it);
 		}
