@@ -123,5 +123,5 @@ DXPipeLine::DXPipeLine(
 
 	// Create the Pipeline State Object (PSO)
 	DXHelper::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc,IID_PPV_ARGS(&m_pipelineState)));
-	DXHelper::ThrowIfFailed(m_pipelineState->SetName(L"Compute PSO"));
+	DXHelper::ThrowIfFailed(m_pipelineState->SetName(L"PSO"));
 }

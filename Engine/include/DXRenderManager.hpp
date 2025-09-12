@@ -102,7 +102,7 @@ private:
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
 
 	// Compute Shader
-	DXComputeBuffer m_computeBuffer;
+	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality

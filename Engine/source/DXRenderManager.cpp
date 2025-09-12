@@ -115,6 +115,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, window);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	// 500 for Sprites, 5 for Skybox, 2 for Compute Shader
 	srvHeapDesc.NumDescriptors = 507;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -281,7 +282,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
 
 	// Initialize for compute shader
-	m_computeBuffer.InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
+	m_computeBuffer = std::make_unique<DXComputeBuffer>();
+	m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
 
 	WaitForGPU();
 
@@ -540,7 +542,7 @@ void DXRenderManager::EndRender()
 	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
 	// Process compute shader
-	m_computeBuffer.PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
+	m_computeBuffer->PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
 
 	//m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
