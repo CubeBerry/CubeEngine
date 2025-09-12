@@ -16,6 +16,7 @@
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
 #include "DXRenderTarget.hpp"
+#include "DXComputeBuffer.hpp"
 
 #include "BasicComponents/Sprite.hpp"
 
@@ -47,7 +48,7 @@ public:
 private:
 	// Initialize DirectX 12 components
 	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
-	void CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters);
+	void CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters) const;
 	void MoveToNextFrame();
 
 	struct LiveObjectReporter
@@ -99,6 +100,9 @@ private:
 	// MSAA
 	// Depth
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
+
+	// Compute Shader
+	DXComputeBuffer m_computeBuffer;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
