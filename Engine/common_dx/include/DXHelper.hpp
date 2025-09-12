@@ -87,7 +87,7 @@ namespace DXHelper
 
         // Create Command List
         DXHelper::ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
-        DXHelper::ThrowIfFailed(commandAllocator->SetName((targetName + L" Command List").c_str()));
+        DXHelper::ThrowIfFailed(commandList->SetName((targetName + L" Command List").c_str()));
 #if USE_NSIGHT_AFTERMATH
         AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(commandList.Get(), &hAftermathCommandListContext));
 #endif
@@ -95,7 +95,7 @@ namespace DXHelper
 
         // Create Fence
         DXHelper::ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
-        DXHelper::ThrowIfFailed(commandAllocator->SetName((targetName + L" Fence").c_str()));
+        DXHelper::ThrowIfFailed(fence->SetName((targetName + L" Fence").c_str()));
 
         // Create Fence Event
         fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);

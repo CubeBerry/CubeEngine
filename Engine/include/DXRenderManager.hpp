@@ -17,6 +17,8 @@
 #include "DXSkybox.hpp"
 #include "DXRenderTarget.hpp"
 
+#include "BasicComponents/Sprite.hpp"
+
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
 
@@ -26,13 +28,13 @@ class DXRenderManager : public RenderManager
 {
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
+	~DXRenderManager() override;
 
 	DXRenderManager(const DXRenderManager&) = delete;
 	DXRenderManager& operator=(const DXRenderManager&) = delete;
 	DXRenderManager(const DXRenderManager&&) = delete;
 	DXRenderManager& operator=(const DXRenderManager&&) = delete;
 
-	~DXRenderManager() override;
 	void Initialize(SDL_Window* window);
 	void SetResize(const int width, const int height);
 	int m_width, m_height;
@@ -139,6 +141,14 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
 		}
 	}
+
+	// Deferred Deletion
+	std::vector<std::pair<std::unique_ptr<BufferWrapper>, UINT64>> m_deletionQueue;
+	void SafeDelete(std::unique_ptr<BufferWrapper> bufferWrapper)
+	{
+		if (bufferWrapper) m_deletionQueue.emplace_back(bufferWrapper.release(), m_frameIndex);
+	}
+	void ProcessDeletionQueue();
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

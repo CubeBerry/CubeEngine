@@ -71,6 +71,8 @@ void GameStateManager::Update(float dt)
 		UpdateDraw(dt);
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
+		if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
+			dynamic_cast<DXRenderManager*>(Engine::Instance().GetRenderManager())->ProcessDeletionQueue();
 		//Mouse Input X if order is opposite
 		break;
 	case State::PAUSE:
@@ -220,38 +222,32 @@ void GameStateManager::StateChanger()
 		{
 			if (ImGui::MenuItem("30"))
 			{
-				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::FPS_30);
 			}
 			if (ImGui::MenuItem("60"))
 			{
-				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::FPS_60);
 			}
 			if (ImGui::MenuItem("120"))
 			{
-				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::FPS_120);
 			}
 			if (ImGui::MenuItem("144"))
 			{
-				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::FPS_144);
 			}
 			if (ImGui::MenuItem("240"))
 			{
-				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::FPS_240);
 			}
 			if (ImGui::MenuItem("UNLIMIT"))
 			{
-				SetGameState(State::RESTART);
 				Engine::Instance().SetFPS(FrameRate::UNLIMIT);
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Toggle FPS History"))
 			{
-				showFPSHistory = (showFPSHistory ? false : true);
+				showFPSHistory = !showFPSHistory;
 			}
 			ImGui::EndMenu();
 		}
