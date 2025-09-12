@@ -10,14 +10,6 @@
 
 #include <stdexcept>
 
-//DXComputeBuffer::DXComputeBuffer(
-//	const ComPtr<ID3D12Device>& device,
-//	const ComPtr<ID3D12CommandQueue>& commandQueue,
-//	const std::vector<uint32_t>* indices) : m_commandQueue(commandQueue)
-//{
-//	InitComputeBuffer(device, indices);
-//}
-
 void DXComputeBuffer::InitComputeBuffer(
 	const ComPtr<ID3D12Device>& device,
 	const std::filesystem::path& computePath,
@@ -150,8 +142,6 @@ void DXComputeBuffer::InitComputeBuffer(
 
 void DXComputeBuffer::PostProcess(
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	/*const ComPtr<ID3D12Device>& device,
-	int width, int height,*/
 	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 	const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
 	const ComPtr<ID3D12Resource>& renderTarget)
