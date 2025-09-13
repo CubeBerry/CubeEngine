@@ -140,11 +140,70 @@ void DXComputeBuffer::InitComputeBuffer(
 	device->CreateUnorderedAccessView(m_postProcessTexture.Get(), nullptr, &uavDesc, m_postProcessOutputUavCpuHandle);
 }
 
+void DXComputeBuffer::OnResize(
+	const ComPtr<ID3D12Device>& device,
+	int width, int height,
+	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
+	const std::unique_ptr<DXRenderTarget>& renderTarget
+)
+{
+	m_postProcessTexture.Reset();
+
+	m_width = width;
+	m_height = height;
+	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		m_width,
+		m_height,
+		1, 0, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+	);
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&m_postProcessTexture)
+	));
+	m_postProcessTexture->SetName(L"Post Process Output Texture");
+
+	UINT descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHeapStart(srvHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHeapStart(srvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	constexpr int postProcessDescriptorOffset = 505;
+
+	m_postProcessInputSrvCpuHandle = srvHeapStart;
+	m_postProcessInputSrvCpuHandle.Offset(postProcessDescriptorOffset, descriptorSize);
+	m_postProcessInputSrvGpuHandle = srvGpuHeapStart;
+	m_postProcessInputSrvGpuHandle.Offset(postProcessDescriptorOffset, descriptorSize);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+	device->CreateShaderResourceView(renderTarget->GetMSAARenderTarget().Get(), &srvDesc, m_postProcessInputSrvCpuHandle);
+
+	m_postProcessOutputUavCpuHandle = srvHeapStart;
+	m_postProcessOutputUavCpuHandle.Offset(postProcessDescriptorOffset + 1, descriptorSize);
+	m_postProcessOutputUavGpuHandle = srvGpuHeapStart;
+	m_postProcessOutputUavGpuHandle.Offset(postProcessDescriptorOffset + 1, descriptorSize);
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	device->CreateUnorderedAccessView(m_postProcessTexture.Get(), nullptr, &uavDesc, m_postProcessOutputUavCpuHandle);
+}
+
 void DXComputeBuffer::PostProcess(
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
 	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 	const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
-	const ComPtr<ID3D12Resource>& renderTarget)
+	const ComPtr<ID3D12Resource>& renderTarget
+)
 {
 	commandList->SetPipelineState(m_computePipelineState.Get());
 	commandList->SetComputeRootSignature(m_computeRootSignature.Get());

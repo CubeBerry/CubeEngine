@@ -338,6 +338,9 @@ void DXRenderManager::OnResize(int width, int height)
 	m_renderTarget.reset();
 	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, Engine::GetWindow().GetWindow());
 
+	// Recreate Compute Shader
+	m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
+
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
 

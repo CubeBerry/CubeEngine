@@ -29,11 +29,18 @@ public:
 		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 		const std::unique_ptr<DXRenderTarget>& renderTarget
 	);
+	void OnResize(
+		const ComPtr<ID3D12Device>& device,
+		int width, int height,
+		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
+		const std::unique_ptr<DXRenderTarget>& renderTarget
+	);
 	void PostProcess(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
 		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 		const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
-		const ComPtr<ID3D12Resource>& renderTarget);
+		const ComPtr<ID3D12Resource>& renderTarget
+	);
 private:
 	ComPtr<ID3D12RootSignature> m_computeRootSignature;
 	ComPtr<ID3D12PipelineState> m_computePipelineState;
