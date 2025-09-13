@@ -40,7 +40,7 @@ public:
 		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 		const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
 		const ComPtr<ID3D12Resource>& renderTarget
-	);
+	) const;
 private:
 	ComPtr<ID3D12RootSignature> m_computeRootSignature;
 	ComPtr<ID3D12PipelineState> m_computePipelineState;

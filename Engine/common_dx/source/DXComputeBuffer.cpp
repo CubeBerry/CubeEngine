@@ -158,7 +158,7 @@ void DXComputeBuffer::PostProcess(
 	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 	const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
 	const ComPtr<ID3D12Resource>& renderTarget
-)
+) const
 {
 	commandList->SetPipelineState(m_computePipelineState.Get());
 	commandList->SetComputeRootSignature(m_computeRootSignature.Get());
@@ -181,9 +181,6 @@ void DXComputeBuffer::PostProcess(
 	commandList->ResourceBarrier(2, barriers);
 
 	commandList->CopyResource(renderTarget.Get(), m_postProcessTexture.Get());
-
-	//CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	//commandList->ResourceBarrier(1, &barrier);
 
 	CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
