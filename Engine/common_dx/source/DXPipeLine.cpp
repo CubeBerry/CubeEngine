@@ -121,6 +121,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.RTVFormats[0] = rtvFormat;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
-	// Create the Pipeline State Object (PSO)
+	// Create Pipeline State Object (PSO)
 	DXHelper::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc,IID_PPV_ARGS(&m_pipelineState)));
+	DXHelper::ThrowIfFailed(m_pipelineState->SetName(L"PSO"));
 }
