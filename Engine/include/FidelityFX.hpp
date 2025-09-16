@@ -6,6 +6,8 @@
 
 #include <directx/d3dx12.h>
 
+class DXRenderTarget;
+
 using Microsoft::WRL::ComPtr;
 
 // https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK
@@ -21,6 +23,12 @@ public:
 	~FidelityFX() = default;
 private:
 	void CreateContext(const ComPtr<ID3D12Device>& device);
+	void Execute(
+		const ComPtr<ID3D12GraphicsCommandList>& commandList,
+		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
+		const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
+		const ComPtr<ID3D12Resource>& renderTarget
+	);
 	void QueryVersion(const ComPtr<ID3D12Device>& device);
 
 	std::vector<uint64_t> m_fsrVersionIds;
@@ -31,4 +39,6 @@ private:
 
 	uint64_t m_currentUpscaleContextVersionId{ 0 };
 	const char* m_currentUpscaleContextVersionName{ nullptr };
+
+	ComPtr<ID3D12Resource> m_postProcessTexture;
 };

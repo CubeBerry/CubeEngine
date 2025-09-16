@@ -5,6 +5,8 @@
 
 #include <stdexcept>
 
+#include "DXRenderTarget.hpp"
+
 #include "Kits/FidelityFX/upscalers/include/ffx_upscale.hpp"
 
 // @TODO Link amd_fidelityfx_loader_dx12.lib!!!
@@ -98,6 +100,89 @@ void FidelityFX::CreateContext(const ComPtr<ID3D12Device>& device)
 			m_fsrVersionIndex = i;
 		}
 	}
+}
+
+void FidelityFX::Execute(
+	const ComPtr<ID3D12GraphicsCommandList>& commandList,
+	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
+	const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
+	const ComPtr<ID3D12Resource>& renderTarget
+)
+{
+	CD3DX12_RESOURCE_BARRIER barriers[2];
+	barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(dxRenderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	commandList->ResourceBarrier(2, barriers);
+
+	//{
+	//	// FFXAPI
+	//	// All cauldron resources come into a render module in a generic read state (ResourceState::NonPixelShaderResource | ResourceState::PixelShaderResource)
+	//	ffx::DispatchDescUpscale dispatchUpscale{};
+	//	dispatchUpscale.commandList = commandList.Get();
+	//	dispatchUpscale.color = SDKWrapper::ffxGetResourceApi(m_pTempTexture->GetResource(), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	//dispatchUpscale.depth = SDKWrapper::ffxGetResourceApi(m_pDepthTarget->GetResource(), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	//dispatchUpscale.motionVectors = SDKWrapper::ffxGetResourceApi(m_pMotionVectors->GetResource(), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	dispatchUpscale.exposure = SDKWrapper::ffxGetResourceApi(nullptr, FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	dispatchUpscale.output = SDKWrapper::ffxGetResourceApi(m_pColorTarget->GetResource(), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+
+	//	if (m_MaskMode != FSRMaskMode::Disabled)
+	//	{
+	//		dispatchUpscale.reactive = SDKWrapper::ffxGetResourceApi(m_pReactiveMask->GetResource(), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	}
+	//	else
+	//	{
+	//		dispatchUpscale.reactive = SDKWrapper::ffxGetResourceApi(nullptr, FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	}
+
+	//	if (m_UseMask)
+	//	{
+	//		dispatchUpscale.transparencyAndComposition =
+	//			SDKWrapper::ffxGetResourceApi(m_pCompositionMask->GetResource(), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	}
+	//	else
+	//	{
+	//		dispatchUpscale.transparencyAndComposition = SDKWrapper::ffxGetResourceApi(nullptr, FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
+	//	}
+
+	//	// Jitter is calculated earlier in the frame using a callback from the camera update
+	//	dispatchUpscale.jitterOffset.x = -m_JitterX;
+	//	dispatchUpscale.jitterOffset.y = -m_JitterY;
+	//	dispatchUpscale.motionVectorScale.x = resInfo.fRenderWidth();
+	//	dispatchUpscale.motionVectorScale.y = resInfo.fRenderHeight();
+	//	dispatchUpscale.reset = m_ResetUpscale || GetScene()->GetCurrentCamera()->WasCameraReset();
+	//	dispatchUpscale.enableSharpening = m_RCASSharpen;
+	//	dispatchUpscale.sharpness = m_Sharpness;
+
+	//	// Cauldron keeps time in seconds, but FSR expects milliseconds
+	//	dispatchUpscale.frameTimeDelta = static_cast<float>(deltaTime * 1000.f);
+
+	//	dispatchUpscale.preExposure = GetScene()->GetSceneExposure();
+	//	dispatchUpscale.renderSize.width = resInfo.RenderWidth;
+	//	dispatchUpscale.renderSize.height = resInfo.RenderHeight;
+	//	dispatchUpscale.upscaleSize.width = resInfo.UpscaleWidth;
+	//	dispatchUpscale.upscaleSize.height = resInfo.UpscaleHeight;
+
+	//	// Setup camera params as required
+	//	dispatchUpscale.cameraFovAngleVertical = pCamera->GetFovY();
+
+	//	if (s_InvertedDepth)
+	//	{
+	//		dispatchUpscale.cameraFar = pCamera->GetNearPlane();
+	//		dispatchUpscale.cameraNear = FLT_MAX;
+	//	}
+	//	else
+	//	{
+	//		dispatchUpscale.cameraFar = pCamera->GetFarPlane();
+	//		dispatchUpscale.cameraNear = pCamera->GetNearPlane();
+	//	}
+	//	dispatchUpscale.flags = 0;
+	//	dispatchUpscale.flags |= m_DrawUpscalerDebugView ? FFX_UPSCALE_FLAG_DRAW_DEBUG_VIEW : 0;
+	//	dispatchUpscale.flags |= m_colorSpace == FSRColorSpace::sRGBColorSpace ? FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_SRGB : 0;
+	//	dispatchUpscale.flags |= m_colorSpace == FSRColorSpace::PQColorSpace ? FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_PQ : 0;
+
+	//	ffx::ReturnCode retCode = ffx::Dispatch(m_UpscalingContext, dispatchUpscale);
+	//	CauldronAssert(ASSERT_CRITICAL, !!retCode, L"Dispatching FSR upscaling failed: %d", (uint32_t)retCode);
+	//}
 }
 
 void FidelityFX::QueryVersion(const ComPtr<ID3D12Device>& device)
