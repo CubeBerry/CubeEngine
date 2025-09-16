@@ -7,6 +7,7 @@
 
 #include "Kits/FidelityFX/upscalers/include/ffx_upscale.hpp"
 
+// @TODO Link amd_fidelityfx_loader_dx12.lib!!!
 void FidelityFX::CreateContext(const ComPtr<ID3D12Device>& device)
 {
 	// https://gpuopen.com/manuals/fidelityfx_sdk2/getting-started/ffx-api/
