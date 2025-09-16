@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.20)
 
 set(DX_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(DX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-# FidelityFX
-set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libs/FidelityFX-SDK-v2.0.0")
+# FidelityFX 1.1.4
+set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libs/FidelityFX-SDK-v1.1.4/sdk/include")
+# FidelityFX 2.0
+# set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libs/FidelityFX-SDK-v2.0.0")
 
 FILE(GLOB DX_SOURCES "${DX_SRC_DIR}/*.cpp")
 FILE(GLOB DX_INCLUDES "${DX_INC_DIR}/*.hpp")

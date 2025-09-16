@@ -23,8 +23,10 @@ set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
 set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
 # Assimp
 set(ASSIMP_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/assimp/include")
-# FidelityFX
-set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v2.0.0")
+# FidelityFX 1.1.4
+set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v1.1.4/sdk/include")
+# FidelityFX 2.0
+# set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v2.0.0")
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
