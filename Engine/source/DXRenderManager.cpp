@@ -283,7 +283,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Initialize for compute shader
 	m_computeBuffer = std::make_unique<DXComputeBuffer>();
-	m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
+	m_computeBuffer->InitComputeBuffer(m_device, "../Engine/libs/FidelityFX-SDK-v2.0.0/Kits/FidelityFX/upscalers/fsr3/internal/shaders/ffx_fsr3upscaler_rcas_pass.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
 
 	WaitForGPU();
 
@@ -547,15 +547,15 @@ void DXRenderManager::EndRender()
 
 	// Process compute shader
 	// @TODO Uncomment for compute shader use later
-	//m_computeBuffer->PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
+	m_computeBuffer->PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
 
 	// @TODO Comment for compute shader use later
-	m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	//m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	// @TODO Comment for compute shader use later
-	auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	//auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	// @TODO Comment for compute shader use later
-	m_commandList->ResourceBarrier(1, &postResolveBarrier);
+	//m_commandList->ResourceBarrier(1, &postResolveBarrier);
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
