@@ -5,6 +5,7 @@
 
 #include <stdexcept>
 
+#include "DXHelper.hpp"
 #include "DXRenderTarget.hpp"
 
 #include "FidelityFX/host/backends/dx12/ffx_dx12.h"
@@ -13,69 +14,142 @@
 // FidelityFX SDK 1.1.4
 FidelityFX::~FidelityFX()
 {
-	ffxCasContextDestroy(&m_CasContext);
+	ffxCasContextDestroy(&m_casContext);
 
 	// Destroy FidelityFX interface memory
-	free(m_InitializationParameters.backendInterface.scratchBuffer);
+	free(m_initializationParameters.backendInterface.scratchBuffer);
 }
 
 void FidelityFX::CreateCasContext(const ComPtr<ID3D12Device>& device)
 {
+	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		// @TODO No magic numbers!
+		1280,
+		720,
+		1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+	);
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&m_postProcessTexture)
+	));
+	m_postProcessTexture->SetName(L"CAS Post Process Texture");
+
 	// https://gpuopen.com/manuals/fidelityfx_sdk/techniques/contrast-adaptive-sharpening/
 	// Based on casrendermodule.cpp from FidelityFX SDK 1.1.4 CAS Sample
-	if (m_InitializationParameters.backendInterface.scratchBuffer != nullptr)
-		free(m_InitializationParameters.backendInterface.scratchBuffer);
+	if (m_initializationParameters.backendInterface.scratchBuffer != nullptr)
+		free(m_initializationParameters.backendInterface.scratchBuffer);
 
 	// Setup FidelityFX interface
 	const size_t scratchBufferSize = ffxGetScratchMemorySizeDX12(FFX_CAS_CONTEXT_COUNT);
 	void* scratchBuffer = calloc(scratchBufferSize, 1u);
-	FfxErrorCode errorCode = ffxGetInterfaceDX12(&m_InitializationParameters.backendInterface, device.Get(), scratchBuffer, scratchBufferSize, FFX_CAS_CONTEXT_COUNT);
+	FfxErrorCode errorCode = ffxGetInterfaceDX12(&m_initializationParameters.backendInterface, device.Get(), scratchBuffer, scratchBufferSize, FFX_CAS_CONTEXT_COUNT);
 	//CAULDRON_ASSERT(errorCode == FFX_OK);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FidelityFX interface.");
 	// @TODO Create proper log
-	//CauldronAssert(ASSERT_CRITICAL, m_InitializationParameters.backendInterface.fpGetSDKVersion(&m_InitializationParameters.backendInterface) == FFX_SDK_MAKE_VERSION(1, 1, 4),
+	//CauldronAssert(ASSERT_CRITICAL, m_initializationParameters.backendInterface.fpGetSDKVersion(&m_initializationParameters.backendInterface) == FFX_SDK_MAKE_VERSION(1, 1, 4),
 	//	L"FidelityFX CAS 2.1 sample requires linking with a 1.1.4 version SDK backend");
 	//CauldronAssert(ASSERT_CRITICAL, ffxCasGetEffectVersion() == FFX_SDK_MAKE_VERSION(1, 2, 0),
 	//	L"FidelityFX CAS 2.1 sample requires linking with a 1.2 version FidelityFX CAS library");
 
-	//m_InitializationParameters.backendInterface.fpRegisterConstantBufferAllocator(&m_InitializationParameters.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
+	//m_initializationParameters.backendInterface.fpRegisterConstantBufferAllocator(&m_initializationParameters.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
 
 	// Initialize CAS Context
 	// Sharpening Only
 	if (m_sharpenOnly)
-		m_InitializationParameters.flags |= FFX_CAS_SHARPEN_ONLY;
+		m_initializationParameters.flags |= FFX_CAS_SHARPEN_ONLY;
 	// Sharpening & Upscaling
 	else
-		m_InitializationParameters.flags &= ~FFX_CAS_SHARPEN_ONLY;
+		m_initializationParameters.flags &= ~FFX_CAS_SHARPEN_ONLY;
 
 	// CubeEngine is using non-linear color space
-	//m_InitializationParameters.colorSpaceConversion = FFX_CAS_COLOR_SPACE_LINEAR;
+	//m_initializationParameters.colorSpaceConversion = FFX_CAS_COLOR_SPACE_LINEAR;
 
 	// @TODO No magic numbers!
-	m_InitializationParameters.maxRenderSize.width = 1280;
-	m_InitializationParameters.maxRenderSize.height = 720;
-	m_InitializationParameters.displaySize.width = 1280;
-	m_InitializationParameters.displaySize.height = 720;
+	m_initializationParameters.maxRenderSize.width = 1280;
+	m_initializationParameters.maxRenderSize.height = 720;
+	m_initializationParameters.displaySize.width = 1280;
+	m_initializationParameters.displaySize.height = 720;
 
 	// Create CAS Context
-	ffxCasContextCreate(&m_CasContext, &m_InitializationParameters);
+	ffxCasContextCreate(&m_casContext, &m_initializationParameters);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to create CAS context");
 }
 
 void FidelityFX::OnResize(const ComPtr<ID3D12Device>& device)
 {
-	ffxCasContextDestroy(&m_CasContext);
+	ffxCasContextDestroy(&m_casContext);
 	// @TODO Should set resized window size
 	CreateCasContext(device);
+
+	m_postProcessTexture.Reset();
+
+	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		// @TODO No magic numbers!
+		1280,
+		720,
+		1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+	);
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&m_postProcessTexture)
+	));
+	m_postProcessTexture->SetName(L"CAS Post Process Texture");
 }
 
 void FidelityFX::Execute(
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
-	const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
 	const ComPtr<ID3D12Resource>& renderTarget
 )
 {
+	FfxCasDispatchDescription dispatchParameters = {};
+	dispatchParameters.commandList = ffxGetCommandListDX12(commandList.Get());
+	// @TODO No magic numbers!
+	dispatchParameters.renderSize = { 1280, 720 };
+	dispatchParameters.sharpness = m_sharpness;
+
+	CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
+	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE),
+	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST)
+	};
+	commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
+
+	commandList->CopyResource(m_postProcessTexture.Get(), renderTarget.Get());
+
+	CD3DX12_RESOURCE_BARRIER dispatchBarriers[] = {
+	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+	};
+	commandList->ResourceBarrier(_countof(dispatchBarriers), dispatchBarriers);
+
+	D3D12_RESOURCE_DESC inputResourceDesc = m_postProcessTexture->GetDesc();
+	FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), { static_cast<uint32_t>(inputResourceDesc.Width) }, { static_cast<uint32_t>(inputResourceDesc.Height) }, { 1 }, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
+	dispatchParameters.color = ffxGetResourceDX12(m_postProcessTexture.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
+
+	D3D12_RESOURCE_DESC outputResourceDesc = renderTarget->GetDesc();
+	FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), { static_cast<uint32_t>(outputResourceDesc.Width) }, { static_cast<uint32_t>(outputResourceDesc.Height) }, { 1 }, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
+	dispatchParameters.output = ffxGetResourceDX12(renderTarget.Get(), outputDesc, L"CAS_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	FfxErrorCode errorCode = ffxCasContextDispatch(&m_casContext, &dispatchParameters);
+	if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch CAS");
+
+	auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(1, &finalBarrier);
 }
 
 // @TODO FidelityFX SDK 2.0

@@ -25,7 +25,7 @@ void DXComputeBuffer::InitComputeBuffer(
 	CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
 	// Input Texture (t0)
 	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	// Outpyt Texture (u0)
+	// Output Texture (u0)
 	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
 	CD3DX12_ROOT_PARAMETER1 rootParameter;

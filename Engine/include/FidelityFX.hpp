@@ -6,6 +6,7 @@
 // @TODO FidelityFX SDK 2.0
 //#include "Kits/FidelityFX/api/include/dx12/ffx_api_dx12.hpp"
 
+#include <wrl.h>
 #include <directx/d3dx12.h>
 
 class DXRenderTarget;
@@ -23,19 +24,17 @@ public:
 	FidelityFX& operator=(const FidelityFX&&) = delete;
 
 	~FidelityFX();
-private:
+
 	void CreateCasContext(const ComPtr<ID3D12Device>& device);
 	void OnResize(const ComPtr<ID3D12Device>& device);
 	void Execute(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
-		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
-		const std::unique_ptr<DXRenderTarget>& dxRenderTarget,
 		const ComPtr<ID3D12Resource>& renderTarget
 	);
-
+private:
 	// FidelityFX SDK 1.1.4
-	FfxCasContextDescription m_InitializationParameters{ 0 };
-	FfxCasContext m_CasContext;
+	FfxCasContextDescription m_initializationParameters{ 0 };
+	FfxCasContext m_casContext;
 	ComPtr<ID3D12Resource> m_postProcessTexture;
 
 	float m_sharpness{ 0.8f };
