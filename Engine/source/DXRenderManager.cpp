@@ -543,11 +543,12 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 void DXRenderManager::EndRender()
 {
+	//OutputDebugStringA("EndRender: Entered.\n");
+
+	// @TODO Remove redundant code for optimization!
 	if (!m_casEnabled)
 	{
 		// Normal Render
-		//OutputDebugStringA("EndRender: Entered.\n");
-
 		auto preResolveBarriers = {
 			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
 			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
@@ -581,13 +582,10 @@ void DXRenderManager::EndRender()
 		//OutputDebugStringA("EndRender: Present successful.\n");
 
 		MoveToNextFrame();
-		//OutputDebugStringA("EndRender: Finished successfully.\n");
 	}
 	else
 	{
 		// FidelityFX Render
-		//OutputDebugStringA("EndRender: Entered.\n");
-
 		auto preResolveBarriers = {
 			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
 			// @TODO Comment for compute shader use later
@@ -621,12 +619,9 @@ void DXRenderManager::EndRender()
 		//OutputDebugStringA("EndRender: Present successful.\n");
 
 		MoveToNextFrame();
-		//OutputDebugStringA("EndRender: Finished successfully.\n");
 	}
 
 	// Compute Shader Render
-	////OutputDebugStringA("EndRender: Entered.\n");
-
 	//auto preResolveBarriers = {
 	//	CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
 	//};
@@ -657,7 +652,8 @@ void DXRenderManager::EndRender()
 	////OutputDebugStringA("EndRender: Present successful.\n");
 
 	//MoveToNextFrame();
-	////OutputDebugStringA("EndRender: Finished successfully.\n");
+
+	//OutputDebugStringA("EndRender: Finished successfully.\n");
 }
 
 void DXRenderManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter)
