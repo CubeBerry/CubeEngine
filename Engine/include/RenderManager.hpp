@@ -209,11 +209,11 @@ public:
 	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
 };
 
-struct SubMesh
-{
-	std::unique_ptr<BufferWrapper> bufferWrapper;
-	ThreeDimension::Material material;
-};
+//struct SubMesh
+//{
+//	std::unique_ptr<BufferWrapper> bufferWrapper;
+//};
+using SubMesh = std::unique_ptr<BufferWrapper>;
 
 enum class PolygonType
 {
