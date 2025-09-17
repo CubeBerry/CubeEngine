@@ -32,7 +32,7 @@ void ObjectManager::End()
 
 void ObjectManager::Draw(float dt)
 {
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Draw(dt); });
+	std::ranges::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Draw(dt); });
 }
 
 void ObjectManager::Destroy(int id)

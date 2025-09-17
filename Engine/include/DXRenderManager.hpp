@@ -151,6 +151,7 @@ public:
 	}
 
 	// Deferred Deletion
+	// @TODO Make OpenGL, Vulkan version of SafeDelete, ProcessDeletionQueue function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
 	std::vector<std::pair<std::unique_ptr<BufferWrapper>, UINT64>> m_deletionQueue;
 	void SafeDelete(std::unique_ptr<BufferWrapper> bufferWrapper)
 	{

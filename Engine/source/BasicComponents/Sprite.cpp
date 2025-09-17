@@ -17,6 +17,7 @@
 Sprite::~Sprite()
 {
 	RenderManager* renderManager = Engine::GetRenderManager();
+	// @TODO Make OpenGL, Vulkan version of SafeDelete, ProcessDeletionQueue function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
 	if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
 	{
 		for (auto& subMesh : subMeshes)
