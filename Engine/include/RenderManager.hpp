@@ -290,14 +290,21 @@ public:
 	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
 #endif
 
+	void RenderingControllerForImGui();
+
 	//Skybox
 	virtual void LoadSkybox(const std::filesystem::path& path) = 0;
 	virtual void DeleteSkybox() = 0;
 protected:
 	//--------------------Common--------------------//
+	// Graphics Mode
 	GraphicsMode gMode{ GraphicsMode::GL };
+	// Render Mode
 	RenderType rMode = RenderType::TwoDimension;
+	// Polygon Mode
 	PolygonType pMode = PolygonType::FILL;
+	// FidelityFX CAS
+	bool m_casEnabled{ true };
 
 	//--------------------2D Render--------------------//
 

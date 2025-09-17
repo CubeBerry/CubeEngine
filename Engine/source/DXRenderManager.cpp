@@ -543,43 +543,86 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 void DXRenderManager::EndRender()
 {
-	// Normal Render
-	//OutputDebugStringA("EndRender: Entered.\n");
+	if (!m_casEnabled)
+	{
+		// Normal Render
+		//OutputDebugStringA("EndRender: Entered.\n");
 
-	auto preResolveBarriers = {
-		CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
-		CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
-	};
-	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
+		auto preResolveBarriers = {
+			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
+			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
+		};
+		m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
-	m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
-	auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_commandList->ResourceBarrier(1, &postResolveBarrier);
+		auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_commandList->ResourceBarrier(1, &postResolveBarrier);
 
-	// ImGui Render
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+		// ImGui Render
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-	m_imguiManager->End(m_commandList);
+		m_imguiManager->End(m_commandList);
 
-	auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	m_commandList->ResourceBarrier(1, &finalBarrier);
+		auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		m_commandList->ResourceBarrier(1, &finalBarrier);
 
-	DXHelper::ThrowIfFailed(m_commandList->Close());
-	//OutputDebugStringA("EndRender: Command list closed.\n");
+		DXHelper::ThrowIfFailed(m_commandList->Close());
+		//OutputDebugStringA("EndRender: Command list closed.\n");
 
-	// Execute the command list
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-	//OutputDebugStringA("EndRender: Command list executed.\n");
+		// Execute the command list
+		ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+		m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+		//OutputDebugStringA("EndRender: Command list executed.\n");
 
-	//OutputDebugStringA("EndRender: Calling Present...\n");
-	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
-	//OutputDebugStringA("EndRender: Present successful.\n");
+		//OutputDebugStringA("EndRender: Calling Present...\n");
+		DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
+		//OutputDebugStringA("EndRender: Present successful.\n");
 
-	MoveToNextFrame();
-	//OutputDebugStringA("EndRender: Finished successfully.\n");
+		MoveToNextFrame();
+		//OutputDebugStringA("EndRender: Finished successfully.\n");
+	}
+	else
+	{
+		// FidelityFX Render
+		//OutputDebugStringA("EndRender: Entered.\n");
+
+		auto preResolveBarriers = {
+			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
+			// @TODO Comment for compute shader use later
+			CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
+		};
+		m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
+
+		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex]);
+
+		// ImGui Render
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+		m_imguiManager->End(m_commandList);
+
+		auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		m_commandList->ResourceBarrier(1, &finalBarrier);
+
+		DXHelper::ThrowIfFailed(m_commandList->Close());
+		//OutputDebugStringA("EndRender: Command list closed.\n");
+
+		// Execute the command list
+		ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+		m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+		//OutputDebugStringA("EndRender: Command list executed.\n");
+
+		//OutputDebugStringA("EndRender: Calling Present...\n");
+		DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
+		//OutputDebugStringA("EndRender: Present successful.\n");
+
+		MoveToNextFrame();
+		//OutputDebugStringA("EndRender: Finished successfully.\n");
+	}
 
 	// Compute Shader Render
 	////OutputDebugStringA("EndRender: Entered.\n");
@@ -591,44 +634,6 @@ void DXRenderManager::EndRender()
 
 	//// Process compute shader
 	//m_computeBuffer->PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
-
-	//// ImGui Render
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
-	//m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-	//m_imguiManager->End(m_commandList);
-
-	//auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	//m_commandList->ResourceBarrier(1, &finalBarrier);
-
-	//DXHelper::ThrowIfFailed(m_commandList->Close());
-	////OutputDebugStringA("EndRender: Command list closed.\n");
-
-	//// Execute the command list
-	//ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	//m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-	////OutputDebugStringA("EndRender: Command list executed.\n");
-
-	////OutputDebugStringA("EndRender: Calling Present...\n");
-	//DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
-	////OutputDebugStringA("EndRender: Present successful.\n");
-
-	//MoveToNextFrame();
-	////OutputDebugStringA("EndRender: Finished successfully.\n");
-
-	// FidelityFX Render
-	////OutputDebugStringA("EndRender: Entered.\n");
-
-	//auto preResolveBarriers = {
-	//	CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
-	//	// @TODO Comment for compute shader use later
-	//	CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
-	//};
-	//m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
-
-	//m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-	//m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex]);
 
 	//// ImGui Render
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);

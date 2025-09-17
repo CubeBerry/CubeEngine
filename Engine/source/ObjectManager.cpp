@@ -281,21 +281,6 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			{
 				spriteComp->SetColor(color);
 			}
-			ImGui::Spacing();
-			if (ImGui::Button("FILL", ImVec2(100, 0)))
-			{
-				renderManager->SetPolygonType(PolygonType::FILL);
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("LINE", ImVec2(100, 0)))
-			{
-				renderManager->SetPolygonType(PolygonType::LINE);
-			}
-#ifdef _DEBUG
-			ImGui::Spacing();
-			ImGui::Checkbox("DrawNormals", &isDrawNormals);
-			renderManager->DrawNormals(isDrawNormals);
-#endif
 
 			ImGui::Spacing();
 			if (ImGui::SliderInt("Stacks", &stacks, 2, 30))

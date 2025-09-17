@@ -839,3 +839,30 @@ glm::mat4 RenderManager::Quantize(
 
 	return decodeMat;
 }
+
+void RenderManager::RenderingControllerForImGui()
+{
+	RenderManager* renderManager = Engine::GetRenderManager();
+	ImGui::Begin("RenderingController");
+
+	if (ImGui::Checkbox("Enable FidelityFX CAS", &m_casEnabled))
+	{
+	}
+	ImGui::Spacing();
+	if (ImGui::Button("FILL", ImVec2(100, 0)))
+	{
+		renderManager->SetPolygonType(PolygonType::FILL);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("LINE", ImVec2(100, 0)))
+	{
+		renderManager->SetPolygonType(PolygonType::LINE);
+	}
+#ifdef _DEBUG
+	ImGui::Spacing();
+	ImGui::Checkbox("DrawNormals", &isDrawNormals);
+	renderManager->DrawNormals(isDrawNormals);
+#endif
+
+	ImGui::End();
+}

@@ -134,12 +134,10 @@ void GameStateManager::DrawWithImGui(float dt)
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	if (renderManager->BeginRender({ 0.0f, 0.0f, 0.0f }))
 	{
-		if (showFPSHistory)
-		{
-			Engine::Instance().GetTimer().ShowFpsGraph();
-		}
+		if (showFPSHistory) Engine::Instance().GetTimer().ShowFpsGraph();
 		StateChanger();
 		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+		if (renderManager->GetRenderType() == RenderType::ThreeDimension) renderManager->RenderingControllerForImGui();
 		renderManager->EndRender();
 	}
 
