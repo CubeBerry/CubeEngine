@@ -123,33 +123,53 @@ void FidelityFX::Execute(
 	dispatchParameters.renderSize = { 1280, 720 };
 	dispatchParameters.sharpness = m_sharpness;
 
-	CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
-	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE),
-	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST)
-	};
-	commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
+	//CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
+	//	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST),
+	//	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE)
+	//};
+	//commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
 
-	commandList->CopyResource(m_postProcessTexture.Get(), renderTarget.Get());
+	//commandList->CopyResource(m_postProcessTexture.Get(), renderTarget.Get());
+
+	//CD3DX12_RESOURCE_BARRIER dispatchBarriers[] = {
+	//	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+	//	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+	//};
 
 	CD3DX12_RESOURCE_BARRIER dispatchBarriers[] = {
-	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
-	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
 	};
+
 	commandList->ResourceBarrier(_countof(dispatchBarriers), dispatchBarriers);
 
-	D3D12_RESOURCE_DESC inputResourceDesc = m_postProcessTexture->GetDesc();
+	D3D12_RESOURCE_DESC inputResourceDesc = renderTarget->GetDesc();
 	FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), { static_cast<uint32_t>(inputResourceDesc.Width) }, { static_cast<uint32_t>(inputResourceDesc.Height) }, { 1 }, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
-	dispatchParameters.color = ffxGetResourceDX12(m_postProcessTexture.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
+	dispatchParameters.color = ffxGetResourceDX12(renderTarget.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
 
-	D3D12_RESOURCE_DESC outputResourceDesc = renderTarget->GetDesc();
+	D3D12_RESOURCE_DESC outputResourceDesc = m_postProcessTexture->GetDesc();
 	FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), { static_cast<uint32_t>(outputResourceDesc.Width) }, { static_cast<uint32_t>(outputResourceDesc.Height) }, { 1 }, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
-	dispatchParameters.output = ffxGetResourceDX12(renderTarget.Get(), outputDesc, L"CAS_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
+	dispatchParameters.output = ffxGetResourceDX12(m_postProcessTexture.Get(), outputDesc, L"CAS_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	FfxErrorCode errorCode = ffxCasContextDispatch(&m_casContext, &dispatchParameters);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch CAS");
 
-	auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	commandList->ResourceBarrier(1, &finalBarrier);
+	CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST)
+	};
+	commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
+
+	commandList->CopyResource(renderTarget.Get(), m_postProcessTexture.Get());
+
+	//auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	//commandList->ResourceBarrier(1, &finalBarrier);
+
+	CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
+	};
+	commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
 }
 
 // @TODO FidelityFX SDK 2.0
