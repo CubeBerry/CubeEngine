@@ -298,18 +298,18 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	SDL_ShowWindow(window);
 }
 
-void DXRenderManager::SetResize(const int width, const int height)
+void DXRenderManager::SetResize()
 {
-	m_width = width;
-	m_height = height;
 	m_isResize = true;
 }
 
-void DXRenderManager::OnResize(int width, int height)
+void DXRenderManager::OnResize()
 {
 	//OutputDebugStringA("OnResize: Entered.\n");
 
-	if (width == 0 || height == 0)
+	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &m_width, &m_height);
+
+	if (m_width == 0 || m_height == 0)
 	{
 		//OutputDebugStringA("OnResize: Skipped due to 0 size.\n");
 		return;
@@ -327,8 +327,8 @@ void DXRenderManager::OnResize(int width, int height)
 
 	DXHelper::ThrowIfFailed(m_swapChain->ResizeBuffers(
 		frameCount,
-		static_cast<UINT>(width),
-		static_cast<UINT>(height),
+		static_cast<UINT>(m_width),
+		static_cast<UINT>(m_height),
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		0
 	));
@@ -347,7 +347,7 @@ void DXRenderManager::OnResize(int width, int height)
 	//m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
 
 	// Recreate FidelityFX
-	m_fidelityFX->OnResize(m_device, width, height);
+	m_fidelityFX->OnResize(m_device, m_width, m_height);
 
 	m_renderTarget.reset();
 	m_renderTarget = std::make_unique<DXRenderTarget>(
@@ -370,7 +370,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	if (m_isResize)
 	{
-		OnResize(m_width, m_height);
+		OnResize();
 		m_isResize = false;
 		return false;
 	}
@@ -382,19 +382,11 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
 	// Set the viewport and scissor rect
-	// @TODO Optimize viewport, scissor size code
-	int width, height;
-	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &width, &height);
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
-
+	// This is weird but FidelityFX class takes care of viewport size (display size, render size)
 	uint32_t renderWidth = m_fidelityFX->GetRenderWidth();
 	uint32_t renderHeight = m_fidelityFX->GetRenderHeight();
-	if (m_casEnabled)
-	{
-		viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
-		scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
-	}
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
 
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);

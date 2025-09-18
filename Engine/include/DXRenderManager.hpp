@@ -37,10 +37,10 @@ public:
 	DXRenderManager& operator=(const DXRenderManager&&) = delete;
 
 	void Initialize(SDL_Window* window);
-	void SetResize(const int width, const int height);
+	void SetResize();
 	int m_width, m_height;
 	bool m_isResize{ false };
-	void OnResize(const int width, const int height);
+	void OnResize();
 	void WaitForGPU();
 
 	bool BeginRender(glm::vec3 bgColor) override;

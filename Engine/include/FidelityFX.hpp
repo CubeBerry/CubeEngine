@@ -52,8 +52,10 @@ public:
 		const ComPtr<ID3D12Resource>& renderTarget
 	);
 
-	uint32_t GetRenderWidth() const { return m_renderWidth; };
-	uint32_t GetRenderHeight() const { return m_renderHeight; };
+	bool GetEnableUpscaling() const { return m_enableUpscaling; }
+	CASScalePreset GetScalePreset() const { return m_scalePreset; };
+	uint32_t GetRenderWidth() const { return m_renderWidth; }
+	uint32_t GetRenderHeight() const { return m_renderHeight; }
 private:
 	// FidelityFX SDK 1.1.4
 	FfxCasContextDescription m_initializationParameters{ 0 };
