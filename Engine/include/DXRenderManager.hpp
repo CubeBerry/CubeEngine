@@ -17,7 +17,6 @@
 #include "DXSkybox.hpp"
 #include "DXRenderTarget.hpp"
 #include "DXComputeBuffer.hpp"
-#include "FidelityFX.hpp"
 
 #include "BasicComponents/Sprite.hpp"
 
@@ -105,9 +104,6 @@ private:
 	// Compute Shader
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
 
-	// FidelityFX
-	std::unique_ptr<FidelityFX> m_fidelityFX;
-
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
 	UINT64 m_frameCounter{ 0 };
@@ -158,6 +154,9 @@ public:
 		if (bufferWrapper) m_deletionQueue.emplace_back(bufferWrapper.release(), m_frameIndex);
 	}
 	void ProcessDeletionQueue();
+
+	// FidelityFX CAS
+	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override;
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

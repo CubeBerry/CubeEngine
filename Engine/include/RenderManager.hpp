@@ -12,6 +12,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 
+#include "FidelityFX.hpp"
+
 #include "GLVertexArray.hpp"
 #include "GLVertexBuffer.hpp"
 #include "GLIndexBuffer.hpp"
@@ -256,6 +258,9 @@ public:
 	// @TODO Change BufferWrapper& -> BufferWrapper*
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
+	// FidelityFX CAS
+	virtual void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) = 0;
+
 	//--------------------2D Render--------------------//
 	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
 
@@ -305,6 +310,7 @@ protected:
 	PolygonType pMode = PolygonType::FILL;
 	// FidelityFX CAS
 	bool m_casEnabled{ true };
+	std::unique_ptr<FidelityFX> m_fidelityFX;
 
 	//--------------------2D Render--------------------//
 

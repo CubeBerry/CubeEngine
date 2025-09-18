@@ -13,7 +13,11 @@ using Microsoft::WRL::ComPtr;
 class DXRenderTarget
 {
 public:
-	DXRenderTarget(const ComPtr<ID3D12Device>& device, SDL_Window* window);
+	DXRenderTarget(
+		const ComPtr<ID3D12Device>& device,
+		SDL_Window* window,
+		int width, int height
+	);
 	~DXRenderTarget() = default;
 
 	DXRenderTarget(const DXRenderTarget&) = delete;
@@ -36,7 +40,7 @@ private:
 	SDL_Window* m_window;
 
 	// MSAA
-	void CreateColorResources();
+	void CreateColorResources(int width, int height);
 
 	UINT m_msaaSampleCount{ 4 };
 	UINT m_msaaQualityLevel;
@@ -44,7 +48,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_msaaRtvHeap;
 
 	// Depth
-	void CreateDepthBuffer();
+	void CreateDepthBuffer(int width, int height);
 
 	ComPtr<ID3D12Resource> m_depthStencil;
 	// dsv = Depth Stencil View

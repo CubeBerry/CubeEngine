@@ -41,7 +41,6 @@ public:
 	//--------------------Common--------------------//
 	void ClearTextures() override;
 
-
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
@@ -67,6 +66,10 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
 		}
 	}
+
+	// FidelityFX CAS
+	// FidelityFX does not support OpenGL
+	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override {}
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

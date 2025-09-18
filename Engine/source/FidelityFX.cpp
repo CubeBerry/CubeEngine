@@ -20,13 +20,18 @@ FidelityFX::~FidelityFX()
 	free(m_initializationParameters.backendInterface.scratchBuffer);
 }
 
-void FidelityFX::CreateCasContext(const ComPtr<ID3D12Device>& device)
+void FidelityFX::CreateCasContext(
+	const ComPtr<ID3D12Device>& device,
+	int displayWidth, int displayHeight
+)
 {
+	m_displayWidth = displayWidth;
+	m_displayHeight = displayHeight;
+
 	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R8G8B8A8_UNORM,
-		// @TODO No magic numbers!
-		1280,
-		720,
+		m_displayWidth,
+		m_displayHeight,
 		1, 1, 1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 	);
@@ -62,40 +67,50 @@ void FidelityFX::CreateCasContext(const ComPtr<ID3D12Device>& device)
 	//m_initializationParameters.backendInterface.fpRegisterConstantBufferAllocator(&m_initializationParameters.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
 
 	// Initialize CAS Context
-	// Sharpening Only
-	if (m_sharpenOnly)
-		m_initializationParameters.flags |= FFX_CAS_SHARPEN_ONLY;
+	m_renderWidth = m_displayWidth;
+	m_renderHeight = m_displayHeight;
+
 	// Sharpening & Upscaling
-	else
+	if (m_enableUpscaling)
+	{
+		m_renderWidth = static_cast<uint32_t>(static_cast<float>(m_displayWidth) / m_upscaleRatio);
+		m_renderHeight = static_cast<uint32_t>(static_cast<float>(m_displayHeight) / m_upscaleRatio);
 		m_initializationParameters.flags &= ~FFX_CAS_SHARPEN_ONLY;
+	}
+	// Sharpening Only
+	else
+		m_initializationParameters.flags |= FFX_CAS_SHARPEN_ONLY;
 
 	// CubeEngine is using non-linear color space
 	//m_initializationParameters.colorSpaceConversion = FFX_CAS_COLOR_SPACE_LINEAR;
 
-	// @TODO No magic numbers!
-	m_initializationParameters.maxRenderSize.width = 1280;
-	m_initializationParameters.maxRenderSize.height = 720;
-	m_initializationParameters.displaySize.width = 1280;
-	m_initializationParameters.displaySize.height = 720;
+	m_initializationParameters.maxRenderSize.width = m_renderWidth;
+	m_initializationParameters.maxRenderSize.height = m_renderHeight;
+	m_initializationParameters.displaySize.width = m_displayWidth;
+	m_initializationParameters.displaySize.height = m_displayHeight;
 
 	// Create CAS Context
 	ffxCasContextCreate(&m_casContext, &m_initializationParameters);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to create CAS context");
 }
 
-void FidelityFX::OnResize(const ComPtr<ID3D12Device>& device)
+void FidelityFX::OnResize(
+	const ComPtr<ID3D12Device>& device,
+	int displayWidth, int displayHeight
+)
 {
+	m_displayWidth = displayWidth;
+	m_displayHeight = displayHeight;
+
 	ffxCasContextDestroy(&m_casContext);
-	// @TODO Should set resized window size
-	CreateCasContext(device);
+	CreateCasContext(device, m_displayWidth, m_displayHeight);
 
 	m_postProcessTexture.Reset();
 
 	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R8G8B8A8_UNORM,
-		// @TODO No magic numbers!
-		1280,
-		720,
+		m_displayWidth,
+		m_displayHeight,
 		1, 1, 1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 	);
@@ -112,6 +127,22 @@ void FidelityFX::OnResize(const ComPtr<ID3D12Device>& device)
 	m_postProcessTexture->SetName(L"CAS Post Process Texture");
 }
 
+void FidelityFX::UpdateScalePreset(const ComPtr<ID3D12Device>& device, bool enableUpscaling, CASScalePreset preset)
+{
+	m_enableUpscaling = enableUpscaling;
+	m_scalePreset = preset;
+	switch (m_scalePreset)
+	{
+	case CASScalePreset::UltraQuality: m_upscaleRatio = 1.3f; break;
+	case CASScalePreset::Quality: m_upscaleRatio = 1.5f; break;
+	case CASScalePreset::Balanced: m_upscaleRatio = 1.7f; break;
+	case CASScalePreset::Performance: m_upscaleRatio = 2.f; break;
+	case CASScalePreset::UltraPerformance: m_upscaleRatio = 3.f; break;
+	case CASScalePreset::Custom: break;
+	}
+	OnResize(device, m_displayWidth, m_displayHeight);
+}
+
 void FidelityFX::Execute(
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
 	const ComPtr<ID3D12Resource>& renderTarget
@@ -119,8 +150,7 @@ void FidelityFX::Execute(
 {
 	FfxCasDispatchDescription dispatchParameters = {};
 	dispatchParameters.commandList = ffxGetCommandListDX12(commandList.Get());
-	// @TODO No magic numbers!
-	dispatchParameters.renderSize = { 1280, 720 };
+	dispatchParameters.renderSize = { m_initializationParameters.maxRenderSize.width, m_initializationParameters.maxRenderSize.height };
 	dispatchParameters.sharpness = m_sharpness;
 
 	//CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
@@ -144,11 +174,11 @@ void FidelityFX::Execute(
 	commandList->ResourceBarrier(_countof(dispatchBarriers), dispatchBarriers);
 
 	D3D12_RESOURCE_DESC inputResourceDesc = renderTarget->GetDesc();
-	FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), { static_cast<uint32_t>(inputResourceDesc.Width) }, { static_cast<uint32_t>(inputResourceDesc.Height) }, { 1 }, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
+	FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), static_cast<uint32_t>(inputResourceDesc.Width), static_cast<uint32_t>(inputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
 	dispatchParameters.color = ffxGetResourceDX12(renderTarget.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
 
 	D3D12_RESOURCE_DESC outputResourceDesc = m_postProcessTexture->GetDesc();
-	FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), { static_cast<uint32_t>(outputResourceDesc.Width) }, { static_cast<uint32_t>(outputResourceDesc.Height) }, { 1 }, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
+	FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), static_cast<uint32_t>(outputResourceDesc.Width), static_cast<uint32_t>(outputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
 	dispatchParameters.output = ffxGetResourceDX12(m_postProcessTexture.Get(), outputDesc, L"CAS_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	FfxErrorCode errorCode = ffxCasContextDispatch(&m_casContext, &dispatchParameters);

@@ -112,7 +112,11 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	//DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 	//DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
 
-	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, window);
+	m_renderTarget = std::make_unique<DXRenderTarget>(
+		m_device, window,
+		static_cast<int>(Engine::GetWindow().GetWindowSize().x),
+		static_cast<int>(Engine::GetWindow().GetWindowSize().y)
+	);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	// 500 for Sprites, 5 for Skybox, 2 for Compute Shader
@@ -282,12 +286,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
 
 	// Initialize for compute shader
-	m_computeBuffer = std::make_unique<DXComputeBuffer>();
-	m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
+	//m_computeBuffer = std::make_unique<DXComputeBuffer>();
+	//m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
 
-	// Initialize FielityFX
+	// Initialize FidelityFX
 	m_fidelityFX = std::make_unique<FidelityFX>();
-	m_fidelityFX->CreateCasContext(m_device);
+	m_fidelityFX->CreateCasContext(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
 
 	WaitForGPU();
 
@@ -339,14 +343,18 @@ void DXRenderManager::OnResize(int width, int height)
 		DXHelper::ThrowIfFailed(m_renderTargets[i]->SetName((L"Recreate Render Target " + std::to_wstring(i)).c_str()));
 	}
 
-	m_renderTarget.reset();
-	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, Engine::GetWindow().GetWindow());
-
 	// Recreate Compute Shader
-	m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
+	//m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
 
 	// Recreate FidelityFX
-	m_fidelityFX->OnResize(m_device);
+	m_fidelityFX->OnResize(m_device, width, height);
+
+	m_renderTarget.reset();
+	m_renderTarget = std::make_unique<DXRenderTarget>(
+		m_device, Engine::GetWindow().GetWindow(),
+		m_fidelityFX->GetRenderWidth(),
+		m_fidelityFX->GetRenderHeight()
+	);
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
@@ -374,10 +382,20 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
 	// Set the viewport and scissor rect
+	// @TODO Optimize viewport, scissor size code
 	int width, height;
 	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &width, &height);
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, width, height };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
+
+	uint32_t renderWidth = m_fidelityFX->GetRenderWidth();
+	uint32_t renderHeight = m_fidelityFX->GetRenderHeight();
+	if (m_casEnabled)
+	{
+		viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+		scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+	}
+
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -789,6 +807,12 @@ void DXRenderManager::ProcessDeletionQueue()
 			++it;
 		}
 	}
+}
+
+void DXRenderManager::UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset)
+{
+	WaitForGPU();
+	m_fidelityFX->UpdateScalePreset(m_device, enableUpscaling, preset);
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)

@@ -845,8 +845,36 @@ void RenderManager::RenderingControllerForImGui()
 	RenderManager* renderManager = Engine::GetRenderManager();
 	ImGui::Begin("RenderingController");
 
+	// FidelityFX
 	if (ImGui::Checkbox("Enable FidelityFX CAS", &m_casEnabled))
 	{
+	}
+	if (m_casEnabled)
+	{
+		if (ImGui::BeginMenu("Upscale Preset"))
+		{
+			if (ImGui::MenuItem("UltraQuality"))
+			{
+				UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraQuality);
+			}
+			if (ImGui::MenuItem("Quality"))
+			{
+				UpdateScalePreset(true, FidelityFX::CASScalePreset::Quality);
+			}
+			if (ImGui::MenuItem("Balanced"))
+			{
+				UpdateScalePreset(true, FidelityFX::CASScalePreset::Balanced);
+			}
+			if (ImGui::MenuItem("Performance"))
+			{
+				UpdateScalePreset(true, FidelityFX::CASScalePreset::Performance);
+			}
+			if (ImGui::MenuItem("UltraPerformance"))
+			{
+				UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraPerformance);
+			}
+			ImGui::EndMenu();
+		}
 	}
 	ImGui::Spacing();
 	if (ImGui::Button("FILL", ImVec2(100, 0)))

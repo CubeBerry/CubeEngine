@@ -17,6 +17,16 @@ using Microsoft::WRL::ComPtr;
 class FidelityFX
 {
 public:
+	enum class CASScalePreset
+	{
+		UltraQuality = 0,  // 1.3f
+		Quality,           // 1.5f
+		Balanced,          // 1.7f
+		Performance,       // 2.f
+		UltraPerformance,  // 3.f
+		Custom             // 1.f - 3.f range
+	};
+public:
 	FidelityFX() = default;
 	FidelityFX(const FidelityFX&) = delete;
 	FidelityFX& operator=(const FidelityFX&) = delete;
@@ -25,12 +35,25 @@ public:
 
 	~FidelityFX();
 
-	void CreateCasContext(const ComPtr<ID3D12Device>& device);
-	void OnResize(const ComPtr<ID3D12Device>& device);
+	void CreateCasContext(
+		const ComPtr<ID3D12Device>& device,
+		int displayWidth, int displayHeight
+	);
+	void OnResize(
+		const ComPtr<ID3D12Device>& device,
+		int displayWidth, int displayHeight
+	);
+	void UpdateScalePreset(
+		const ComPtr<ID3D12Device>& device,
+		bool enableUpscaling,
+		CASScalePreset preset);
 	void Execute(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
 		const ComPtr<ID3D12Resource>& renderTarget
 	);
+
+	uint32_t GetRenderWidth() const { return m_renderWidth; };
+	uint32_t GetRenderHeight() const { return m_renderHeight; };
 private:
 	// FidelityFX SDK 1.1.4
 	FfxCasContextDescription m_initializationParameters{ 0 };
@@ -38,7 +61,12 @@ private:
 	ComPtr<ID3D12Resource> m_postProcessTexture;
 
 	float m_sharpness{ 0.8f };
-	bool m_sharpenOnly{ false };
+	bool m_enableUpscaling{ false };
+	CASScalePreset m_scalePreset{ CASScalePreset::UltraQuality };
+	float m_upscaleRatio{ 1.3f };
+
+	int m_displayWidth, m_displayHeight;
+	uint32_t m_renderWidth, m_renderHeight;
 
 	// @TODO FidelityFX SDK 2.0
 	//std::vector<uint64_t> m_fsrVersionIds;
