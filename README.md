@@ -50,20 +50,31 @@ slangc Skybox.slang -profile sm_5_1 -entry vertexMain -stage vertex -target hlsl
 slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target hlsl -o Skybox.frag.hlsl -D__hlsl__
 ```
 
-## Features
-1. Running on OpenGL & Vulkan & DirectX 12 Graphics APIs.
-2. [Slang Shading Language](https://shader-slang.org/)
-3. [ImGui](https://github.com/ocornut/imgui) Integrated
-4. CPU Dump Writer, CRT Memory Leak Detector, [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) (DX12 Only)
-5. SoundManager with ImGui UI
-6. Basic 2D Game Engine Features
-7. 3D Plane, Cube(3D Collision Applied), Sphere, Tours, Cylinder, Cone Meshes + Normal Vector Debugger
-8. Assimp Model Loading
-9. Blinn-Phong Lighting, Physically Based Rendering
-10. PBR Image Based Lighting
-11. Skybox
-12. MSAA
-13. Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit))
+* **Legend:** ✅: Implemented / ❌: Not Supported / ➖: Not Applicable
+
+| Feature | Engine Core (CPU) | OpenGL | Vulkan | DirectX 12 |
+| :--- | :---: | :---: | :---: | :---: |
+| **Core Engine** | | | | |
+| CPU Dump Writer | ✅ | ➖ | ➖ | ➖ |
+| CRT Memory Leak Detector | ✅ | ➖ | ➖ | ➖ |
+| Sound Manager | ✅ | ➖ | ➖ | ➖ |
+| **Rendering Features** | | | | |
+| 2D (Sprite Based Animation) Rendering | ✅ | ➖ | ➖ | ➖ |
+| 3D Mesh Rendering | ✅ | ➖ | ➖ | ➖ |
+| PBR (Physically Based Rendering) | ✅ | ➖ | ➖ | ➖ |
+| IBL (Image Based Lighting) | ✅ | ➖ | ➖ | ➖ |
+| Skybox | ✅ | ➖ | ➖ | ➖ |
+| Normal Vector Debugger | ✅ | ➖ | ➖ | ➖ |
+| [Assimp Model Loading](https://github.com/assimp/assimp) | ✅ | ➖ | ➖ | ➖ |
+| **Graphics Backend Features** | | | | |
+| [Slang Shading Language](https://shader-slang.org/) | ➖ | ❌ | ✅ | ✅ |
+| [ImGui](https://github.com/ocornut/imgui) | ➖ | ✅ | ✅ | ✅ |
+| [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) | ➖ | ❌ | ❌ | ✅ |
+| Compute Shader | ➖ | ❌ | ❌ | ✅ |
+| **Optimization Techniques** | | | | |
+| MSAA | ✅ | ➖ | ➖ | ➖ |
+| Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit)) | ✅ | ➖ | ➖ | ➖ |
+| [AMD FidelityFX CAS](https://gpuopen.com/fidelityfx-cas/) | ➖ | ❌ | ❌ | ✅ |
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
