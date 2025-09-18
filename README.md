@@ -59,12 +59,12 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 | CRT Memory Leak Detector | ✅ | ➖ | ➖ | ➖ |
 | Sound Manager | ✅ | ➖ | ➖ | ➖ |
 | **Rendering Features** | | | | |
-| 2D (Sprite Based Animation) Rendering | ✅ | ➖ | ➖ | ➖ |
-| 3D Mesh Rendering | ✅ | ➖ | ➖ | ➖ |
-| PBR (Physically Based Rendering) | ✅ | ➖ | ➖ | ➖ |
-| IBL (Image Based Lighting) | ✅ | ➖ | ➖ | ➖ |
-| Skybox | ✅ | ➖ | ➖ | ➖ |
-| Normal Vector Debugger | ✅ | ➖ | ➖ | ➖ |
+| 2D (Sprite Based Animation) Rendering | ➖ | ✅ | ✅ | ✅ |
+| 3D Mesh Rendering | ➖ | ✅ | ✅ | ✅ |
+| PBR (Physically Based Rendering) | ➖ | ✅ | ✅ | ✅ |
+| IBL (Image Based Lighting) | ➖ | ✅ | ✅ | ✅ |
+| Skybox | ➖ | ✅ | ✅ | ✅ |
+| Normal Vector Visualization | ➖ | ✅ | ✅ | ✅ |
 | [Assimp Model Loading](https://github.com/assimp/assimp) | ✅ | ➖ | ➖ | ➖ |
 | **Graphics Backend Features** | | | | |
 | [Slang Shading Language](https://shader-slang.org/) | ➖ | ❌ | ✅ | ✅ |
@@ -72,7 +72,7 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 | [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) | ➖ | ❌ | ❌ | ✅ |
 | Compute Shader | ➖ | ❌ | ❌ | ✅ |
 | **Optimization Techniques** | | | | |
-| MSAA | ✅ | ➖ | ➖ | ➖ |
+| MSAA | ➖ | ✅ | ✅ | ✅ |
 | Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit)) | ✅ | ➖ | ➖ | ➖ |
 | [AMD FidelityFX CAS](https://gpuopen.com/fidelityfx-cas/) | ➖ | ❌ | ❌ | ✅ |
 
