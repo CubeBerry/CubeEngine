@@ -746,8 +746,23 @@ void DXRenderManager::MoveToNextFrame()
 
 void DXRenderManager::UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset)
 {
-	WaitForGPU();
-	m_fidelityFX->UpdateScalePreset(m_device, enableUpscaling, preset);
+	QueueDeferredFunction(
+		[this, enableUpscaling, preset]() -> bool
+		{
+			WaitForGPU();
+
+			m_fidelityFX->UpdateScalePreset(m_device, enableUpscaling, preset);
+
+			m_renderTarget.reset();
+			m_renderTarget = std::make_unique<DXRenderTarget>(
+				m_device, Engine::GetWindow().GetWindow(),
+				m_fidelityFX->GetRenderWidth(),
+				m_fidelityFX->GetRenderHeight()
+			);
+
+			return true;
+		}
+	);
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)

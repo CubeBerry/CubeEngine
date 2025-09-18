@@ -852,7 +852,7 @@ void RenderManager::RenderingControllerForImGui()
 		{
 			if (!m_casEnabled)
 			{
-				UpdateScalePreset(false, FidelityFX::CASScalePreset::UltraPerformance);
+				UpdateScalePreset(false, FidelityFX::CASScalePreset::UltraQuality);
 			}
 		}
 		if (m_casEnabled)
