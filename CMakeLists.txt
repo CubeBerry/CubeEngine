@@ -124,8 +124,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Af
 # 1. Run BuildFidelityFXSDK.bat or BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat
 # 2. Run BuildFidelityFXSDK.bat or Run BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat -> Open and build solution created in build folder
 # 3. .lib files are created in bin folder
-target_link_libraries(${PROJECT_NAME} PRIVATE ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64d.lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64d.lib)
+# Debug
+target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64d.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64d.lib)
+# Release
+target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 

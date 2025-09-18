@@ -402,3 +402,5 @@ FodyWeavers.xsd
 !Engine/libs/NVIDIA_Nsight_Aftermath_SDK_*/lib/x86
 # /** makes entire folders or formats that should be excluded (bin for example) are ignored
 !Engine/libs/FidelityFX-SDK-v1.1.4/**
+Engine/libs/FidelityFX-SDK-v1.1.4/sdk/build
+!Engine/libs/FidelityFX-SDK-v2.0.0/**
