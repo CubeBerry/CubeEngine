@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # Custom Exclude
 !Engine/libs/NVIDIA_Nsight_Aftermath_SDK_*/lib/x64
 !Engine/libs/NVIDIA_Nsight_Aftermath_SDK_*/lib/x86
+!Engine/libs/FidelityFX-SDK-v1.1.4/sdk/bin

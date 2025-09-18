@@ -119,6 +119,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.lib)
+# FidelityFX SDK 1.1.4's .lib files can be acquired by following steps:
+# 1. Move to Engine/libs/FidelityFX-SDK-v1.1.4/sdk
+# 1. Run BuildFidelityFXSDK.bat or BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat
+# 2. Run BuildFidelityFXSDK.bat or Run BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat -> Open and build solution created in build folder
+# 3. .lib files are created in bin folder
+target_link_libraries(${PROJECT_NAME} PRIVATE ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64d.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64d.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
