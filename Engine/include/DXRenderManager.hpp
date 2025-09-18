@@ -3,6 +3,7 @@
 //File: DXRenderManager.hpp
 #pragma once
 #include "RenderManager.hpp"
+#include <functional>
 
 #include <dxgi1_6.h>
 
@@ -146,14 +147,50 @@ public:
 		}
 	}
 
+	std::vector<std::function<bool()>> functionQueue;
+	void QueueDeferredFunction(std::function<bool()>&& func)
+	{
+		functionQueue.push_back(std::move(func));
+	}
+	void ProcessFunctionQueue()
+	{
+		std::erase_if(functionQueue, [](const auto& function)
+			{
+				return function();
+			});
+
+		// If not C++ 20
+		//auto it = functionQueue.begin();
+		//while (it != functionQueue.end())
+		//{
+		//	if ((*it)()) it = functionQueue.erase(it);
+		//	else ++it;
+		//}
+	}
+
 	// Deferred Deletion
-	// @TODO Make OpenGL, Vulkan version of SafeDelete, ProcessDeletionQueue function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
+	// @TODO Make OpenGL, Vulkan version of SafeDelete function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
 	std::vector<std::pair<std::unique_ptr<BufferWrapper>, UINT64>> m_deletionQueue;
 	void SafeDelete(std::unique_ptr<BufferWrapper> bufferWrapper)
 	{
-		if (bufferWrapper) m_deletionQueue.emplace_back(bufferWrapper.release(), m_frameIndex);
+		if (!bufferWrapper) return;
+
+		const UINT64 queuedFrame = m_fence->GetCompletedValue();
+		// shared count == 1
+		auto bufferHolder = std::make_shared<std::unique_ptr<BufferWrapper>>(std::move(bufferWrapper));
+		// shared count == 2
+		QueueDeferredFunction([this, bufferHolder, queuedFrame]() -> bool
+			{
+				if (queuedFrame <= m_fence->GetCompletedValue())
+				{
+					return true;
+				}
+				return false;
+				// shared count--
+			}
+		);
+		// shared count--
 	}
-	void ProcessDeletionQueue();
 
 	// FidelityFX CAS
 	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override;

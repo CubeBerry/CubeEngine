@@ -349,6 +349,8 @@ void DXRenderManager::OnResize()
 	// Recreate FidelityFX
 	m_fidelityFX->OnResize(m_device, m_width, m_height);
 
+	// unique_ptr's release() == give up ownership, does not deallocate memory
+	// unique_ptr's reset() == deallocate the memory
 	m_renderTarget.reset();
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, Engine::GetWindow().GetWindow(),
@@ -740,30 +742,6 @@ void DXRenderManager::MoveToNextFrame()
 	}
 
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
-}
-
-// Deferred Deletion
-void DXRenderManager::ProcessDeletionQueue()
-{
-	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
-
-	auto it = m_deletionQueue.begin();
-	while (it != m_deletionQueue.end())
-	{
-		if (it->second <= gpuCompletedFrame)
-		{
-			WaitForGPU();
-			// unique_ptr's release() == give up ownership, does not deallocate memory
-			// unique_ptr's reset() == deallocate the memory
-			it->first.reset();
-
-			it = m_deletionQueue.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
 }
 
 void DXRenderManager::UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset)

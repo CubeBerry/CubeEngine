@@ -72,7 +72,7 @@ void GameStateManager::Update(float dt)
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
-			dynamic_cast<DXRenderManager*>(Engine::Instance().GetRenderManager())->ProcessDeletionQueue();
+			dynamic_cast<DXRenderManager*>(Engine::Instance().GetRenderManager())->ProcessFunctionQueue();
 		//Mouse Input X if order is opposite
 		break;
 	case State::PAUSE:
