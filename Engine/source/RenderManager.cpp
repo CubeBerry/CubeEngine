@@ -846,45 +846,48 @@ void RenderManager::RenderingControllerForImGui()
 	ImGui::Begin("RenderingController");
 
 	// FidelityFX
-	if (ImGui::Checkbox("Enable FidelityFX CAS", &m_casEnabled))
+	if (renderManager->gMode == GraphicsMode::DX)
 	{
-		if (!m_casEnabled)
+		if (ImGui::Checkbox("Enable FidelityFX CAS", &m_casEnabled))
 		{
-			UpdateScalePreset(false, FidelityFX::CASScalePreset::UltraPerformance);
-		}
-	}
-	if (m_casEnabled)
-	{
-		bool enableUpscaling = m_fidelityFX->GetEnableUpscaling();
-		if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &enableUpscaling))
-		{
-			UpdateScalePreset(enableUpscaling, m_fidelityFX->GetScalePreset());
-		}
-		if (m_fidelityFX->GetEnableUpscaling())
-		{
-			if (ImGui::BeginMenu("Upscale Preset"))
+			if (!m_casEnabled)
 			{
-				if (ImGui::MenuItem("UltraQuality"))
+				UpdateScalePreset(false, FidelityFX::CASScalePreset::UltraPerformance);
+			}
+		}
+		if (m_casEnabled)
+		{
+			bool enableUpscaling = m_fidelityFX->GetEnableUpscaling();
+			if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &enableUpscaling))
+			{
+				UpdateScalePreset(enableUpscaling, m_fidelityFX->GetScalePreset());
+			}
+			if (m_fidelityFX->GetEnableUpscaling())
+			{
+				if (ImGui::BeginMenu("Upscale Preset"))
 				{
-					UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraQuality);
+					if (ImGui::MenuItem("UltraQuality"))
+					{
+						UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraQuality);
+					}
+					if (ImGui::MenuItem("Quality"))
+					{
+						UpdateScalePreset(true, FidelityFX::CASScalePreset::Quality);
+					}
+					if (ImGui::MenuItem("Balanced"))
+					{
+						UpdateScalePreset(true, FidelityFX::CASScalePreset::Balanced);
+					}
+					if (ImGui::MenuItem("Performance"))
+					{
+						UpdateScalePreset(true, FidelityFX::CASScalePreset::Performance);
+					}
+					if (ImGui::MenuItem("UltraPerformance"))
+					{
+						UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraPerformance);
+					}
+					ImGui::EndMenu();
 				}
-				if (ImGui::MenuItem("Quality"))
-				{
-					UpdateScalePreset(true, FidelityFX::CASScalePreset::Quality);
-				}
-				if (ImGui::MenuItem("Balanced"))
-				{
-					UpdateScalePreset(true, FidelityFX::CASScalePreset::Balanced);
-				}
-				if (ImGui::MenuItem("Performance"))
-				{
-					UpdateScalePreset(true, FidelityFX::CASScalePreset::Performance);
-				}
-				if (ImGui::MenuItem("UltraPerformance"))
-				{
-					UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraPerformance);
-				}
-				ImGui::EndMenu();
 			}
 		}
 	}

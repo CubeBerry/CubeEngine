@@ -53,7 +53,7 @@ public:
 	);
 
 	bool GetEnableUpscaling() const { return m_enableUpscaling; }
-	CASScalePreset GetScalePreset() const { return m_scalePreset; };
+	CASScalePreset GetScalePreset() const { return m_scalePreset; }
 	uint32_t GetRenderWidth() const { return m_renderWidth; }
 	uint32_t GetRenderHeight() const { return m_renderHeight; }
 private:
