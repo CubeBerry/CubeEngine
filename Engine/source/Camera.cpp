@@ -10,7 +10,17 @@
 
 void Camera::Update()
 {
-	glm::vec2 wSize = Engine::Instance().GetWindow().GetWindowSize();
+	RenderManager* renderManager = Engine::GetRenderManager();
+
+	glm::vec2 wSize = Engine::GetWindow().GetWindowSize();
+	// @TODO Render Size should be considered when FidelityFX CAS Upscaling is enabled
+	if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
+	{
+		wSize = {
+		static_cast<float>(renderManager->GetRenderWidth()),
+		static_cast<float>(renderManager->GetRenderHeight())
+		};
+	}
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:
