@@ -103,21 +103,21 @@ private:
 
     //For ObjectController
     std::string objName;
-    bool isShowPopup = false;
+    bool isShowPopup{ false };
     int selectedItem = -1;
 
     int objectListForImguiIndex = 0;
     int currentIndex = 0;
 	int closestObjectId = 0;
-    bool isDragObject = false;
-    bool isObjGravityOn = false;
+    bool isDragObject{ false };
+    bool isObjGravityOn{ false };
 
     int stacks = 2;
     int slices = 2;
     float metallic = 0.3f;
     float roughness = 0.3f;
 #ifdef _DEBUG
-    bool isDrawNormals = false;
+    bool isDrawNormals{ false };
 #endif
 
     std::vector<std::function<void()>> functionQueue;

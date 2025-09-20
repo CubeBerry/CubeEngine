@@ -91,7 +91,7 @@ void ThreadManager::ProcessEvents()
 		case SDL_EVENT_WINDOW_RESIZED:
 			Engine::Instance().ResetDeltaTime();
 			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
-				dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->SetResize(event.window.data1, event.window.data2);
+				dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->SetResize();
 			SDL_FALLTHROUGH;
 		case SDL_EVENT_WINDOW_MOVED:
 		case SDL_EVENT_WINDOW_MINIMIZED:

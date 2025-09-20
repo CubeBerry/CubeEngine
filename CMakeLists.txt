@@ -23,6 +23,10 @@ set(FMOD_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/inc")
 set(FMOD_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/fmod/lib")
 # Assimp
 set(ASSIMP_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/assimp/include")
+# FidelityFX 1.1.4
+set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v1.1.4/sdk/include")
+# FidelityFX 2.0
+# set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v2.0.0")
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
@@ -115,6 +119,17 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.lib)
+# FidelityFX SDK 1.1.4's .lib files can be acquired by following steps:
+# 1. Move to Engine/libs/FidelityFX-SDK-v1.1.4/sdk
+# 1. Run BuildFidelityFXSDK.bat or BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat
+# 2. Run BuildFidelityFXSDK.bat or Run BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat -> Open and build solution created in build folder
+# 3. .lib files are created in bin folder
+# Debug
+target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64d.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64d.lib)
+# Release
+target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
@@ -125,6 +140,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${DX_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${IMGUI_DIR} ${IMGUI_BACKEND_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_INC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${FFX_INC_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ENGINE_INC_DIR} ${ENGINE_INC_DIR}/DebugTools)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL3-3.2.16/include)

@@ -6,11 +6,14 @@
 
 #include <filesystem>
 #include <variant>
+#include <functional>
 #include "Material.hpp"
 #include "Window.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
+
+#include "FidelityFX.hpp"
 
 #include "GLVertexArray.hpp"
 #include "GLVertexBuffer.hpp"
@@ -209,11 +212,11 @@ public:
 	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
 };
 
-struct SubMesh
-{
-	std::unique_ptr<BufferWrapper> bufferWrapper;
-	ThreeDimension::Material material;
-};
+//struct SubMesh
+//{
+//	std::unique_ptr<BufferWrapper> bufferWrapper;
+//};
+using SubMesh = std::unique_ptr<BufferWrapper>;
 
 enum class PolygonType
 {
@@ -256,10 +259,32 @@ public:
 	// @TODO Change BufferWrapper& -> BufferWrapper*
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
+	// FidelityFX CAS
+	virtual void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) = 0;
+	uint32_t GetRenderWidth() const { return m_fidelityFX->GetRenderWidth(); }
+	uint32_t GetRenderHeight() const { return m_fidelityFX->GetRenderHeight(); }
+
 	//--------------------2D Render--------------------//
 	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
 
 	//--------------------3D Render--------------------//
+	// Deferred Deletion
+	void ProcessFunctionQueue()
+	{
+		std::erase_if(functionQueue, [](const auto& function)
+			{
+				return function();
+			});
+
+		// If not C++ 20
+		//auto it = functionQueue.begin();
+		//while (it != functionQueue.end())
+		//{
+		//	if ((*it)()) it = functionQueue.erase(it);
+		//	else ++it;
+		//}
+	}
+
 	void CreateMesh(
 		std::vector<SubMesh>& subMeshes,
 		MeshType type, const std::filesystem::path& path, int stacks, int slices,
@@ -290,18 +315,32 @@ public:
 	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
 #endif
 
+	void RenderingControllerForImGui();
+
 	//Skybox
 	virtual void LoadSkybox(const std::filesystem::path& path) = 0;
 	virtual void DeleteSkybox() = 0;
 protected:
 	//--------------------Common--------------------//
+	// Graphics Mode
 	GraphicsMode gMode{ GraphicsMode::GL };
+	// Render Mode
 	RenderType rMode = RenderType::TwoDimension;
+	// Polygon Mode
 	PolygonType pMode = PolygonType::FILL;
+	// FidelityFX CAS
+	bool m_casEnabled{ true };
+	std::unique_ptr<FidelityFX> m_fidelityFX;
 
 	//--------------------2D Render--------------------//
 
 	//--------------------3D Render--------------------//
+	// Deferred Deletion
+	void QueueDeferredFunction(std::function<bool()>&& func)
+	{
+		functionQueue.push_back(std::move(func));
+	}
+
 	static bool DegenerateTri(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
 	{
 		return (glm::distance(v0, v1) < EPSILON || glm::distance(v1, v2) < EPSILON || glm::distance(v2, v0) < EPSILON);
@@ -344,6 +383,9 @@ private:
 		std::vector<ThreeDimension::QuantizedVertex>& quantizedVertices,
 		const std::vector<ThreeDimension::Vertex>& vertices,
 		glm::vec3 largestBBoxSize);
+	
+	// Deferred Deletion
+	std::vector<std::function<bool()>> functionQueue;
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)

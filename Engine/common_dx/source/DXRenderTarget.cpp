@@ -4,7 +4,11 @@
 #include "DXRenderTarget.hpp"
 #include "DXHelper.hpp"
 
-DXRenderTarget::DXRenderTarget(const ComPtr<ID3D12Device>& device, SDL_Window* window) : m_device(device), m_window(window)
+DXRenderTarget::DXRenderTarget(
+	const ComPtr<ID3D12Device>& device,
+	SDL_Window* window,
+	int width, int height
+	) : m_device(device), m_window(window)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
@@ -13,15 +17,12 @@ DXRenderTarget::DXRenderTarget(const ComPtr<ID3D12Device>& device, SDL_Window* w
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 	DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
 
-	CreateColorResources();
-	CreateDepthBuffer();
+	CreateColorResources(width, height);
+	CreateDepthBuffer(width, height);
 }
 
-void DXRenderTarget::CreateColorResources()
+void DXRenderTarget::CreateColorResources(int width, int height)
 {
-	int width, height;
-	SDL_GetWindowSizeInPixels(m_window, &width, &height);
-
 	// Check MSAA Support
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels = {};
 	msQualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -80,11 +81,8 @@ void DXRenderTarget::CreateColorResources()
 }
 
 // Depth
-void DXRenderTarget::CreateDepthBuffer()
+void DXRenderTarget::CreateDepthBuffer(int width, int height)
 {
-	int width, height;
-	SDL_GetWindowSizeInPixels(m_window, &width, &height);
-
 	// Create Depth Stencil Buffer Resource
 	D3D12_RESOURCE_DESC depthStencilDesc = {};
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;

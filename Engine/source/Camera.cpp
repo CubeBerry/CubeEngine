@@ -10,7 +10,9 @@
 
 void Camera::Update()
 {
-	glm::vec2 wSize = Engine::Instance().GetWindow().GetWindowSize();
+	// @TODO Why only fixed Window size work for projection matrix even if window is resized?
+	// @TODO Need to acknowledge the difference between resizing and stretching/squashing
+	glm::vec2 wSize = Engine::GetWindow().GetWindowSize();
 	switch (cameraType)
 	{
 	case CameraType::TwoDimension:

@@ -112,7 +112,11 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	//DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 	//DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
 
-	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, window);
+	m_renderTarget = std::make_unique<DXRenderTarget>(
+		m_device, window,
+		static_cast<int>(Engine::GetWindow().GetWindowSize().x),
+		static_cast<int>(Engine::GetWindow().GetWindowSize().y)
+	);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	// 500 for Sprites, 5 for Skybox, 2 for Compute Shader
@@ -282,26 +286,48 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
 
 	// Initialize for compute shader
-	m_computeBuffer = std::make_unique<DXComputeBuffer>();
-	m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
+	//m_computeBuffer = std::make_unique<DXComputeBuffer>();
+	//m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
+
+	// Initialize FidelityFX
+	m_fidelityFX = std::make_unique<FidelityFX>();
+	m_fidelityFX->CreateCasContext(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
+	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		m_fidelityFX->GetRenderWidth(),
+		m_fidelityFX->GetRenderHeight(),
+		1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+	);
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&m_lowResRenderTarget)
+	));
+	m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
 
 	WaitForGPU();
 
 	SDL_ShowWindow(window);
 }
 
-void DXRenderManager::SetResize(const int width, const int height)
+void DXRenderManager::SetResize()
 {
-	m_width = width;
-	m_height = height;
 	m_isResize = true;
 }
 
-void DXRenderManager::OnResize(int width, int height)
+void DXRenderManager::OnResize()
 {
 	//OutputDebugStringA("OnResize: Entered.\n");
 
-	if (width == 0 || height == 0)
+	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &m_width, &m_height);
+
+	if (m_width == 0 || m_height == 0)
 	{
 		//OutputDebugStringA("OnResize: Skipped due to 0 size.\n");
 		return;
@@ -319,8 +345,8 @@ void DXRenderManager::OnResize(int width, int height)
 
 	DXHelper::ThrowIfFailed(m_swapChain->ResizeBuffers(
 		frameCount,
-		static_cast<UINT>(width),
-		static_cast<UINT>(height),
+		static_cast<UINT>(m_width),
+		static_cast<UINT>(m_height),
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		0
 	));
@@ -335,11 +361,43 @@ void DXRenderManager::OnResize(int width, int height)
 		DXHelper::ThrowIfFailed(m_renderTargets[i]->SetName((L"Recreate Render Target " + std::to_wstring(i)).c_str()));
 	}
 
-	m_renderTarget.reset();
-	m_renderTarget = std::make_unique<DXRenderTarget>(m_device, Engine::GetWindow().GetWindow());
-
 	// Recreate Compute Shader
-	m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
+	//m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
+
+	// Recreate FidelityFX
+	m_fidelityFX->OnResize(m_device, m_width, m_height);
+
+	// unique_ptr's release() == give up ownership, does not deallocate memory
+	// unique_ptr's reset() == deallocate the memory
+	m_renderTarget.reset();
+	m_renderTarget = std::make_unique<DXRenderTarget>(
+		m_device, Engine::GetWindow().GetWindow(),
+		m_fidelityFX->GetRenderWidth(),
+		m_fidelityFX->GetRenderHeight()
+	);
+
+	m_lowResRenderTarget.Reset();
+	if (m_fidelityFX->GetEnableUpscaling())
+	{
+		auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			m_fidelityFX->GetRenderWidth(),
+			m_fidelityFX->GetRenderHeight(),
+			1, 1, 1, 0,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		);
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+		DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&textureDesc,
+			D3D12_RESOURCE_STATE_COMMON,
+			nullptr,
+			IID_PPV_ARGS(&m_lowResRenderTarget)
+		));
+		m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
+	}
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
@@ -355,7 +413,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
 	if (m_isResize)
 	{
-		OnResize(m_width, m_height);
+		OnResize();
 		m_isResize = false;
 		return false;
 	}
@@ -367,10 +425,12 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
 	// Set the viewport and scissor rect
-	int width, height;
-	SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &width, &height);
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, width, height };
+	// This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	uint32_t renderWidth = m_fidelityFX->GetRenderWidth();
+	uint32_t renderHeight = m_fidelityFX->GetRenderHeight();
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -401,12 +461,12 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				auto& buffer = subMesh.bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>();
-				auto& constantBuffer = subMesh.bufferWrapper->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
+				auto& buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+				auto& constantBuffer = subMesh->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
 
 				// Update Constant Buffer
-				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
-				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
+				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
+				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
 
 				// Bind Vertex Buffer & Index Buffer
 				D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
@@ -417,7 +477,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
-				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper->GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh->GetIndices().size()), 1, 0, 0, 0);
 			}
 		}
 	}
@@ -434,13 +494,13 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			{
 				m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				auto& buffer = subMesh.bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>();
-				auto& constantBuffer = subMesh.bufferWrapper->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
+				auto& buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+				auto& constantBuffer = subMesh->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
 
 				// Update Constant Buffer
-				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-				constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
+				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
+				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
+				constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
 
 				if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
 				{
@@ -474,7 +534,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 				m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
-				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh.bufferWrapper->GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh->GetIndices().size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
 				if (isDrawNormals)
@@ -483,14 +543,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
 					m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-					auto& vertexUniform = subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+					auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
 					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
 					m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
 
 					vbv = buffer.normalVertexBuffer->GetView();
 					m_commandList->IASetVertexBuffers(0, 1, &vbv);
 
-					m_commandList->DrawInstanced(static_cast<UINT>(subMesh.bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+					m_commandList->DrawInstanced(static_cast<UINT>(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
 
 					switch (pMode)
 					{
@@ -540,22 +600,43 @@ void DXRenderManager::EndRender()
 
 	auto preResolveBarriers = {
 		CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
-		// @TODO Comment for compute shader use later
-		CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
+	//CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
 	};
 	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
-	// Process compute shader
-	// @TODO Uncomment for compute shader use later
-	//m_computeBuffer->PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
+	//m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
-	// @TODO Comment for compute shader use later
-	m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	if (m_casEnabled && m_fidelityFX->GetEnableUpscaling())
+	{
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RESOLVE_DEST);
+		m_commandList->ResourceBarrier(1, &barrier);
 
-	// @TODO Comment for compute shader use later
-	auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	// @TODO Comment for compute shader use later
-	m_commandList->ResourceBarrier(1, &postResolveBarrier);
+		m_commandList->ResolveSubresource(m_lowResRenderTarget.Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
+		m_commandList->ResourceBarrier(1, &postResolveBarrier);
+
+		m_fidelityFX->Execute(m_commandList, m_lowResRenderTarget.Get(), m_renderTargets[m_frameIndex]);
+	}
+	else
+	{
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST);
+		m_commandList->ResourceBarrier(1, &barrier);
+		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		if (m_casEnabled)
+		{
+			auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
+			m_commandList->ResourceBarrier(1, &postResolveBarrier);
+
+			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex], m_renderTargets[m_frameIndex]);
+		}
+		else
+		{
+			auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_commandList->ResourceBarrier(1, &postResolveBarrier);
+		}
+	}
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
@@ -579,6 +660,39 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Present successful.\n");
 
 	MoveToNextFrame();
+
+	// Compute Shader Render
+	//auto preResolveBarriers = {
+	//	CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
+	//};
+	//m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
+
+	//// Process compute shader
+	//m_computeBuffer->PostProcess(m_commandList, m_srvHeap, m_renderTarget, m_renderTargets[m_frameIndex]);
+
+	//// ImGui Render
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+	//m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	//m_imguiManager->End(m_commandList);
+
+	//auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	//m_commandList->ResourceBarrier(1, &finalBarrier);
+
+	//DXHelper::ThrowIfFailed(m_commandList->Close());
+	////OutputDebugStringA("EndRender: Command list closed.\n");
+
+	//// Execute the command list
+	//ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	//m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	////OutputDebugStringA("EndRender: Command list executed.\n");
+
+	////OutputDebugStringA("EndRender: Calling Present...\n");
+	//DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
+	////OutputDebugStringA("EndRender: Present successful.\n");
+
+	//MoveToNextFrame();
+
 	//OutputDebugStringA("EndRender: Finished successfully.\n");
 }
 
@@ -693,28 +807,48 @@ void DXRenderManager::MoveToNextFrame()
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
-// Deferred Deletion
-void DXRenderManager::ProcessDeletionQueue()
+void DXRenderManager::UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset)
 {
-	const UINT64 gpuCompletedFrame = m_fence->GetCompletedValue();
-
-	auto it = m_deletionQueue.begin();
-	while (it != m_deletionQueue.end())
-	{
-		if (it->second <= gpuCompletedFrame)
+	QueueDeferredFunction(
+		[this, enableUpscaling, preset]() -> bool
 		{
 			WaitForGPU();
-			// unique_ptr's release() == give up ownership, does not deallocate memory
-			// unique_ptr's reset() == deallocate the memory
-			it->first.reset();
 
-			it = m_deletionQueue.erase(it);
+			m_fidelityFX->UpdateScalePreset(m_device, enableUpscaling, preset);
+
+			m_renderTarget.reset();
+			m_renderTarget = std::make_unique<DXRenderTarget>(
+				m_device, Engine::GetWindow().GetWindow(),
+				m_fidelityFX->GetRenderWidth(),
+				m_fidelityFX->GetRenderHeight()
+			);
+
+			m_lowResRenderTarget.Reset();
+			if (m_fidelityFX->GetEnableUpscaling())
+			{
+				auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+					DXGI_FORMAT_R8G8B8A8_UNORM,
+					m_fidelityFX->GetRenderWidth(),
+					m_fidelityFX->GetRenderHeight(),
+					1, 1, 1, 0,
+					D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+				);
+
+				CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+				DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
+					&heapProps,
+					D3D12_HEAP_FLAG_NONE,
+					&textureDesc,
+					D3D12_RESOURCE_STATE_COMMON,
+					nullptr,
+					IID_PPV_ARGS(&m_lowResRenderTarget)
+				));
+				m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
+			}
+
+			return true;
 		}
-		else
-		{
-			++it;
-		}
-	}
+	);
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)

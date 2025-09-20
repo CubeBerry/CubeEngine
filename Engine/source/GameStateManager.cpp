@@ -71,8 +71,7 @@ void GameStateManager::Update(float dt)
 		UpdateDraw(dt);
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
-		if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
-			dynamic_cast<DXRenderManager*>(Engine::Instance().GetRenderManager())->ProcessDeletionQueue();
+		Engine::GetRenderManager()->ProcessFunctionQueue();
 		//Mouse Input X if order is opposite
 		break;
 	case State::PAUSE:
@@ -134,12 +133,10 @@ void GameStateManager::DrawWithImGui(float dt)
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	if (renderManager->BeginRender({ 0.0f, 0.0f, 0.0f }))
 	{
-		if (showFPSHistory)
-		{
-			Engine::Instance().GetTimer().ShowFpsGraph();
-		}
+		if (showFPSHistory) Engine::Instance().GetTimer().ShowFpsGraph();
 		StateChanger();
 		levelList.at(static_cast<int>(currentLevel))->ImGuiDraw(dt);
+		if (renderManager->GetRenderType() == RenderType::ThreeDimension) renderManager->RenderingControllerForImGui();
 		renderManager->EndRender();
 	}
 

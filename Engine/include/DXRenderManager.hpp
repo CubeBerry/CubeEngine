@@ -37,10 +37,10 @@ public:
 	DXRenderManager& operator=(const DXRenderManager&&) = delete;
 
 	void Initialize(SDL_Window* window);
-	void SetResize(const int width, const int height);
+	void SetResize();
 	int m_width, m_height;
 	bool m_isResize{ false };
-	void OnResize(const int width, const int height);
+	void OnResize();
 	void WaitForGPU();
 
 	bool BeginRender(glm::vec3 bgColor) override;
@@ -71,6 +71,8 @@ private:
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
+	// This is required for FidelityFX CAS Upscaling
+	ComPtr<ID3D12Resource> m_lowResRenderTarget;
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
@@ -147,12 +149,30 @@ public:
 	}
 
 	// Deferred Deletion
-	std::vector<std::pair<std::unique_ptr<BufferWrapper>, UINT64>> m_deletionQueue;
+	// @TODO Make OpenGL, Vulkan version of SafeDelete function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
 	void SafeDelete(std::unique_ptr<BufferWrapper> bufferWrapper)
 	{
-		if (bufferWrapper) m_deletionQueue.emplace_back(bufferWrapper.release(), m_frameIndex);
+		if (!bufferWrapper) return;
+
+		const UINT64 queuedFrame = m_fence->GetCompletedValue();
+		// shared count == 1
+		auto bufferHolder = std::make_shared<std::unique_ptr<BufferWrapper>>(std::move(bufferWrapper));
+		// shared count == 2
+		QueueDeferredFunction([this, bufferHolder, queuedFrame]() -> bool
+			{
+				if (queuedFrame <= m_fence->GetCompletedValue())
+				{
+					return true;
+				}
+				return false;
+				// shared count--
+			}
+		);
+		// shared count--
 	}
-	void ProcessDeletionQueue();
+
+	// FidelityFX CAS
+	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override;
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

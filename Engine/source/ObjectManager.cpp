@@ -32,7 +32,7 @@ void ObjectManager::End()
 
 void ObjectManager::Draw(float dt)
 {
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Draw(dt); });
+	std::ranges::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Draw(dt); });
 }
 
 void ObjectManager::Destroy(int id)
@@ -270,8 +270,8 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 	{
 		stacks = sprite->GetStacks();
 		slices = sprite->GetSlices();
-		metallic = sprite->GetSubMeshes()[0].bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic;
-		roughness = sprite->GetSubMeshes()[0].bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness;
+		metallic = sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic;
+		roughness = sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness;
 
 		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -281,21 +281,6 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			{
 				spriteComp->SetColor(color);
 			}
-			ImGui::Spacing();
-			if (ImGui::Button("FILL", ImVec2(100, 0)))
-			{
-				renderManager->SetPolygonType(PolygonType::FILL);
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("LINE", ImVec2(100, 0)))
-			{
-				renderManager->SetPolygonType(PolygonType::LINE);
-			}
-#ifdef _DEBUG
-			ImGui::Spacing();
-			ImGui::Checkbox("DrawNormals", &isDrawNormals);
-			renderManager->DrawNormals(isDrawNormals);
-#endif
 
 			ImGui::Spacing();
 			if (ImGui::SliderInt("Stacks", &stacks, 2, 30))
@@ -324,12 +309,12 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
-				sprite->GetSubMeshes()[0].bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = metallic;
+				sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = metallic;
 
 			}
 			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
 			{
-				sprite->GetSubMeshes()[0].bufferWrapper->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = roughness;
+				sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = roughness;
 			}
 			ImGui::Spacing();
 

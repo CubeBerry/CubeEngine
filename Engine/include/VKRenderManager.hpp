@@ -107,6 +107,9 @@ public:
 	VKTexture* GetTexture(std::string name);
 	const std::vector<std::unique_ptr<VKTexture>>& GetTextures() { return textures; }
 
+	// FidelityFX CAS
+	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override {}
+
 	//--------------------3D Render--------------------//
 	void LoadSkybox(const std::filesystem::path& path) override;
 	void DeleteSkybox() override;
