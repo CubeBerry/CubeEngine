@@ -49,7 +49,8 @@ public:
 		CASScalePreset preset);
 	void Execute(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
-		const ComPtr<ID3D12Resource>& renderTarget
+		const ComPtr<ID3D12Resource>& inputRenderTarget,
+		const ComPtr<ID3D12Resource>& outputRenderTarget
 	);
 
 	bool GetEnableUpscaling() const { return m_enableUpscaling; }

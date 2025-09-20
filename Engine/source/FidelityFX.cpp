@@ -145,7 +145,8 @@ void FidelityFX::UpdateScalePreset(const ComPtr<ID3D12Device>& device, bool enab
 
 void FidelityFX::Execute(
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	const ComPtr<ID3D12Resource>& renderTarget
+	const ComPtr<ID3D12Resource>& inputRenderTarget,
+	const ComPtr<ID3D12Resource>& outputRenderTarget
 )
 {
 	FfxCasDispatchDescription dispatchParameters = {};
@@ -153,29 +154,15 @@ void FidelityFX::Execute(
 	dispatchParameters.renderSize = { m_initializationParameters.maxRenderSize.width, m_initializationParameters.maxRenderSize.height };
 	dispatchParameters.sharpness = m_sharpness;
 
-	//CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
-	//	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST),
-	//	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE)
-	//};
-	//commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
-
-	//commandList->CopyResource(m_postProcessTexture.Get(), renderTarget.Get());
-
-	//CD3DX12_RESOURCE_BARRIER dispatchBarriers[] = {
-	//	CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-	//	CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
-	//};
-
 	CD3DX12_RESOURCE_BARRIER dispatchBarriers[] = {
-		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(inputRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
 	};
-
 	commandList->ResourceBarrier(_countof(dispatchBarriers), dispatchBarriers);
 
-	D3D12_RESOURCE_DESC inputResourceDesc = renderTarget->GetDesc();
+	D3D12_RESOURCE_DESC inputResourceDesc = inputRenderTarget->GetDesc();
 	FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), static_cast<uint32_t>(inputResourceDesc.Width), static_cast<uint32_t>(inputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
-	dispatchParameters.color = ffxGetResourceDX12(renderTarget.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
+	dispatchParameters.color = ffxGetResourceDX12(inputRenderTarget.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
 
 	D3D12_RESOURCE_DESC outputResourceDesc = m_postProcessTexture->GetDesc();
 	FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), static_cast<uint32_t>(outputResourceDesc.Width), static_cast<uint32_t>(outputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
@@ -184,22 +171,35 @@ void FidelityFX::Execute(
 	FfxErrorCode errorCode = ffxCasContextDispatch(&m_casContext, &dispatchParameters);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch CAS");
 
+	D3D12_RESOURCE_STATES outputBeforeState;
+	if (inputRenderTarget.Get() != outputRenderTarget.Get()) outputBeforeState = D3D12_RESOURCE_STATE_PRESENT;
+	else outputBeforeState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
 	CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
-		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST)
+		CD3DX12_RESOURCE_BARRIER::Transition(outputRenderTarget.Get(), outputBeforeState, D3D12_RESOURCE_STATE_COPY_DEST)
 	};
 	commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
 
-	commandList->CopyResource(renderTarget.Get(), m_postProcessTexture.Get());
+	commandList->CopyResource(outputRenderTarget.Get(), m_postProcessTexture.Get());
 
-	//auto finalBarrier = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	//commandList->ResourceBarrier(1, &finalBarrier);
-
-	CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
-		CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
-	};
-	commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
+	if (inputRenderTarget.Get() != outputRenderTarget.Get())
+	{
+		CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
+			CD3DX12_RESOURCE_BARRIER::Transition(inputRenderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COMMON),
+			CD3DX12_RESOURCE_BARRIER::Transition(outputRenderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
+			CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
+		};
+		commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
+	}
+	else
+	{
+		CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
+			CD3DX12_RESOURCE_BARRIER::Transition(outputRenderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
+			CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
+		};
+		commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
+	}
 }
 
 // @TODO FidelityFX SDK 2.0

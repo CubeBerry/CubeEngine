@@ -71,6 +71,8 @@ private:
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
+	// This is required for FidelityFX CAS Upscaling
+	ComPtr<ID3D12Resource> m_lowResRenderTarget;
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
