@@ -10,6 +10,7 @@
 
 void Camera::Update()
 {
+	// @TODO Why only fixed Window size work for projection matrix even if window is resized?
 	glm::vec2 wSize = Engine::GetWindow().GetWindowSize();
 	switch (cameraType)
 	{
