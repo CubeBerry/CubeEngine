@@ -127,9 +127,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Af
 # Debug
 target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64d.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64d.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE debug ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_fsr1_x64d.lib)
 # Release
 target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_backend_dx12_x64.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_cas_x64.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ffx_sdk/ffx_fsr1_x64.lib)
 # For MSVC
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
