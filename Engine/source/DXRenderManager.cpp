@@ -292,6 +292,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	// Initialize FidelityFX
 	m_fidelityFX = std::make_unique<FidelityFX>();
 	m_fidelityFX->CreateCasContext(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
+	m_fidelityFX->CreateFSRContext(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
 	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		m_fidelityFX->GetRenderWidth(),

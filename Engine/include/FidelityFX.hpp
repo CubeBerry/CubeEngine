@@ -69,7 +69,7 @@ public:
 
 	// CAS
 	bool GetEnableUpscaling() const { return m_enableUpscaling; }
-	CASScalePreset GetScalePreset() const { return m_scalePreset; }
+	CASScalePreset GetScalePreset() const { return m_casScalePreset; }
 	uint32_t GetRenderWidth() const { return m_renderWidth; }
 	uint32_t GetRenderHeight() const { return m_renderHeight; }
 
@@ -87,13 +87,15 @@ private:
 	ComPtr<ID3D12Resource> m_postProcessTexture;
 
 	bool m_enableUpscaling{ false };
-	CASScalePreset m_scalePreset{ CASScalePreset::UltraQuality };
+	CASScalePreset m_casScalePreset{ CASScalePreset::UltraQuality };
 	float m_upscaleRatio{ 1.3f };
 
 	// FSR1
+	// @TODO FfxFsr1QualityMode
 	FfxFsr1ContextDescription m_fsr1ContextDesc{};
 	FfxFsr1Context m_fsr1Context;
 	bool m_enableRCAS{ true };
+	FfxFsr1QualityMode m_fsr1QualityMode{ FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY };
 
 	// Common
 	bool m_enableFSR{ true };

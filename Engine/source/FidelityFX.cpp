@@ -104,6 +104,8 @@ void FidelityFX::OnResize(
 
 	ffxCasContextDestroy(&m_casContext);
 	CreateCasContext(device, m_displayWidth, m_displayHeight);
+	ffxFsr1ContextDestroy(&m_fsr1Context);
+	CreateFSRContext(device, m_displayWidth, m_displayWidth);
 
 	m_postProcessTexture.Reset();
 
@@ -129,16 +131,24 @@ void FidelityFX::OnResize(
 
 void FidelityFX::UpdateScalePreset(const ComPtr<ID3D12Device>& device, bool enableUpscaling, CASScalePreset preset)
 {
+	// @TODO ffxFsr1GetUpscaleRatioFromQualityMode
 	m_enableUpscaling = enableUpscaling;
-	m_scalePreset = preset;
-	switch (m_scalePreset)
+	m_casScalePreset = preset;
+	if (m_enableFSR)
 	{
-	case CASScalePreset::UltraQuality: m_upscaleRatio = 1.3f; break;
-	case CASScalePreset::Quality: m_upscaleRatio = 1.5f; break;
-	case CASScalePreset::Balanced: m_upscaleRatio = 1.7f; break;
-	case CASScalePreset::Performance: m_upscaleRatio = 2.f; break;
-	case CASScalePreset::UltraPerformance: m_upscaleRatio = 3.f; break;
-	case CASScalePreset::Custom: break;
+		m_upscaleRatio = ffxFsr1GetUpscaleRatioFromQualityMode(m_fsr1QualityMode);
+	}
+	else
+	{
+		switch (m_casScalePreset)
+		{
+		case CASScalePreset::UltraQuality: m_upscaleRatio = 1.3f; break;
+		case CASScalePreset::Quality: m_upscaleRatio = 1.5f; break;
+		case CASScalePreset::Balanced: m_upscaleRatio = 1.7f; break;
+		case CASScalePreset::Performance: m_upscaleRatio = 2.f; break;
+		case CASScalePreset::UltraPerformance: m_upscaleRatio = 3.f; break;
+		case CASScalePreset::Custom: break;
+		}
 	}
 	OnResize(device, m_displayWidth, m_displayHeight);
 }
@@ -157,9 +167,9 @@ void FidelityFX::CreateFSRContext(
 	// Setup FidelityFX interface
 	const size_t scratchBufferSize = ffxGetScratchMemorySizeDX12(FFX_FSR1_CONTEXT_COUNT);
 	void* scratchBuffer = calloc(scratchBufferSize, 1u);
-	FfxErrorCode errorCode = ffxGetInterfaceDX12(&m_fsr1ContextDesc.backendInterface, device.Get(), scratchBuffer, scratchBufferSize, FFX_CAS_CONTEXT_COUNT);
+	FfxErrorCode errorCode = ffxGetInterfaceDX12(&m_fsr1ContextDesc.backendInterface, device.Get(), scratchBuffer, scratchBufferSize, FFX_FSR1_CONTEXT_COUNT);
 	//CAULDRON_ASSERT(errorCode == FFX_OK);
-	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FidelityFX interface.");
+	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FidelityFX interface");
 	// @TODO Create proper log
 	//CauldronAssert(ASSERT_CRITICAL, m_fsr1ContextDesc.backendInterface.fpGetSDKVersion(&m_fsr1ContextDesc.backendInterface) == FFX_SDK_MAKE_VERSION(1, 1, 4),
 	//	L"FidelityFX CAS 2.1 sample requires linking with a 1.1.4 version SDK backend");
@@ -168,19 +178,15 @@ void FidelityFX::CreateFSRContext(
 
 	//m_fsr1ContextDesc.backendInterface.fpRegisterConstantBufferAllocator(&m_initializationParameters.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
 
-	m_renderWidth = m_displayWidth;
-	m_renderHeight = m_displayHeight;
+	// @TODO ffxFsr1GetRenderResolutionFromQualityMode
+	errorCode = ffxFsr1GetRenderResolutionFromQualityMode(&m_renderWidth, &m_renderHeight, m_displayWidth, m_displayHeight, m_fsr1QualityMode);
+	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FSR1 render resolution");
 
 	// Sharpening & Upscaling
 	if (m_enableRCAS)
 	{
-		m_renderWidth = static_cast<uint32_t>(static_cast<float>(m_displayWidth) / m_upscaleRatio);
-		m_renderHeight = static_cast<uint32_t>(static_cast<float>(m_displayHeight) / m_upscaleRatio);
-		m_casContextDesc.flags &= ~FFX_CAS_SHARPEN_ONLY;
+		m_fsr1ContextDesc.flags |= FFX_FSR1_ENABLE_RCAS;
 	}
-	// Sharpening Only
-	else
-		m_casContextDesc.flags |= FFX_CAS_SHARPEN_ONLY;
 
 	m_fsr1ContextDesc.maxRenderSize.width = m_renderWidth;
 	m_fsr1ContextDesc.maxRenderSize.height = m_renderHeight;
