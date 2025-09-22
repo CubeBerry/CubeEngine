@@ -105,7 +105,7 @@ void FidelityFX::OnResize(
 	ffxCasContextDestroy(&m_casContext);
 	CreateCasContext(device, m_displayWidth, m_displayHeight);
 	ffxFsr1ContextDestroy(&m_fsr1Context);
-	CreateFSRContext(device, m_displayWidth, m_displayWidth);
+	CreateFSRContext(device, m_displayWidth, m_displayHeight);
 
 	m_postProcessTexture.Reset();
 
