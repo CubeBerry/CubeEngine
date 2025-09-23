@@ -145,6 +145,7 @@ void FidelityFX::CreateFSR1Context(
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FSR1 render resolution");
 
 	// Sharpening & Upscaling
+	m_fsr1ContextDesc.flags = 0;
 	if (m_enableRCAS)
 	{
 		m_fsr1ContextDesc.flags |= FFX_FSR1_ENABLE_RCAS;
@@ -210,6 +211,7 @@ void FidelityFX::UpdateScalePreset(const ComPtr<ID3D12Device>& device, bool enab
 {
 	m_enableFSR1 = enableFSR1;
 	m_enableRCAS = enableRCAS;
+	m_fsr1QualityMode = preset;
 	m_casUpscaleRatio = ffxFsr1GetUpscaleRatioFromQualityMode(m_fsr1QualityMode);
 	OnResize(device, m_displayWidth, m_displayHeight);
 }

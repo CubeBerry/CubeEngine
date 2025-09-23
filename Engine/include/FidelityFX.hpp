@@ -100,7 +100,7 @@ private:
 	// @TODO FfxFsr1QualityMode
 	FfxFsr1ContextDescription m_fsr1ContextDesc{};
 	FfxFsr1Context m_fsr1Context;
-	bool m_enableRCAS{ true };
+	bool m_enableRCAS{ false };
 	FfxFsr1QualityMode m_fsr1QualityMode{ FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY };
 
 	// Common

@@ -848,17 +848,18 @@ void RenderManager::RenderingControllerForImGui()
 	// FidelityFX
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
+		bool enableFSR1 = m_fidelityFX->GetEnableFSR1();
+		
 		// Enable/Disable FidelityFX
 		bool enableFFX = m_fidelityFX->GetEnableFFX();
 		if (ImGui::Checkbox("Enable FidelityFX", &enableFFX))
 		{
 			m_fidelityFX->SetEnableFFX(enableFFX);
-			UpdateScalePreset(true, false, FidelityFX::CASScalePreset::UltraQuality);
+			UpdateScalePreset(enableFSR1, false, FidelityFX::CASScalePreset::UltraQuality);
 		}
 		if (m_fidelityFX->GetEnableFFX())
 		{
-			// Enable FSR1/CAS
-			bool enableFSR1 = m_fidelityFX->GetEnableFSR1();
+			// Enable FSR1/CAS			bool enableFSR1 = m_fidelityFX->GetEnableFSR1();
 			int currentMode = enableFSR1 ? 0 : 1;
 			if (ImGui::RadioButton("FidelityFX FSR1", &currentMode, 0))
 			{
