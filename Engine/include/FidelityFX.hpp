@@ -29,15 +29,6 @@ public:
 		UltraPerformance,  // 3.f
 		Custom             // 1.f - 3.f range
 	};
-
-	// FSR1
-	enum class RCASScalePreset
-	{
-		UltraQuality = 0,  // 1.3f
-		Quality,           // 1.5f
-		Balanced,          // 1.7f
-		Performance,       // 2.f
-	};
 public:
 	FidelityFX() = default;
 	FidelityFX(const FidelityFX&) = delete;
@@ -52,42 +43,58 @@ public:
 		const ComPtr<ID3D12Device>& device,
 		int displayWidth, int displayHeight
 	);
+	/*
+	 * FSR1 -> enableFSR1 == true
+	 * CAS -> enableFSR1 == false
+	 */
+	void UpdateScalePreset(
+		const ComPtr<ID3D12Device>& device,
+		bool enableFSR1,
+		bool enableUpscaling,
+		CASScalePreset preset);
 
-	bool GetEnableUpscaling() const { return m_enableUpscaling; }
+	bool GetEnableUpscaling() const { return m_casEnableUpscaling; }
 	CASScalePreset GetScalePreset() const { return m_casScalePreset; }
-	uint32_t GetRenderWidth() const { return m_renderWidth; }
-	uint32_t GetRenderHeight() const { return m_renderHeight; }
 
 	// FSR1
-	void CreateFSRContext(
-		const ComPtr<ID3D12Device>& device,
-		int displayWidth, int displayHeight
-	);
-
-	// Common
-	void OnResize(
+	void CreateFSR1Context(
 		const ComPtr<ID3D12Device>& device,
 		int displayWidth, int displayHeight
 	);
 	void UpdateScalePreset(
 		const ComPtr<ID3D12Device>& device,
-		bool enableUpscaling,
-		CASScalePreset preset);
+		bool enableFSR1,
+		bool enableRCAS,
+		FfxFsr1QualityMode preset);
+
+	bool GetEnableFSR1() const { return m_enableFSR1; }
+	bool GetEnableRCAS() const { return m_enableRCAS; }
+	FfxFsr1QualityMode GetFSR1QualityMode() const { return m_fsr1QualityMode; }
+
+	// Common
+	void SetEnableFFX(bool enableFFX) { m_enableFFX = enableFFX; }
+	void OnResize(
+		const ComPtr<ID3D12Device>& device,
+		int displayWidth, int displayHeight
+	);
 	void Execute(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
 		const ComPtr<ID3D12Resource>& inputRenderTarget,
 		const ComPtr<ID3D12Resource>& outputRenderTarget
 	);
+
+	bool GetEnableFFX() const { return m_enableFFX; };
+	uint32_t GetRenderWidth() const { return m_renderWidth; }
+	uint32_t GetRenderHeight() const { return m_renderHeight; }
 private:
 	// FidelityFX SDK 1.1.4
 	// CAS
 	FfxCasContextDescription m_casContextDesc{};
 	FfxCasContext m_casContext;
-	ComPtr<ID3D12Resource> m_casPostProcessTexture;
 
-	bool m_enableUpscaling{ false };
+	bool m_casEnableUpscaling{ false };
 	CASScalePreset m_casScalePreset{ CASScalePreset::UltraQuality };
-	float m_upscaleRatio{ 1.3f };
+	float m_casUpscaleRatio{ 1.3f };
 
 	// FSR1
 	// @TODO FfxFsr1QualityMode
@@ -95,10 +102,11 @@ private:
 	FfxFsr1Context m_fsr1Context;
 	bool m_enableRCAS{ true };
 	FfxFsr1QualityMode m_fsr1QualityMode{ FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY };
-	ComPtr<ID3D12Resource> m_fsr1PostProcessTexture;
 
 	// Common
-	bool m_enableFSR{ true };
+	bool m_enableFFX{ false };
+	ComPtr<ID3D12Resource> m_postProcessTexture;
+	bool m_enableFSR1{ false };
 	float m_sharpness{ 0.2f };
 	int m_displayWidth, m_displayHeight;
 	uint32_t m_renderWidth, m_renderHeight;

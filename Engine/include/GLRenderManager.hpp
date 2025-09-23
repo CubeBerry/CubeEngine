@@ -69,7 +69,8 @@ public:
 
 	// FidelityFX CAS
 	// FidelityFX does not support OpenGL
-	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override {}
+	void UpdateScalePreset(const bool& enableFSR1, const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override {}
+	void UpdateScalePreset(const bool& enableFSR1, const bool& enableRCAS, FfxFsr1QualityMode preset) override {}
 
 	//--------------------2D Render--------------------//
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;

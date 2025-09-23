@@ -848,45 +848,91 @@ void RenderManager::RenderingControllerForImGui()
 	// FidelityFX
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
-		if (ImGui::Checkbox("Enable FidelityFX CAS", &m_casEnabled))
+		// Enable/Disable FidelityFX
+		bool enableFFX = m_fidelityFX->GetEnableFFX();
+		if (ImGui::Checkbox("Enable FidelityFX", &enableFFX))
 		{
-			if (!m_casEnabled)
-			{
-				UpdateScalePreset(false, FidelityFX::CASScalePreset::UltraQuality);
-			}
+			m_fidelityFX->SetEnableFFX(enableFFX);
+			UpdateScalePreset(true, false, FidelityFX::CASScalePreset::UltraQuality);
 		}
-		if (m_casEnabled)
+		if (m_fidelityFX->GetEnableFFX())
 		{
-			bool enableUpscaling = m_fidelityFX->GetEnableUpscaling();
-			if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &enableUpscaling))
+			// Enable FSR1/CAS
+			bool enableFSR1 = m_fidelityFX->GetEnableFSR1();
+			int currentMode = enableFSR1 ? 0 : 1;
+			if (ImGui::RadioButton("FidelityFX FSR1", &currentMode, 0))
 			{
-				UpdateScalePreset(enableUpscaling, m_fidelityFX->GetScalePreset());
+				UpdateScalePreset(true, false, FidelityFX::CASScalePreset::UltraQuality);
 			}
-			if (m_fidelityFX->GetEnableUpscaling())
+			ImGui::SameLine();
+			if (ImGui::RadioButton("FidelityFX CAS", &currentMode, 1))
 			{
+				UpdateScalePreset(false, false, FidelityFX::CASScalePreset::UltraQuality);
+			}
+
+			// FSR1
+			if (enableFSR1)
+			{
+				bool enableRCAS = m_fidelityFX->GetEnableRCAS();
+				if (ImGui::Checkbox("Enable FidelityFX RCAS", &enableRCAS))
+				{
+					UpdateScalePreset(enableFSR1, enableRCAS, m_fidelityFX->GetFSR1QualityMode());
+				}
 				if (ImGui::BeginMenu("Upscale Preset"))
 				{
 					if (ImGui::MenuItem("UltraQuality"))
 					{
-						UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraQuality);
+						UpdateScalePreset(enableFSR1, enableRCAS, FfxFsr1QualityMode::FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY);
 					}
 					if (ImGui::MenuItem("Quality"))
 					{
-						UpdateScalePreset(true, FidelityFX::CASScalePreset::Quality);
+						UpdateScalePreset(enableFSR1, enableRCAS, FfxFsr1QualityMode::FFX_FSR1_QUALITY_MODE_QUALITY);
 					}
 					if (ImGui::MenuItem("Balanced"))
 					{
-						UpdateScalePreset(true, FidelityFX::CASScalePreset::Balanced);
+						UpdateScalePreset(enableFSR1, enableRCAS, FfxFsr1QualityMode::FFX_FSR1_QUALITY_MODE_BALANCED);
 					}
 					if (ImGui::MenuItem("Performance"))
 					{
-						UpdateScalePreset(true, FidelityFX::CASScalePreset::Performance);
-					}
-					if (ImGui::MenuItem("UltraPerformance"))
-					{
-						UpdateScalePreset(true, FidelityFX::CASScalePreset::UltraPerformance);
+						UpdateScalePreset(enableFSR1, enableRCAS, FfxFsr1QualityMode::FFX_FSR1_QUALITY_MODE_PERFORMANCE);
 					}
 					ImGui::EndMenu();
+				}
+			}
+			// CAS
+			else
+			{
+				bool enableUpscaling = m_fidelityFX->GetEnableUpscaling();
+				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &enableUpscaling))
+				{
+					UpdateScalePreset(false, enableUpscaling, m_fidelityFX->GetScalePreset());
+				}
+				if (m_fidelityFX->GetEnableUpscaling())
+				{
+					if (ImGui::BeginMenu("Upscale Preset"))
+					{
+						if (ImGui::MenuItem("UltraQuality"))
+						{
+							UpdateScalePreset(false, enableUpscaling, FidelityFX::CASScalePreset::UltraQuality);
+						}
+						if (ImGui::MenuItem("Quality"))
+						{
+							UpdateScalePreset(false, enableUpscaling, FidelityFX::CASScalePreset::Quality);
+						}
+						if (ImGui::MenuItem("Balanced"))
+						{
+							UpdateScalePreset(false, enableUpscaling, FidelityFX::CASScalePreset::Balanced);
+						}
+						if (ImGui::MenuItem("Performance"))
+						{
+							UpdateScalePreset(false, enableUpscaling, FidelityFX::CASScalePreset::Performance);
+						}
+						if (ImGui::MenuItem("UltraPerformance"))
+						{
+							UpdateScalePreset(false, enableUpscaling, FidelityFX::CASScalePreset::UltraPerformance);
+						}
+						ImGui::EndMenu();
+					}
 				}
 			}
 		}

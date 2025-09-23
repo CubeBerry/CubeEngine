@@ -108,7 +108,8 @@ public:
 	const std::vector<std::unique_ptr<VKTexture>>& GetTextures() { return textures; }
 
 	// FidelityFX CAS
-	void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override {}
+	void UpdateScalePreset(const bool& enableFSR1, const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) override {}
+	void UpdateScalePreset(const bool& enableFSR1, const bool& enableRCAS, FfxFsr1QualityMode preset) override {}
 
 	//--------------------3D Render--------------------//
 	void LoadSkybox(const std::filesystem::path& path) override;
