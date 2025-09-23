@@ -144,13 +144,7 @@ void FidelityFX::CreateFSR1Context(
 	errorCode = ffxFsr1GetRenderResolutionFromQualityMode(&m_renderWidth, &m_renderHeight, m_displayWidth, m_displayHeight, m_fsr1QualityMode);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FSR1 render resolution");
 
-	// Sharpening & Upscaling
-	m_fsr1ContextDesc.flags = 0;
-	if (m_enableRCAS)
-	{
-		m_fsr1ContextDesc.flags |= FFX_FSR1_ENABLE_RCAS;
-	}
-
+	m_fsr1ContextDesc.flags |= FFX_FSR1_ENABLE_RCAS;
 	m_fsr1ContextDesc.maxRenderSize.width = m_renderWidth;
 	m_fsr1ContextDesc.maxRenderSize.height = m_renderHeight;
 	m_fsr1ContextDesc.displaySize.width = m_displayWidth;
