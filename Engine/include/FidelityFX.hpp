@@ -52,6 +52,19 @@ public:
 		const ComPtr<ID3D12Device>& device,
 		int displayWidth, int displayHeight
 	);
+
+	bool GetEnableUpscaling() const { return m_enableUpscaling; }
+	CASScalePreset GetScalePreset() const { return m_casScalePreset; }
+	uint32_t GetRenderWidth() const { return m_renderWidth; }
+	uint32_t GetRenderHeight() const { return m_renderHeight; }
+
+	// FSR1
+	void CreateFSRContext(
+		const ComPtr<ID3D12Device>& device,
+		int displayWidth, int displayHeight
+	);
+
+	// Common
 	void OnResize(
 		const ComPtr<ID3D12Device>& device,
 		int displayWidth, int displayHeight
@@ -60,20 +73,6 @@ public:
 		const ComPtr<ID3D12Device>& device,
 		bool enableUpscaling,
 		CASScalePreset preset);
-
-	// FSR1
-	void CreateFSRContext(
-		const ComPtr<ID3D12Device>& device,
-		int displayWidth, int displayHeight
-	);
-
-	// CAS
-	bool GetEnableUpscaling() const { return m_enableUpscaling; }
-	CASScalePreset GetScalePreset() const { return m_casScalePreset; }
-	uint32_t GetRenderWidth() const { return m_renderWidth; }
-	uint32_t GetRenderHeight() const { return m_renderHeight; }
-
-	// Common
 	void Execute(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
 		const ComPtr<ID3D12Resource>& inputRenderTarget,
@@ -84,7 +83,7 @@ private:
 	// CAS
 	FfxCasContextDescription m_casContextDesc{};
 	FfxCasContext m_casContext;
-	ComPtr<ID3D12Resource> m_postProcessTexture;
+	ComPtr<ID3D12Resource> m_casPostProcessTexture;
 
 	bool m_enableUpscaling{ false };
 	CASScalePreset m_casScalePreset{ CASScalePreset::UltraQuality };
@@ -96,6 +95,7 @@ private:
 	FfxFsr1Context m_fsr1Context;
 	bool m_enableRCAS{ true };
 	FfxFsr1QualityMode m_fsr1QualityMode{ FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY };
+	ComPtr<ID3D12Resource> m_fsr1PostProcessTexture;
 
 	// Common
 	bool m_enableFSR{ true };
