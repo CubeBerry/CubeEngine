@@ -855,7 +855,7 @@ void RenderManager::RenderingControllerForImGui()
 		if (ImGui::Checkbox("Enable FidelityFX", &enableFFX))
 		{
 			m_fidelityFX->SetEnableFFX(enableFFX);
-			UpdateScalePreset(enableFSR1, false, FidelityFX::CASScalePreset::UltraQuality);
+			UpdateScalePreset(true, false, FfxFsr1QualityMode::FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY);
 		}
 		if (m_fidelityFX->GetEnableFFX())
 		{
@@ -879,6 +879,7 @@ void RenderManager::RenderingControllerForImGui()
 				{
 					UpdateScalePreset(enableFSR1, enableRCAS, m_fidelityFX->GetFSR1QualityMode());
 				}
+				if (enableRCAS) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
 				if (ImGui::BeginMenu("Upscale Preset"))
 				{
 					if (ImGui::MenuItem("UltraQuality"))
@@ -903,6 +904,7 @@ void RenderManager::RenderingControllerForImGui()
 			// CAS
 			else
 			{
+				ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
 				bool enableUpscaling = m_fidelityFX->GetEnableUpscaling();
 				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &enableUpscaling))
 				{

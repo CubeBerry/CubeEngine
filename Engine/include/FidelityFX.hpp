@@ -83,9 +83,11 @@ public:
 		const ComPtr<ID3D12Resource>& outputRenderTarget
 	);
 
-	bool GetEnableFFX() const { return m_enableFFX; };
+	bool GetEnableFFX() const { return m_enableFFX; }
 	uint32_t GetRenderWidth() const { return m_renderWidth; }
 	uint32_t GetRenderHeight() const { return m_renderHeight; }
+
+	float m_sharpness{ 0.8f };
 private:
 	// FidelityFX SDK 1.1.4
 	// CAS
@@ -107,7 +109,6 @@ private:
 	bool m_enableFFX{ false };
 	ComPtr<ID3D12Resource> m_postProcessTexture;
 	bool m_enableFSR1{ false };
-	float m_sharpness{ 0.2f };
 	int m_displayWidth, m_displayHeight;
 	uint32_t m_renderWidth, m_renderHeight;
 };
