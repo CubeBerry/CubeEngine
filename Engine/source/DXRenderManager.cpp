@@ -294,8 +294,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_height = 720;
 	m_fidelityFX = std::make_unique<FidelityFX>();
 	m_fidelityFX->InitializeBackend(m_device, m_width, m_height);
-	m_fidelityFX->CreateCasContext(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
-	m_fidelityFX->CreateFSR1Context(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
+	m_fidelityFX->CreateCasContext();
+	m_fidelityFX->CreateFSR1Context();
 
 	WaitForGPU();
 

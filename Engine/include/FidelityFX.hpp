@@ -47,15 +47,9 @@ public:
 
 	void InitializeBackend(const ComPtr<ID3D12Device>& device, int displayWidth, int displayHeight);
 	// CAS
-	void CreateCasContext(
-		const ComPtr<ID3D12Device>& device,
-		int displayWidth, int displayHeight
-	);
+	void CreateCasContext();
 	// FSR1
-	void CreateFSR1Context(
-		const ComPtr<ID3D12Device>& device,
-		int displayWidth, int displayHeight
-	);
+	void CreateFSR1Context();
 
 	bool UpdatePreset(Effect effect, FfxFsr1QualityMode fsr1QualityMode, CASScalePreset casScalePreset);
 

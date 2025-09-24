@@ -43,10 +43,7 @@ void FidelityFX::InitializeBackend(const ComPtr<ID3D12Device>& device, int displ
 	//m_casContextDesc.backendInterface.fpRegisterConstantBufferAllocator(&m_casContextDesc.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
 }
 
-void FidelityFX::CreateCasContext(
-	const ComPtr<ID3D12Device>& device,
-	int displayWidth, int displayHeight
-)
+void FidelityFX::CreateCasContext()
 {
 	// https://gpuopen.com/manuals/fidelityfx_sdk/techniques/contrast-adaptive-sharpening/
 	// Based on casrendermodule.cpp from FidelityFX SDK 1.1.4 CAS Sample
@@ -76,14 +73,8 @@ void FidelityFX::CreateCasContext(
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to create CAS context");
 }
 
-void FidelityFX::CreateFSR1Context(
-	const ComPtr<ID3D12Device>& device,
-	int displayWidth, int displayHeight
-)
+void FidelityFX::CreateFSR1Context()
 {
-	m_displayWidth = displayWidth;
-	m_displayHeight = displayHeight;
-
 	m_fsr1ContextDesc.backendInterface = m_backendInterface;
 
 	//FfxErrorCode errorCode = ffxFsr1GetRenderResolutionFromQualityMode(&m_renderWidth, &m_renderHeight, m_displayWidth, m_displayHeight, m_fsr1QualityMode);
@@ -147,9 +138,9 @@ void FidelityFX::OnResize(
 	}
 
 	ffxFsr1ContextDestroy(&m_fsr1Context);
-	CreateFSR1Context(device, m_displayWidth, m_displayHeight);
+	CreateFSR1Context();
 	ffxCasContextDestroy(&m_casContext);
-	CreateCasContext(device, m_displayWidth, m_displayHeight);
+	CreateCasContext();
 
 	m_postProcessTexture.Reset();
 	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
