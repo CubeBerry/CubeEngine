@@ -842,6 +842,7 @@ glm::mat4 RenderManager::Quantize(
 
 void RenderManager::RenderingControllerForImGui()
 {
+	// @TODO Might need to make ImGui UI remember state (FSR1/CAS) of FFX effect even if FFX is turned off
 	RenderManager* renderManager = Engine::GetRenderManager();
 	ImGui::Begin("RenderingController");
 
