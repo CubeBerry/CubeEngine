@@ -39,7 +39,7 @@ public:
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS(&m_vertexBuffer)
 		));
@@ -63,6 +63,13 @@ public:
 		memcpy(pVertexDataBegin, data, totalSize);
 		m_uploadBuffer->Unmap(0, nullptr);
 
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_vertexBuffer.Get(),
+			D3D12_RESOURCE_STATE_COMMON,
+			D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		m_commandList->ResourceBarrier(1, &barrier);
+
 		m_commandList->CopyBufferRegion(
 			m_vertexBuffer.Get(),
 			0,
@@ -71,7 +78,7 @@ public:
 			totalSize
 		);
 
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_vertexBuffer.Get(),
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
