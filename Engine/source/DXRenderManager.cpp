@@ -609,8 +609,6 @@ void DXRenderManager::EndRender()
 		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 		if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY)
 		{
-			barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-			m_commandList->ResourceBarrier(1, &barrier);
 			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex].Get(), m_renderTargets[m_frameIndex].Get());
 		}
 		else
