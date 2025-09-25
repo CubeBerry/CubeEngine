@@ -214,9 +214,13 @@ void FidelityFX::Execute(
 		if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch CAS");
 	}
 
+	D3D12_RESOURCE_STATES outputBeforeState;
+	if (input == output) outputBeforeState = D3D12_RESOURCE_STATE_COMMON;
+	else  outputBeforeState = D3D12_RESOURCE_STATE_PRESENT;
+
 	CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
 	CD3DX12_RESOURCE_BARRIER::Transition(m_uavOutputTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
-	CD3DX12_RESOURCE_BARRIER::Transition(output.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST)
+	CD3DX12_RESOURCE_BARRIER::Transition(output.Get(), outputBeforeState, D3D12_RESOURCE_STATE_COPY_DEST)
 	};
 	commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
 
