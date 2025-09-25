@@ -849,95 +849,69 @@ void RenderManager::RenderingControllerForImGui()
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
 		auto currentEffect = m_fidelityFX->GetCurrentEffect();
-		bool casUpscaling = (currentEffect == FidelityFX::Effect::CAS_UPSCALING);
+		FfxFsr1QualityMode currentFsrMode = m_fidelityFX->GetFSR1QualityMode();
+		FidelityFX::CASScalePreset currentCasScalePreset = m_fidelityFX->GetSCASScalePreset();
 		
 		// Enable/Disable FidelityFX
 		bool ffxEnabled = (currentEffect != FidelityFX::Effect::NONE);
+		int effectMode = (currentEffect == FidelityFX::Effect::FSR1) ? 1 : 2;
 		if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
 		{
 			FidelityFX::Effect newEffect = ffxEnabled ? FidelityFX::Effect::FSR1 : FidelityFX::Effect::NONE;
-			UpdateScalePreset(newEffect, FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY, FidelityFX::CASScalePreset::UltraQuality);
+			UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
 		}
+
 		if (ffxEnabled)
 		{
 			// Enable FSR1/CAS
-			int mode = (currentEffect == FidelityFX::Effect::FSR1) ? 1 : 2;
-			if (ImGui::RadioButton("FidelityFX FSR1", &mode, 1))
+			if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
 			{
-				UpdateScalePreset(FidelityFX::Effect::FSR1, FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY, FidelityFX::CASScalePreset::UltraQuality);
+				UpdateScalePreset(FidelityFX::Effect::FSR1, currentFsrMode, currentCasScalePreset);
 			}
 			ImGui::SameLine();
-			if (ImGui::RadioButton("FidelityFX CAS", &mode, 2))
+			if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
 			{
-				UpdateScalePreset(FidelityFX::Effect::CAS_SHARPEN_ONLY, FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY, FidelityFX::CASScalePreset::UltraQuality);
+				UpdateScalePreset(FidelityFX::Effect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
 			}
 
+			bool rcasEnabled = m_fidelityFX->GetEnableRCAS();
+			bool casUpscalingEnabled = (currentEffect == FidelityFX::Effect::CAS_UPSCALING);
 			// FSR1
 			if (currentEffect == FidelityFX::Effect::FSR1)
 			{
-				bool enableRCAS = m_fidelityFX->GetEnableRCAS();
-				if (ImGui::Checkbox("Enable FidelityFX RCAS", &enableRCAS))
+				if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
 				{
-					UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), m_fidelityFX->GetScalePreset());
+					m_fidelityFX->SetEnableRCAS(rcasEnabled);
 				}
-				if (enableRCAS) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
-				if (ImGui::BeginMenu("Upscale Preset"))
+
+				const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
+				int currentFsrModeInt = static_cast<int>(currentFsrMode);
+				if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
 				{
-					if (ImGui::MenuItem("UltraQuality"))
-					{
-						UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), m_fidelityFX->GetScalePreset());
-					}
-					if (ImGui::MenuItem("Quality"))
-					{
-						UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), m_fidelityFX->GetScalePreset());
-					}
-					if (ImGui::MenuItem("Balanced"))
-					{
-						UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), m_fidelityFX->GetScalePreset());
-					}
-					if (ImGui::MenuItem("Performance"))
-					{
-						UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), m_fidelityFX->GetScalePreset());
-					}
-					ImGui::EndMenu();
+					UpdateScalePreset(FidelityFX::Effect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
 				}
 			}
 			// CAS
 			else
 			{
-				ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
-				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscaling))
+				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
 				{
-					UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), m_fidelityFX->GetScalePreset());
+					FidelityFX::Effect newEffect = casUpscalingEnabled ? FidelityFX::Effect::CAS_UPSCALING : FidelityFX::Effect::CAS_SHARPEN_ONLY;
+					UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
 				}
-				if (casUpscaling)
+				if (casUpscalingEnabled)
 				{
-					if (ImGui::BeginMenu("Upscale Preset"))
+					const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
+					int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
+					if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
 					{
-						if (ImGui::MenuItem("UltraQuality"))
-						{
-							UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), FidelityFX::CASScalePreset::UltraQuality);
-						}
-						if (ImGui::MenuItem("Quality"))
-						{
-							UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), FidelityFX::CASScalePreset::Quality);
-						}
-						if (ImGui::MenuItem("Balanced"))
-						{
-							UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), FidelityFX::CASScalePreset::Balanced);
-						}
-						if (ImGui::MenuItem("Performance"))
-						{
-							UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), FidelityFX::CASScalePreset::Performance);
-						}
-						if (ImGui::MenuItem("UltraPerformance"))
-						{
-							UpdateScalePreset(currentEffect, m_fidelityFX->GetFSR1QualityMode(), FidelityFX::CASScalePreset::UltraPerformance);
-						}
-						ImGui::EndMenu();
+						UpdateScalePreset(FidelityFX::Effect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
 					}
 				}
 			}
+
+			// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
+			if (!(currentEffect == FidelityFX::Effect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
 		}
 	}
 	ImGui::Spacing();

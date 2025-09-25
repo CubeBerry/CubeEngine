@@ -69,7 +69,7 @@ public:
 	uint32_t GetRenderWidth() const { return m_renderWidth; }
 	uint32_t GetRenderHeight() const { return m_renderHeight; }
 	FfxFsr1QualityMode GetFSR1QualityMode() const { return m_fsr1QualityMode; }
-	CASScalePreset GetScalePreset() const { return m_casScalePreset; }
+	CASScalePreset GetSCASScalePreset() const { return m_casScalePreset; }
 
 	float m_sharpness{ 0.8f };
 private:
