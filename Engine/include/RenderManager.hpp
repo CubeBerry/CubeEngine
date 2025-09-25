@@ -260,7 +260,7 @@ public:
 	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
 	// FidelityFX CAS
-	virtual void UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset) = 0;
+	virtual void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) = 0;
 	uint32_t GetRenderWidth() const { return m_fidelityFX->GetRenderWidth(); }
 	uint32_t GetRenderHeight() const { return m_fidelityFX->GetRenderHeight(); }
 
@@ -329,7 +329,6 @@ protected:
 	// Polygon Mode
 	PolygonType pMode = PolygonType::FILL;
 	// FidelityFX CAS
-	bool m_casEnabled{ true };
 	std::unique_ptr<FidelityFX> m_fidelityFX;
 
 	//--------------------2D Render--------------------//

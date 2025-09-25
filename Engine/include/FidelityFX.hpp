@@ -2,7 +2,9 @@
 //Project: CubeEngine
 //File: FidelityFX.hpp
 #pragma once
+// FidelityFX SDK 1.1.4
 #include "FidelityFX/host/ffx_cas.h"
+#include "FidelityFX/host/ffx_fsr1.h"
 // @TODO FidelityFX SDK 2.0
 //#include "Kits/FidelityFX/api/include/dx12/ffx_api_dx12.hpp"
 
@@ -17,6 +19,14 @@ using Microsoft::WRL::ComPtr;
 class FidelityFX
 {
 public:
+	enum class UpscaleEffect
+	{
+		NONE,
+		FSR1,
+		CAS_SHARPEN_ONLY,
+		CAS_UPSCALING
+	};
+	// CAS
 	enum class CASScalePreset
 	{
 		UltraQuality = 0,  // 1.3f
@@ -35,53 +45,54 @@ public:
 
 	~FidelityFX();
 
-	void CreateCasContext(
-		const ComPtr<ID3D12Device>& device,
-		int displayWidth, int displayHeight
-	);
+	void InitializeBackend(const ComPtr<ID3D12Device>& device, int displayWidth, int displayHeight);
+	// CAS
+	void CreateCasContext();
+	// FSR1
+	void CreateFSR1Context();
+
+	bool UpdatePreset(UpscaleEffect effect, FfxFsr1QualityMode fsr1QualityMode, CASScalePreset casScalePreset);
+
 	void OnResize(
 		const ComPtr<ID3D12Device>& device,
 		int displayWidth, int displayHeight
 	);
-	void UpdateScalePreset(
-		const ComPtr<ID3D12Device>& device,
-		bool enableUpscaling,
-		CASScalePreset preset);
 	void Execute(
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
-		const ComPtr<ID3D12Resource>& inputRenderTarget,
-		const ComPtr<ID3D12Resource>& outputRenderTarget
+		const ComPtr<ID3D12Resource>& input,
+		const ComPtr<ID3D12Resource>& output
 	);
 
-	bool GetEnableUpscaling() const { return m_enableUpscaling; }
-	CASScalePreset GetScalePreset() const { return m_scalePreset; }
+	UpscaleEffect GetCurrentEffect() const { return m_currentEffect; }
+	bool GetEnableRCAS() const { return m_enableRCAS; }
+	void SetEnableRCAS(bool enable) { m_enableRCAS = enable; }
 	uint32_t GetRenderWidth() const { return m_renderWidth; }
 	uint32_t GetRenderHeight() const { return m_renderHeight; }
-private:
-	// FidelityFX SDK 1.1.4
-	FfxCasContextDescription m_initializationParameters{ 0 };
-	FfxCasContext m_casContext;
-	ComPtr<ID3D12Resource> m_postProcessTexture;
+	FfxFsr1QualityMode GetFSR1QualityMode() const { return m_fsr1QualityMode; }
+	CASScalePreset GetSCASScalePreset() const { return m_casScalePreset; }
 
 	float m_sharpness{ 0.8f };
-	bool m_enableUpscaling{ false };
-	CASScalePreset m_scalePreset{ CASScalePreset::UltraQuality };
-	float m_upscaleRatio{ 1.3f };
+private:
+	// FidelityFX SDK 1.1.4
+	FfxInterface m_backendInterface;
+	void* m_scratchBuffer{ nullptr };
+	ComPtr<ID3D12Resource> m_uavOutputTexture;
 
+	UpscaleEffect m_currentEffect{ UpscaleEffect::NONE };
+	bool m_enableRCAS{ false };
 	int m_displayWidth, m_displayHeight;
 	uint32_t m_renderWidth, m_renderHeight;
 
-	// @TODO FidelityFX SDK 2.0
-	//std::vector<uint64_t> m_fsrVersionIds;
-	//int32_t m_fsrVersionIndex{ 0 };
-	//bool m_overrideVersion{ false };
-	//std::vector<const char*> m_fsrVersionNames;
-	//ffx::Context m_upscalingContext{ nullptr };
+	// CAS
+	FfxCasContextDescription m_casContextDesc{};
+	FfxCasContext m_casContext;
+	CASScalePreset m_casScalePreset{ CASScalePreset::UltraQuality };
+	float m_casUpscaleRatio{ 1.3f };
 
-	//uint64_t m_currentUpscaleContextVersionId{ 0 };
-	//const char* m_currentUpscaleContextVersionName{ nullptr };
-
-	//ComPtr<ID3D12Resource> m_postProcessTexture;
+	// FSR1
+	FfxFsr1ContextDescription m_fsr1ContextDesc{};
+	FfxFsr1Context m_fsr1Context;
+	FfxFsr1QualityMode m_fsr1QualityMode{ FFX_FSR1_QUALITY_MODE_ULTRA_QUALITY };
 };
 
 // @TODO FidelityFX SDK 2.0

@@ -15,83 +15,92 @@
 FidelityFX::~FidelityFX()
 {
 	ffxCasContextDestroy(&m_casContext);
+	ffxFsr1ContextDestroy(&m_fsr1Context);
 
 	// Destroy FidelityFX interface memory
-	free(m_initializationParameters.backendInterface.scratchBuffer);
+	free(m_scratchBuffer);
 }
 
-void FidelityFX::CreateCasContext(
-	const ComPtr<ID3D12Device>& device,
-	int displayWidth, int displayHeight
-)
+void FidelityFX::InitializeBackend(const ComPtr<ID3D12Device>& device, int displayWidth, int displayHeight)
 {
 	m_displayWidth = displayWidth;
 	m_displayHeight = displayHeight;
-
-	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		m_displayWidth,
-		m_displayHeight,
-		1, 1, 1, 0,
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
-	);
-
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&textureDesc,
-		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
-		IID_PPV_ARGS(&m_postProcessTexture)
-	));
-	m_postProcessTexture->SetName(L"CAS Post Process Texture");
-
-	// https://gpuopen.com/manuals/fidelityfx_sdk/techniques/contrast-adaptive-sharpening/
-	// Based on casrendermodule.cpp from FidelityFX SDK 1.1.4 CAS Sample
-	if (m_initializationParameters.backendInterface.scratchBuffer != nullptr)
-		free(m_initializationParameters.backendInterface.scratchBuffer);
+	m_renderWidth = m_displayWidth;
+	m_renderHeight = m_displayHeight;
 
 	// Setup FidelityFX interface
-	const size_t scratchBufferSize = ffxGetScratchMemorySizeDX12(FFX_CAS_CONTEXT_COUNT);
-	void* scratchBuffer = calloc(scratchBufferSize, 1u);
-	FfxErrorCode errorCode = ffxGetInterfaceDX12(&m_initializationParameters.backendInterface, device.Get(), scratchBuffer, scratchBufferSize, FFX_CAS_CONTEXT_COUNT);
+	const size_t scratchBufferSize = ffxGetScratchMemorySizeDX12(FFX_CAS_CONTEXT_COUNT + FFX_FSR1_CONTEXT_COUNT);
+	m_scratchBuffer = calloc(scratchBufferSize, 1u);
+	FfxErrorCode errorCode = ffxGetInterfaceDX12(&m_backendInterface, device.Get(), m_scratchBuffer, scratchBufferSize, FFX_CAS_CONTEXT_COUNT + FFX_FSR1_CONTEXT_COUNT);
 	//CAULDRON_ASSERT(errorCode == FFX_OK);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FidelityFX interface.");
 	// @TODO Create proper log
-	//CauldronAssert(ASSERT_CRITICAL, m_initializationParameters.backendInterface.fpGetSDKVersion(&m_initializationParameters.backendInterface) == FFX_SDK_MAKE_VERSION(1, 1, 4),
+	//CauldronAssert(ASSERT_CRITICAL, m_casContextDesc.backendInterface.fpGetSDKVersion(&m_casContextDesc.backendInterface) == FFX_SDK_MAKE_VERSION(1, 1, 4),
 	//	L"FidelityFX CAS 2.1 sample requires linking with a 1.1.4 version SDK backend");
 	//CauldronAssert(ASSERT_CRITICAL, ffxCasGetEffectVersion() == FFX_SDK_MAKE_VERSION(1, 2, 0),
 	//	L"FidelityFX CAS 2.1 sample requires linking with a 1.2 version FidelityFX CAS library");
 
-	//m_initializationParameters.backendInterface.fpRegisterConstantBufferAllocator(&m_initializationParameters.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
+	//m_casContextDesc.backendInterface.fpRegisterConstantBufferAllocator(&m_casContextDesc.backendInterface, SDKWrapper::ffxAllocateConstantBuffer);
+}
 
-	// Initialize CAS Context
-	m_renderWidth = m_displayWidth;
-	m_renderHeight = m_displayHeight;
+void FidelityFX::CreateCasContext()
+{
+	// https://gpuopen.com/manuals/fidelityfx_sdk/techniques/contrast-adaptive-sharpening/
+	// Based on casrendermodule.cpp from FidelityFX SDK 1.1.4 CAS Sample
+	m_casContextDesc.backendInterface = m_backendInterface;
 
 	// Sharpening & Upscaling
-	if (m_enableUpscaling)
+	if (m_currentEffect == UpscaleEffect::CAS_UPSCALING)
 	{
-		m_renderWidth = static_cast<uint32_t>(static_cast<float>(m_displayWidth) / m_upscaleRatio);
-		m_renderHeight = static_cast<uint32_t>(static_cast<float>(m_displayHeight) / m_upscaleRatio);
-		m_initializationParameters.flags &= ~FFX_CAS_SHARPEN_ONLY;
+		//m_renderWidth = static_cast<uint32_t>(static_cast<float>(m_displayWidth) / m_casUpscaleRatio);
+		//m_renderHeight = static_cast<uint32_t>(static_cast<float>(m_displayHeight) / m_casUpscaleRatio);
+		m_casContextDesc.flags &= ~FFX_CAS_SHARPEN_ONLY;
 	}
 	// Sharpening Only
-	else
-		m_initializationParameters.flags |= FFX_CAS_SHARPEN_ONLY;
+	else if (m_currentEffect == UpscaleEffect::CAS_SHARPEN_ONLY)
+		m_casContextDesc.flags |= FFX_CAS_SHARPEN_ONLY;
 
 	// CubeEngine is using non-linear color space
-	//m_initializationParameters.colorSpaceConversion = FFX_CAS_COLOR_SPACE_LINEAR;
+	//m_casContextDesc.colorSpaceConversion = FFX_CAS_COLOR_SPACE_LINEAR;
 
-	m_initializationParameters.maxRenderSize.width = m_renderWidth;
-	m_initializationParameters.maxRenderSize.height = m_renderHeight;
-	m_initializationParameters.displaySize.width = m_displayWidth;
-	m_initializationParameters.displaySize.height = m_displayHeight;
+	m_casContextDesc.maxRenderSize.width = m_renderWidth;
+	m_casContextDesc.maxRenderSize.height = m_renderHeight;
+	m_casContextDesc.displaySize.width = m_displayWidth;
+	m_casContextDesc.displaySize.height = m_displayHeight;
 
 	// Create CAS Context
-	ffxCasContextCreate(&m_casContext, &m_initializationParameters);
+	FfxErrorCode errorCode = ffxCasContextCreate(&m_casContext, &m_casContextDesc);
 	if (errorCode != FFX_OK) throw std::runtime_error("Failed to create CAS context");
+}
+
+void FidelityFX::CreateFSR1Context()
+{
+	m_fsr1ContextDesc.backendInterface = m_backendInterface;
+
+	//FfxErrorCode errorCode = ffxFsr1GetRenderResolutionFromQualityMode(&m_renderWidth, &m_renderHeight, m_displayWidth, m_displayHeight, m_fsr1QualityMode);
+	//if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FSR1 render resolution");
+
+	m_fsr1ContextDesc.flags |= FFX_FSR1_ENABLE_RCAS;
+	m_fsr1ContextDesc.maxRenderSize.width = m_renderWidth;
+	m_fsr1ContextDesc.maxRenderSize.height = m_renderHeight;
+	m_fsr1ContextDesc.displaySize.width = m_displayWidth;
+	m_fsr1ContextDesc.displaySize.height = m_displayHeight;
+	m_fsr1ContextDesc.outputFormat = FFX_SURFACE_FORMAT_R8G8B8A8_UNORM;
+
+	// @TODO Should I enable HDR?
+	//m_fsr1ContextDesc.flags = FFX_FSR1_ENABLE_HIGH_DYNAMIC_RANGE;
+
+	FfxErrorCode errorCode = ffxFsr1ContextCreate(&m_fsr1Context, &m_fsr1ContextDesc);
+	if (errorCode != FFX_OK) throw std::runtime_error("Failed to create FSR1 context");
+}
+
+bool FidelityFX::UpdatePreset(UpscaleEffect effect, FfxFsr1QualityMode fsr1QualityMode, CASScalePreset casScalePreset)
+{
+	bool isUpdate = (m_currentEffect != effect || m_fsr1QualityMode != fsr1QualityMode || m_casScalePreset != casScalePreset);
+	m_currentEffect = effect;
+	m_fsr1QualityMode = fsr1QualityMode;
+	m_casScalePreset = casScalePreset;
+	return isUpdate;
 }
 
 void FidelityFX::OnResize(
@@ -102,11 +111,38 @@ void FidelityFX::OnResize(
 	m_displayWidth = displayWidth;
 	m_displayHeight = displayHeight;
 
+	switch (m_currentEffect)
+	{
+	case UpscaleEffect::NONE:
+	case UpscaleEffect::CAS_SHARPEN_ONLY:
+		m_renderWidth = m_displayWidth;
+		m_renderHeight = m_displayHeight;
+		break;
+	case UpscaleEffect::FSR1:
+		/*FfxErrorCode errorCode =*/ ffxFsr1GetRenderResolutionFromQualityMode(&m_renderWidth, &m_renderHeight, m_displayWidth, m_displayHeight, m_fsr1QualityMode);
+		//if (errorCode != FFX_OK) throw std::runtime_error("Failed to get FSR1 render resolution");
+		break;
+	case UpscaleEffect::CAS_UPSCALING:
+		switch (m_casScalePreset)
+		{
+		case CASScalePreset::UltraQuality: m_casUpscaleRatio = 1.3f; break;
+		case CASScalePreset::Quality: m_casUpscaleRatio = 1.5f; break;
+		case CASScalePreset::Balanced: m_casUpscaleRatio = 1.7f; break;
+		case CASScalePreset::Performance: m_casUpscaleRatio = 2.f; break;
+		case CASScalePreset::UltraPerformance: m_casUpscaleRatio = 3.f; break;
+		case CASScalePreset::Custom: break;
+		}
+		m_renderWidth = static_cast<uint32_t>(static_cast<float>(m_displayWidth) / m_casUpscaleRatio);
+		m_renderHeight = static_cast<uint32_t>(static_cast<float>(m_displayHeight) / m_casUpscaleRatio);
+		break;
+	}
+
+	ffxFsr1ContextDestroy(&m_fsr1Context);
+	CreateFSR1Context();
 	ffxCasContextDestroy(&m_casContext);
-	CreateCasContext(device, m_displayWidth, m_displayHeight);
+	CreateCasContext();
 
-	m_postProcessTexture.Reset();
-
+	m_uavOutputTexture.Reset();
 	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		m_displayWidth,
@@ -122,84 +158,77 @@ void FidelityFX::OnResize(
 		&textureDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
-		IID_PPV_ARGS(&m_postProcessTexture)
+		IID_PPV_ARGS(&m_uavOutputTexture)
 	));
-	m_postProcessTexture->SetName(L"CAS Post Process Texture");
-}
-
-void FidelityFX::UpdateScalePreset(const ComPtr<ID3D12Device>& device, bool enableUpscaling, CASScalePreset preset)
-{
-	m_enableUpscaling = enableUpscaling;
-	m_scalePreset = preset;
-	switch (m_scalePreset)
-	{
-	case CASScalePreset::UltraQuality: m_upscaleRatio = 1.3f; break;
-	case CASScalePreset::Quality: m_upscaleRatio = 1.5f; break;
-	case CASScalePreset::Balanced: m_upscaleRatio = 1.7f; break;
-	case CASScalePreset::Performance: m_upscaleRatio = 2.f; break;
-	case CASScalePreset::UltraPerformance: m_upscaleRatio = 3.f; break;
-	case CASScalePreset::Custom: break;
-	}
-	OnResize(device, m_displayWidth, m_displayHeight);
+	m_uavOutputTexture->SetName(L"FidelityFX Post Process Texture");
 }
 
 void FidelityFX::Execute(
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	const ComPtr<ID3D12Resource>& inputRenderTarget,
-	const ComPtr<ID3D12Resource>& outputRenderTarget
+	const ComPtr<ID3D12Resource>& input,
+	const ComPtr<ID3D12Resource>& output
 )
 {
-	FfxCasDispatchDescription dispatchParameters = {};
-	dispatchParameters.commandList = ffxGetCommandListDX12(commandList.Get());
-	dispatchParameters.renderSize = { m_initializationParameters.maxRenderSize.width, m_initializationParameters.maxRenderSize.height };
-	dispatchParameters.sharpness = m_sharpness;
+	if (m_currentEffect == UpscaleEffect::NONE) return;
 
-	CD3DX12_RESOURCE_BARRIER dispatchBarriers[] = {
-		CD3DX12_RESOURCE_BARRIER::Transition(inputRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
-		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-	};
-	commandList->ResourceBarrier(_countof(dispatchBarriers), dispatchBarriers);
+	auto preBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_uavOutputTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	commandList->ResourceBarrier(1, &preBarrier);
 
-	D3D12_RESOURCE_DESC inputResourceDesc = inputRenderTarget->GetDesc();
-	FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), static_cast<uint32_t>(inputResourceDesc.Width), static_cast<uint32_t>(inputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
-	dispatchParameters.color = ffxGetResourceDX12(inputRenderTarget.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
+	// FSR1
+	if (m_currentEffect == UpscaleEffect::FSR1)
+	{
+		FfxFsr1DispatchDescription dispatchParameters{};
+		dispatchParameters.commandList = ffxGetCommandListDX12(commandList.Get());
+		dispatchParameters.renderSize = { m_fsr1ContextDesc.maxRenderSize.width, m_fsr1ContextDesc.maxRenderSize.height };
+		dispatchParameters.enableSharpening = m_enableRCAS;
+		dispatchParameters.sharpness = m_sharpness;
 
-	D3D12_RESOURCE_DESC outputResourceDesc = m_postProcessTexture->GetDesc();
-	FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), static_cast<uint32_t>(outputResourceDesc.Width), static_cast<uint32_t>(outputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
-	dispatchParameters.output = ffxGetResourceDX12(m_postProcessTexture.Get(), outputDesc, L"CAS_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
+		D3D12_RESOURCE_DESC inputResourceDesc = input->GetDesc();
+		FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), static_cast<uint32_t>(inputResourceDesc.Width), static_cast<uint32_t>(inputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
+		dispatchParameters.color = ffxGetResourceDX12(input.Get(), inputDesc, L"FSR1_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
 
-	FfxErrorCode errorCode = ffxCasContextDispatch(&m_casContext, &dispatchParameters);
-	if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch CAS");
+		D3D12_RESOURCE_DESC outputResourceDesc = m_uavOutputTexture->GetDesc();
+		FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), static_cast<uint32_t>(outputResourceDesc.Width), static_cast<uint32_t>(outputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
+		dispatchParameters.output = ffxGetResourceDX12(m_uavOutputTexture.Get(), outputDesc, L"FSR1_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	D3D12_RESOURCE_STATES outputBeforeState;
-	if (inputRenderTarget.Get() != outputRenderTarget.Get()) outputBeforeState = D3D12_RESOURCE_STATE_PRESENT;
-	else outputBeforeState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		FfxErrorCode errorCode = ffxFsr1ContextDispatch(&m_fsr1Context, &dispatchParameters);
+		if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch FSR1");
+	}
+	// CAS
+	else
+	{
+		FfxCasDispatchDescription dispatchParameters{};
+		dispatchParameters.commandList = ffxGetCommandListDX12(commandList.Get());
+		dispatchParameters.renderSize = { m_casContextDesc.maxRenderSize.width, m_casContextDesc.maxRenderSize.height };
+		dispatchParameters.sharpness = m_sharpness;
+
+		D3D12_RESOURCE_DESC inputResourceDesc = input->GetDesc();
+		FfxResourceDescription inputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(inputResourceDesc.Format), static_cast<uint32_t>(inputResourceDesc.Width), static_cast<uint32_t>(inputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_READ_ONLY };
+		dispatchParameters.color = ffxGetResourceDX12(input.Get(), inputDesc, L"CAS_Input", FFX_RESOURCE_STATE_COMPUTE_READ);
+
+		D3D12_RESOURCE_DESC outputResourceDesc = m_uavOutputTexture->GetDesc();
+		FfxResourceDescription outputDesc = { FFX_RESOURCE_TYPE_TEXTURE2D, ffxGetSurfaceFormatDX12(outputResourceDesc.Format), static_cast<uint32_t>(outputResourceDesc.Width), static_cast<uint32_t>(outputResourceDesc.Height), 1, 0, FFX_RESOURCE_FLAGS_NONE, FFX_RESOURCE_USAGE_UAV };
+		dispatchParameters.output = ffxGetResourceDX12(m_uavOutputTexture.Get(), outputDesc, L"CAS_Output", FFX_RESOURCE_STATE_UNORDERED_ACCESS);
+
+		FfxErrorCode errorCode = ffxCasContextDispatch(&m_casContext, &dispatchParameters);
+		if (errorCode != FFX_OK) throw std::runtime_error("Failed to dispatch CAS");
+	}
+
+	D3D12_RESOURCE_STATES outputBeforeState = (input == output) ? D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_PRESENT;
 
 	CD3DX12_RESOURCE_BARRIER copyBarriers[] = {
-		CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
-		CD3DX12_RESOURCE_BARRIER::Transition(outputRenderTarget.Get(), outputBeforeState, D3D12_RESOURCE_STATE_COPY_DEST)
+	CD3DX12_RESOURCE_BARRIER::Transition(m_uavOutputTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
+	CD3DX12_RESOURCE_BARRIER::Transition(output.Get(), outputBeforeState, D3D12_RESOURCE_STATE_COPY_DEST)
 	};
 	commandList->ResourceBarrier(_countof(copyBarriers), copyBarriers);
 
-	commandList->CopyResource(outputRenderTarget.Get(), m_postProcessTexture.Get());
+	commandList->CopyResource(output.Get(), m_uavOutputTexture.Get());
 
-	if (inputRenderTarget.Get() != outputRenderTarget.Get())
-	{
-		CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition(inputRenderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COMMON),
-			CD3DX12_RESOURCE_BARRIER::Transition(outputRenderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
-			CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
-		};
-		commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
-	}
-	else
-	{
-		CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
-			CD3DX12_RESOURCE_BARRIER::Transition(outputRenderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
-			CD3DX12_RESOURCE_BARRIER::Transition(m_postProcessTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
-		};
-		commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
-	}
+	CD3DX12_RESOURCE_BARRIER finalBarriers[] = {
+	CD3DX12_RESOURCE_BARRIER::Transition(output.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
+	CD3DX12_RESOURCE_BARRIER::Transition(m_uavOutputTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON)
+	};
+	commandList->ResourceBarrier(_countof(finalBarriers), finalBarriers);
 }
 
 // @TODO FidelityFX SDK 2.0

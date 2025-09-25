@@ -74,7 +74,8 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 | **Optimization Techniques** | | | | |
 | MSAA | ➖ | ✅ | ✅ | ✅ |
 | Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit)) | ✅ | ➖ | ➖ | ➖ |
-| [AMD FidelityFX CAS](https://gpuopen.com/fidelityfx-cas/) | ➖ | ❌ | ❌ | ✅ |
+| [AMD FidelityFX™ Contrast Adaptive Sharpening](https://gpuopen.com/fidelityfx-cas/) | ➖ | ❌ | ❌ | ✅ |
+| [AMD FidelityFX™ Super Resolution 1](https://gpuopen.com/fidelityfx-superresolution/) | ➖ | ❌ | ❌ | ✅ |
 
 ## Screenshots
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)

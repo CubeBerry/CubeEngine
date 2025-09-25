@@ -290,26 +290,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	//m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
 
 	// Initialize FidelityFX
+	m_width = 1280;
+	m_height = 720;
 	m_fidelityFX = std::make_unique<FidelityFX>();
-	m_fidelityFX->CreateCasContext(m_device, static_cast<int>(Engine::GetWindow().GetWindowSize().x), static_cast<int>(Engine::GetWindow().GetWindowSize().y));
-	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		m_fidelityFX->GetRenderWidth(),
-		m_fidelityFX->GetRenderHeight(),
-		1, 1, 1, 0,
-		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-	);
-
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&textureDesc,
-		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
-		IID_PPV_ARGS(&m_lowResRenderTarget)
-	));
-	m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
+	m_fidelityFX->InitializeBackend(m_device, m_width, m_height);
+	m_fidelityFX->CreateCasContext();
+	m_fidelityFX->CreateFSR1Context();
 
 	WaitForGPU();
 
@@ -377,7 +363,8 @@ void DXRenderManager::OnResize()
 	);
 
 	m_lowResRenderTarget.Reset();
-	if (m_fidelityFX->GetEnableUpscaling())
+	auto currentEffect = m_fidelityFX->GetCurrentEffect();
+	if (currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
 	{
 		auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 			DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -600,36 +587,31 @@ void DXRenderManager::EndRender()
 
 	auto preResolveBarriers = {
 		CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
-	//CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST)
 	};
 	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
-	//m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	FidelityFX::UpscaleEffect currentEffect = m_fidelityFX->GetCurrentEffect();
+	bool useUpscaling = (currentEffect == FidelityFX::UpscaleEffect::FSR1) || (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
 
-	if (m_casEnabled && m_fidelityFX->GetEnableUpscaling())
+	if (useUpscaling)
 	{
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RESOLVE_DEST);
 		m_commandList->ResourceBarrier(1, &barrier);
-
 		m_commandList->ResolveSubresource(m_lowResRenderTarget.Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-		auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-		m_commandList->ResourceBarrier(1, &postResolveBarrier);
-
-		m_fidelityFX->Execute(m_commandList, m_lowResRenderTarget.Get(), m_renderTargets[m_frameIndex]);
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
+		m_commandList->ResourceBarrier(1, &barrier);
+		m_fidelityFX->Execute(m_commandList, m_lowResRenderTarget.Get(), m_renderTargets[m_frameIndex].Get());
 	}
 	else
 	{
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST);
 		m_commandList->ResourceBarrier(1, &barrier);
 		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-		if (m_casEnabled)
+		if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY)
 		{
-			auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-			m_commandList->ResourceBarrier(1, &postResolveBarrier);
-
-			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex], m_renderTargets[m_frameIndex]);
+			barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			m_commandList->ResourceBarrier(1, &barrier);
+			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex].Get(), m_renderTargets[m_frameIndex].Get());
 		}
 		else
 		{
@@ -807,43 +789,48 @@ void DXRenderManager::MoveToNextFrame()
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
-void DXRenderManager::UpdateScalePreset(const bool& enableUpscaling, const FidelityFX::CASScalePreset& preset)
+void DXRenderManager::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
 {
 	QueueDeferredFunction(
-		[this, enableUpscaling, preset]() -> bool
+		[this, effect, mode, preset]() -> bool
 		{
 			WaitForGPU();
 
-			m_fidelityFX->UpdateScalePreset(m_device, enableUpscaling, preset);
-
-			m_renderTarget.reset();
-			m_renderTarget = std::make_unique<DXRenderTarget>(
-				m_device, Engine::GetWindow().GetWindow(),
-				m_fidelityFX->GetRenderWidth(),
-				m_fidelityFX->GetRenderHeight()
-			);
-
-			m_lowResRenderTarget.Reset();
-			if (m_fidelityFX->GetEnableUpscaling())
+			bool isUpdate = m_fidelityFX->UpdatePreset(effect, mode, preset);
+			if (isUpdate)
 			{
-				auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-					DXGI_FORMAT_R8G8B8A8_UNORM,
+				m_fidelityFX->OnResize(m_device, m_width, m_height);
+
+				m_renderTarget.reset();
+				m_renderTarget = std::make_unique<DXRenderTarget>(
+					m_device, Engine::GetWindow().GetWindow(),
 					m_fidelityFX->GetRenderWidth(),
-					m_fidelityFX->GetRenderHeight(),
-					1, 1, 1, 0,
-					D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+					m_fidelityFX->GetRenderHeight()
 				);
 
-				CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-				DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-					&heapProps,
-					D3D12_HEAP_FLAG_NONE,
-					&textureDesc,
-					D3D12_RESOURCE_STATE_COMMON,
-					nullptr,
-					IID_PPV_ARGS(&m_lowResRenderTarget)
-				));
-				m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
+				m_lowResRenderTarget.Reset();
+				auto currentEffect = m_fidelityFX->GetCurrentEffect();
+				if (currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
+				{
+					auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+						DXGI_FORMAT_R8G8B8A8_UNORM,
+						m_fidelityFX->GetRenderWidth(),
+						m_fidelityFX->GetRenderHeight(),
+						1, 1, 1, 0,
+						D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+					);
+
+					CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+					DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
+						&heapProps,
+						D3D12_HEAP_FLAG_NONE,
+						&textureDesc,
+						D3D12_RESOURCE_STATE_COMMON,
+						nullptr,
+						IID_PPV_ARGS(&m_lowResRenderTarget)
+					));
+					m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
+				}
 			}
 
 			return true;
