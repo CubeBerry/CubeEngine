@@ -892,7 +892,7 @@ void RenderManager::RenderingControllerForImGui()
 				}
 			}
 			// CAS
-			else
+			else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
 			{
 				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
 				{
