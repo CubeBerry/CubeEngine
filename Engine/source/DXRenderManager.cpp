@@ -364,7 +364,7 @@ void DXRenderManager::OnResize()
 
 	m_lowResRenderTarget.Reset();
 	auto currentEffect = m_fidelityFX->GetCurrentEffect();
-	if (currentEffect == FidelityFX::Effect::FSR1 || currentEffect == FidelityFX::Effect::CAS_UPSCALING)
+	if (currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
 	{
 		auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 			DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -590,8 +590,8 @@ void DXRenderManager::EndRender()
 	};
 	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
-	FidelityFX::Effect effect = m_fidelityFX->GetCurrentEffect();
-	bool useUpscaling = (effect == FidelityFX::Effect::FSR1) || (effect == FidelityFX::Effect::CAS_UPSCALING);
+	FidelityFX::UpscaleEffect effect = m_fidelityFX->GetCurrentEffect();
+	bool useUpscaling = (effect == FidelityFX::UpscaleEffect::FSR1) || (effect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
 
 	if (useUpscaling)
 	{
@@ -607,7 +607,7 @@ void DXRenderManager::EndRender()
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST);
 		m_commandList->ResourceBarrier(1, &barrier);
 		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-		if (effect == FidelityFX::Effect::CAS_SHARPEN_ONLY)
+		if (effect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY)
 			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex].Get(), m_renderTargets[m_frameIndex].Get());
 		else
 		{
@@ -817,7 +817,7 @@ void DXRenderManager::MoveToNextFrame()
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
-void DXRenderManager::UpdateScalePreset(const FidelityFX::Effect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
+void DXRenderManager::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
 {
 	QueueDeferredFunction(
 		[this, effect, mode, preset]() -> bool
@@ -838,7 +838,7 @@ void DXRenderManager::UpdateScalePreset(const FidelityFX::Effect& effect, const 
 
 				m_lowResRenderTarget.Reset();
 				auto currentEffect = m_fidelityFX->GetCurrentEffect();
-				if (currentEffect == FidelityFX::Effect::FSR1 || currentEffect == FidelityFX::Effect::CAS_UPSCALING)
+				if (currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
 				{
 					auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 						DXGI_FORMAT_R8G8B8A8_UNORM,

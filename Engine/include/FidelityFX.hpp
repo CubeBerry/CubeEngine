@@ -19,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 class FidelityFX
 {
 public:
-	enum class Effect
+	enum class UpscaleEffect
 	{
 		NONE,
 		FSR1,
@@ -51,7 +51,7 @@ public:
 	// FSR1
 	void CreateFSR1Context();
 
-	bool UpdatePreset(Effect effect, FfxFsr1QualityMode fsr1QualityMode, CASScalePreset casScalePreset);
+	bool UpdatePreset(UpscaleEffect effect, FfxFsr1QualityMode fsr1QualityMode, CASScalePreset casScalePreset);
 
 	void OnResize(
 		const ComPtr<ID3D12Device>& device,
@@ -63,7 +63,7 @@ public:
 		const ComPtr<ID3D12Resource>& output
 	);
 
-	Effect GetCurrentEffect() const { return m_currentEffect; }
+	UpscaleEffect GetCurrentEffect() const { return m_currentEffect; }
 	bool GetEnableRCAS() const { return m_enableRCAS; }
 	void SetEnableRCAS(bool enable) { m_enableRCAS = enable; }
 	uint32_t GetRenderWidth() const { return m_renderWidth; }
@@ -76,9 +76,9 @@ private:
 	// FidelityFX SDK 1.1.4
 	FfxInterface m_backendInterface;
 	void* m_scratchBuffer{ nullptr };
-	ComPtr<ID3D12Resource> m_postProcessTexture;
+	ComPtr<ID3D12Resource> m_uavOutputTexture;
 
-	Effect m_currentEffect{ Effect::NONE };
+	UpscaleEffect m_currentEffect{ UpscaleEffect::NONE };
 	bool m_enableRCAS{ false };
 	int m_displayWidth, m_displayHeight;
 	uint32_t m_renderWidth, m_renderHeight;
