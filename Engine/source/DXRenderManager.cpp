@@ -590,8 +590,8 @@ void DXRenderManager::EndRender()
 	};
 	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
 
-	FidelityFX::UpscaleEffect effect = m_fidelityFX->GetCurrentEffect();
-	bool useUpscaling = (effect == FidelityFX::UpscaleEffect::FSR1) || (effect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
+	FidelityFX::UpscaleEffect currentEffect = m_fidelityFX->GetCurrentEffect();
+	bool useUpscaling = (currentEffect == FidelityFX::UpscaleEffect::FSR1) || (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
 
 	if (useUpscaling)
 	{
@@ -607,46 +607,18 @@ void DXRenderManager::EndRender()
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST);
 		m_commandList->ResourceBarrier(1, &barrier);
 		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-		if (effect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY)
+		if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY)
+		{
+			barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
+			m_commandList->ResourceBarrier(1, &barrier);
 			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex].Get(), m_renderTargets[m_frameIndex].Get());
+		}
 		else
 		{
 			auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			m_commandList->ResourceBarrier(1, &postResolveBarrier);
 		}
 	}
-
-	//if (m_fidelityFX->GetEnableFSR1())
-	//{
-	//	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RESOLVE_DEST);
-	//	m_commandList->ResourceBarrier(1, &barrier);
-
-	//	m_commandList->ResolveSubresource(m_lowResRenderTarget.Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-	//	auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-	//	m_commandList->ResourceBarrier(1, &postResolveBarrier);
-
-	//	m_fidelityFX->Execute(m_commandList, m_lowResRenderTarget.Get(), m_renderTargets[m_frameIndex]);
-	//}
-	//else
-	//{
-	//	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST);
-	//	m_commandList->ResourceBarrier(1, &barrier);
-	//	m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-	//	if (m_cas)
-	//	{
-	//		auto postresolvebarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-	//		m_commandList->ResourceBarrier(1, &postresolvebarrier);
-
-	//		m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex], m_renderTargets[m_frameIndex]);
-	//	}
-	//	else
-	//	{
-	//		auto postresolvebarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	//		m_commandList->ResourceBarrier(1, &postresolvebarrier);
-	//	}
-	//}
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
