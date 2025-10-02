@@ -1,13 +1,17 @@
 //Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Timer.hpp
+
 #pragma once
 #include <chrono>
 #include <deque>
+#include <vector>    
+#include <numeric>   
+#include <algorithm> 
 #include "imgui.h"
 
-//1 / 120 = 0.008333
-//1 / 60 = 0.016667
+// 1 / 120 = 0.008333
+// 1 / 60 = 0.016667
 
 enum class FrameRate
 {
@@ -36,16 +40,15 @@ public:
 		}
 		else
 		{
-			framePerTime = 0.f; 
+			framePerTime = 0.f;
 		}
 
-		currentFps = 0.0f;
 		ResetHistory();
 	}
 
 	void Update() { timeStamp = clock::now(); }
 
-	void AddFrameHistory(float amount) 
+	void AddFrameHistory(float amount)
 	{
 		UpdateHistory(amount);
 	}
@@ -75,33 +78,31 @@ public:
 		ImGui::SetNextWindowBgAlpha(0.35f);
 		ImGui::SetNextWindowPos(pos, ImGuiCond_Always, pivot);
 		ImGui::SetNextWindowSize(ImVec2(350.0f, 110.0f), ImGuiCond_Always);
-		ImGui::Begin("FPS History", nullptr, 
+		ImGui::Begin("FPS History", nullptr,
 			ImGuiWindowFlags_NoDecoration |
 			ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoSavedSettings);
 
 		float avgFps = 0.0f;
+		float minFps = 0.0f;
+		float maxFps = 0.0f;
 		float graphMin = 0.0f;
-		float graphMax = 150.0f; 
+		float graphMax = 150.0f;
 
 		if (!data.empty())
 		{
-			avgFps = frameTotalAmount / frameTotalCount;
+			float total_fps = std::accumulate(data.begin(), data.end(), 0.0f);
+			avgFps = total_fps / data.size();
 
-			float graphMinFps = fpsHistory[0];
-			float graphMaxFps = fpsHistory[0];
-
-			for (const float& val : fpsHistory)
-			{
-				if (val < graphMinFps) graphMinFps = val;
-				if (val > graphMaxFps) graphMaxFps = val;
-			}
+			std::vector<float> sorted_data = data;
+			std::sort(sorted_data.begin(), sorted_data.end());
+			minFps = sorted_data.front();
+			maxFps = sorted_data.back();
 
 			const float padding = 10.0f;
-			graphMin = graphMinFps - padding;
-			graphMax = graphMaxFps + padding;
-
+			graphMin = minFps - padding;
+			graphMax = maxFps + padding;
 			if (graphMin < 0.0f) {
 				graphMin = 0.0f;
 			}
@@ -136,35 +137,22 @@ public:
 
 	FrameRate GetFrameRate() { return frame; }
 	float GetFramePerTime() { return framePerTime; }
+
 private:
 	void UpdateHistory(float fps)
 	{
-		if (fpsHistory.empty())
-		{
-			minFps = fps;
-			maxFps = fps;
-		} 
-		else
-		{
-			if (fps < minFps) minFps = fps;
-			if (fps > maxFps) maxFps = fps;
-		}
-
 		currentFps = fps;
-		frameTotalAmount += fps;
-		++frameTotalCount;
 		fpsHistory.push_back(fps);
-		if (fpsHistory.size() > 30) fpsHistory.pop_front();
+		if (fpsHistory.size() > 100)
+		{
+			fpsHistory.pop_front();
+		}
 	}
 
 	void ResetHistory()
 	{
 		fpsHistory.clear();
 		currentFps = 0.0f;
-		frameTotalAmount = 0.f;
-		frameTotalCount = 0;
-		minFps = 0.0f;
-		maxFps = 0.0f;
 	}
 
 	using clock = std::chrono::steady_clock;
@@ -175,12 +163,7 @@ private:
 	std::chrono::steady_clock::time_point fpsCalcTime;
 
 	FrameRate frame = FrameRate::FPS_60;
-	float framePerTime = 0.f;
-	float frameTotalAmount = 0.f;
-	int frameTotalCount = 0;
-	float minFps = 0.0f;
-	float maxFps = 0.0f;
-
 	std::deque<float> fpsHistory;
+	float framePerTime = 0.f;
 	float currentFps = 0.0f;
 };
