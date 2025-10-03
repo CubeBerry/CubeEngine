@@ -129,7 +129,8 @@ void ObjectManager::ObjectControllerForImGui()
 
 		Object* obj = FindObjectWithId(currentIndex);
 
-		glm::vec3 position = obj->GetPosition();
+		glm::vec3 originalPosition = obj->GetPosition();
+		glm::vec3 position = originalPosition;
 		glm::vec3 size = obj->GetSize();
 		glm::vec3 rotation = obj->GetRotate3D();
 
@@ -143,9 +144,20 @@ void ObjectManager::ObjectControllerForImGui()
 				ImGui::DragFloat3("Object Rotation", &rotation.x, 0.5f);
 
 				obj->SetPosition(position);
-				obj->SetXSize(size.x);
-				obj->SetYSize(size.y);
-				obj->SetZSize(size.z);
+
+				if (originalPosition != position)
+				{
+					if (obj->HasComponent<Physics3D>())
+					{
+						// If the component exists, call the Teleport function.
+						obj->GetComponent<Physics3D>()->Teleport(position);
+					}
+					else
+					{
+						// If the component does not exist, call the original SetPosition function.
+						obj->SetPosition(position);
+					}
+				}
 				obj->SetRotate(rotation);
 			}
 		}
@@ -214,20 +226,6 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 	Physics3D* physics = phy;
 	if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType3D::RIGID))
-		{
-			physics->SetBodyType(BodyType3D::RIGID);
-		}
-		ImGui::SameLine();
-		if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType3D::BLOCK))
-		{
-			physics->SetBodyType(BodyType3D::BLOCK);
-		}
-
-		//bool isGhostCollisionOn = physics->GetIsGhostCollision();
-		//ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
-		//physics->SetIsGhostCollision(isGhostCollisionOn);
-
 		bool isGravityOn = physics->GetIsGravityOn();
 		ImGui::Checkbox("Use Gravity", &isGravityOn);
 		physics->SetGravity(physics->GetGravity(), isGravityOn);
@@ -255,6 +253,32 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		float mass = physics->GetMass();
 		ImGui::DragFloat("Mass", &mass, 0.01f);
 		physics->SetMass(mass);
+
+		ImGui::SeparatorText("Collision");
+		int mode_int = static_cast<int>(phy->GetCollisionDetectionMode());
+
+		ImGui::RadioButton("Discrete", &mode_int, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("Continuous", &mode_int, 1);
+
+		if (mode_int != static_cast<int>(phy->GetCollisionDetectionMode()))
+		{
+			phy->SetCollisionDetectionMode(static_cast<CollisionDetectionMode>(mode_int));
+		}
+
+		if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType3D::RIGID))
+		{
+			physics->SetBodyType(BodyType3D::RIGID);
+		}
+		ImGui::SameLine();
+		if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType3D::BLOCK))
+		{
+			physics->SetBodyType(BodyType3D::BLOCK);
+		}
+
+		//bool isGhostCollisionOn = physics->GetIsGhostCollision();
+		//ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
+		//physics->SetIsGhostCollision(isGhostCollisionOn);
 	}
 	physics = nullptr;
 }

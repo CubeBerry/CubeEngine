@@ -19,6 +19,23 @@ void PhysicsDemo::Init()
 	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,13.f });
 	Engine::GetCameraManager().SetTarget(glm::vec3{ 0.f, 0.f,0.f });
 
+	//// 1. 바닥 역할을 할 거대한 고정 구 (DISCRETE 모드)
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f, -10.f, 0.f }, glm::vec3{ 10.f, 10.f, 10.f }, "STATIC_SPHERE", ObjectType::NONE);
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 0.8f, 0.8f, 0.8f, 1.0f });
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetBodyType(BodyType3D::BLOCK); // 고정된 몸체
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollideSphere(10.f); // 반지름 10
+
+	//// 2. 빠르게 떨어지는 테스트용 구 (CONTINUOUS 모드)
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.1f, 5.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, "MOVING_SPHERE", ObjectType::NONE);
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 });
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollideSphere(1.f); // 반지름 1
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(10.f); // 빠른 낙하를 위한 높은 중력
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetCollisionDetectionMode(CollisionDetectionMode::CONTINUOUS);
+
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-2.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
@@ -27,26 +44,28 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetBodyType(BodyType3D::BLOCK);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 20.f,20.f,0.001f });
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,3.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetCollisionDetectionMode(CollisionDetectionMode::CONTINUOUS);
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE1", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 2.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE1", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(4.f);
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,1.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE2", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 1.0f,0.f,1.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE2COn", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollidePolyhedronAABB({ 1.f,1.f,1.f });
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(4.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetCollisionDetectionMode(CollisionDetectionMode::CONTINUOUS);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -1.0f,0.f,-1.f }, glm::vec3{ 0.5f,0.5f,0.5f }, "CUBE3", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
@@ -60,6 +79,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, {0.0, 0.0, 1.0, 1.0}, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollideSphere(0.5f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(4.f);
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.5f, 0.f), glm::vec3{ 0.1f,0.1f,0.1f }, "LIGHT", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
@@ -91,7 +111,7 @@ void PhysicsDemo::Update(float dt)
 
 	{
 		glm::vec3 movement(0.0f);
-		float speed = 20.0f * dt;
+		float speed = 200.0f * dt;
 
 		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP))
 		{

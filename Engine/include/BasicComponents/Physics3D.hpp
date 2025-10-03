@@ -15,6 +15,20 @@
 #include "Sprite.hpp"
 #endif
 
+enum class CollisionDetectionMode
+{
+	DISCRETE,
+	CONTINUOUS
+};
+
+struct CollisionResult
+{
+	bool hasCollided = false;
+	float timeOfImpact = 1.0f;
+	Object* otherObject = nullptr;
+	glm::vec3 collisionNormal = { 0.f, 0.f, 0.f };
+};
+
 #ifdef _DEBUG
 struct Point3D
 {
@@ -77,6 +91,7 @@ public:
 	void AddForceX(float amount) { force.x = amount; }
 	void AddForceY(float amount) { force.y = amount; }
 	void AddForceZ(float amount) { force.z = amount; }
+	void Teleport(glm::vec3 newPosition);
 
 	void SetFriction(float f) { friction = f; }
 	void SetGravity(float g, bool isGravityOn_ = true) { gravity = g; isGravityOn = isGravityOn_; }
@@ -89,10 +104,12 @@ public:
 	bool GetIsGhostCollision() const { return isGhostCollision; }
 	BodyType3D GetBodyType() const { return bodyType; };
 	ColliderType3D GetColliderType() const { return colliderType; }
+	CollisionDetectionMode GetCollisionDetectionMode() const { return collisionMode; }
 
 	void SetColliderType(ColliderType3D type) { colliderType = type; }
 	void SetIsGhostCollision(bool state) { isGhostCollision = state; }
 	void SetBodyType(BodyType3D type) { bodyType = type; };
+	void SetCollisionDetectionMode(CollisionDetectionMode mode) { collisionMode = mode; }
 
 	//2d->3d
 	std::vector<glm::vec3> GetCollidePolyhedron() { return collidePolyhedron; }
@@ -124,6 +141,7 @@ private:
 
 	ColliderType3D colliderType =  ColliderType3D::BOX;
 	BodyType3D bodyType = BodyType3D::RIGID;
+	CollisionDetectionMode collisionMode = CollisionDetectionMode::DISCRETE;
 
 	//2d->3d
 	glm::vec3 FindSATCenter(const std::vector<glm::vec3>& points_);
@@ -133,6 +151,18 @@ private:
 	
 	glm::vec3 FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices);
 	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
+
+	//CollisionDetectionMode : Continuous
+	void ProjectPolygon(const std::vector<glm::vec3>& vertices, const glm::vec3& axis, float& min, float& max);
+	bool StaticSATIntersection(Physics3D* body1, Physics3D* body2,
+		const std::vector<glm::vec3>& rotatedPoly1, const std::vector<glm::vec3>& rotatedPoly2,
+		const glm::mat4& rotationMatrix1, const glm::mat4& rotationMatrix2,
+		glm::vec3& outNormal, float& outDepth);
+	bool SweptSATOBB(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
+	bool SweptSpheres(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
+	bool SweptSphereVsOBB(Physics3D* boxBody, float dt, CollisionResult& outResult);
+	CollisionResult FindClosestCollision(float dt);
+	//CollisionDetectionMode : Continuous
 
 	std::vector<glm::vec3> collidePolyhedron;
 	Sphere sphere;
