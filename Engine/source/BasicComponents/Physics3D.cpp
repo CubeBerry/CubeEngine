@@ -5,10 +5,7 @@
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Sprite.hpp"
 
-#ifdef _DEBUG
 #include "Engine.hpp"
-#endif // _DEBUG
-
 #include <iostream>
 #include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
