@@ -105,6 +105,7 @@ namespace DXHelper
         }
     }
 
+    // Read in precompiled shader
     //inline std::vector<char> ReadShaderFile(const std::filesystem::path& path)
     //{
     //    std::ifstream shaderData(path, std::ios::in | std::ios::binary);

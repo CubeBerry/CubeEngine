@@ -12,6 +12,7 @@
 #endif
 
 #include "DXPipeLine.hpp"
+#include "DXMeshPipeLine.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
@@ -69,7 +70,7 @@ private:
 
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
-	ComPtr<ID3D12Device> m_device;
+	ComPtr<ID3D12Device2> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
 	// This is required for FidelityFX CAS Upscaling
 	ComPtr<ID3D12Resource> m_lowResRenderTarget;
@@ -93,6 +94,7 @@ private:
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
 	std::unique_ptr<DXPipeLine> m_pipeline3D;
+	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
 	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
 #ifdef _DEBUG
 	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
@@ -105,6 +107,9 @@ private:
 
 	// Compute Shader
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
+
+	// Mesh Shader
+	bool m_useMeshShader{ false };
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality

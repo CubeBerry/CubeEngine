@@ -54,6 +54,27 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXHelper::ThrowIfFailed(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)));
 	DXHelper::ThrowIfFailed(m_device->SetName(L"Main Device"));
 
+	// Check Mesh Shader Support
+	D3D12_FEATURE_DATA_D3D12_OPTIONS7 features{};
+	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features)))
+		|| (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+	{
+		m_useMeshShader = false;
+		OutputDebugStringA("ERROR: Mesh Shaders aren't supported!\n");
+	}
+	else
+	{
+		// Check Shader Model 6.5 Support for Mesh Shader
+		D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_5 };
+		if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)))
+			|| (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
+		{
+			m_useMeshShader = false;
+			OutputDebugStringA("ERROR: Shader Model 6.5 is not supported\n");
+		}
+		else m_useMeshShader = true;
+	}
+
 #if USE_NSIGHT_AFTERMATH
 	const uint32_t aftermathFlags =
 		GFSDK_Aftermath_FeatureFlags_EnableMarkers |             // Enable event marker tracking.
@@ -146,7 +167,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Create root signature and pipeline for 2D
 	// The slot of a root signature version 1.1
-	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(3, {});
+	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(3, CD3DX12_ROOT_PARAMETER1{});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
@@ -206,6 +227,20 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
 		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
 		std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+		D3D12_FILL_MODE_SOLID,
+		D3D12_CULL_MODE_BACK,
+		sampleDesc,
+		true,
+		true,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+	);
+
+	m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
+		m_device,
+		m_rootSignature3D,
+		std::filesystem::path("../Engine/shaders/hlsl/3D.mesh.hlsl"),
+		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_BACK,
 		sampleDesc,
@@ -966,7 +1001,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 
 	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
 
-	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2, {});
+	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2, CD3DX12_ROOT_PARAMETER1{});
 	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
 	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
