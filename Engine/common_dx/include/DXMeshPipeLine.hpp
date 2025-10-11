@@ -8,6 +8,12 @@
 
 using Microsoft::WRL::ComPtr;
 
+// https://jcgt.org/published/0012/02/01/paper-lowres.pdf
+// https://github.com/Senbyo/meshletmaker
+// 1. NVIDIA Meshlet Builder
+// https://github.com/nvpro-samples/gl_vk_meshlet_cadscene
+// 2. Meshlet Creation Library
+// https://github.com/zeux/meshoptimizer
 class DXMeshPipeLine
 {
 public:

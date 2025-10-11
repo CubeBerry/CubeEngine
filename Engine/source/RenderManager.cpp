@@ -469,6 +469,12 @@ void RenderManager::CreateMesh(
 #endif
 	}
 
+	// Mesh Shader
+	if (m_useMeshShader)
+	{
+		
+	}
+
 	// Uniform
 	auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
 	vertexUniform.model = glm::mat4(1.f);

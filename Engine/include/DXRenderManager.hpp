@@ -108,9 +108,6 @@ private:
 	// Compute Shader
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
 
-	// Mesh Shader
-	bool m_useMeshShader{ false };
-
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
 	UINT64 m_frameCounter{ 0 };

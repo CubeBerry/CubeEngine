@@ -8,6 +8,7 @@
 #include <variant>
 #include <functional>
 #include "Material.hpp"
+#include "Utility.hpp"
 #include "Window.hpp"
 
 #include <assimp/Importer.hpp>
@@ -59,6 +60,11 @@ public:
 		ThreeDimension::VertexUniform vertexUniform;
 		ThreeDimension::FragmentUniform fragmentUniform;
 		ThreeDimension::Material material;
+
+		// Mesh Shader
+		std::vector<Meshlet> Meshlets;
+		std::vector<uint8_t> UniqueVertexIndices;
+		std::vector<glm::vec3> PrimitiveIndices;
 	};
 private:
 	struct BufferData
@@ -363,6 +369,9 @@ protected:
 
 	//Skybox
 	bool skyboxEnabled{ false };
+
+	// Mesh Shader
+	bool m_useMeshShader{ false };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp
