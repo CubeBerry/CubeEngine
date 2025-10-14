@@ -3,6 +3,7 @@
 //File: Utility.hpp
 #pragma once
 #include <vector>
+#include <map>
 #include "glm/vec3.hpp"
 
 // Meshlet
@@ -37,13 +38,21 @@ namespace Utility
 	{
 		void BuildAdjacency(const std::vector<glm::vec3>& inVertices,
 			const std::vector<uint32_t>& inIndices,
-			std::vector<Meshlet::Vertex> outVertices,
-			std::vector<Meshlet::Triangle> outTriangles);
+			std::vector<Meshlet::Vertex>& outVertices,
+			std::vector<Meshlet::Triangle>& outTriangles);
+
+		// @TODO
+		void BuildMeshlet(std::map<uint32_t, uint8_t>& vertexMap,
+			std::vector<uint32_t>& tempUniqueVertexIndices,
+			std::vector<uint8_t>& tempPrimitiveIndices,
+			std::vector<Meshlet::Meshlet>& outMeshlets,
+			std::vector<uint32_t>& outUniqueVertexIndices,
+			std::vector<uint8_t>& outPrimitiveIndices);
 
 		// Greedy Algorithm
 		void BuildMeshletsGreedy(const std::vector<uint32_t>& inSortedVertexList,
 			std::vector<Meshlet::Vertex>& inVertices,
-			std::vector<Meshlet::Triangle> inTriangles,
+			std::vector<Meshlet::Triangle>& inTriangles,
 			std::vector<Meshlet::Meshlet>& outMeshlets,
 			std::vector<uint32_t>& outUniqueVertexIndices,
 			std::vector<uint8_t>& outPrimitiveIndices,
