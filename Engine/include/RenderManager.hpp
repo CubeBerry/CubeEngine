@@ -63,8 +63,8 @@ public:
 
 		// Mesh Shader
 		std::vector<Meshlet::Meshlet> Meshlets;
-		std::vector<uint8_t> UniqueVertexIndices;
-		std::vector<glm::vec3> PrimitiveIndices;
+		std::vector<uint32_t> UniqueVertexIndices;
+		std::vector<uint8_t> PrimitiveIndices;
 	};
 private:
 	struct BufferData
