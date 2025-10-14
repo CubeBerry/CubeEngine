@@ -62,7 +62,7 @@ public:
 		ThreeDimension::Material material;
 
 		// Mesh Shader
-		std::vector<Meshlet> Meshlets;
+		std::vector<Meshlet::Meshlet> Meshlets;
 		std::vector<uint8_t> UniqueVertexIndices;
 		std::vector<glm::vec3> PrimitiveIndices;
 	};

@@ -4,21 +4,163 @@
 #include "Utility.hpp"
 
 #include <queue>
+#include <map>
 
-std::vector<Meshlet> Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<ThreeDimension::Vertex>& vertices, uint32_t maxVertices, uint32_t maxPrimitives)
+void Utility::MeshletBuilder::BuildAdjacency(const std::vector<glm::vec3>& inVertices,
+	const std::vector<uint32_t>& inIndices,
+	std::vector<Meshlet::Vertex> outVertices,
+	std::vector<Meshlet::Triangle> outTriangles)
 {
-	std::vector<bool> usedVertices(vertices.size(), false);
-	std::queue<ThreeDimension::Vertex> vertexQueue;
-	for (size_t i = 0; i < vertices.size(); ++i)
+	outVertices.resize(inVertices.size());
+	for (size_t i = 0; i < inVertices.size(); ++i)
 	{
-		if (usedVertices[i]) continue;
-		vertexQueue.push(vertices[i]);
-		while (!vertexQueue.empty())
-		{
-			ThreeDimension::Vertex currentVertex = vertexQueue.front();
-			vertexQueue.pop();
-		}
+		outVertices[i].position = inVertices[i];
 	}
 
-	return {};
+	outTriangles.resize(inIndices.size() / 3);
+	for (size_t i = 0; i < outTriangles.size(); ++i)
+	{
+		outTriangles[i].vertices[0] = inIndices[i * 3 + 0];
+		outTriangles[i].vertices[1] = inIndices[i * 3 + 1];
+		outTriangles[i].vertices[2] = inIndices[i * 3 + 2];
+	}
+
+	for (size_t i = 0; i < outTriangles.size(); ++i)
+	{
+		uint32_t v0 = outTriangles[i].vertices[0];
+		uint32_t v1 = outTriangles[i].vertices[1];
+		uint32_t v2 = outTriangles[i].vertices[2];
+		
+		// Adjacent Triangles
+		outVertices[v0].triangles.push_back(i);
+		outVertices[v1].triangles.push_back(i);
+		outVertices[v2].triangles.push_back(i);
+	}
+}
+
+void Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<uint32_t>& inSortedVertexList,
+	std::vector<Meshlet::Vertex>& inVertices,
+	std::vector<Meshlet::Triangle> inTriangles,
+	std::vector<Meshlet::Meshlet>& outMeshlets,
+	std::vector<uint32_t>& outUniqueVertexIndices,
+	std::vector<uint8_t>& outPrimitiveIndices,
+	uint32_t maxVertices, uint32_t maxPrimitives)
+{
+	const uint32_t MAX_VERTS_PER_MESHLET = maxVertices;
+	const uint32_t MAX_PRIMS_PER_MESHLET = maxPrimitives;
+
+	for (const auto& sortedVertexIndex : inSortedVertexList)
+	{
+		if (inVertices[sortedVertexIndex].isUsed) continue;
+		std::queue<uint32_t> queue;
+		queue.push(sortedVertexIndex);
+		inVertices[sortedVertexIndex].isUsed = true;
+
+		// uint32_t == Vertex Index, uint8_t == Unique Vertex Index
+		std::map<uint32_t, uint8_t> vertexMap;
+		std::vector<uint32_t> tempUniqueVertexIndices;
+		std::vector<uint8_t> tempPrimitiveIndices;
+
+		while (!queue.empty())
+		{
+			uint32_t currentVertexIndex = queue.front();
+			queue.pop();
+
+			for (const uint32_t& triangleIndex : inVertices[currentVertexIndex].triangles)
+			{
+				if (inTriangles[triangleIndex].isUsed) continue;
+
+				uint32_t uniqueVertexCount{ 0 };
+				for (int i = 0; i < 3; ++i)
+				{
+					uint32_t triangleVertexIndex = inTriangles[triangleIndex].vertices[i];
+					if (vertexMap.find(triangleVertexIndex) == vertexMap.end())
+					{
+						uniqueVertexCount++;
+					}
+				}
+
+				for (const uint32_t& triangleVertexIndex : inTriangles[triangleIndex].vertices)
+				{
+					if (!inVertices[triangleVertexIndex].isUsed) queue.push(triangleVertexIndex);
+				}
+
+				// Mehslet is full
+				if (tempUniqueVertexIndices.size() + uniqueVertexCount > MAX_VERTS_PER_MESHLET)
+				{
+					if (tempPrimitiveIndices.size() / 3 < MAX_PRIMS_PER_MESHLET)
+					{
+						// Find triangle in border
+						std::vector<uint32_t> borderTriangleIndices;
+						for (const auto& [vertexIndex, uniqueVertexIndex] : vertexMap)
+						{
+							for (const uint32_t& adjacentTriangleIndex : inVertices[vertexIndex].triangles)
+							{
+								if (!inTriangles[adjacentTriangleIndex].isUsed)
+								{
+									if (std::find(borderTriangleIndices.begin(), borderTriangleIndices.end(), adjacentTriangleIndex) == borderTriangleIndices.end())
+									{
+										borderTriangleIndices.push_back(adjacentTriangleIndex);
+									}
+								}
+							}
+						}
+
+						// if triangle.vertices in Meshlet
+						for (const uint32_t& borderTriangleIndex : borderTriangleIndices)
+						{
+							bool isAllVerticesInMeshlet{ true };
+							for (int i = 0; i < 3; ++i)
+							{
+								if (vertexMap.find(inTriangles[borderTriangleIndex].vertices[i]) == vertexMap.end())
+								{
+									isAllVerticesInMeshlet = false;
+									break;
+								}
+							}
+
+							// if triangle.vertices in Meshlet then Meshlet.add(triangle)
+							if (isAllVerticesInMeshlet)
+							{
+								inTriangles[borderTriangleIndex].isUsed = true;
+								tempPrimitiveIndices.push_back(vertexMap[inTriangles[borderTriangleIndex].vertices[0]]);
+								tempPrimitiveIndices.push_back(vertexMap[inTriangles[borderTriangleIndex].vertices[1]]);
+								tempPrimitiveIndices.push_back(vertexMap[inTriangles[borderTriangleIndex].vertices[2]]);
+
+								Meshlet::Meshlet meshlet;
+								meshlet.vertexOffset = static_cast<uint32_t>(outUniqueVertexIndices.size());
+								meshlet.vertexCount = static_cast<uint32_t>(tempUniqueVertexIndices.size());
+								meshlet.primitiveOffset = static_cast<uint32_t>(outPrimitiveIndices.size());
+								meshlet.primitiveCount = static_cast<uint32_t>(tempPrimitiveIndices.size() / 3);
+								outMeshlets.push_back(meshlet);
+								outUniqueVertexIndices.insert(outUniqueVertexIndices.end(), tempUniqueVertexIndices.begin(), tempUniqueVertexIndices.end());
+								outPrimitiveIndices.insert(outPrimitiveIndices.end(), tempPrimitiveIndices.begin(), tempPrimitiveIndices.end());
+							}
+						}
+					}
+
+					while (!queue.empty())
+					{
+						queue.pop();
+					}
+					queue.push(currentVertexIndex);
+					break;
+				}
+
+				inTriangles[triangleIndex].isUsed = true;
+				tempPrimitiveIndices.push_back(vertexMap[inTriangles[triangleIndex].vertices[0]]);
+				tempPrimitiveIndices.push_back(vertexMap[inTriangles[triangleIndex].vertices[1]]);
+				tempPrimitiveIndices.push_back(vertexMap[inTriangles[triangleIndex].vertices[2]]);
+
+				Meshlet::Meshlet meshlet;
+				meshlet.vertexOffset = static_cast<uint32_t>(outUniqueVertexIndices.size());
+				meshlet.vertexCount = static_cast<uint32_t>(tempUniqueVertexIndices.size());
+				meshlet.primitiveOffset = static_cast<uint32_t>(outPrimitiveIndices.size());
+				meshlet.primitiveCount = static_cast<uint32_t>(tempPrimitiveIndices.size() / 3);
+				outMeshlets.push_back(meshlet);
+				outUniqueVertexIndices.insert(outUniqueVertexIndices.end(), tempUniqueVertexIndices.begin(), tempUniqueVertexIndices.end());
+				outPrimitiveIndices.insert(outPrimitiveIndices.end(), tempPrimitiveIndices.begin(), tempPrimitiveIndices.end());
+			}
+		}
+	}
 }
