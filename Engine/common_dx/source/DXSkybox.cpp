@@ -33,7 +33,7 @@ DXSkybox::~DXSkybox()
 	if (m_deallocator)
 	{
 		// index 0 will deallocate when m_equirectangularMap is deleted
-		for (UINT index = 0; index < 5; ++index)
+		for (UINT index = 1; index < 5; ++index)
 		{
 			m_deallocator(m_srvHandles[index].second);
 		}
@@ -50,7 +50,7 @@ DXSkybox::~DXSkybox()
 }
 
 void DXSkybox::Initialize(const std::filesystem::path& path,
-	const std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 6>& srvHandles,
+	const std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5>& srvHandles,
 	std::function<void(UINT)> deallocator)
 {
 	m_srvHandles = srvHandles;
@@ -58,8 +58,8 @@ void DXSkybox::Initialize(const std::filesystem::path& path,
 
 	m_equirectangularMap = std::make_unique<DXTexture>();
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
-	// Store equirectangular texture in srvHeap index 5
-	m_equirectangularMap->LoadTexture(m_device, m_commandList, m_commandQueue, srvHandles[5], deallocator, m_fence, m_fenceEvent, true, path, "Equirectangular", true);
+	// Store equirectangular texture in srvHeap index 0
+	m_equirectangularMap->LoadTexture(m_device, m_commandList, m_commandQueue, srvHandles[0], m_deallocator, m_fence, m_fenceEvent, true, path, "Equirectangular", true);
 	faceSize = m_equirectangularMap->GetHeight();
 
 	EquirectangularToCube();
@@ -189,7 +189,7 @@ void DXSkybox::EquirectangularToCube()
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE equirectangularSrvHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-	equirectangularSrvHandle.Offset(m_srvHandles[5].second, m_srvDescriptorSize);
+	equirectangularSrvHandle.Offset(m_srvHandles[0].second, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, equirectangularSrvHandle);
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);

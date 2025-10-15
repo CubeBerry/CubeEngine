@@ -1080,8 +1080,8 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	WaitForGPU();
 	// Skybox SRV offset starts from 1000
 	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap);
-	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 6> skyboxSrvHandles;
-	for (int i = 0; i < 6; ++i)
+	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5> skyboxSrvHandles;
+	for (int i = 0; i < 5; ++i)
 	{
 		auto [handle, index] = AllocateSrvCpuHandle();
 		skyboxSrvHandles[i] = { handle, index };

@@ -30,7 +30,7 @@ public:
 		const ComPtr<ID3D12DescriptorHeap>& srvHeap);
 	~DXSkybox();
 	void Initialize(const std::filesystem::path& path,
-		const std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 6>& srvHandles,
+		const std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5>& srvHandles,
 		std::function<void(UINT)> deallocator);
 	void ExecuteCommandList();
 
@@ -90,7 +90,7 @@ private:
 	UINT m_srvHeapStartOffset;
 	UINT m_srvDescriptorSize;
 
-	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 6> m_srvHandles;
+	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5> m_srvHandles;
 	std::function<void(UINT)> m_deallocator;
 
 	ComPtr<ID3D12Resource> m_cubemap;
