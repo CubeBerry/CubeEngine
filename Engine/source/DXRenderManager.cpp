@@ -140,8 +140,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	// 500 for Sprites, 5 for Skybox, 2 for Compute Shader
-	srvHeapDesc.NumDescriptors = 507;
+	// 500 for Sprite Textures, 500 for Meshlet Structured Buffers, 5 for Skybox, 2 for Compute Shader
+	srvHeapDesc.NumDescriptors = 1007;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
@@ -236,19 +236,19 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 
-	m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
-		m_device,
-		m_rootSignature3D,
-		std::filesystem::path("../Engine/shaders/hlsl/3D.mesh.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	//m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
+	//	m_device,
+	//	m_rootSignature3D,
+	//	std::filesystem::path("../Engine/shaders/hlsl/3D.mesh.hlsl"),
+	//	std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
+	//	D3D12_FILL_MODE_SOLID,
+	//	D3D12_CULL_MODE_BACK,
+	//	sampleDesc,
+	//	true,
+	//	true,
+	//	DXGI_FORMAT_R8G8B8A8_UNORM,
+	//	D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+	//);
 
 	m_pipeline3DLine = std::make_unique<DXPipeLine>(
 		m_device,
@@ -824,6 +824,47 @@ void DXRenderManager::MoveToNextFrame()
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
+std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvCpuHandle()
+{
+	UINT descriptorIndex;
+
+	if (!availableSrvSlots.empty())
+	{
+		descriptorIndex = availableSrvSlots.back();
+		availableSrvSlots.pop_back();
+	}
+	else
+	{
+		descriptorIndex = m_srvDescriptorSize;
+		m_srvDescriptorSize++;
+	}
+
+	const UINT maxDescriptors = m_srvHeap->GetDesc().NumDescriptors;
+	if (m_srvDescriptorSize >= maxDescriptors)
+	{
+		throw std::runtime_error("SRV Descriptor Heap is full");
+	}
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(
+		m_srvHeap->GetCPUDescriptorHandleForHeapStart(),
+		static_cast<INT>(descriptorIndex),
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+	);
+
+	std::string logMsg = "--> Allocating SRV Index: " + std::to_string(descriptorIndex) + "\n";
+	OutputDebugStringA(logMsg.c_str());
+
+	return { srvHandle, descriptorIndex };
+}
+
+void DXRenderManager::DeallocateSrvHandle(const UINT& descriptorIndex)
+{
+	std::string logMsg = "<-- Deallocating SRV Index: " + std::to_string(descriptorIndex) + "\n";
+	OutputDebugStringA(logMsg.c_str());
+
+	availableSrvSlots.push_back(descriptorIndex);
+}
+
 void DXRenderManager::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
 {
 	QueueDeferredFunction(
@@ -903,15 +944,21 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	const int texId = static_cast<int>(textures.size() - 1);
 	texture->SetTextureID(texId);
 
-	DXHelper::ThrowIfFailed(tempCommandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
+	auto [srvHandle, srvIndex] = AllocateSrvCpuHandle();
+	auto deallocator = [this](UINT index)
+	{
+		this->DeallocateSrvHandle(index);
+	};
+
+	DXHelper::ThrowIfFailed(tempCommandList->Reset(tempCommandAllocator.Get(), nullptr));
 	texture->LoadTexture(
 		m_device,
 		tempCommandList,
-		m_srvHeap,
 		m_commandQueue,
+		{ srvHandle, srvIndex },
+		deallocator,
 		tempFence,
 		tempFenceEvent,
-		texture->GetTextrueId(),
 		false,
 		path_,
 		name_,
@@ -1031,8 +1078,19 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	);
 
 	WaitForGPU();
-	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap, MAX_OBJECT_SIZE);
-	m_skybox->Initialize(path);
+	// Skybox SRV offset starts from 1000
+	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap);
+	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 6> skyboxSrvHandles;
+	for (int i = 0; i < 6; ++i)
+	{
+		auto [handle, index] = AllocateSrvCpuHandle();
+		skyboxSrvHandles[i] = { handle, index };
+	}
+	auto deallocator = [this](UINT index)
+	{
+		this->DeallocateSrvHandle(index);
+	};
+	m_skybox->Initialize(path, skyboxSrvHandles, deallocator);
 
 	skyboxEnabled = true;
 }

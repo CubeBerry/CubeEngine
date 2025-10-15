@@ -66,6 +66,9 @@ private:
 		}
 	} reporter;
 
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvCpuHandle();
+	void DeallocateSrvHandle(const UINT& index);
+
 	static constexpr UINT frameCount = 2;
 
 	// m = member
@@ -85,7 +88,8 @@ private:
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
 	UINT m_rtvDescriptorSize{ 0 };
-	//UINT m_srvDescriptorSize{ 0 };
+	UINT m_srvDescriptorSize{ 0 };
+	std::vector<UINT> availableSrvSlots;
 
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };

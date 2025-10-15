@@ -129,7 +129,7 @@ void DXComputeBuffer::OnResize(
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHeapStart(srvHeap->GetCPUDescriptorHandleForHeapStart());
 	CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHeapStart(srvHeap->GetGPUDescriptorHandleForHeapStart());
 
-	constexpr int postProcessDescriptorOffset = 505;
+	constexpr int postProcessDescriptorOffset = 1005;
 
 	m_postProcessInputSrvCpuHandle = srvHeapStart;
 	m_postProcessInputSrvCpuHandle.Offset(postProcessDescriptorOffset, descriptorSize);
