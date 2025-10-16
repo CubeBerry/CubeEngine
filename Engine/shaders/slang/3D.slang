@@ -1,9 +1,12 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
+// #pragma pack_matrix(row_major)
+
 #define MAX_TEXTURES 500
 #define MAX_LIGHTS 10
 #define PI 3.14159265358979323846f
 
+// Vertex Shader
 struct VSInput
 {
     uint position : POSITION0;
@@ -63,6 +66,69 @@ VSOutput vertexMain(VSInput input)
     return output;
 }
 
+// Mesh Shader
+#define MAX_VERTICES_PER_MESHLET 128
+#define MAX_PRIMITIVES_PER_MESHLET 256
+
+struct Meshlet
+{
+    uint vertexCount;
+    uint vertexOffset;
+    uint primitiveCount;
+    uint primitiveOffset;
+};
+
+StructuredBuffer<VSInput> uniqueVertices : register(t8);
+StructuredBuffer<Meshlet> meshlets : register(t9);
+StructuredBuffer<uint> uniqueVertexIndices : register(t10);
+StructuredBuffer<uint8_t> primitiveIndices : register(t11);
+
+[numthreads(64, 1, 1)]
+[outputtopology("triangle")]
+[shader("mesh")]
+void meshMain(
+    uint groupThreadID: SV_GroupThreadID,
+    uint groupID: SV_GroupID,
+    out vertices VSOutput verts[MAX_VERTICES_PER_MESHLET],
+    out indices uint3 tris[MAX_PRIMITIVES_PER_MESHLET]
+)
+{
+    Meshlet meshlet = meshlets[groupID.x];
+    SetMeshOutputCounts(meshlet.vertexCount, meshlet.primitiveCount);
+
+    if (groupThreadID < meshlet.vertexCount)
+    {
+        uint vertexIndex = uniqueVertexIndices[meshlet.vertexOffset + groupThreadID];
+        VSInput input = uniqueVertices[vertexIndex];
+
+        // 11, 11, 10
+        float x = float(input.position & 0x7FFu);
+        float y = float((input.position >> 11) & 0x7FFu);
+        float z = float((input.position >> 22) & 0x3FFu);
+        float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
+
+        verts[groupThreadID].uv = input.uv;
+        verts[groupThreadID].color = matrix.color;
+        verts[groupThreadID].tex_sub_index = input.tex_sub_index;
+
+        // Lighting
+        verts[groupThreadID].normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
+        verts[groupThreadID].fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
+        verts[groupThreadID].viewPosition = matrix.viewPosition;
+
+        verts[groupThreadID].position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
+    }
+
+    if (groupThreadID < meshlet.primitiveCount)
+    {
+        uint i0 = primitiveIndices[meshlet.primitiveOffset + groupThreadID * 3 + 0];
+        uint i1 = primitiveIndices[meshlet.primitiveOffset + groupThreadID * 3 + 1];
+        uint i2 = primitiveIndices[meshlet.primitiveOffset + groupThreadID * 3 + 2];
+        tris[groupThreadID] = uint3(i0, i1, i2);
+    }
+}
+
+// Fragment Shader
 struct fMatrix
 {
     int isTex;

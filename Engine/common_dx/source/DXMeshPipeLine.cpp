@@ -27,51 +27,8 @@ DXMeshPipeLine::DXMeshPipeLine(
 
 	ComPtr<ID3DBlob> errorMessages;
 
-	// Compile mesh shader
-	HRESULT hr = D3DCompileFromFile(
-		meshPath.c_str(),
-		nullptr,
-		nullptr,
-		"meshMain",
-		"ms_6_5",
-		compileFlags,
-		0,
-		&m_meshShader,
-		&errorMessages
-	);
-	if (FAILED(hr))
-	{
-		if (errorMessages)
-		{
-			const char* string = static_cast<const char*>(errorMessages->GetBufferPointer());
-			OutputDebugStringA("Vertex Shader Compilation Error:\n");
-			OutputDebugStringA(string);
-		}
-		throw std::runtime_error("Failed to compile vertex shader.");
-	}
-
-	// Compile pixel shader
-	hr = D3DCompileFromFile(
-		pixelPath.c_str(),
-		nullptr,
-		nullptr,
-		"fragmentMain",
-		"ps_6_5",
-		compileFlags,
-		0,
-		&m_pixelShader,
-		&errorMessages
-	);
-	if (FAILED(hr))
-	{
-		if (errorMessages)
-		{
-			const char* string = static_cast<const char*>(errorMessages->GetBufferPointer());
-			OutputDebugStringA("Pixel Shader Compilation Error:\n");
-			OutputDebugStringA(string);
-		}
-		throw std::runtime_error("Failed to compile pixel shader.");
-	}
+	std::vector<char> meshShader = DXHelper::ReadShaderFile(meshPath);
+	std::vector<char> pixelShader = DXHelper::ReadShaderFile(pixelPath);
 
 	// Create Mesh Pipeline State Object(PSO) description
 	D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
@@ -85,8 +42,8 @@ DXMeshPipeLine::DXMeshPipeLine(
 
 	psoDesc.pRootSignature = rootSignature.Get();
 	//psoDesc.AS
-	psoDesc.MS = CD3DX12_SHADER_BYTECODE{ m_meshShader.Get() };
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get() };
+	psoDesc.MS = CD3DX12_SHADER_BYTECODE{ meshShader.data(), meshShader.size() };
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
 	psoDesc.NumRenderTargets = 1;
 	psoDesc.RTVFormats[0] = rtvFormat;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;

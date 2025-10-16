@@ -70,7 +70,7 @@ private:
 	std::map<UINT, UINT> m_availableSrvBlocks;
 	// SRV Handle, Descriptor Index
 	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvHandles(const UINT& count = 1);
-	void DeallocateSrvBlock(UINT startIndex, UINT count);
+	//void DeallocateSrvBlock(UINT startIndex, UINT count);
 
 	static constexpr UINT frameCount = 2;
 
@@ -88,7 +88,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-	ComPtr<ID3D12GraphicsCommandList> m_commandList;
+	ComPtr<ID3D12GraphicsCommandList6> m_commandList;
 
 	UINT m_rtvDescriptorSize{ 0 };
 	UINT m_srvDescriptorSize{ 0 };
@@ -128,6 +128,9 @@ private:
 public:
 	//--------------------Common--------------------//
 	void ClearTextures() override;
+	
+	// @TODO Should this function in public due to deallocating srv block in BufferWrapper's destructor?
+	void DeallocateSrvBlock(UINT startIndex, UINT count);
 
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
@@ -153,6 +156,26 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::VertexUniform>>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
+
+			if (m_useMeshShader)
+			{
+				auto& bufferData3D = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>();
+				auto& buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+
+				buffer.srvHandle = AllocateSrvHandles(4);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexSrvHandle(buffer.srvHandle.first, 0, m_srvDescriptorSize);
+				buffer.uniqueVertexBuffer = std::make_unique<DXStructuredBuffer<ThreeDimension::QuantizedVertex>>(m_device, m_commandQueue, vertices, uniqueVertexSrvHandle);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE meshletSrvHandle(buffer.srvHandle.first, 1, m_srvDescriptorSize);
+				buffer.meshletBuffer = std::make_unique<DXStructuredBuffer<Meshlet::Meshlet>>(m_device, m_commandQueue, bufferData3D.Meshlets, meshletSrvHandle);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexIndexSrvHandle(buffer.srvHandle.first, 2, m_srvDescriptorSize);
+				buffer.uniqueVertexIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.UniqueVertexIndices, uniqueVertexIndexSrvHandle);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer.srvHandle.first, 3, m_srvDescriptorSize);
+				buffer.primitiveIndexBuffer = std::make_unique<DXStructuredBuffer<uint8_t>>(m_device, m_commandQueue, bufferData3D.PrimitiveIndices, primitiveIndexSrvHandle);
+			}
 		}
 	}
 

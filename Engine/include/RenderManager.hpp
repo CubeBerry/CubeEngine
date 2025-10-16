@@ -25,6 +25,7 @@
 #include "DXVertexBuffer.hpp"
 #include "DXIndexBuffer.hpp"
 #include "DXConstantBuffer.hpp"
+#include "DXStructuredBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -117,6 +118,12 @@ public:
 		std::unique_ptr<DXVertexBuffer> normalVertexBuffer;
 #endif
 		std::unique_ptr<DXIndexBuffer> indexBuffer;
+
+		std::unique_ptr<DXStructuredBuffer<ThreeDimension::QuantizedVertex>> uniqueVertexBuffer;
+		std::unique_ptr<DXStructuredBuffer<Meshlet::Meshlet>> meshletBuffer;
+		std::unique_ptr<DXStructuredBuffer<uint32_t>> uniqueVertexIndexBuffer;
+		std::unique_ptr<DXStructuredBuffer<uint8_t>> primitiveIndexBuffer;
+		std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> srvHandle;
 	};
 
 	struct DXConstantBuffer2D
@@ -141,7 +148,7 @@ public:
 	{
 		bufferData.classifiedData = std::monostate{};
 	}
-	~BufferWrapper() = default;
+	~BufferWrapper();
 
 	BufferWrapper(const BufferWrapper&) = delete;
 	BufferWrapper& operator=(const BufferWrapper&) = delete;

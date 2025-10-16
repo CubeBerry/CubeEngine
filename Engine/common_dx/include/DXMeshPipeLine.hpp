@@ -33,7 +33,5 @@ public:
 
 	ComPtr<ID3D12PipelineState> GetPipelineState() const { return m_pipelineState; }
 private:
-	ComPtr<ID3DBlob> m_meshShader;
-	ComPtr<ID3DBlob> m_pixelShader;
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 };

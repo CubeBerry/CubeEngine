@@ -69,8 +69,8 @@ void Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<uint32_t>& i
 	std::vector<uint8_t>& outPrimitiveIndices,
 	uint32_t maxVertices, uint32_t maxPrimitives)
 {
-	const uint32_t MAX_VERTS_PER_MESHLET = maxVertices;
-	const uint32_t MAX_PRIMS_PER_MESHLET = maxPrimitives;
+	const uint32_t MAX_VERTICES_PER_MESHLET = maxVertices;
+	const uint32_t MAX_PRIMITIVES_PER_MESHLET = maxPrimitives;
 
 	for (const auto& sortedVertexIndex : inSortedVertexList)
 	{
@@ -118,9 +118,9 @@ void Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<uint32_t>& i
 				//}
 
 				// Mehslet is full
-				if (tempUniqueVertexIndices.size() + uniqueVertexCount > MAX_VERTS_PER_MESHLET)
+				if (tempUniqueVertexIndices.size() + uniqueVertexCount > MAX_VERTICES_PER_MESHLET)
 				{
-					if (tempPrimitiveIndices.size() / 3 < MAX_PRIMS_PER_MESHLET)
+					if (tempPrimitiveIndices.size() / 3 < MAX_PRIMITIVES_PER_MESHLET)
 					{
 						// Find triangle in border
 						std::vector<uint32_t> borderTriangleIndices;
