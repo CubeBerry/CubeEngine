@@ -33,10 +33,7 @@ DXSkybox::~DXSkybox()
 	if (m_deallocator)
 	{
 		// index 0 will deallocate when m_equirectangularMap is deleted
-		for (UINT index = 1; index < 5; ++index)
-		{
-			m_deallocator(m_srvHandles[index].second);
-		}
+		m_deallocator(m_srvHandles[1].second);
 	}
 
 	//m_commandQueue->Signal(m_fence.Get(), m_fenceValue);

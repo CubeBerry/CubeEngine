@@ -824,45 +824,85 @@ void DXRenderManager::MoveToNextFrame()
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
-std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvCpuHandle()
+std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandles(const UINT& count)
 {
-	UINT descriptorIndex;
+	UINT startIndex{ 0 };
+	bool foundBlock{ false };
 
-	if (!availableSrvSlots.empty())
+	for (auto it = m_availableSrvBlocks.begin(); it != m_availableSrvBlocks.end(); ++it)
 	{
-		descriptorIndex = availableSrvSlots.back();
-		availableSrvSlots.pop_back();
-	}
-	else
-	{
-		descriptorIndex = m_srvDescriptorSize;
-		m_srvDescriptorSize++;
+		if (it->second >= count)
+		{
+			startIndex = it->first;
+			foundBlock = true;
+
+			if (it->second > count)
+			{
+				UINT remainingSize = it->second - count;
+				UINT newStartIndex = startIndex + count;
+				m_availableSrvBlocks.erase(it);
+				m_availableSrvBlocks[newStartIndex] = remainingSize;
+			}
+			else
+			{
+				m_availableSrvBlocks.erase(it);
+			}
+			break;
+		}
 	}
 
-	const UINT maxDescriptors = m_srvHeap->GetDesc().NumDescriptors;
-	if (m_srvDescriptorSize >= maxDescriptors)
+	if (!foundBlock)
 	{
-		throw std::runtime_error("SRV Descriptor Heap is full");
+		startIndex = m_srvDescriptorSize;
+		m_srvDescriptorSize += count;
+
+		if (m_srvDescriptorSize >= m_srvHeap->GetDesc().NumDescriptors)
+		{
+			throw std::runtime_error("SRV Descriptor Heap is full");
+		}
 	}
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(
 		m_srvHeap->GetCPUDescriptorHandleForHeapStart(),
-		static_cast<INT>(descriptorIndex),
+		static_cast<INT>(startIndex),
 		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
 	);
 
-	std::string logMsg = "--> Allocating SRV Index: " + std::to_string(descriptorIndex) + "\n";
-	OutputDebugStringA(logMsg.c_str());
-
-	return { srvHandle, descriptorIndex };
+	return { srvHandle, startIndex };
 }
 
-void DXRenderManager::DeallocateSrvHandle(const UINT& descriptorIndex)
+void DXRenderManager::DeallocateSrvBlock(UINT startIndex, UINT count)
 {
-	std::string logMsg = "<-- Deallocating SRV Index: " + std::to_string(descriptorIndex) + "\n";
-	OutputDebugStringA(logMsg.c_str());
+	auto itAfter = m_availableSrvBlocks.upper_bound(startIndex);
+	auto itBefore = m_availableSrvBlocks.end();
 
-	availableSrvSlots.push_back(descriptorIndex);
+	// Check merge with previous block
+	if (itAfter != m_availableSrvBlocks.begin())
+	{
+		itBefore = std::prev(itAfter);
+		if (itBefore->first + itBefore->second == startIndex)
+		{
+			itBefore->second += count;
+			startIndex = itBefore->first;
+			count = itBefore->second;
+		}
+		else
+		{
+			itBefore = m_availableSrvBlocks.end();
+		}
+	}
+
+	// Check merge wirth next block
+	if (itAfter != m_availableSrvBlocks.end())
+	{
+		if (startIndex + count == itAfter->first)
+		{
+			count += itAfter->second;
+			m_availableSrvBlocks.erase(itAfter);
+		}
+	}
+
+	m_availableSrvBlocks[startIndex] = count;
 }
 
 void DXRenderManager::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
@@ -941,13 +981,10 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 	const auto& texture = textures.emplace_back(std::make_unique<DXTexture>());
 
-	const int texId = static_cast<int>(textures.size() - 1);
-	texture->SetTextureID(texId);
-
-	auto [srvHandle, srvIndex] = AllocateSrvCpuHandle();
+	auto [srvHandle, srvIndex] = AllocateSrvHandles();
 	auto deallocator = [this](UINT index)
 	{
-		this->DeallocateSrvHandle(index);
+		this->DeallocateSrvBlock(index, 1);
 	};
 
 	DXHelper::ThrowIfFailed(tempCommandList->Reset(tempCommandAllocator.Get(), nullptr));
@@ -964,6 +1001,9 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 		name_,
 		flip
 	);
+
+	const int texId = static_cast<int>(srvIndex);
+	texture->SetTextureID(texId);
 
 	//tempCommandList->Close();
 	//ID3D12CommandList* ppCommandLists[] = { tempCommandList.Get() };
@@ -1078,17 +1118,17 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	);
 
 	WaitForGPU();
-	// Skybox SRV offset starts from 1000
 	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap);
 	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5> skyboxSrvHandles;
+	auto [startHandle, startIndex] = AllocateSrvHandles(5);
 	for (int i = 0; i < 5; ++i)
 	{
-		auto [handle, index] = AllocateSrvCpuHandle();
-		skyboxSrvHandles[i] = { handle, index };
+		CD3DX12_CPU_DESCRIPTOR_HANDLE currentHandle(startHandle, i, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		skyboxSrvHandles[i] = { currentHandle, startIndex + i };
 	}
 	auto deallocator = [this](UINT index)
 	{
-		this->DeallocateSrvHandle(index);
+		this->DeallocateSrvBlock(index, 5);
 	};
 	m_skybox->Initialize(path, skyboxSrvHandles, deallocator);
 

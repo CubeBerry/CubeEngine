@@ -66,8 +66,11 @@ private:
 		}
 	} reporter;
 
-	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvCpuHandle();
-	void DeallocateSrvHandle(const UINT& index);
+	// Descriptor Start Index, Block Size
+	std::map<UINT, UINT> m_availableSrvBlocks;
+	// SRV Handle, Descriptor Index
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvHandles(const UINT& count = 1);
+	void DeallocateSrvBlock(UINT startIndex, UINT count);
 
 	static constexpr UINT frameCount = 2;
 
@@ -89,7 +92,6 @@ private:
 
 	UINT m_rtvDescriptorSize{ 0 };
 	UINT m_srvDescriptorSize{ 0 };
-	std::vector<UINT> availableSrvSlots;
 
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };
