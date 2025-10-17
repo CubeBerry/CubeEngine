@@ -537,6 +537,32 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
 					constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
 
+					m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+
+					if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
+					{
+						directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
+						m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+					}
+					if (pointLightUniformBuffer && !pointLightUniforms.empty())
+					{
+						pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
+						m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+					}
+
+					pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
+					pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
+					m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
+
+					m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+
+					if (skyboxEnabled && m_skybox)
+					{
+						m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
+					}
+
 					// Bind structured buffers to root signature
 					m_commandList->SetGraphicsRootShaderResourceView(8, buffer.uniqueVertexBuffer->GetGPUVirtualAddress());
 					m_commandList->SetGraphicsRootShaderResourceView(9, buffer.meshletBuffer->GetGPUVirtualAddress());
