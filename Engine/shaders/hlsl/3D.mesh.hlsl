@@ -9,7 +9,7 @@
 #endif
 
 
-#line 73 "3d.slang"
+#line 73 "3D.slang"
 struct Meshlet_0
 {
     uint vertexCount_0;
@@ -76,9 +76,9 @@ struct VSOutput_0
 
 
 #line 89
-[shader("mesh")][numthreads(64, 1, 1)]
+[shader("mesh")][numthreads(128, 1, 1)]
 [outputtopology("triangle")]
-void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices inout VSOutput_0  verts_0[int(128)], out indices inout uint3  tris_0[int(256)])
+void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[int(128)], out indices uint3  tris_0[int(256)])
 {
 
 
@@ -117,7 +117,7 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
         uint _S2 = meshlet_0.primitiveOffset_0 + groupThreadID_0 * 3U;
 
 
-        tris_0[groupThreadID_0] = uint3(uint(primitiveIndices_0.Load(_S2)), uint(primitiveIndices_0.Load(_S2 + 1U)), uint(primitiveIndices_0.Load(_S2 + 2U)));
+        tris_0[groupThreadID_0] = uint3(primitiveIndices_0.Load(_S2), primitiveIndices_0.Load(_S2 + 1U), primitiveIndices_0.Load(_S2 + 2U));
 
 #line 122
     }

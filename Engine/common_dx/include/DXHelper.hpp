@@ -4,6 +4,7 @@
 #pragma once
 #include <directx/d3dx12.h>
 #include <stdexcept>
+#include <filesystem>
 #include <fstream>
 
 #include "DebugTools.hpp"

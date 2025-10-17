@@ -81,16 +81,16 @@ struct Meshlet
 StructuredBuffer<VSInput> uniqueVertices : register(t8);
 StructuredBuffer<Meshlet> meshlets : register(t9);
 StructuredBuffer<uint> uniqueVertexIndices : register(t10);
-StructuredBuffer<uint8_t> primitiveIndices : register(t11);
+StructuredBuffer<uint> primitiveIndices : register(t11);
 
-[numthreads(64, 1, 1)]
+[numthreads(128, 1, 1)]
 [outputtopology("triangle")]
 [shader("mesh")]
 void meshMain(
     uint groupThreadID: SV_GroupThreadID,
     uint groupID: SV_GroupID,
-    out vertices VSOutput verts[MAX_VERTICES_PER_MESHLET],
-    out indices uint3 tris[MAX_PRIMITIVES_PER_MESHLET]
+    OutputVertices<VSOutput, MAX_VERTICES_PER_MESHLET> verts,
+    OutputIndices<uint3, MAX_PRIMITIVES_PER_MESHLET> tris,
 )
 {
     Meshlet meshlet = meshlets[groupID.x];
