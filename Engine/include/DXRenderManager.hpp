@@ -174,7 +174,7 @@ public:
 				buffer.uniqueVertexIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.UniqueVertexIndices, uniqueVertexIndexSrvHandle);
 
 				CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer.srvHandle.first, 3, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				buffer.primitiveIndexBuffer = std::make_unique<DXStructuredBuffer<uint8_t>>(m_device, m_commandQueue, bufferData3D.PrimitiveIndices, primitiveIndexSrvHandle);
+				buffer.primitiveIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.PrimitiveIndices, primitiveIndexSrvHandle);
 			}
 		}
 	}
@@ -185,14 +185,18 @@ public:
 	{
 		if (!bufferWrapper) return;
 
+		auto srvHandle = bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>().srvHandle;
+		const UINT srvCount = 4;
+
 		const UINT64 queuedFrame = m_fence->GetCompletedValue();
 		// shared count == 1
 		auto bufferHolder = std::make_shared<std::unique_ptr<BufferWrapper>>(std::move(bufferWrapper));
 		// shared count == 2
-		QueueDeferredFunction([this, bufferHolder, queuedFrame]() -> bool
+		QueueDeferredFunction([this, bufferHolder, queuedFrame, srvHandle, srvCount]() -> bool
 			{
 				if (queuedFrame <= m_fence->GetCompletedValue())
 				{
+					DeallocateSrvBlock(srvHandle.second, srvCount);
 					return true;
 				}
 				return false;

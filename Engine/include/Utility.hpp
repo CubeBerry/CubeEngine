@@ -42,12 +42,12 @@ namespace Utility
 			std::vector<Meshlet::Triangle>& outTriangles);
 
 		// @TODO
-		void BuildMeshlet(std::map<uint32_t, uint8_t>& vertexMap,
+		void BuildMeshlet(std::map<uint32_t, uint32_t>& vertexMap,
 			std::vector<uint32_t>& tempUniqueVertexIndices,
-			std::vector<uint8_t>& tempPrimitiveIndices,
+			std::vector<uint32_t>& tempPrimitiveIndices,
 			std::vector<Meshlet::Meshlet>& outMeshlets,
 			std::vector<uint32_t>& outUniqueVertexIndices,
-			std::vector<uint8_t>& outPrimitiveIndices);
+			std::vector<uint32_t>& outPrimitiveIndices);
 
 		// Greedy Algorithm
 		void BuildMeshletsGreedy(const std::vector<uint32_t>& inSortedVertexList,
@@ -55,7 +55,7 @@ namespace Utility
 			std::vector<Meshlet::Triangle>& inTriangles,
 			std::vector<Meshlet::Meshlet>& outMeshlets,
 			std::vector<uint32_t>& outUniqueVertexIndices,
-			std::vector<uint8_t>& outPrimitiveIndices,
+			std::vector<uint32_t>& outPrimitiveIndices,
 			// https://gpuopen.com/learn/mesh_shaders/mesh_shaders-optimization_and_best_practices/
 			// It differs based on GPU, max 128 vertices and 256 primitives are recommended to Radeon
 			uint32_t maxVertices = 128, uint32_t maxPrimitives = 256

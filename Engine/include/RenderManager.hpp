@@ -65,7 +65,7 @@ public:
 		// Mesh Shader
 		std::vector<Meshlet::Meshlet> Meshlets;
 		std::vector<uint32_t> UniqueVertexIndices;
-		std::vector<uint8_t> PrimitiveIndices;
+		std::vector<uint32_t> PrimitiveIndices;
 	};
 private:
 	struct BufferData
@@ -122,7 +122,7 @@ public:
 		std::unique_ptr<DXStructuredBuffer<ThreeDimension::QuantizedVertex>> uniqueVertexBuffer;
 		std::unique_ptr<DXStructuredBuffer<Meshlet::Meshlet>> meshletBuffer;
 		std::unique_ptr<DXStructuredBuffer<uint32_t>> uniqueVertexIndexBuffer;
-		std::unique_ptr<DXStructuredBuffer<uint8_t>> primitiveIndexBuffer;
+		std::unique_ptr<DXStructuredBuffer<uint32_t>> primitiveIndexBuffer;
 		std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> srvHandle;
 	};
 

@@ -38,12 +38,12 @@ void Utility::MeshletBuilder::BuildAdjacency(const std::vector<glm::vec3>& inVer
 }
 
 // @TODO
-void Utility::MeshletBuilder::BuildMeshlet(std::map<uint32_t, uint8_t>& vertexMap,
+void Utility::MeshletBuilder::BuildMeshlet(std::map<uint32_t, uint32_t>& vertexMap,
 	std::vector<uint32_t>& tempUniqueVertexIndices,
-	std::vector<uint8_t>& tempPrimitiveIndices,
+	std::vector<uint32_t>& tempPrimitiveIndices,
 	std::vector<Meshlet::Meshlet>& outMeshlets,
 	std::vector<uint32_t>& outUniqueVertexIndices,
-	std::vector<uint8_t>& outPrimitiveIndices)
+	std::vector<uint32_t>& outPrimitiveIndices)
 {
 	Meshlet::Meshlet meshlet;
 	meshlet.vertexCount = static_cast<uint32_t>(tempUniqueVertexIndices.size());
@@ -66,7 +66,7 @@ void Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<uint32_t>& i
 	std::vector<Meshlet::Triangle>& inTriangles,
 	std::vector<Meshlet::Meshlet>& outMeshlets,
 	std::vector<uint32_t>& outUniqueVertexIndices,
-	std::vector<uint8_t>& outPrimitiveIndices,
+	std::vector<uint32_t>& outPrimitiveIndices,
 	uint32_t maxVertices, uint32_t maxPrimitives)
 {
 	const uint32_t MAX_VERTICES_PER_MESHLET = maxVertices;
@@ -80,9 +80,9 @@ void Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<uint32_t>& i
 		inVertices[sortedVertexIndex].isUsed = true;
 
 		// uint32_t == Vertex Index, uint8_t == Unique Vertex Index
-		std::map<uint32_t, uint8_t> vertexMap;
+		std::map<uint32_t, uint32_t> vertexMap;
 		std::vector<uint32_t> tempUniqueVertexIndices;
-		std::vector<uint8_t> tempPrimitiveIndices;
+		std::vector<uint32_t> tempPrimitiveIndices;
 
 		while (!queue.empty())
 		{

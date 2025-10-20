@@ -16,10 +16,10 @@
 BufferWrapper::~BufferWrapper()
 {
 	// Deallocate SRV block
-	RenderManager* renderManager = Engine::GetRenderManager();
-	if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
-	{
-		dynamic_cast<DXRenderManager*>(renderManager)->DeallocateSrvBlock(std::get<DXBuffer>(buffer).srvHandle.second, 4);
+	//RenderManager* renderManager = Engine::GetRenderManager();
+	//if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
+	//{
+	//	dynamic_cast<DXRenderManager*>(renderManager)->DeallocateSrvBlock(std::get<DXBuffer>(buffer).srvHandle.second, 4);
 
 		//CD3DX12_CPU_DESCRIPTOR_HANDLE meshletSrvHandle(buffer.srvHandle.first, 0, m_srvDescriptorSize);
 		//buffer.meshletBuffer = std::make_unique<DXStructuredBuffer<Meshlet::Meshlet>>(m_device, m_commandQueue, bufferData3D.Meshlets, meshletSrvHandle);
@@ -29,7 +29,7 @@ BufferWrapper::~BufferWrapper()
 
 		//CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer.srvHandle.first, 2, m_srvDescriptorSize);
 		//buffer.primitiveIndexBuffer = std::make_unique<DXStructuredBuffer<uint8_t>>(m_device, m_commandQueue, bufferData3D.PrimitiveIndices, primitiveIndexSrvHandle);
-	}
+	//}
 
 //	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::DX)
 //		dynamic_cast<DXRenderManager*>(Engine::GetRenderManager())->WaitForGPU();
@@ -715,6 +715,36 @@ void RenderManager::ProcessMesh(
 		normalVertices.push_back(ThreeDimension::NormalVertex{ start });
 		normalVertices.push_back(ThreeDimension::NormalVertex{ end });
 #endif
+	}
+
+	// Mesh Shader
+	if (m_useMeshShader)
+	{
+		auto& bufferData3D = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>();
+
+		std::vector<glm::vec3> positions;
+		positions.reserve(vertices.size());
+		for (const auto& v : vertices)
+		{
+			positions.push_back(v.position);
+		}
+
+		std::vector<Meshlet::Vertex> meshletVertices;
+		std::vector<Meshlet::Triangle> meshletTriangles;
+		Utility::MeshletBuilder::BuildAdjacency(positions, indices, meshletVertices, meshletTriangles);
+
+		// @TODO Sorting vertices according to the biggest bounding box axis length required
+		std::vector<uint32_t> sortedVertexList(vertices.size());
+		std::iota(sortedVertexList.begin(), sortedVertexList.end(), 0);
+
+		Utility::MeshletBuilder::BuildMeshletsGreedy(
+			sortedVertexList,
+			meshletVertices,
+			meshletTriangles,
+			bufferData3D.Meshlets,
+			bufferData3D.UniqueVertexIndices,
+			bufferData3D.PrimitiveIndices
+		);
 	}
 
 	// Uniform
