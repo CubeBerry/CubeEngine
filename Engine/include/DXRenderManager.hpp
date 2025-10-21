@@ -71,6 +71,7 @@ private:
 	// SRV Handle, Descriptor Index
 	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvHandles(const UINT& count = 1);
 	//void DeallocateSrvBlock(UINT startIndex, UINT count);
+	std::string LogSrvBlocks();
 
 	static constexpr UINT frameCount = 2;
 

@@ -49,7 +49,7 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 	};
 
-	struct alignas(16) QuantizedVertex
+	struct /*alignas(16)*/ QuantizedVertex
 	{
 		//glm::vec3 position;
 

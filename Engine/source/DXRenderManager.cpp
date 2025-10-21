@@ -572,7 +572,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					const auto& meshlets = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().Meshlets;
 					UINT numMeshlets = static_cast<UINT>(meshlets.size());
 					UINT threadGroupCount = (numMeshlets + 127) / 128;
-					m_commandList->DispatchMesh(threadGroupCount, 1, 1);
+					m_commandList->DispatchMesh(numMeshlets, 1, 1);
 				}
 				else
 				{
@@ -887,8 +887,25 @@ void DXRenderManager::MoveToNextFrame()
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
 }
 
+std::string DXRenderManager::LogSrvBlocks()
+{
+	std::stringstream ss;
+	ss << "m_availableSrvBlocks state: { ";
+	for (const auto& pair : m_availableSrvBlocks)
+	{
+		ss << "[" << pair.first << ", size=" << pair.second << "] ";
+	}
+	ss << "}\n";
+	return ss.str();
+}
+
 std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandles(const UINT& count)
 {
+	std::stringstream ss;
+	ss << "====== SRV ALLOCATE Request: " << count << " descriptors ======\n";
+	OutputDebugStringA(ss.str().c_str());
+	ss.str("");
+
 	UINT startIndex{ 0 };
 	bool foundBlock{ false };
 
@@ -899,16 +916,20 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 			startIndex = it->first;
 			foundBlock = true;
 
+			ss << "  [LOG] Found available block at index " << startIndex << " (size " << it->second << ").\n";
+
 			if (it->second > count)
 			{
 				UINT remainingSize = it->second - count;
 				UINT newStartIndex = startIndex + count;
 				m_availableSrvBlocks.erase(it);
 				m_availableSrvBlocks[newStartIndex] = remainingSize;
+				ss << "  [LOG] Block split: Using " << count << ", remaining block at index " << newStartIndex << " (size " << remainingSize << ").\n";
 			}
 			else
 			{
 				m_availableSrvBlocks.erase(it);
+				ss << "  [LOG] Block exact match: Using entire block.\n";
 			}
 			break;
 		}
@@ -919,8 +940,12 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 		startIndex = m_srvDescriptorSize;
 		m_srvDescriptorSize += count;
 
+		ss << "  [LOG] No available block found. Allocating new block at index " << startIndex << ".\n";
+		ss << "  [LOG] New m_srvDescriptorOffset: " << m_srvDescriptorSize << "\n";
+
 		if (m_srvDescriptorSize >= m_srvHeap->GetDesc().NumDescriptors)
 		{
+			OutputDebugStringA("  [FATAL ERROR] SRV Descriptor Heap is full!\n");
 			throw std::runtime_error("SRV Descriptor Heap is full");
 		}
 	}
@@ -931,11 +956,19 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
 	);
 
+	ss << "  [LOG] Allocation successful. Returning startIndex: " << startIndex << "\n";
+	ss << "  [LOG] " << LogSrvBlocks();
+	ss << "====== SRV ALLOCATE End ===================================\n";
+	OutputDebugStringA(ss.str().c_str());
+
 	return { srvHandle, startIndex };
 }
 
 void DXRenderManager::DeallocateSrvBlock(UINT startIndex, UINT count)
 {
+	std::stringstream ss;
+	ss << "====== SRV DEALLOCATE Request: index " << startIndex << ", count " << count << " ======\n";
+
 	auto itAfter = m_availableSrvBlocks.upper_bound(startIndex);
 	auto itBefore = m_availableSrvBlocks.end();
 
@@ -945,6 +978,7 @@ void DXRenderManager::DeallocateSrvBlock(UINT startIndex, UINT count)
 		itBefore = std::prev(itAfter);
 		if (itBefore->first + itBefore->second == startIndex)
 		{
+			ss << "  [LOG] Merging with PREVIOUS block (index " << itBefore->first << ", size " << itBefore->second << ").\n";
 			itBefore->second += count;
 			startIndex = itBefore->first;
 			count = itBefore->second;
@@ -960,12 +994,18 @@ void DXRenderManager::DeallocateSrvBlock(UINT startIndex, UINT count)
 	{
 		if (startIndex + count == itAfter->first)
 		{
+			ss << "  [LOG] Merging with NEXT block (index " << itAfter->first << ", size " << itAfter->second << ").\n";
 			count += itAfter->second;
 			m_availableSrvBlocks.erase(itAfter);
 		}
 	}
 
+	ss << "  [LOG] Adding/Updating available block: index " << startIndex << ", count " << count << ".\n";
 	m_availableSrvBlocks[startIndex] = count;
+
+	ss << "  [LOG] " << LogSrvBlocks();
+	ss << "====== SRV DEALLOCATE End =================================\n";
+	OutputDebugStringA(ss.str().c_str());
 }
 
 void DXRenderManager::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
