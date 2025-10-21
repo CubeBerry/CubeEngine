@@ -499,18 +499,28 @@ void RenderManager::CreateMesh(
 			positions.push_back(v.position);
 		}
 
-		std::vector<Meshlet::Vertex> meshletVertices;
-		std::vector<Meshlet::Triangle> meshletTriangles;
-		Utility::MeshletBuilder::BuildAdjacency(positions, indices, meshletVertices, meshletTriangles);
+		// Greedy Algorithm
+		//std::vector<Meshlet::Vertex> meshletVertices;
+		//std::vector<Meshlet::Triangle> meshletTriangles;
+		//Utility::MeshletBuilder::BuildAdjacency(positions, indices, meshletVertices, meshletTriangles);
 
 		// @TODO Sorting vertices according to the biggest bounding box axis length required
-		std::vector<uint32_t> sortedVertexList(vertices.size());
-		std::iota(sortedVertexList.begin(), sortedVertexList.end(), 0);
+		//std::vector<uint32_t> sortedVertexList(vertices.size());
+		//std::iota(sortedVertexList.begin(), sortedVertexList.end(), 0);
 
-		Utility::MeshletBuilder::BuildMeshletsGreedy(
-			sortedVertexList,
-			meshletVertices,
-			meshletTriangles,
+		//Utility::MeshletBuilder::BuildMeshletsGreedy(
+		//	sortedVertexList,
+		//	meshletVertices,
+		//	meshletTriangles,
+		//	bufferData3D.Meshlets,
+		//	bufferData3D.UniqueVertexIndices,
+		//	bufferData3D.PrimitiveIndices
+		//);
+
+		// meshoptimizer Library
+		Utility::MeshletBuilder::BuildMeshletsMeshOptimizer(
+			positions,
+			indices,
 			bufferData3D.Meshlets,
 			bufferData3D.UniqueVertexIndices,
 			bufferData3D.PrimitiveIndices

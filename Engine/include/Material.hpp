@@ -49,6 +49,7 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 	};
 
+	// @TODO Should add alignas(16) for 3D pipeline but mesh pipeline does not require alignas(16) for Structured Buffer
 	struct /*alignas(16)*/ QuantizedVertex
 	{
 		//glm::vec3 position;

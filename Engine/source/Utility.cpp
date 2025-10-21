@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: Utility.cpp
 #include "Utility.hpp"
+#include "meshoptimizer.h"
 
 #include <queue>
 
@@ -29,7 +30,7 @@ void Utility::MeshletBuilder::BuildAdjacency(const std::vector<glm::vec3>& inVer
 		uint32_t v0 = outTriangles[i].vertices[0];
 		uint32_t v1 = outTriangles[i].vertices[1];
 		uint32_t v2 = outTriangles[i].vertices[2];
-		
+
 		// Adjacent Triangles
 		outVertices[v0].triangles.push_back(i);
 		outVertices[v1].triangles.push_back(i);
@@ -239,5 +240,61 @@ void Utility::MeshletBuilder::BuildMeshletsGreedy(const std::vector<uint32_t>& i
 		}
 		// @TODO
 		BuildMeshlet(vertexMap, tempUniqueVertexIndices, tempPrimitiveIndices, outMeshlets, outUniqueVertexIndices, outPrimitiveIndices);
+	}
+}
+
+void Utility::MeshletBuilder::BuildMeshletsMeshOptimizer(std::vector<glm::vec3>& inVertices,
+	const std::vector<uint32_t>& inIndices,
+	std::vector<Meshlet::Meshlet>& outMeshlets,
+	std::vector<uint32_t>& outUniqueVertexIndices,
+	std::vector<uint32_t>& outPrimitiveIndices,
+	uint32_t maxVertices, uint32_t maxPrimitives)
+{
+	const uint32_t MAX_VERTICES_PER_MESHLET = maxVertices;
+	const uint32_t MAX_PRIMITIVES_PER_MESHLET = maxPrimitives;
+	const float coneWeight{ 0.0f };
+
+	size_t maxMeshlets = meshopt_buildMeshletsBound(inIndices.size(), MAX_VERTICES_PER_MESHLET, MAX_PRIMITIVES_PER_MESHLET);
+	std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
+	std::vector<unsigned int> meshletVertices(inIndices.size());
+	std::vector<unsigned char> meshletTriangles(inIndices.size() + maxMeshlets * 3);
+
+	size_t meshletCount = meshopt_buildMeshlets(meshlets.data(), meshletVertices.data(), meshletTriangles.data(), inIndices.data(),
+		inIndices.size(), &inVertices[0].x, inVertices.size(), sizeof(glm::vec3), MAX_VERTICES_PER_MESHLET, MAX_PRIMITIVES_PER_MESHLET, coneWeight);
+
+	const meshopt_Meshlet& last = meshlets[meshletCount - 1];
+
+	meshletVertices.resize(last.vertex_offset + last.vertex_count);
+	meshletTriangles.resize(last.triangle_offset + last.triangle_count * 3);
+	meshlets.resize(meshletCount);
+
+	for (const auto& m : meshlets)
+	{
+		meshopt_optimizeMeshlet(&meshletVertices[m.vertex_offset], &meshletTriangles[m.triangle_offset], m.triangle_count, m.vertex_count);
+	}
+
+	// @TODO Meshlet::Meshlet struct and meshopt_Meshlet struct are same so that it is not efficient to copy one by one
+	outMeshlets.reserve(meshlets.size());
+	for (const auto& m : meshlets)
+	{
+		Meshlet::Meshlet meshlet;
+		meshlet.vertexCount = m.vertex_count;
+		meshlet.vertexOffset = m.vertex_offset;
+		meshlet.primitiveCount = m.triangle_count;
+		meshlet.primitiveOffset = m.triangle_offset;
+		outMeshlets.push_back(meshlet);
+	}
+
+	outUniqueVertexIndices.clear();
+	outUniqueVertexIndices.assign(meshletVertices.begin(), meshletVertices.end());
+
+	//outPrimitiveIndices.clear();
+	//outPrimitiveIndices.assign(meshletTriangles.begin(), meshletTriangles.end());
+
+	outPrimitiveIndices.clear();
+	outPrimitiveIndices.reserve(meshletTriangles.size());
+	for (unsigned char index : meshletTriangles)
+	{
+		outPrimitiveIndices.push_back(static_cast<uint32_t>(index));
 	}
 }

@@ -60,5 +60,16 @@ namespace Utility
 			// It differs based on GPU, max 128 vertices and 256 primitives are recommended to Radeon
 			uint32_t maxVertices = 128, uint32_t maxPrimitives = 256
 		);
+
+		// meshoptimizer Library
+		void BuildMeshletsMeshOptimizer(std::vector<glm::vec3>& inVertices,
+			const std::vector<uint32_t>& inIndices,
+			std::vector<Meshlet::Meshlet>& outMeshlets,
+			std::vector<uint32_t>& outUniqueVertexIndices,
+			std::vector<uint32_t>& outPrimitiveIndices,
+			// https://gpuopen.com/learn/mesh_shaders/mesh_shaders-optimization_and_best_practices/
+			// It differs based on GPU, max 128 vertices and 256 primitives are recommended to Radeon
+			uint32_t maxVertices = 128, uint32_t maxPrimitives = 256
+		);
 	}
 }
