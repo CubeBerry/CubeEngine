@@ -913,7 +913,7 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 	UINT startIndex{ 0 };
 	bool foundBlock{ false };
 
-	for (auto it = m_availableSrvBlocks.begin(); it != m_availableSrvBlocks.end(); ++it)
+	for (auto it = m_availableSrvBlocks.begin(); it != m_availableSrvBlocks.end(); /*++it*/)
 	{
 		if (it->second >= count)
 		{
@@ -937,6 +937,7 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 			}
 			break;
 		}
+		else it++;
 	}
 
 	if (!foundBlock)
@@ -1235,7 +1236,7 @@ void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 	}
 	auto deallocator = [this](UINT index)
 	{
-		this->DeallocateSrvBlock(index, 5);
+		this->DeallocateSrvBlock(index, 1);
 	};
 	m_skybox->Initialize(path, skyboxSrvHandles, deallocator);
 

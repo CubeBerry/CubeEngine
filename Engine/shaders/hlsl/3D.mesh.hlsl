@@ -97,13 +97,15 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
 
         verts_0[groupThreadID_0].uv_1 = input_0.uv_0;
         verts_0[groupThreadID_0].color_1 = matrix_0.color_0;
+
+#line 126
         verts_0[groupThreadID_0].tex_sub_index_1 = input_0.tex_sub_index_0;
 
 
         verts_0[groupThreadID_0].normal_1 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_0);
         float4 _S1 = float4(decoded_position_0, 1.0);
 
-#line 117
+#line 130
         verts_0[groupThreadID_0].fragmentPosition_0 = mul(matrix_0.model_0, _S1).xyz;
         verts_0[groupThreadID_0].viewPosition_1 = matrix_0.viewPosition_0;
 
@@ -112,7 +114,7 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
 #line 100
     }
 
-#line 123
+#line 136
     if(groupThreadID_0 < meshlet_0.primitiveCount_0)
     {
         uint _S2 = meshlet_0.primitiveOffset_0 + groupThreadID_0 * 3U;
@@ -120,10 +122,10 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
 
         tris_0[groupThreadID_0] = uint3(primitiveIndices_0.Load(_S2), primitiveIndices_0.Load(_S2 + 1U), primitiveIndices_0.Load(_S2 + 2U));
 
-#line 123
+#line 136
     }
 
-#line 169
+#line 182
     return;
 }
 

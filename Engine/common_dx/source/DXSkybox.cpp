@@ -33,7 +33,11 @@ DXSkybox::~DXSkybox()
 	if (m_deallocator)
 	{
 		// index 0 will deallocate when m_equirectangularMap is deleted
-		m_deallocator(m_srvHandles[1].second);
+		// Deallocate Cubemap, Irradiance, Prefilter, BRDF LUT
+		for (int i = 1; i < 5; ++i)
+		{
+			m_deallocator(m_srvHandles[i].second);
+		}
 	}
 
 	//m_commandQueue->Signal(m_fence.Get(), m_fenceValue);
