@@ -67,8 +67,8 @@ VSOutput vertexMain(VSInput input)
 }
 
 // Mesh Shader
-#define MAX_VERTICES_PER_MESHLET 128
-#define MAX_PRIMITIVES_PER_MESHLET 256
+#define MAX_VERTICES_PER_MESHLET 64
+#define MAX_PRIMITIVES_PER_MESHLET 128
 
 struct Meshlet
 {
@@ -96,6 +96,7 @@ void meshMain(
     Meshlet meshlet = meshlets[groupID.x];
     SetMeshOutputCounts(meshlet.vertexCount, meshlet.primitiveCount);
 
+    // MAX_VERTICES_PER_MESHLET == 64, MAX_PRIMITIVES_PER_MESHLET == 128
     if (groupThreadID < meshlet.vertexCount)
     {
         uint vertexIndex = uniqueVertexIndices[meshlet.vertexOffset + groupThreadID];
@@ -126,6 +127,45 @@ void meshMain(
         uint i2 = primitiveIndices[meshlet.primitiveOffset + groupThreadID * 3 + 2];
         tris[groupThreadID] = uint3(i0, i1, i2);
     }
+
+    // https://gpuopen.com/learn/mesh_shaders/mesh_shaders-optimization_and_best_practices/
+    // It differs based on GPU, max 128 vertices and 256 primitives are recommended to Radeon
+    // MAX_VERTICES_PER_MESHLET == 128, MAX_PRIMITIVES_PER_MESHLET == 256
+    // for (uint i = 0; i < 2; ++i)
+    // {
+    //     const uint primitiveId = groupThreadID + i * 128;
+
+    //     if (primitiveId < meshlet.vertexCount)
+    //     {
+    //         uint vertexIndex = uniqueVertexIndices[meshlet.vertexOffset + primitiveId];
+    //         VSInput input = uniqueVertices[vertexIndex];
+
+    //         // 11, 11, 10
+    //         float x = float(input.position & 0x7FFu);
+    //         float y = float((input.position >> 11) & 0x7FFu);
+    //         float z = float((input.position >> 22) & 0x3FFu);
+    //         float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
+
+    //         verts[primitiveId].uv = input.uv;
+    //         verts[primitiveId].color = matrix.color;
+    //         verts[primitiveId].tex_sub_index = input.tex_sub_index;
+
+    //         // Lighting
+    //         verts[primitiveId].normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
+    //         verts[primitiveId].fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
+    //         verts[primitiveId].viewPosition = matrix.viewPosition;
+
+    //         verts[primitiveId].position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
+    //     }
+
+    //     if (primitiveId < meshlet.primitiveCount)
+    //     {
+    //         uint i0 = primitiveIndices[meshlet.primitiveOffset + primitiveId * 3 + 0];
+    //         uint i1 = primitiveIndices[meshlet.primitiveOffset + primitiveId * 3 + 1];
+    //         uint i2 = primitiveIndices[meshlet.primitiveOffset + primitiveId * 3 + 2];
+    //         tris[primitiveId] = uint3(i0, i1, i2);
+    //     }
+    // }
 }
 
 // Fragment Shader

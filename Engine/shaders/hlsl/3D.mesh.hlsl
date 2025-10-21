@@ -78,7 +78,7 @@ struct VSOutput_0
 #line 89
 [shader("mesh")][numthreads(128, 1, 1)]
 [outputtopology("triangle")]
-void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[int(128)], out indices uint3  tris_0[int(256)])
+void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[int(64)], out indices uint3  tris_0[int(128)])
 {
 
 
@@ -86,12 +86,13 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
     Meshlet_0 meshlet_0 = meshlets_0.Load(groupID_0);
     SetMeshOutputCounts(meshlet_0.vertexCount_0, meshlet_0.primitiveCount_0);
 
+
     if(groupThreadID_0 < meshlet_0.vertexCount_0)
     {
 
         VSInput_0 input_0 = uniqueVertices_0.Load(uniqueVertexIndices_0.Load(meshlet_0.vertexOffset_0 + groupThreadID_0));
 
-#line 108
+#line 109
         float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float(input_0.position_0 & 2047U), float(input_0.position_0 >> int(11) & 2047U), float(input_0.position_0 >> int(22) & 1023U)), 1.0)).xyz;
 
         verts_0[groupThreadID_0].uv_1 = input_0.uv_0;
@@ -102,16 +103,16 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
         verts_0[groupThreadID_0].normal_1 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_0);
         float4 _S1 = float4(decoded_position_0, 1.0);
 
-#line 116
+#line 117
         verts_0[groupThreadID_0].fragmentPosition_0 = mul(matrix_0.model_0, _S1).xyz;
         verts_0[groupThreadID_0].viewPosition_1 = matrix_0.viewPosition_0;
 
         verts_0[groupThreadID_0].position_1 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, _S1)));
 
-#line 99
+#line 100
     }
 
-#line 122
+#line 123
     if(groupThreadID_0 < meshlet_0.primitiveCount_0)
     {
         uint _S2 = meshlet_0.primitiveOffset_0 + groupThreadID_0 * 3U;
@@ -119,10 +120,10 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
 
         tris_0[groupThreadID_0] = uint3(primitiveIndices_0.Load(_S2), primitiveIndices_0.Load(_S2 + 1U), primitiveIndices_0.Load(_S2 + 2U));
 
-#line 122
+#line 123
     }
 
-#line 129
+#line 169
     return;
 }
 
