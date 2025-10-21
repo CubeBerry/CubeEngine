@@ -231,49 +231,54 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	//m_pipeline3D = std::make_unique<DXPipeLine>(
-	//	m_device,
-	//	m_rootSignature3D,
-	//	std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-	//	std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-	//	std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
-	//	D3D12_FILL_MODE_SOLID,
-	//	D3D12_CULL_MODE_BACK,
-	//	sampleDesc,
-	//	true,
-	//	true,
-	//	DXGI_FORMAT_R8G8B8A8_UNORM,
-	//	D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	//);
+	if (m_useMeshShader)
+	{
+		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
+			m_device,
+			m_rootSignature3D,
+			std::filesystem::path("../Engine/shaders/cso/3D.mesh.cso"),
+			std::filesystem::path("../Engine/shaders/cso/3D.frag.cso"),
+			D3D12_FILL_MODE_SOLID,
+			D3D12_CULL_MODE_BACK,
+			sampleDesc,
+			true,
+			true,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+		);
+	}
+	else
+	{
+		m_pipeline3D = std::make_unique<DXPipeLine>(
+			m_device,
+			m_rootSignature3D,
+			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
+			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
+			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+			D3D12_FILL_MODE_SOLID,
+			D3D12_CULL_MODE_BACK,
+			sampleDesc,
+			true,
+			true,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+		);
 
-	m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
-		m_device,
-		m_rootSignature3D,
-		std::filesystem::path("../Engine/shaders/cso/3D.mesh.cso"),
-		std::filesystem::path("../Engine/shaders/cso/3D.frag.cso"),
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
-
-	//m_pipeline3DLine = std::make_unique<DXPipeLine>(
-	//	m_device,
-	//	m_rootSignature3D,
-	//	std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-	//	std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-	//	std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
-	//	D3D12_FILL_MODE_WIREFRAME,
-	//	D3D12_CULL_MODE_BACK,
-	//	sampleDesc,
-	//	true,
-	//	true,
-	//	DXGI_FORMAT_R8G8B8A8_UNORM,
-	//	D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	//);
+		m_pipeline3DLine = std::make_unique<DXPipeLine>(
+			m_device,
+			m_rootSignature3D,
+			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
+			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
+			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+			D3D12_FILL_MODE_WIREFRAME,
+			D3D12_CULL_MODE_BACK,
+			sampleDesc,
+			true,
+			true,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+		);
+	}
 
 #ifdef _DEBUG
 	// Create root signature and pipeline for Normal 3D
@@ -571,7 +576,6 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 					const auto& meshlets = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().Meshlets;
 					UINT numMeshlets = static_cast<UINT>(meshlets.size());
-					UINT threadGroupCount = (numMeshlets + 127) / 128;
 					m_commandList->DispatchMesh(numMeshlets, 1, 1);
 				}
 				else
