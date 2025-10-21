@@ -71,6 +71,7 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 | [ImGui](https://github.com/ocornut/imgui) | ➖ | ✅ | ✅ | ✅ |
 | [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) | ➖ | ❌ | ❌ | ✅ |
 | Compute Shader | ➖ | ❌ | ❌ | ✅ |
+| Mesh Shader | ➖ | ❌ | ❌ | ✅ |
 | **Optimization Techniques** | | | | |
 | MSAA | ➖ | ✅ | ✅ | ✅ |
 | Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit)) | ✅ | ➖ | ➖ | ➖ |
