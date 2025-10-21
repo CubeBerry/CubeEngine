@@ -1022,10 +1022,15 @@ void RenderManager::RenderingControllerForImGui()
 	{
 		renderManager->SetPolygonType(PolygonType::LINE);
 	}
+	ImGui::Spacing();
+	bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
+	if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
+	{
+		m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
+	}
 #ifdef _DEBUG
 	ImGui::Spacing();
-	ImGui::Checkbox("DrawNormals", &isDrawNormals);
-	renderManager->DrawNormals(isDrawNormals);
+	ImGui::Checkbox("Normal Vector Visualization", &m_normalVectorVisualization);
 #endif
 
 	ImGui::End();

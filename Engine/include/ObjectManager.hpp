@@ -86,10 +86,6 @@ public:
     }
 
     void ProcessFunctionQueue();
-
-#ifdef _DEBUG
-    void SetIsDrawNormals(bool draw) { isDrawNormals = draw; };
-#endif
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
     void SpriteControllerForImGui(Sprite* sprite);
@@ -116,9 +112,6 @@ private:
     int slices = 2;
     float metallic = 0.3f;
     float roughness = 0.3f;
-#ifdef _DEBUG
-    bool isDrawNormals{ false };
-#endif
 
     std::vector<std::function<void()>> functionQueue;
     //For ObjectController

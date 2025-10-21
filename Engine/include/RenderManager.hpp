@@ -324,10 +324,6 @@ public:
 	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; };
 	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; };
 
-#ifdef _DEBUG
-	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
-#endif
-
 	void RenderingControllerForImGui();
 
 	//Skybox
@@ -368,7 +364,7 @@ protected:
 	std::vector<ThreeDimension::PointLightUniform> pointLightUniforms;
 
 #ifdef _DEBUG
-	bool isDrawNormals{ false };
+	bool m_normalVectorVisualization{ false };
 #endif
 
 	//Assimp
@@ -379,6 +375,7 @@ protected:
 
 	// Mesh Shader
 	bool m_useMeshShader{ false };
+	unsigned int m_meshletVisualization{ 0 };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp

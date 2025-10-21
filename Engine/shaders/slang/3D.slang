@@ -23,8 +23,9 @@ struct VSOutput
     int tex_sub_index : TEXCOORD1;
     // Lighting
     float3 normal : NORMAL0;
-    float3 fragmentPosition : LIGHT0;
-    float3 viewPosition : LIGHT1;
+    float3 fragmentPosition : TEXCOORD2;
+    float3 viewPosition : TEXCOORD3;
+    bool meshletVisualization : TEXCOORD4;
 };
 
 struct vMatrix
@@ -82,6 +83,7 @@ StructuredBuffer<VSInput> uniqueVertices : register(t8);
 StructuredBuffer<Meshlet> meshlets : register(t9);
 StructuredBuffer<uint> uniqueVertexIndices : register(t10);
 StructuredBuffer<uint> primitiveIndices : register(t11);
+uniform uint meshletVisualization : register(b6, space0);
 
 [numthreads(128, 1, 1)]
 [outputtopology("triangle")]
@@ -96,6 +98,7 @@ void meshMain(
     Meshlet meshlet = meshlets[groupID.x];
     SetMeshOutputCounts(meshlet.vertexCount, meshlet.primitiveCount);
 
+    bool meshletVisualizationEnabled = meshletVisualization > 0;
     // MAX_VERTICES_PER_MESHLET == 64, MAX_PRIMITIVES_PER_MESHLET == 128
     if (groupThreadID < meshlet.vertexCount)
     {
@@ -109,20 +112,24 @@ void meshMain(
         float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
 
         verts[groupThreadID].uv = input.uv;
-        verts[groupThreadID].color = matrix.color;
-        // Mesh Shader Debug Color
-        // uint hash = groupID.x;
-        // hash = (hash ^ 61) ^ (hash >> 16);
-        // hash = hash + (hash << 3);
-        // hash = hash ^ (hash >> 4);
-        // hash = hash * 0x27d4eb2d;
-        // hash = hash ^ (hash >> 15);
-        // float3 debugColor = float3(
-        //     float(hash & 0xFF) / 255.0f,
-        //     float((hash >> 8) & 0xFF) / 255.0f,
-        //     float((hash >> 16) & 0xFF) / 255.0f
-        // );
-        // verts[groupThreadID].color = float4(debugColor, 1.0f);
+        verts[groupThreadID].meshletVisualization = meshletVisualizationEnabled;
+        if (meshletVisualizationEnabled)
+        {
+            // Mesh Shader Debug Color
+            uint hash = groupID.x;
+            hash = (hash ^ 61) ^ (hash >> 16);
+            hash = hash + (hash << 3);
+            hash = hash ^ (hash >> 4);
+            hash = hash * 0x27d4eb2d;
+            hash = hash ^ (hash >> 15);
+            float3 debugColor = float3(
+                float(hash & 0xFF) / 255.0f,
+                float((hash >> 8) & 0xFF) / 255.0f,
+                float((hash >> 16) & 0xFF) / 255.0f
+            );
+            verts[groupThreadID].color = float4(debugColor, 1.0f);
+        }
+        else verts[groupThreadID].color = matrix.color;
         verts[groupThreadID].tex_sub_index = input.tex_sub_index;
 
         // Lighting
@@ -474,8 +481,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 
     // PBR Result Color
-    return float4(resultColor, 1.0);
+    // return float4(resultColor, 1.0);
 
     // Mesh Shader Debug Color
-    // return float4(input.color.rgb, 1.0);
+    return input.meshletVisualization ? float4(input.color.rgb, 1.0) : float4(resultColor, 1.0);
 }

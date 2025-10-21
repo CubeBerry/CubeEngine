@@ -200,7 +200,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Create root signature and pipeline for 3D
 	rootParameters.clear();
-	rootParameters.resize(m_useMeshShader ? 12 : 8, {});
+	rootParameters.resize(m_useMeshShader ? 13 : 8, {});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -216,11 +216,13 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	if (m_useMeshShader)
 	{
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
 		// ThreeDimension::QuantizedVertex data is transfer via SRV
 		rootParameters[8].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		rootParameters[9].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		rootParameters[10].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		rootParameters[11].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[12].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
 	}
 
 	CreateRootSignature(m_rootSignature3D, rootParameters);
@@ -573,6 +575,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_commandList->SetGraphicsRootShaderResourceView(9, buffer.meshletBuffer->GetGPUVirtualAddress());
 					m_commandList->SetGraphicsRootShaderResourceView(10, buffer.uniqueVertexIndexBuffer->GetGPUVirtualAddress());
 					m_commandList->SetGraphicsRootShaderResourceView(11, buffer.primitiveIndexBuffer->GetGPUVirtualAddress());
+					m_commandList->SetGraphicsRoot32BitConstants(12, 1, &m_meshletVisualization, 0);
 
 					const auto& meshlets = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().Meshlets;
 					UINT numMeshlets = static_cast<UINT>(meshlets.size());
@@ -626,7 +629,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				}
 
 #ifdef _DEBUG
-				if (isDrawNormals)
+				if (m_normalVectorVisualization)
 				{
 					m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
 					m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());

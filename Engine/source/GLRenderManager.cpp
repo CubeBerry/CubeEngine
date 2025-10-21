@@ -184,7 +184,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 				//	glNormal3DShader.Use(false);
 				//}
 
-				if (isDrawNormals)
+				if (m_normalVectorVisualization)
 				{
 					glNormal3DShader.Use(true);
 
