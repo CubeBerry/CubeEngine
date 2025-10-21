@@ -943,9 +943,9 @@ void RenderManager::RenderingControllerForImGui()
 	RenderManager* renderManager = Engine::GetRenderManager();
 	ImGui::Begin("RenderingController");
 
-	// FidelityFX
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
+		// FidelityFX
 		auto currentEffect = m_fidelityFX->GetCurrentEffect();
 		FfxFsr1QualityMode currentFsrMode = m_fidelityFX->GetFSR1QualityMode();
 		FidelityFX::CASScalePreset currentCasScalePreset = m_fidelityFX->GetSCASScalePreset();
@@ -1011,6 +1011,15 @@ void RenderManager::RenderingControllerForImGui()
 			// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
 			if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
 		}
+
+		// Meshlet Visualization
+		// Currently only works with DX graphics mode
+		ImGui::Spacing();
+		bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
+		if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
+		{
+			m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
+		}
 	}
 	ImGui::Spacing();
 	if (ImGui::Button("FILL", ImVec2(100, 0)))
@@ -1021,12 +1030,6 @@ void RenderManager::RenderingControllerForImGui()
 	if (ImGui::Button("LINE", ImVec2(100, 0)))
 	{
 		renderManager->SetPolygonType(PolygonType::LINE);
-	}
-	ImGui::Spacing();
-	bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
-	if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
-	{
-		m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
 	}
 #ifdef _DEBUG
 	ImGui::Spacing();
