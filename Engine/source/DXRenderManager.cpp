@@ -623,36 +623,36 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
 
 					m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh->GetIndices().size()), 1, 0, 0, 0);
+				}
 
 #ifdef _DEBUG
-					if (isDrawNormals)
+				if (isDrawNormals)
+				{
+					m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
+					m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
+					m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+					auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
+					m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
+
+					D3D12_VERTEX_BUFFER_VIEW nvbv = subMesh->GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer->GetView();
+					m_commandList->IASetVertexBuffers(0, 1, &nvbv);
+
+					m_commandList->DrawInstanced(static_cast<UINT>(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+
+					switch (pMode)
 					{
-						m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
-						m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
-						m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-						auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-						glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-						m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
-
-						vbv = buffer.normalVertexBuffer->GetView();
-						m_commandList->IASetVertexBuffers(0, 1, &vbv);
-
-						m_commandList->DrawInstanced(static_cast<UINT>(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
-
-						switch (pMode)
-						{
-						case PolygonType::FILL:
-							m_commandList->SetPipelineState(m_pipeline3D->GetPipelineState().Get());
-							break;
-						case PolygonType::LINE:
-							m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
-							break;
-						}
-						m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
+					case PolygonType::FILL:
+						m_commandList->SetPipelineState(m_useMeshShader ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
+						break;
+					case PolygonType::LINE:
+						m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
+						break;
 					}
-#endif
+					m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
 				}
+#endif
 			}
 		}
 
