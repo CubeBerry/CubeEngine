@@ -110,6 +110,19 @@ void meshMain(
 
         verts[groupThreadID].uv = input.uv;
         verts[groupThreadID].color = matrix.color;
+        // Mesh Shader Debug Color
+        // uint hash = groupID.x;
+        // hash = (hash ^ 61) ^ (hash >> 16);
+        // hash = hash + (hash << 3);
+        // hash = hash ^ (hash >> 4);
+        // hash = hash * 0x27d4eb2d;
+        // hash = hash ^ (hash >> 15);
+        // float3 debugColor = float3(
+        //     float(hash & 0xFF) / 255.0f,
+        //     float((hash >> 8) & 0xFF) / 255.0f,
+        //     float((hash >> 16) & 0xFF) / 255.0f
+        // );
+        // verts[groupThreadID].color = float4(debugColor, 1.0f);
         verts[groupThreadID].tex_sub_index = input.tex_sub_index;
 
         // Lighting
@@ -462,4 +475,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
 
     // PBR Result Color
     return float4(resultColor, 1.0);
+
+    // Mesh Shader Debug Color
+    // return float4(input.color.rgb, 1.0);
 }
