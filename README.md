@@ -50,6 +50,11 @@ slangc Skybox.slang -profile sm_5_1 -entry vertexMain -stage vertex -target hlsl
 slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target hlsl -o Skybox.frag.hlsl -D__hlsl__
 ```
 
+## How to Compile HLSL (High-Level Shader Language) to DXIL (DirectX Intermediate Language)
+```
+dxc 3D.frag.hlsl -T ps_6_5 -E fragmentMain -Fo 3D.frag.cso
+```
+
 * **Legend:** ✅: Implemented / ❌: Not Supported / ➖: Not Applicable
 
 | Feature | Engine Core (CPU) | OpenGL | Vulkan | DirectX 12 |
