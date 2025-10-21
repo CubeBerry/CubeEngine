@@ -8,6 +8,7 @@
 
 using Microsoft::WRL::ComPtr;
 
+// https://gpuopen.com/learn/mesh_shaders/mesh_shaders-optimization_and_best_practices/
 // https://jcgt.org/published/0012/02/01/paper-lowres.pdf
 // https://github.com/Senbyo/meshletmaker
 // 1. NVIDIA Meshlet Builder
