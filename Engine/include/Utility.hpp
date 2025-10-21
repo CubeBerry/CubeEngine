@@ -69,6 +69,7 @@ namespace Utility
 			std::vector<uint32_t>& outPrimitiveIndices,
 			// https://gpuopen.com/learn/mesh_shaders/mesh_shaders-optimization_and_best_practices/
 			// It differs based on GPU, max 128 vertices and 256 primitives are recommended to Radeon
+			// MAX_PRIMITIVES_PER_MESHLET should not bigger than X of numthreads. Also max X of numthreads is 128
 			uint32_t maxVertices = 64, uint32_t maxPrimitives = 128
 		);
 	}
