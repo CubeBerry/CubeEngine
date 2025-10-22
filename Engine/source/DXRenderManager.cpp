@@ -72,7 +72,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 			m_useMeshShader = false;
 			OutputDebugStringA("ERROR: Shader Model 6.5 is not supported\n");
 		}
-		else m_useMeshShader = true;
+		else
+		{
+			m_useMeshShader = true;
+			std::cout << "D3D12 Mesh Shader Enabled\n";
+			OutputDebugStringA("Mesh Shader Enabled\n");
+		}
 	}
 
 #if USE_NSIGHT_AFTERMATH
