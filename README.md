@@ -90,6 +90,8 @@ dxc 3D.frag.hlsl -T ps_6_5 -E fragmentMain -Fo 3D.frag.cso
 
 ![image](https://github.com/user-attachments/assets/4a713821-5f2c-4fe5-81c4-fba9a72dfd67)
 
+<img width="2560" height="1392" alt="image" src="https://github.com/user-attachments/assets/7b40822c-f84d-4f42-ae0a-7a203dc34732" />
+
 ![image](https://github.com/user-attachments/assets/0116de70-4fcc-465d-be30-21321d67ee25)
 
 ![image](https://github.com/user-attachments/assets/e7221576-5010-48b5-8a58-78bd5f197625)
