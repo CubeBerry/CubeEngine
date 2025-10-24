@@ -189,7 +189,7 @@ public:
 		auto srvHandle = bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>().srvHandle;
 		const UINT srvCount = 4;
 
-		const UINT64 queuedFrame = m_fence->GetCompletedValue();
+		const UINT64 queuedFrame = m_fenceValues[m_frameIndex];
 		// shared count == 1
 		auto bufferHolder = std::make_shared<std::unique_ptr<BufferWrapper>>(std::move(bufferWrapper));
 		// shared count == 2
