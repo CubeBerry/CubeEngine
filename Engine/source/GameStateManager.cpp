@@ -72,6 +72,7 @@ void GameStateManager::Update(float dt)
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
 		Engine::GetRenderManager()->ProcessFunctionQueue();
+		Engine::GetParticleManager().ProcessParticleDeleteQueue();
 		//Mouse Input X if order is opposite
 		break;
 	case State::PAUSE:
@@ -79,6 +80,7 @@ void GameStateManager::Update(float dt)
 		UpdateDraw(0.f);
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::GetObjectManager().DeleteObjectsFromList();
+		Engine::GetParticleManager().ProcessParticleDeleteQueue();
 		break;
 	case State::CHANGE:
 		// @TODO temporary function to clear all textures

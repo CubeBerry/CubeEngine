@@ -7,6 +7,7 @@
 ParticleManager::~ParticleManager()
 {
 	Clear();
+	index.clear();
 }
 
 void ParticleManager::AddRandomParticle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float angle_, float lifeTime, int particleAmount, glm::vec4 color_, ParticleType type, std::string spriteName_, bool isFade)
@@ -40,6 +41,16 @@ void ParticleManager::AddSingleFadeOutParticle(glm::vec3 position_, glm::vec3 si
 	GetLastParticle()->SetFadeOutAmount(decreaseAmount);
 }
 
+void ParticleManager::ProcessParticleDeleteQueue()
+{
+	for(auto i : index)
+	{
+		delete (particles.begin() + i)->GetSprite();
+		particles.erase(particles.begin() + i);
+	}
+	index.clear();
+}
+
 void ParticleManager::Update(float dt)
 {
 	for (int i = 0; i < particles.size(); i++)
@@ -50,8 +61,7 @@ void ParticleManager::Update(float dt)
 		}
 		else
 		{
-			delete (particles.begin() + i)->GetSprite();
-			particles.erase(particles.begin() + i);
+			index.push_back(i);
 		}
 	}
 }

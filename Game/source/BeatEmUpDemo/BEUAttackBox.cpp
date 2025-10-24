@@ -18,8 +18,8 @@ BEUAttackBox::BEUAttackBox(glm::vec3 offset_, glm::vec3 size_, std::string name,
 	GetComponent<Physics2D>()->AddCollidePolygonAABB(size_ / 2.f);
 	GetComponent<Physics2D>()->SetIsGhostCollision(true);
 
-	AddComponent<Sprite>();
-	GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.f });
+	//AddComponent<Sprite>();
+	//GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.f });
 	parent = parent_;
 	lifeTime = lifeTime_;
 	offset = offset_;
