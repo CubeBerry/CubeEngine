@@ -11,6 +11,8 @@
 #include "DXPipeLine.hpp"
 
 #include <filesystem>
+#include <functional>
+#include <array>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -25,10 +27,11 @@ class DXSkybox
 public:
 	DXSkybox(const ComPtr<ID3D12Device>& device,
 		const ComPtr<ID3D12CommandQueue>& commandQueue,
-		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
-		const UINT& srvHeapStartOffset);
+		const ComPtr<ID3D12DescriptorHeap>& srvHeap);
 	~DXSkybox();
-	void Initialize(const std::filesystem::path& path);
+	void Initialize(const std::filesystem::path& path,
+		const std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5>& srvHandles,
+		std::function<void(UINT)> deallocator);
 	void ExecuteCommandList();
 
 	void EquirectangularToCube();
@@ -36,34 +39,34 @@ public:
 	void PrefilteredEnvironmentMap();
 	void BRDFLUT();
 
-	D3D12_GPU_DESCRIPTOR_HANDLE GetEquirectangularSrv()
+	D3D12_GPU_DESCRIPTOR_HANDLE GetEquirectangularSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
+		handle.Offset(m_srvHandles[0].second, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetCubemapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
+		handle.Offset(m_srvHandles[1].second, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetIrradianceMapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 2, m_srvDescriptorSize);
+		handle.Offset(m_srvHandles[2].second, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetPrefilterMapSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 3, m_srvDescriptorSize);
+		handle.Offset(m_srvHandles[3].second, m_srvDescriptorSize);
 		return handle;
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetBrdfLutSrv() const
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-		handle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 4, m_srvDescriptorSize);
+		handle.Offset(m_srvHandles[4].second, m_srvDescriptorSize);
 		return handle;
 	}
 private:
@@ -86,6 +89,9 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 	UINT m_srvHeapStartOffset;
 	UINT m_srvDescriptorSize;
+
+	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5> m_srvHandles;
+	std::function<void(UINT)> m_deallocator;
 
 	ComPtr<ID3D12Resource> m_cubemap;
 	ComPtr<ID3D12Resource> m_irradianceMap;

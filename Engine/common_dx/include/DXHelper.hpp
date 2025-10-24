@@ -4,6 +4,8 @@
 #pragma once
 #include <directx/d3dx12.h>
 #include <stdexcept>
+#include <filesystem>
+#include <fstream>
 
 #include "DebugTools.hpp"
 
@@ -105,19 +107,20 @@ namespace DXHelper
         }
     }
 
-    //inline std::vector<char> ReadShaderFile(const std::filesystem::path& path)
-    //{
-    //    std::ifstream shaderData(path, std::ios::in | std::ios::binary);
-    //    if (!shaderData.is_open())
-    //        throw std::runtime_error{ "File Does Not Exist" };
+    // Read in precompiled shader
+    inline std::vector<char> ReadShaderFile(const std::filesystem::path& path)
+    {
+        std::ifstream shaderData(path, std::ios::in | std::ios::binary);
+        if (!shaderData.is_open())
+            throw std::runtime_error{ "File Does Not Exist" };
 
-    //    shaderData.seekg(0, std::ios::end);
-    //    size_t fileSize = shaderData.tellg();
-    //    shaderData.seekg(0);
-    //    std::vector<char> shaderCode(fileSize / sizeof(char));
-    //    shaderData.read(reinterpret_cast<char*>(shaderCode.data()), fileSize);
-    //    shaderData.close();
+        shaderData.seekg(0, std::ios::end);
+        size_t fileSize = shaderData.tellg();
+        shaderData.seekg(0);
+        std::vector<char> shaderCode(fileSize / sizeof(char));
+        shaderData.read(reinterpret_cast<char*>(shaderCode.data()), fileSize);
+        shaderData.close();
 
-    //    return shaderCode;
-    //}
+        return shaderCode;
+    }
 }

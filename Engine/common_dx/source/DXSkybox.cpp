@@ -10,8 +10,7 @@
 
 DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	const ComPtr<ID3D12CommandQueue>& commandQueue,
-	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
-	const UINT& srvHeapStartOffset) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap), m_srvHeapStartOffset(srvHeapStartOffset)
+	const ComPtr<ID3D12DescriptorHeap>& srvHeap) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap)
 {
 	std::wstring targetName{ L"Skybox Texture" };
 	DXHelper::CreateFenceSet(m_device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
@@ -24,13 +23,23 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	m_srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_srvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(glm::vec3)), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
 }
 
 DXSkybox::~DXSkybox()
 {
+	if (m_deallocator)
+	{
+		// index 0 will deallocate when m_equirectangularMap is deleted
+		// Deallocate Cubemap, Irradiance, Prefilter, BRDF LUT
+		for (int i = 1; i < 5; ++i)
+		{
+			m_deallocator(m_srvHandles[i].second);
+		}
+	}
+
 	//m_commandQueue->Signal(m_fence.Get(), m_fenceValue);
 	//HRESULT hr = m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent);
 	//if (FAILED(hr))
@@ -41,15 +50,19 @@ DXSkybox::~DXSkybox()
 	//CloseHandle(m_fenceEvent);
 }
 
-void DXSkybox::Initialize(const std::filesystem::path& path)
+void DXSkybox::Initialize(const std::filesystem::path& path,
+	const std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5>& srvHandles,
+	std::function<void(UINT)> deallocator)
 {
+	m_srvHandles = srvHandles;
+	m_deallocator = std::move(deallocator);
+
 	m_equirectangularMap = std::make_unique<DXTexture>();
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 	// Store equirectangular texture in srvHeap index 0
-	m_equirectangularMap->LoadTexture(m_device, m_commandList, m_srvHeap, m_commandQueue, m_fence, m_fenceEvent, static_cast<UINT>(m_srvHeapStartOffset), true, path, "equirectangular", true);
+	m_equirectangularMap->LoadTexture(m_device, m_commandList, m_commandQueue, srvHandles[0], m_deallocator, m_fence, m_fenceEvent, true, path, "Equirectangular", true);
 	faceSize = m_equirectangularMap->GetHeight();
 
-	// @TODO Fix Exception thrown when running through RenderDoc or on iGPU
 	EquirectangularToCube();
 	CalculateIrradiance();
 	PrefilteredEnvironmentMap();
@@ -177,7 +190,7 @@ void DXSkybox::EquirectangularToCube()
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE equirectangularSrvHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-	equirectangularSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset), m_srvDescriptorSize);
+	equirectangularSrvHandle.Offset(m_srvHandles[0].second, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, equirectangularSrvHandle);
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
@@ -211,14 +224,13 @@ void DXSkybox::EquirectangularToCube()
 	ExecuteCommandList();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.TextureCube.MipLevels = 1;
 
-	// Store Cubemap texture in srvHeap index 1
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
-	m_device->CreateShaderResourceView(m_cubemap.Get(), &srvDesc, srvHandle);
+	// Store Cubemap texture in second array of m_srvDescriptorIndices offset
+	m_device->CreateShaderResourceView(m_cubemap.Get(), &srvDesc, m_srvHandles[1].first);
 }
 
 void DXSkybox::CalculateIrradiance()
@@ -329,7 +341,7 @@ void DXSkybox::CalculateIrradiance()
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvHandle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
+	cubemapSrvHandle.Offset(m_srvHandles[1].second, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
 
 	//DXConstantBuffer<WorldToNDC> matrixConstantBuffer(m_device, 1);
@@ -363,14 +375,13 @@ void DXSkybox::CalculateIrradiance()
 	ExecuteCommandList();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.TextureCube.MipLevels = 1;
 
-	// Store Irradiance texture in srvHeap index 2
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 2, m_srvDescriptorSize);
-	m_device->CreateShaderResourceView(m_irradianceMap.Get(), &srvDesc, srvHandle);
+	// Store Irradiance texture in third array of m_srvDescriptorIndices offset
+	m_device->CreateShaderResourceView(m_irradianceMap.Get(), &srvDesc, m_srvHandles[2].first);
 }
 
 void DXSkybox::PrefilteredEnvironmentMap()
@@ -465,7 +476,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE cubemapSrvHandle{ m_srvHeap->GetGPUDescriptorHandleForHeapStart() };
-	cubemapSrvHandle.Offset(static_cast<INT>(m_srvHeapStartOffset) + 1, m_srvDescriptorSize);
+	cubemapSrvHandle.Offset(m_srvHandles[1].second, m_srvDescriptorSize);
 	m_commandList->SetGraphicsRootDescriptorTable(1, cubemapSrvHandle);
 
 	DXConstantBuffer<float>roughnessConstantBuffer(m_device, 1);
@@ -520,16 +531,15 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	ExecuteCommandList();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = mipLevels;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 
-	// Store Prefilter texture in srvHeap index 3
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 3, m_srvDescriptorSize);
-	m_device->CreateShaderResourceView(m_prefilterMap.Get(), &srvDesc, srvHandle);
+	// Store Prefilter texture in fourth array of m_srvDescriptorIndices offset
+	m_device->CreateShaderResourceView(m_prefilterMap.Get(), &srvDesc, m_srvHandles[3].first);
 }
 
 void DXSkybox::BRDFLUT()
@@ -624,13 +634,12 @@ void DXSkybox::BRDFLUT()
 	ExecuteCommandList();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = texDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
 
-	// Store BRDF LUT texture in srvHeap index 4
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<UINT>(m_srvHeapStartOffset) + 4, m_srvDescriptorSize);
-	m_device->CreateShaderResourceView(m_brdfLUT.Get(), &srvDesc, srvHandle);
+	// Store BRDF LUT texture in fifth array of m_srvDescriptorIndices offset
+	m_device->CreateShaderResourceView(m_brdfLUT.Get(), &srvDesc, m_srvHandles[4].first);
 }

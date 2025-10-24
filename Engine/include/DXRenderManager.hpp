@@ -12,6 +12,7 @@
 #endif
 
 #include "DXPipeLine.hpp"
+#include "DXMeshPipeLine.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
@@ -65,11 +66,18 @@ private:
 		}
 	} reporter;
 
+	// Descriptor Start Index, Block Size
+	std::map<UINT, UINT> m_availableSrvBlocks;
+	// SRV Handle, Descriptor Index
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvHandles(const UINT& count = 1);
+	//void DeallocateSrvBlock(UINT startIndex, UINT count);
+	std::string LogSrvBlocks();
+
 	static constexpr UINT frameCount = 2;
 
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
-	ComPtr<ID3D12Device> m_device;
+	ComPtr<ID3D12Device2> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
 	// This is required for FidelityFX CAS Upscaling
 	ComPtr<ID3D12Resource> m_lowResRenderTarget;
@@ -81,10 +89,10 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-	ComPtr<ID3D12GraphicsCommandList> m_commandList;
+	ComPtr<ID3D12GraphicsCommandList6> m_commandList;
 
 	UINT m_rtvDescriptorSize{ 0 };
-	//UINT m_srvDescriptorSize{ 0 };
+	UINT m_srvDescriptorSize{ 0 };
 
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };
@@ -93,6 +101,7 @@ private:
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
 	std::unique_ptr<DXPipeLine> m_pipeline3D;
+	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
 	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
 #ifdef _DEBUG
 	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
@@ -120,6 +129,9 @@ private:
 public:
 	//--------------------Common--------------------//
 	void ClearTextures() override;
+	
+	// @TODO Should this function in public due to deallocating srv block in BufferWrapper's destructor?
+	void DeallocateSrvBlock(UINT startIndex, UINT count);
 
 	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
@@ -145,6 +157,26 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::VertexUniform>>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
+
+			if (m_useMeshShader)
+			{
+				auto& bufferData3D = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>();
+				auto& buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+
+				buffer.srvHandle = AllocateSrvHandles(4);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexSrvHandle(buffer.srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer.uniqueVertexBuffer = std::make_unique<DXStructuredBuffer<ThreeDimension::QuantizedVertex>>(m_device, m_commandQueue, vertices, uniqueVertexSrvHandle);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE meshletSrvHandle(buffer.srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer.meshletBuffer = std::make_unique<DXStructuredBuffer<Meshlet::Meshlet>>(m_device, m_commandQueue, bufferData3D.Meshlets, meshletSrvHandle);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexIndexSrvHandle(buffer.srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer.uniqueVertexIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.UniqueVertexIndices, uniqueVertexIndexSrvHandle);
+
+				CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer.srvHandle.first, 3, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer.primitiveIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.PrimitiveIndices, primitiveIndexSrvHandle);
+			}
 		}
 	}
 
@@ -154,14 +186,18 @@ public:
 	{
 		if (!bufferWrapper) return;
 
+		auto srvHandle = bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>().srvHandle;
+		const UINT srvCount = 4;
+
 		const UINT64 queuedFrame = m_fence->GetCompletedValue();
 		// shared count == 1
 		auto bufferHolder = std::make_shared<std::unique_ptr<BufferWrapper>>(std::move(bufferWrapper));
 		// shared count == 2
-		QueueDeferredFunction([this, bufferHolder, queuedFrame]() -> bool
+		QueueDeferredFunction([this, bufferHolder, queuedFrame, srvHandle, srvCount]() -> bool
 			{
 				if (queuedFrame <= m_fence->GetCompletedValue())
 				{
+					DeallocateSrvBlock(srvHandle.second, srvCount);
 					return true;
 				}
 				return false;

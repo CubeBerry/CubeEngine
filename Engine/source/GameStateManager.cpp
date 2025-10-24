@@ -86,8 +86,6 @@ void GameStateManager::Update(float dt)
 		levelList.at(static_cast<int>(currentLevel))->End();
 		currentLevel = levelSelected;
 #ifdef _DEBUG
-		Engine::GetRenderManager()->DrawNormals(false);
-		Engine::GetObjectManager().SetIsDrawNormals(false);
 		std::cout << "Level Change" << '\n';
 #endif
 		state = State::LOAD;

@@ -27,6 +27,9 @@ set(ASSIMP_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/assimp/include")
 set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v1.1.4/sdk/include")
 # FidelityFX 2.0
 # set(FFX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/FidelityFX-SDK-v2.0.0")
+# meshoptimizer
+set(MESHOPTIMIZER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/meshoptimizer")
+set(MESHOPTIMIZER_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/libs/meshoptimizer/src")
 # Engine
 set(ENGINE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/source")
 set(ENGINE_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
@@ -44,6 +47,8 @@ add_subdirectory(${VK_DIR})
 add_subdirectory(${DX_DIR})
 # SDL3
 add_subdirectory(${COMMON_LIB_DIR}/SDL3-3.2.16)
+# meshoptimizer
+add_subdirectory(${MESHOPTIMIZER_DIR})
 
 # Compile Settings
 FILE(GLOB DEBUG_TOOLS_SRC
@@ -93,9 +98,11 @@ source_group("Game"             FILES ${GAME_SRC})
 source_group("ImGui"            FILES ${IMGUI_SRC})
 
 # Copy DLL Files
+# glew
 FILE(COPY ./Engine/common_gl/libs/glew/glew32.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
+# SDL3
 FILE(COPY ./Engine/libs/SDL3-3.2.16/SDL3.dll
 DESTINATION ${CMAKE_BINARY_DIR}
 )
@@ -119,6 +126,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs/glew/glew32.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/fmod_vc.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/assimp/assimp-vc143-mtd.lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE meshoptimizer)
 # FidelityFX SDK 1.1.4's .lib files can be acquired by following steps:
 # 1. Move to Engine/libs/FidelityFX-SDK-v1.1.4/sdk
 # 1. Run BuildFidelityFXSDK.bat or BuildFidelityFXSDKSolutionDX12.bat or BuildFidelityFXSDKSolutionVK.bat
@@ -149,3 +157,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${GAME_INC_DIR} ${ASSET_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR} ${COMMON_LIB_DIR}/SDL3-3.2.16/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/libs)
 target_include_directories(${PROJECT_NAME} PRIVATE ${COMMON_LIB_DIR}/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${MESHOPTIMIZER_INC_DIR})

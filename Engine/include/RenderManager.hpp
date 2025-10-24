@@ -8,6 +8,7 @@
 #include <variant>
 #include <functional>
 #include "Material.hpp"
+#include "Utility.hpp"
 #include "Window.hpp"
 
 #include <assimp/Importer.hpp>
@@ -24,6 +25,7 @@
 #include "DXVertexBuffer.hpp"
 #include "DXIndexBuffer.hpp"
 #include "DXConstantBuffer.hpp"
+#include "DXStructuredBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -59,6 +61,11 @@ public:
 		ThreeDimension::VertexUniform vertexUniform;
 		ThreeDimension::FragmentUniform fragmentUniform;
 		ThreeDimension::Material material;
+
+		// Mesh Shader
+		std::vector<Meshlet::Meshlet> Meshlets;
+		std::vector<uint32_t> UniqueVertexIndices;
+		std::vector<uint32_t> PrimitiveIndices;
 	};
 private:
 	struct BufferData
@@ -111,6 +118,12 @@ public:
 		std::unique_ptr<DXVertexBuffer> normalVertexBuffer;
 #endif
 		std::unique_ptr<DXIndexBuffer> indexBuffer;
+
+		std::unique_ptr<DXStructuredBuffer<ThreeDimension::QuantizedVertex>> uniqueVertexBuffer;
+		std::unique_ptr<DXStructuredBuffer<Meshlet::Meshlet>> meshletBuffer;
+		std::unique_ptr<DXStructuredBuffer<uint32_t>> uniqueVertexIndexBuffer;
+		std::unique_ptr<DXStructuredBuffer<uint32_t>> primitiveIndexBuffer;
+		std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> srvHandle;
 	};
 
 	struct DXConstantBuffer2D
@@ -135,7 +148,7 @@ public:
 	{
 		bufferData.classifiedData = std::monostate{};
 	}
-	~BufferWrapper() = default;
+	~BufferWrapper();
 
 	BufferWrapper(const BufferWrapper&) = delete;
 	BufferWrapper& operator=(const BufferWrapper&) = delete;
@@ -311,10 +324,6 @@ public:
 	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; };
 	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; };
 
-#ifdef _DEBUG
-	void DrawNormals(bool isDraw) { this->isDrawNormals = isDraw; };
-#endif
-
 	void RenderingControllerForImGui();
 
 	//Skybox
@@ -355,7 +364,7 @@ protected:
 	std::vector<ThreeDimension::PointLightUniform> pointLightUniforms;
 
 #ifdef _DEBUG
-	bool isDrawNormals{ false };
+	bool m_normalVectorVisualization{ false };
 #endif
 
 	//Assimp
@@ -363,6 +372,10 @@ protected:
 
 	//Skybox
 	bool skyboxEnabled{ false };
+
+	// Mesh Shader
+	bool m_useMeshShader{ false };
+	unsigned int m_meshletVisualization{ 0 };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp

@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
+#include <functional>
 
 using Microsoft::WRL::ComPtr;
 
@@ -15,16 +16,16 @@ class DXTexture
 {
 public:
 	DXTexture() = default;
-	~DXTexture() = default;
+	~DXTexture();
 
 	void LoadTexture(
 		const ComPtr<ID3D12Device>& device,
 		const ComPtr<ID3D12GraphicsCommandList>& commandList,
-		const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 		const ComPtr<ID3D12CommandQueue>& commandQueue,
+		const std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>& srvHandle,
+		std::function<void(UINT)> deallocator,
 		const ComPtr<ID3D12Fence>& fence,
 		const HANDLE& fenceEvent,
-		const INT& offsetIndex,
 		bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip);
 	void LoadSkyBox(
 		bool isHDR,
@@ -48,6 +49,9 @@ private:
 	int width, height;
 	int texID;
 	std::string name;
+
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> m_srvHandle;
+	std::function<void(UINT)> m_deallocator;
 
 	void FlipTextureHorizontally(uint8_t* src, int width_, int height_, int numComponents) const
 	{

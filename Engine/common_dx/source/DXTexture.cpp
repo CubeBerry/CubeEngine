@@ -7,16 +7,27 @@
 
 #include "stb-master/stb_image.h"
 
+DXTexture::~DXTexture()
+{
+	if (m_deallocator)
+	{
+		m_deallocator(m_srvHandle.second);
+	}
+}
+
 void DXTexture::LoadTexture(
 	const ComPtr<ID3D12Device>& device,
 	const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	const ComPtr<ID3D12DescriptorHeap>& srvHeap,
 	const ComPtr<ID3D12CommandQueue>& commandQueue,
+	const std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>& srvHandle,
+	std::function<void(UINT)> deallocator,
 	const ComPtr<ID3D12Fence>& fence,
 	const HANDLE& fenceEvent,
-	const INT& offsetIndex,
 	bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip)
 {
+	m_srvHandle = srvHandle;
+	m_deallocator = std::move(deallocator);
+
 	name = name_;
 
 	if (flip) stbi_set_flip_vertically_on_load(true);
@@ -89,15 +100,12 @@ void DXTexture::LoadTexture(
 		commandList->ResourceBarrier(1, &barrier);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = isHDR ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_R8G8B8A8_UNORM;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Texture2D.MipLevels = 1;
 
-		UINT descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(srvHeap->GetCPUDescriptorHandleForHeapStart(), offsetIndex, descriptorSize);
-
-		device->CreateShaderResourceView(m_texture.Get(), &srvDesc, srvHandle);
+		device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHandle.first);
 	}
 
 	DXHelper::ThrowIfFailed(commandList->Close());

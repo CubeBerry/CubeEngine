@@ -19,5 +19,5 @@ void computeMain(uint3 dispatchThreadID : SV_DispatchThreadID)
     // float4 invertedColor = float4(1.f - originalColor.rgb, 1.f);
     // g_output[dispatchThreadID.xy] = invertedColor;
 
-    g_output[dispatchThreadID.xy] = float4(1.f,0.f,0.f,1.f);
+    g_output[dispatchThreadID.xy] = float4(1.f, 0.f, 0.f, 1.f);
 }

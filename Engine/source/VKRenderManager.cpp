@@ -994,7 +994,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(subMesh->GetIndices().size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
-				if (isDrawNormals)
+				if (m_normalVectorVisualization)
 				{
 					VkBuffer* normalVertexBuffer = buffer.normalVertexBuffer->GetVertexBuffer();
 					//Bind Pipeline
