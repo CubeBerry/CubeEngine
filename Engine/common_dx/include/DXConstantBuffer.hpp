@@ -57,6 +57,7 @@ DXConstantBuffer<Type>::DXConstantBuffer(const ComPtr<ID3D12Device>& device, con
 		nullptr,
 		IID_PPV_ARGS(&m_constantBuffer)
 	));
+	m_constantBuffer->SetName(L"Constant Buffer");
 
 	CD3DX12_RANGE readRange(0, 0);
 	DXHelper::ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedData)));

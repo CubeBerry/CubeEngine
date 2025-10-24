@@ -76,6 +76,7 @@ void DXRenderTarget::CreateColorResources(int width, int height)
 		&msaaClearValue,
 		IID_PPV_ARGS(&m_msaaRenderTarget)
 	));
+	m_msaaRenderTarget->SetName(L"MSAA Render Target View");
 
 	m_device->CreateRenderTargetView(m_msaaRenderTarget.Get(), nullptr, m_msaaRtvHeap->GetCPUDescriptorHandleForHeapStart());
 }
@@ -112,7 +113,7 @@ void DXRenderTarget::CreateDepthBuffer(int width, int height)
 		&clearValue,
 		IID_PPV_ARGS(&m_depthStencil)
 	));
-	DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"Depth/Stencil Resource"));
+	DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"Depth/Stencil View"));
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
