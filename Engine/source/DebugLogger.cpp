@@ -22,10 +22,19 @@ DebugLogger::DebugLogger(std::chrono::steady_clock::time_point startTime, Severi
 		localtime_r(&t, &localTm);
 #endif
 
-		std::stringstream ss; ss << "Log_" << std::put_time(&localTm, "%Y-%m-%d_%H-%M-%S") << ".log";
+		std::stringstream ss;
+		ss << "Log_" << std::put_time(&localTm, "%Y-%m-%d_%H-%M-%S") << ".csv";
 		std::string filename = ss.str();
 
 		outStream.open(filename);
+
+		// Add a header (column titles) to the first line of the .csv file
+		if (outStream.is_open())
+		{
+			outStream << "Timestamp,Severity,Category,Message\n";
+			outStream.flush();
+		}
+
 		std::cout << "Saving logs to '" << filename << "'" << std::endl;
 	}
 	else
@@ -50,6 +59,7 @@ void DebugLogger::LogEvent(LogCategory category, std::string text)
 	Log(Severity::Event, category, text);
 }
 
+
 void DebugLogger::LogDebug(LogCategory category, std::string text)
 {
 	Log(Severity::Debug, category, text);
@@ -64,35 +74,59 @@ void DebugLogger::Log(Severity severity, LogCategory category, std::string displ
 {
 	std::lock_guard<std::mutex> lock(logMutex);
 
-	if (severity >= minLevel)
+	if (severity < minLevel)
 	{
-		auto const now = std::chrono::system_clock::now();
-		auto const now_t = std::chrono::system_clock::to_time_t(now);
-		auto const ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+		return;
+	}
 
-		std::tm localTm;
+	// Get current time information
+	auto const now = std::chrono::system_clock::now();
+	auto const now_t = std::chrono::system_clock::to_time_t(now);
+	auto const ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+	std::tm localTm;
 #ifdef _WIN32
-		localtime_s(&localTm, &now_t);
+	localtime_s(&localTm, &now_t);
 #else
-		localtime_r(&now_t, &localTm);
+	localtime_r(&now_t, &localTm);
 #endif
-		std::stringstream ss;
-		ss << '[' << std::put_time(&localTm, "%H:%M:%S");
-		ss << '.' << std::setw(3) << std::setfill('0') << ms.count() << "]\t";
-		ss << '[' << SeverityToString(severity) << "]\t";
-		ss << '[' << CategoryToString(category) << "]\t";
-		ss << displayText << '\n';
 
-		std::string logMessage = ss.str();
+	std::stringstream ss_timestamp;
+	ss_timestamp << std::put_time(&localTm, "%H:%M:%S");
+	ss_timestamp << '.' << std::setw(3) << std::setfill('0') << ms.count();
+	std::string timestampStr = ss_timestamp.str();
 
-		std::cout << logMessage;
-		std::cout.flush();
+	std::stringstream ss_console;
+	ss_console << '[' << timestampStr << "]\t";
+	ss_console << '[' << SeverityToString(severity) << "]\t";
+	ss_console << '[' << CategoryToString(category) << "]\t";
+	ss_console << displayText << '\n';
 
-		if (outStream.rdbuf() != std::cout.rdbuf() && outStream.is_open())
+	std::string consoleMessage = ss_console.str();
+	std::cout << consoleMessage;
+	std::cout.flush();
+
+	if (outStream.rdbuf() != std::cout.rdbuf() && outStream.is_open())
+	{
+		// Escape double quotes (") with two double quotes ("") for CSV standard
+		std::string escapedMessage = displayText;
+		size_t pos = escapedMessage.find('"');
+		while (pos != std::string::npos)
 		{
-			outStream << logMessage;
-			outStream.flush();
+			escapedMessage.replace(pos, 1, "\"\"");
+			pos = escapedMessage.find('"', pos + 2);
 		}
+
+		// Create CSV format string (comma-separated)
+		std::stringstream ss_csv;
+		ss_csv << timestampStr << ",";
+		ss_csv << SeverityToString(severity) << ",";
+		ss_csv << CategoryToString(category) << ",";
+		// Enclose the entire message in double quotes in case it contains commas
+		ss_csv << '"' << escapedMessage << '"' << '\n';
+
+		outStream << ss_csv.str();
+		outStream.flush();
 	}
 }
 
@@ -125,23 +159,23 @@ const char* DebugLogger::CategoryToString(LogCategory category)
 {
 	switch (category)
 	{
-	case LogCategory::Engine:     
+	case LogCategory::Engine:
 		return "Engine";
-	case LogCategory::Graphic: 
+	case LogCategory::Graphic:
 		return "Graphic";
 	case LogCategory::Level:
 		return "Level";
 	case LogCategory::Object:
 		return "Object";
-	case LogCategory::Physics:  
+	case LogCategory::Physics:
 		return "Physics";
-	case LogCategory::Sound:    
+	case LogCategory::Sound:
 		return "Sound";
-	case LogCategory::Game:     
+	case LogCategory::Game:
 		return "Game";
-	case LogCategory::Editor:   
+	case LogCategory::Editor:
 		return "Editor";
-	default:                    
+	default:
 		return "Unknown";
 	}
 }
