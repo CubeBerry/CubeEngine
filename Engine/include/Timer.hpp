@@ -23,7 +23,7 @@ enum class FrameRate
 class Timer
 {
 public:
-	void Init(FrameRate rate = FrameRate::FPS_60)
+	std::chrono::steady_clock::time_point Init(FrameRate rate = FrameRate::FPS_60)
 	{
 		frame = rate;
 		timeStamp = clock::now();
@@ -41,6 +41,8 @@ public:
 
 		currentFps = 0.0f;
 		ResetHistory();
+
+		return timeStamp;
 	}
 
 	void Update() { timeStamp = clock::now(); }

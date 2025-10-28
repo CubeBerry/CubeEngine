@@ -45,6 +45,7 @@ void SoundManager::Initialize(int maxChannel)
 		channels.push_back(std::move(channel));
 		channels.back().channel->setVolume(channels.back().soundVolume);
 	}
+	Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Sound Manager Initialized!");
 }
 
 void SoundManager::Update()
@@ -397,7 +398,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 			if (extension == "wav")
 			{
 #ifdef _DEBUG
-				std::cout << "Load Sound Complete : " << fileName << '\n';
+				Engine::GetDebugLogger().LogDebug(LogCategory::Sound, "Load Sound Complete : " + fileName);
 #endif
 				LoadFile(filePath, fileName);
 			}
@@ -433,7 +434,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::wstring& folderPath)
 
 			if (extension == L"mp3" || extension == L"ogg")
 			{
-				std::cout << "Load Music Complete : " << ConvertWideStringToUTF8(fileName).c_str() << '\n';
+				Engine::GetDebugLogger().LogDebug(LogCategory::Sound, "Load Music Complete : " + ConvertWideStringToUTF8(fileName));
 				LoadFile(filePath, fileName);
 			}
 

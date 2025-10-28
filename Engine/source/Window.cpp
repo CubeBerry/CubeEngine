@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: Window.cpp
 #include "Window.hpp"
+#include "Engine.hpp"
 #include "glew/glew.h"
 #include <Windows.h>
 
@@ -78,7 +79,8 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 			break;
 		}
 		SetMainWindowTitle(title);
-		std::cout << "Create Window Successful" << '\n';
+
+		Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Window Created!");
 	}
 }
 

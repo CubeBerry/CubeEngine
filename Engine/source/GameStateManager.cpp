@@ -36,7 +36,7 @@ void GameStateManager::LevelInit(GameLevel currentLevel_)
 	Engine::GetObjectManager().ProcessFunctionQueue();
 	state = State::UPDATE;
 #ifdef _DEBUG
-	std::cout << "Load Complete" << '\n';
+	Engine::GetDebugLogger().LogDebug(LogCategory::Level, "Load Complete : " + *GameLevelTypeEnumToChar(currentLevel));
 #endif
 }
 
@@ -59,11 +59,11 @@ void GameStateManager::Update(float dt)
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
 #ifdef _DEBUG
-		std::cout << "Load Complete" << '\n';
+		Engine::GetDebugLogger().LogDebug(LogCategory::Level, "Load Complete : " + *GameLevelTypeEnumToChar(currentLevel));
 #endif
 		state = State::UPDATE;
 #ifdef _DEBUG
-		std::cout << "Update" << '\n';
+		Engine::GetDebugLogger().LogDebug(LogCategory::Level, "Update");
 #endif
 		break;
 	case State::UPDATE:
@@ -88,7 +88,7 @@ void GameStateManager::Update(float dt)
 		levelList.at(static_cast<int>(currentLevel))->End();
 		currentLevel = levelSelected;
 #ifdef _DEBUG
-		std::cout << "Level Change" << '\n';
+		Engine::GetDebugLogger().LogDebug(LogCategory::Level, "Level Change : " + *GameLevelTypeEnumToChar(currentLevel));
 #endif
 		state = State::LOAD;
 		break;
@@ -96,14 +96,14 @@ void GameStateManager::Update(float dt)
 		LevelEnd();
 		state = State::LOAD;
 #ifdef _DEBUG
-		std::cout << "Level Restart" << '\n';
+		Engine::GetDebugLogger().LogDebug(LogCategory::Level, "Level Restart");
 #endif
 		break;
 	case State::UNLOAD:
 		LevelEnd();
 		state = State::SHUTDOWN;
 #ifdef _DEBUG
-		std::cout << "ShutDown" << '\n';
+		Engine::GetDebugLogger().LogDebug(LogCategory::Level, "ShutDown");
 #endif
 		break;
 	case State::SHUTDOWN:
@@ -161,6 +161,7 @@ void GameStateManager::LevelEnd()
 void GameStateManager::AddLevel(GameState* level)
 {
 	levelList.push_back(level);
+	Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Add Level : " + *GameLevelTypeEnumToChar(static_cast<GameLevel>(levelList.size() - 1)));
 }
 
 void GameStateManager::ChangeLevel(GameLevel lev)

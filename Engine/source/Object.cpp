@@ -1,9 +1,14 @@
 //Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Object.cpp
+#include "Engine.hpp"
 #include "Object.hpp"
 
 #include <iostream>
+
+Object::Object()
+{
+}
 
 Object::Object(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType objectType)
 {
@@ -13,6 +18,7 @@ Object::Object(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType obj
 	this->objectType = objectType;
 
 	objectName = name;
+	Engine::GetDebugLogger().LogDebug(LogCategory::Object, "Object Added : " + objectName);
 }
 
 Object::Object(const Object& rhs) : position(rhs.position), speed(rhs.speed), size(rhs.size), 
@@ -22,6 +28,12 @@ objectType(rhs.objectType), objectName(rhs.objectName), angle(rhs.angle), compon
 	{
 		c->SetOwner(this);
 	}
+}
+
+Object::~Object()
+{
+	DestroyAllComponents();
+	Engine::GetDebugLogger().LogDebug(LogCategory::Object, "Object Deleted : " + objectName);
 }
 
 void Object::Init()

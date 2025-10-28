@@ -10,6 +10,7 @@ void ThreadManager::Start()
 	running = true;
 	gameUpdateThread = std::thread(&ThreadManager::GameUpdateLoop, this);
 	sdlEventThread = std::thread(&ThreadManager::SDLEventLoop, this);
+	Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Thread Manager Initialized!");
 }
 
 void ThreadManager::Stop()

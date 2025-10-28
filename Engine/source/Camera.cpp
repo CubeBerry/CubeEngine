@@ -8,6 +8,11 @@
 #include "Camera.hpp"
 #include "Engine.hpp"
 
+Camera::~Camera()
+{
+	Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Camera Deleted!");
+}
+
 void Camera::Update()
 {
 	// @TODO Why only fixed Window size work for projection matrix even if window is resized?

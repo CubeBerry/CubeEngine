@@ -36,7 +36,7 @@ class Camera
 {
 public:
 	constexpr Camera() noexcept = default;
-	~Camera() {};
+	~Camera();
 	void Update();
 	void Reset();
 

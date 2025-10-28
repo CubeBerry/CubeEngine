@@ -20,6 +20,7 @@ void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float 
 	default:
 		break;
 	}
+	Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Camera Manager Initialized!");
 }
 
 void CameraManager::Update()

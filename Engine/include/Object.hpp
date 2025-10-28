@@ -12,10 +12,10 @@
 class Object
 {
 public:
-	Object() = default;
+	Object();
 	Object(glm::vec3 pos_, glm::vec3 size_, std::string name = "", ObjectType objectType = ObjectType::NONE);
 	Object(const Object& rhs);
-	~Object() { DestroyAllComponents(); };
+	~Object();
 	virtual void Init();
 	virtual void Update(float dt);
 	virtual void Draw(float dt);
