@@ -18,7 +18,7 @@ enum class Severity
 enum class LogCategory
 {
 	Engine,
-	Graphic,
+	Graphics,
 	Level,
 	Object,
 	Physics,

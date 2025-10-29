@@ -164,8 +164,8 @@ const char* Logger::CategoryToString(LogCategory category)
 	{
 	case LogCategory::Engine:
 		return "Engine";
-	case LogCategory::Graphic:
-		return "Graphic";
+	case LogCategory::Graphics:
+		return "Graphics";
 	case LogCategory::Level:
 		return "Level";
 	case LogCategory::Object:
