@@ -17,6 +17,11 @@ void APIENTRY OpenGLDebugMessageCallback(GLenum /*source*/, GLenum /*type*/, GLu
 	}
 }
 
+Window::~Window()
+{
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Window Deleted");
+}
+
 void Window::Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode)
 {
 	int flags = 0;
@@ -30,7 +35,7 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 
 	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
-		std::cerr << "Failed to initialize SDL: " << SDL_GetError() << '\n';
+		Engine::GetLogger().LogError(LogCategory::Engine, std::string("Failed to initialize SDL: ") + SDL_GetError());
 	}
 	else
 	{
@@ -80,7 +85,7 @@ void Window::Init(GraphicsMode gMode, const char* title, int width, int height, 
 		}
 		SetMainWindowTitle(title);
 
-		Engine::GetDebugLogger().LogDebug(LogCategory::Engine, "Window Created!");
+		Engine::GetLogger().LogDebug(LogCategory::Engine, "Window Created");
 	}
 }
 
@@ -132,7 +137,8 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	glewExperimental = true;
 	GLenum result = glewInit();
 	if (result != GLEW_OK)
-		std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
+		Engine::GetLogger().LogError(LogCategory::Engine, std::string("GLEW Init Failed: ") + std::string((const char*)glewGetErrorString(result)));
+		//std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
 
 	// Debugging
 	glEnable(GL_DEBUG_OUTPUT);

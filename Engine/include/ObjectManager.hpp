@@ -17,8 +17,8 @@ class Light;
 class ObjectManager
 {
 public:
-    ObjectManager()  = default;
-    ~ObjectManager() = default;
+    ObjectManager();
+    ~ObjectManager();
 
 	void Update(float dt);
     void DeleteObjectsFromList();

@@ -85,10 +85,12 @@ Light::~Light()
 			}
 		}
 	}
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Light");
 }
 
 void Light::Init()
 {
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Light");
 }
 
 void Light::AddLight(LightType lightType_, float ambient_, float specular_)

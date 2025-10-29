@@ -16,6 +16,7 @@ SpriteManager::~SpriteManager()
 	//		std::cout << sprites.size() << '\n'';
 	//	}
 	//}
+    Engine::GetLogger().LogDebug(LogCategory::Engine, "Sprite Manager Deleted");
 }
 
 void SpriteManager::Update(float /*dt*/)

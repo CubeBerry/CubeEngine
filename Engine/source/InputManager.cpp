@@ -5,9 +5,15 @@
 
 #include "Engine.hpp"
 
-InputManager::InputManager() {}
+InputManager::InputManager() 
+{
+	//Engine::GetLogger().LogDebug(LogCategory::Engine, "Input Manager Initialized");
+}
 
-InputManager::~InputManager() {}
+InputManager::~InputManager() 
+{
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Input Manager Deleted");
+}
 
 void InputManager::InputPollEvent(SDL_Event& event)
 {
@@ -15,26 +21,31 @@ void InputManager::InputPollEvent(SDL_Event& event)
 	{
 	case SDL_EVENT_KEY_DOWN:
 		KeyDown(static_cast<KEYBOARDKEYS>(event.key.key));
+		Engine::GetLogger().LogEvent(LogCategory::Engine, "Key Down : " + std::to_string(event.key.key));
 		break;
 	case SDL_EVENT_KEY_UP:
 		KeyUp(static_cast<KEYBOARDKEYS>(event.key.key));
+		Engine::GetLogger().LogEvent(LogCategory::Engine, "Key Up : " + std::to_string(event.key.key));
 		break;
 	case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
 		{
 			MouseButtonDown(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
+			Engine::GetLogger().LogEvent(LogCategory::Engine, "Mouse Down : " + std::to_string(event.button.button));
 		}
 		break;
 	case SDL_EVENT_MOUSE_BUTTON_UP:
 		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
 		{
 			MouseButtonUp(static_cast<MOUSEBUTTON>(event.button.button), event.button.x, event.button.y);
+			Engine::GetLogger().LogEvent(LogCategory::Engine, "Mouse Up : " + std::to_string(event.button.button));
 		}
 		break;
 	case SDL_EVENT_MOUSE_WHEEL:
 		if (!(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemHovered()))
 		{
 			MouseWheel(event);
+			Engine::GetLogger().LogEvent(LogCategory::Engine, "Mouse Wheel : " + std::to_string(static_cast<float>(event.wheel.y)));
 		}
 		break;
 	case SDL_EVENT_MOUSE_MOTION:

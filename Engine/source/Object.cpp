@@ -18,7 +18,7 @@ Object::Object(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType obj
 	this->objectType = objectType;
 
 	objectName = name;
-	Engine::GetDebugLogger().LogDebug(LogCategory::Object, "Object Added : " + objectName);
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Object Added : " + objectName);
 }
 
 Object::Object(const Object& rhs) : position(rhs.position), speed(rhs.speed), size(rhs.size), 
@@ -33,7 +33,7 @@ objectType(rhs.objectType), objectName(rhs.objectName), angle(rhs.angle), compon
 Object::~Object()
 {
 	DestroyAllComponents();
-	Engine::GetDebugLogger().LogDebug(LogCategory::Object, "Object Deleted : " + objectName);
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Object Deleted : " + objectName);
 }
 
 void Object::Init()

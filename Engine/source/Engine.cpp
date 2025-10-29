@@ -14,7 +14,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	std::cin >> number;
 	std::cout << '\n';
 
-	debugLogger = new DebugLogger(timer.Init());
+	logger = new Logger(timer.Init());
 	if (number == 0)
 	{
 		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);

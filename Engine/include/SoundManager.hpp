@@ -35,7 +35,7 @@ struct Channel
 
 class SoundManager {
 public:
-	SoundManager() = default;
+	SoundManager();
 	~SoundManager();
 
 	void Initialize(int maxChannel);

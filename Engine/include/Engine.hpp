@@ -14,7 +14,7 @@
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
 #include "ThreadManager.hpp"
-#include "DebugLogger.hpp"
+#include "Logger.hpp"
 #include "Particle/ParticleManager.hpp"
 
 class Engine
@@ -34,7 +34,7 @@ public:
 	static SpriteManager& GetSpriteManager() { return Instance().spriteManager; }
 	static ParticleManager& GetParticleManager() { return Instance().particleManager; }
 	static Timer& GetTimer() { return Instance().timer; }
-	static DebugLogger& GetDebugLogger() { return *Instance().debugLogger; }
+	static Logger& GetLogger() { return *Instance().logger; }
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
@@ -61,5 +61,5 @@ private:
 	SpriteManager spriteManager;
 	ParticleManager particleManager;
 	ThreadManager threadManager;
-	DebugLogger* debugLogger;
+	Logger* logger;
 };

@@ -1,9 +1,12 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Logger.cpp
 #include <iostream> // cout.rdbuf
 #include <sstream>   // FileName
 #include <iomanip>   // Time/Date
-#include "DebugLogger.hpp"
+#include "Logger.hpp"
 
-DebugLogger::DebugLogger(std::chrono::steady_clock::time_point startTime, Severity severity)
+Logger::Logger(std::chrono::steady_clock::time_point startTime, Severity severity)
 	: minLevel(severity), startTime(startTime)
 {
 	char choice = 'n';
@@ -43,36 +46,36 @@ DebugLogger::DebugLogger(std::chrono::steady_clock::time_point startTime, Severi
 	}
 }
 
-DebugLogger::~DebugLogger()
+Logger::~Logger()
 {
 	outStream.flush();
 	outStream.close();
 }
 
-void DebugLogger::LogError(LogCategory category, std::string text)
+void Logger::LogError(LogCategory category, std::string text)
 {
 	Log(Severity::Error, category, text);
 }
 
-void DebugLogger::LogEvent(LogCategory category, std::string text)
+void Logger::LogEvent(LogCategory category, std::string text)
 {
 	Log(Severity::Event, category, text);
 }
 
 
-void DebugLogger::LogDebug(LogCategory category, std::string text)
+void Logger::LogDebug(LogCategory category, std::string text)
 {
 	Log(Severity::Debug, category, text);
 }
 
-void DebugLogger::LogVerbose(LogCategory category, std::string text)
+void Logger::LogVerbose(LogCategory category, std::string text)
 {
 	Log(Severity::Verbose, category, text);
 }
 
-void DebugLogger::Log(Severity severity, LogCategory category, std::string displayText)
+void Logger::Log(Severity severity, LogCategory category, std::string displayText)
 {
-	std::lock_guard<std::mutex> lock(logMutex);
+	//std::lock_guard<std::mutex> lock(logMutex);
 
 	if (severity < minLevel)
 	{
@@ -130,7 +133,7 @@ void DebugLogger::Log(Severity severity, LogCategory category, std::string displ
 	}
 }
 
-float DebugLogger::GetSecondsSinceStart()
+float Logger::GetSecondsSinceStart()
 {
 	using clock = std::chrono::steady_clock;
 	using second = std::chrono::duration<float>;
@@ -138,7 +141,7 @@ float DebugLogger::GetSecondsSinceStart()
 	return std::chrono::duration_cast<second>(clock::now() - startTime).count();
 }
 
-const char* DebugLogger::SeverityToString(Severity severity)
+const char* Logger::SeverityToString(Severity severity)
 {
 	switch (severity)
 	{
@@ -155,7 +158,7 @@ const char* DebugLogger::SeverityToString(Severity severity)
 	}
 }
 
-const char* DebugLogger::CategoryToString(LogCategory category)
+const char* Logger::CategoryToString(LogCategory category)
 {
 	switch (category)
 	{
@@ -171,6 +174,8 @@ const char* DebugLogger::CategoryToString(LogCategory category)
 		return "Physics";
 	case LogCategory::Sound:
 		return "Sound";
+	case LogCategory::Camera:
+		return "Camera";
 	case LogCategory::Game:
 		return "Game";
 	case LogCategory::Editor:

@@ -9,6 +9,16 @@
 #include "BasicComponents/Light.hpp"
 #include "imgui.h"
 
+ObjectManager::ObjectManager()
+{
+	//Engine::GetLogger().LogDebug(LogCategory::Engine, "Object Manager Initialized");
+}
+
+ObjectManager::~ObjectManager()
+{
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Object Manager Deleted");
+}
+
 void ObjectManager::Update(float dt)
 {
 	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });

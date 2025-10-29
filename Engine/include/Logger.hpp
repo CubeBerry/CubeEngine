@@ -1,3 +1,6 @@
+//Author: DOYEONG LEE
+//Project: CubeEngine
+//File: Logger.hpp
 #pragma once
 #include <string>
 #include <fstream> //file output
@@ -6,10 +9,10 @@
 
 enum class Severity
 {
-	Verbose,		// This option is for minor messages, which could be useful 
-	Debug,			// This should only be used when you are currently trying to debug something
-	Event,			// These are general events, such as key press, exit state, enter state, enter state finish
-	Error,			// This is for an error, such as an asset is not found
+	Verbose,		// Minor Messages: Useful secondary info, often for minor debugging.
+	Debug,			// Debugging Only: Detailed logs specifically needed during active debugging.
+	Event,			// General Events: Standard occurrences like key presses or state changes.
+	Error,			// Error: Critical issues, such as an asset failing to load (asset not found).
 };
 
 enum class LogCategory
@@ -20,15 +23,16 @@ enum class LogCategory
 	Object,
 	Physics,
 	Sound,
+	Camera,
 	Game,
 	Editor
 };
 
-class DebugLogger
+class Logger
 {
 public:
-	DebugLogger(std::chrono::steady_clock::time_point startTime, Severity severity = Severity::Verbose);
-	~DebugLogger();
+	Logger(std::chrono::steady_clock::time_point startTime, Severity severity = Severity::Verbose);
+	~Logger();
 
 	void LogError(LogCategory category, std::string text);
 	void LogEvent(LogCategory category, std::string text);

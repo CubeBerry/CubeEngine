@@ -20,12 +20,12 @@ Physics3D::~Physics3D()
 	}
 	points.clear();
 #endif
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Phy3D");
 }
 
 void Physics3D::Init()
 {
-#ifdef _DEBUG
-#endif // _DEBUG
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Phy3D");
 }
 
 void Physics3D::Update(float dt)

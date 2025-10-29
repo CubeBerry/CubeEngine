@@ -8,6 +8,9 @@ class Object;
 class CameraManager
 {
 public:
+	CameraManager() {};
+	~CameraManager();
+
 	void Init(glm::vec2 viewSize, CameraType type = CameraType::TwoDimension, float zoom = 45.f, float angle = 0.f);
 	void Update(); 
 	void Reset();
