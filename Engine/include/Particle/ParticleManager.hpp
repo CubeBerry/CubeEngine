@@ -9,7 +9,7 @@
 class ParticleManager
 {
 public:
-	ParticleManager() = default;
+	ParticleManager();
     ~ParticleManager();
 
 	//For Test

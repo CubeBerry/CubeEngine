@@ -31,10 +31,12 @@ Sprite::~Sprite()
 	}
 	animations.clear();
 	DeleteFromSpriteManagerList();
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Sprite");
 }
 
 void Sprite::Init()
 {
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Sprite");
 }
 
 void Sprite::Update(float dt)

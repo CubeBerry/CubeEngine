@@ -4,6 +4,11 @@
 #include "CameraManager.hpp"
 #include "Engine.hpp"
 
+CameraManager::~CameraManager()
+{
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Manager Deleted");
+}
+
 void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float angle)
 {
 	camera.SetCameraType(type);
@@ -20,6 +25,7 @@ void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float 
 	default:
 		break;
 	}
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Manager Initialized");
 }
 
 void CameraManager::Update()
@@ -29,7 +35,8 @@ void CameraManager::Update()
 
 void CameraManager::Reset()
 {
-	camera.Reset(); 
+	camera.Reset();
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Manager Reset");
 }
 
 bool CameraManager::IsInCamera(Object* object)

@@ -14,6 +14,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	std::cin >> number;
 	std::cout << '\n';
 
+	logger = new Logger(timer.Init());
 	if (number == 0)
 	{
 		window.Init(GraphicsMode::GL, title, windowWidth, windowHeight, fullScreen, mode);
@@ -34,7 +35,6 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 		renderManager = new DXRenderManager;
 		dynamic_cast<DXRenderManager*>(renderManager)->Initialize(window.GetWindow());
 	}
-	timer.Init();
 
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 	soundManager.Initialize(8);

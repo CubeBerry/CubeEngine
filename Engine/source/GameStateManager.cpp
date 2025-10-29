@@ -10,6 +10,7 @@
 
 GameStateManager::GameStateManager()
 {
+	//Engine::GetLogger().LogDebug(LogCategory::Engine, "GameState Manager Initialized");
 }
 
 GameStateManager::~GameStateManager()
@@ -19,6 +20,7 @@ GameStateManager::~GameStateManager()
 		delete lev;
 	}
 	levelList.clear();
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "GameState Manager Deleted");
 }
 
 void GameStateManager::LevelInit()
@@ -35,9 +37,7 @@ void GameStateManager::LevelInit(GameLevel currentLevel_)
 	LevelInit();
 	Engine::GetObjectManager().ProcessFunctionQueue();
 	state = State::UPDATE;
-#ifdef _DEBUG
-	std::cout << "Load Complete" << '\n';
-#endif
+	Engine::GetLogger().LogDebug(LogCategory::Level, std::string("Load Complete : ") + GameLevelTypeEnumToChar(currentLevel_));
 }
 
 void GameStateManager::Update(float dt)
@@ -58,13 +58,9 @@ void GameStateManager::Update(float dt)
 		LevelInit();
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
-#ifdef _DEBUG
-		std::cout << "Load Complete" << '\n';
-#endif
+		Engine::GetLogger().LogDebug(LogCategory::Level, std::string("Load Complete : ") + GameLevelTypeEnumToChar(currentLevel));
 		state = State::UPDATE;
-#ifdef _DEBUG
-		std::cout << "Update" << '\n';
-#endif
+		Engine::GetLogger().LogDebug(LogCategory::Level, std::string("Update : ") + GameLevelTypeEnumToChar(currentLevel));
 		break;
 	case State::UPDATE:
 		UpdateGameLogic(dt);
@@ -86,25 +82,19 @@ void GameStateManager::Update(float dt)
 		// @TODO temporary function to clear all textures
 		Engine::GetRenderManager()->ClearTextures();
 		levelList.at(static_cast<int>(currentLevel))->End();
+		Engine::GetLogger().LogDebug(LogCategory::Level, std::string("Level Change : ") + GameLevelTypeEnumToChar(currentLevel) + " -> " + GameLevelTypeEnumToChar(levelSelected));
 		currentLevel = levelSelected;
-#ifdef _DEBUG
-		std::cout << "Level Change" << '\n';
-#endif
 		state = State::LOAD;
 		break;
 	case State::RESTART:
 		LevelEnd();
 		state = State::LOAD;
-#ifdef _DEBUG
-		std::cout << "Level Restart" << '\n';
-#endif
+		Engine::GetLogger().LogDebug(LogCategory::Level, std::string("Level Restart : ") + GameLevelTypeEnumToChar(currentLevel));
 		break;
 	case State::UNLOAD:
 		LevelEnd();
 		state = State::SHUTDOWN;
-#ifdef _DEBUG
-		std::cout << "ShutDown" << '\n';
-#endif
+		Engine::GetLogger().LogDebug(LogCategory::Level, std::string("ShutDown : ") + GameLevelTypeEnumToChar(currentLevel));
 		break;
 	case State::SHUTDOWN:
 		break;
@@ -161,6 +151,7 @@ void GameStateManager::LevelEnd()
 void GameStateManager::AddLevel(GameState* level)
 {
 	levelList.push_back(level);
+	Engine::GetLogger().LogDebug(LogCategory::Engine, std::string("Add Level : ") + GameLevelTypeEnumToChar(static_cast<GameLevel>(levelList.size() - 1)));
 }
 
 void GameStateManager::ChangeLevel(GameLevel lev)

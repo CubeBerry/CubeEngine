@@ -26,9 +26,14 @@ std::string ConvertWideStringToUTF8(const std::wstring& wideString)
 	return converter.to_bytes(wideString);*/
 }
 
+SoundManager::SoundManager()
+{
+}
+
 SoundManager::~SoundManager()
 {
 	Shutdown();
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Sound Manager Deleted");
 }
 
 void SoundManager::Initialize(int maxChannel)
@@ -45,6 +50,7 @@ void SoundManager::Initialize(int maxChannel)
 		channels.push_back(std::move(channel));
 		channels.back().channel->setVolume(channels.back().soundVolume);
 	}
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Sound Manager Initialized");
 }
 
 void SoundManager::Update()
@@ -130,6 +136,9 @@ void SoundManager::Play(std::string name, int channelIndex, bool loop)
 {
 	int index = FindSoundIndexWithName(name);
 	Play(index, channelIndex, loop);
+	Engine::GetLogger().LogDebug(LogCategory::Sound, "Play Sound : " + name + 
+		", Channel : " + std::to_string(channelIndex) +
+	", Loop : " + (loop ? "True" : "False"));
 }
 
 void SoundManager::Play(int index, int channelIndex, bool loop)
@@ -148,7 +157,6 @@ void SoundManager::Play(int index, int channelIndex, bool loop)
 		FMOD_MODE mode = loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF;
 		result = sounds[index].sound->setMode(mode);
 		ErrorCheck(result);
-
 	}
 }
 
@@ -160,6 +168,7 @@ void SoundManager::Stop(int channelIndex)
 		{
 			result = channels[channelIndex].channel->stop();
 			ErrorCheck(result);
+			Engine::GetLogger().LogDebug(LogCategory::Sound, "Stop Sound : Channel : " + std::to_string(channelIndex));
 		}
 	}
 }
@@ -172,6 +181,7 @@ void SoundManager::Pause(int channelIndex, FMOD_BOOL state)
 		{
 			result = channels[channelIndex].channel->setPaused(state);
 			ErrorCheck(result);
+			Engine::GetLogger().LogDebug(LogCategory::Sound, "Pause Sound : Channel : " + std::to_string(channelIndex));
 		}
 	}
 }
@@ -223,11 +233,13 @@ bool SoundManager::IsPaused(int channelIndex)
 void SoundManager::VolumeUp(int channelIndex)
 {
 	SetVolume(channelIndex, channels[channelIndex].soundVolume + 0.05f);
+	Engine::GetLogger().LogDebug(LogCategory::Sound, "Volume Up: " + std::to_string(channels[channelIndex].soundVolume));
 }
 
 void SoundManager::VolumeDown(int channelIndex)
 {
 	SetVolume(channelIndex, channels[channelIndex].soundVolume - 0.05f);
+	Engine::GetLogger().LogDebug(LogCategory::Sound, "Volume Down: " + std::to_string(channels[channelIndex].soundVolume));
 }
 
 void SoundManager::SetVolume(int channelIndex, float volume)
@@ -238,6 +250,7 @@ void SoundManager::SetVolume(int channelIndex, float volume)
 		ErrorCheck(result);
 
 		channels[channelIndex].soundVolume = volume;
+		Engine::GetLogger().LogDebug(LogCategory::Sound, "Volume Set : " + std::to_string(channels[channelIndex].soundVolume));
 	}
 }
 
@@ -316,6 +329,8 @@ void SoundManager::MoveSoundPlaybackPosition(int channelIndex, int currentSoundI
 
 		unsigned int newPosition = static_cast<unsigned int>(pos * totalLength);
 		result = channels[channelIndex].channel->setPosition(newPosition, FMOD_TIMEUNIT_MS);
+
+		Engine::GetLogger().LogDebug(LogCategory::Sound, "Set PlayBack Pos: " + std::to_string(newPosition));
 	}
 }
 
@@ -396,9 +411,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::string& folderPath)
 
 			if (extension == "wav")
 			{
-#ifdef _DEBUG
-				std::cout << "Load Sound Complete : " << fileName << '\n';
-#endif
+				Engine::GetLogger().LogDebug(LogCategory::Sound, "Load Sound Complete : " + fileName);
 				LoadFile(filePath, fileName);
 			}
 
@@ -433,7 +446,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::wstring& folderPath)
 
 			if (extension == L"mp3" || extension == L"ogg")
 			{
-				std::cout << "Load Music Complete : " << ConvertWideStringToUTF8(fileName).c_str() << '\n';
+				Engine::GetLogger().LogDebug(LogCategory::Sound, "Load Sound Complete : " + ConvertWideStringToUTF8(fileName));
 				LoadFile(filePath, fileName);
 			}
 

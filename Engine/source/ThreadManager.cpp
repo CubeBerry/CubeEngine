@@ -10,6 +10,7 @@ void ThreadManager::Start()
 	running = true;
 	gameUpdateThread = std::thread(&ThreadManager::GameUpdateLoop, this);
 	sdlEventThread = std::thread(&ThreadManager::SDLEventLoop, this);
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Thread Manager Initialized");
 }
 
 void ThreadManager::Stop()
@@ -18,6 +19,7 @@ void ThreadManager::Stop()
 	gameUpdateCV.notify_one();
 	if (gameUpdateThread.joinable()) gameUpdateThread.join();
 	if (sdlEventThread.joinable()) sdlEventThread.join();
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Thread Manager Stop");
 }
 
 void ThreadManager::QueueGameUpdate(const std::function<void(float)>& updateFunc, float dt)

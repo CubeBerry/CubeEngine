@@ -2,10 +2,12 @@
 //Project: CubeEngine
 //File: Window.cpp
 #include "Window.hpp"
+#include "Engine.hpp"
 #include "glew/glew.h"
 #include <Windows.h>
 
 #include <iostream>
+#include <stdexcept>
 
 // Debugging
 void APIENTRY OpenGLDebugMessageCallback(GLenum /*source*/, GLenum /*type*/, GLuint id, GLenum severity,
@@ -16,69 +18,83 @@ void APIENTRY OpenGLDebugMessageCallback(GLenum /*source*/, GLenum /*type*/, GLu
 	}
 }
 
+Window::~Window()
+{
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Window Deleted");
+}
+
 void Window::Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode)
 {
-	int flags = 0;
-	wSize.x = static_cast<float>(width);
-	wSize.y = static_cast<float>(height);
+	try
+	{
+		int flags = 0;
+		wSize.x = static_cast<float>(width);
+		wSize.y = static_cast<float>(height);
 
-	if (fullscreen)
-	{
-		flags = SDL_WINDOW_FULLSCREEN;
-	}
-
-	if (!SDL_Init(SDL_INIT_VIDEO))
-	{
-		std::cerr << "Failed to initialize SDL: " << SDL_GetError() << '\n';
-	}
-	else
-	{
-		switch (gMode)
+		if (fullscreen)
 		{
-		case GraphicsMode::GL:
-			InitWindowGL(wMode, title, flags);
-			break;
-		case GraphicsMode::VK:
-			switch (wMode)
-			{
-			case WindowMode::NORMAL:
-				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
-					title,
-					static_cast<int>(wSize.x),
-					static_cast<int>(wSize.y),
-					flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
-				break;
-			case WindowMode::BORADLESS:
-				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
-					title,
-					static_cast<int>(wSize.x),
-					static_cast<int>(wSize.y),
-					flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
-				break;
-			}
-			break;
-		case GraphicsMode::DX:
-			switch (wMode)
-			{
-			case WindowMode::NORMAL:
-				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
-					title,
-					static_cast<int>(wSize.x),
-					static_cast<int>(wSize.y),
-					flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN));
-				break;
-			case WindowMode::BORADLESS:
-				window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
-					title,
-					static_cast<int>(wSize.x),
-					static_cast<int>(wSize.y),
-					flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN));
-				break;
-			}
-			break;
+			flags = SDL_WINDOW_FULLSCREEN;
 		}
-		SetMainWindowTitle(title);
-		std::cout << "Create Window Successful" << '\n';
+
+		if (!SDL_Init(SDL_INIT_VIDEO))
+		{
+			Engine::GetLogger().LogError(LogCategory::Engine, std::string("Failed to initialize SDL: ") + SDL_GetError());
+		}
+		else
+		{
+			switch (gMode)
+			{
+			case GraphicsMode::GL:
+				InitWindowGL(wMode, title, flags);
+				break;
+			case GraphicsMode::VK:
+				switch (wMode)
+				{
+				case WindowMode::NORMAL:
+					window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
+						title,
+						static_cast<int>(wSize.x),
+						static_cast<int>(wSize.y),
+						flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
+					break;
+				case WindowMode::BORADLESS:
+					window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
+						title,
+						static_cast<int>(wSize.x),
+						static_cast<int>(wSize.y),
+						flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN));
+					break;
+				}
+				break;
+			case GraphicsMode::DX:
+				switch (wMode)
+				{
+				case WindowMode::NORMAL:
+					window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
+						title,
+						static_cast<int>(wSize.x),
+						static_cast<int>(wSize.y),
+						flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN));
+					break;
+				case WindowMode::BORADLESS:
+					window = std::unique_ptr<SDL_Window, SDLWindowDestroyer>(SDL_CreateWindow(
+						title,
+						static_cast<int>(wSize.x),
+						static_cast<int>(wSize.y),
+						flags | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN));
+					break;
+				}
+				break;
+			}
+			SetMainWindowTitle(title);
+
+			Engine::GetLogger().LogDebug(LogCategory::Engine, "Window Created");
+		}
+	}
+	catch (const std::runtime_error& e)
+	{
+		std::cerr << "Error during Window Initialization: " << e.what() << std::endl;
+		throw;
 	}
 }
 
@@ -130,7 +146,8 @@ void Window::InitWindowGL(WindowMode wMode, const char* title, int flags)
 	glewExperimental = true;
 	GLenum result = glewInit();
 	if (result != GLEW_OK)
-		std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
+		Engine::GetLogger().LogError(LogCategory::Engine, std::string("GLEW Init Failed: ") + std::string((const char*)glewGetErrorString(result)));
+		//std::cerr << "GLEW Init Failed: " << glewGetErrorString(result) << '\n';
 
 	// Debugging
 	glEnable(GL_DEBUG_OUTPUT);

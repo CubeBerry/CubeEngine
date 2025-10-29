@@ -2,12 +2,19 @@
 //Project: CubeEngine
 //File: ParticleManager.cpp
 #include "particle/ParticleManager.hpp"
+#include "Engine.hpp"
 
+
+ParticleManager::ParticleManager()
+{
+	//Engine::GetLogger().LogDebug(LogCategory::Engine, "Particle Manager Initialized");
+}
 
 ParticleManager::~ParticleManager()
 {
 	Clear();
 	index.clear();
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Particle Manager Deleted");
 }
 
 void ParticleManager::AddRandomParticle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float angle_, float lifeTime, int particleAmount, glm::vec4 color_, ParticleType type, std::string spriteName_, bool isFade)

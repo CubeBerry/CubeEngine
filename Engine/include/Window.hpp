@@ -24,7 +24,7 @@ class Window
 {
 public:
 	Window() = default;
-	~Window() = default;
+	~Window();
 	void Init(GraphicsMode gMode, const char* title, int width, int height, bool fullscreen, WindowMode wMode);
 	void InitWindowGL(WindowMode wMode, const char* title, int flags);
 	void UpdateWindowGL(SDL_Event& event);
