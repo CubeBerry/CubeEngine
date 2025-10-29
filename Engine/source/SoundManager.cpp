@@ -136,7 +136,7 @@ void SoundManager::Play(std::string name, int channelIndex, bool loop)
 {
 	int index = FindSoundIndexWithName(name);
 	Play(index, channelIndex, loop);
-	Engine::GetLogger().LogDebug(LogCategory::Sound, "Play Music : " + name + 
+	Engine::GetLogger().LogDebug(LogCategory::Sound, "Play Sound : " + name + 
 		", Channel : " + std::to_string(channelIndex) +
 	", Loop : " + (loop ? "True" : "False"));
 }
@@ -168,7 +168,7 @@ void SoundManager::Stop(int channelIndex)
 		{
 			result = channels[channelIndex].channel->stop();
 			ErrorCheck(result);
-			Engine::GetLogger().LogDebug(LogCategory::Sound, "Stop Music : Channel : " + std::to_string(channelIndex));
+			Engine::GetLogger().LogDebug(LogCategory::Sound, "Stop Sound : Channel : " + std::to_string(channelIndex));
 		}
 	}
 }
@@ -181,7 +181,7 @@ void SoundManager::Pause(int channelIndex, FMOD_BOOL state)
 		{
 			result = channels[channelIndex].channel->setPaused(state);
 			ErrorCheck(result);
-			Engine::GetLogger().LogDebug(LogCategory::Sound, "Pause Music : Channel : " + std::to_string(channelIndex));
+			Engine::GetLogger().LogDebug(LogCategory::Sound, "Pause Sound : Channel : " + std::to_string(channelIndex));
 		}
 	}
 }
@@ -446,7 +446,7 @@ void SoundManager::LoadSoundFilesFromFolder(const std::wstring& folderPath)
 
 			if (extension == L"mp3" || extension == L"ogg")
 			{
-				Engine::GetLogger().LogDebug(LogCategory::Sound, "Load Music Complete : " + ConvertWideStringToUTF8(fileName));
+				Engine::GetLogger().LogDebug(LogCategory::Sound, "Load Sound Complete : " + ConvertWideStringToUTF8(fileName));
 				LoadFile(filePath, fileName);
 			}
 

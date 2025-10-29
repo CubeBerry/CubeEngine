@@ -4,6 +4,7 @@
 #include <iostream> // cout.rdbuf
 #include <sstream>   // FileName
 #include <iomanip>   // Time/Date
+#include <stdexcept> // exception
 #include "Logger.hpp"
 
 Logger::Logger(std::chrono::steady_clock::time_point startTime, Severity severity)
@@ -54,7 +55,8 @@ Logger::~Logger()
 
 void Logger::LogError(LogCategory category, std::string text)
 {
-	Log(Severity::Error, category, text);
+	Log(Severity::Error, category, text); 
+	throw std::runtime_error(text);
 }
 
 void Logger::LogEvent(LogCategory category, std::string text)
