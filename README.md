@@ -63,6 +63,7 @@ dxc 3D.frag.hlsl -T ps_6_5 -E fragmentMain -Fo 3D.frag.cso
 | CPU Dump Writer | ✅ | ➖ | ➖ | ➖ |
 | CRT Memory Leak Detector | ✅ | ➖ | ➖ | ➖ |
 | Sound Manager | ✅ | ➖ | ➖ | ➖ |
+| Logger | ✅ | ➖ | ➖ | ➖ |
 | **Rendering Features** | | | | |
 | 2D (Sprite Based Animation) Rendering | ➖ | ✅ | ✅ | ✅ |
 | 3D Mesh Rendering | ➖ | ✅ | ✅ | ✅ |
