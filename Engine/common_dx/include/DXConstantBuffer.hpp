@@ -2,8 +2,8 @@
 //Project: CubeEngine
 //File: DXConstantBuffer.hpp
 #pragma once
-#include <directx/d3dx12.h>
 #include "DXHelper.hpp"
+#include "DXInitializer.hpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -46,17 +46,13 @@ DXConstantBuffer<Type>::DXConstantBuffer(const ComPtr<ID3D12Device>& device, con
 	m_alignedSizePerFrame = AlignConstantBufferSize(sizeof(Type));
 	const UINT& totalBufferSize = m_alignedSizePerFrame * frameCount;
 
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
-
-	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)
-	));
+	m_constantBuffer = DXInitializer::CreateBufferResource(
+		device,
+		totalBufferSize,
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_HEAP_TYPE_UPLOAD,
+		D3D12_RESOURCE_STATE_GENERIC_READ
+	);
 	m_constantBuffer->SetName(L"Constant Buffer");
 
 	CD3DX12_RANGE readRange(0, 0);

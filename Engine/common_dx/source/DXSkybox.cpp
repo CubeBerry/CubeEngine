@@ -5,6 +5,7 @@
 #include <filesystem>
 
 #include "DXHelper.hpp"
+#include "DXInitializer.hpp"
 #include "DXTexture.hpp"
 #include "DXConstantBuffer.hpp"
 
@@ -13,7 +14,7 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	const ComPtr<ID3D12DescriptorHeap>& srvHeap) : m_device(device), m_commandQueue(commandQueue), m_srvHeap(srvHeap)
 {
 	std::wstring targetName{ L"Skybox Texture" };
-	DXHelper::CreateFenceSet(m_device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
+	DXInitializer::CreateFenceSet(m_device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
 
 	// Create Render Target View (RTV) heap for each face
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};

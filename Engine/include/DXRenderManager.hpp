@@ -13,6 +13,7 @@
 
 #include "DXPipeLine.hpp"
 #include "DXMeshPipeLine.hpp"
+#include "DXWorkGraphsStateObject.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
@@ -114,6 +115,9 @@ private:
 
 	// Compute Shader
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
+
+	// Work Graphs
+	std::unique_ptr<DXWorkGraphsStateObject> m_workGraphsStateObject;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality

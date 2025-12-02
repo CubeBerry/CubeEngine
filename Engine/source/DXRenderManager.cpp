@@ -362,7 +362,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
 	{
-		throw std::runtime_error("Failed to create fence event.");
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Failed to create fence event.");
 	}
 
 	m_imguiManager = std::make_unique<DXImGuiManager>(
@@ -371,6 +371,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	directionalLightUniformBuffer = new DXConstantBuffer<DirectionalLightBatch>(m_device, frameCount);
 	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
+
+	// Initialize for work graphs
+	if (m_workGraphsEnabled)
+	{
+		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_device, "../Engine/shaders/cso/WorkGraphs.cso");
+	}
 
 	// Initialize for compute shader
 	//m_computeBuffer = std::make_unique<DXComputeBuffer>();
@@ -895,7 +901,7 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 	if (FAILED(hr))
 	{
 		if (error) OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));
-		throw std::runtime_error("Failed to serialize root signature.");
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Failed to serialize root signature.");
 	}
 
 	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
@@ -989,7 +995,7 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 		if (m_srvDescriptorSize >= m_srvHeap->GetDesc().NumDescriptors)
 		{
 			OutputDebugStringA("  [FATAL ERROR] SRV Descriptor Heap is full!\n");
-			throw std::runtime_error("SRV Descriptor Heap is full");
+			Engine::GetLogger().LogError(LogCategory::D3D12, "SRV Descriptor Heap is full.");
 		}
 	}
 
@@ -1122,7 +1128,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	HANDLE tempFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (tempFenceEvent == nullptr)
 	{
-		throw std::runtime_error("Failed to create texture fence event.");
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Failed to create texture fence event.");
 	}
 
 	const auto& texture = textures.emplace_back(std::make_unique<DXTexture>());

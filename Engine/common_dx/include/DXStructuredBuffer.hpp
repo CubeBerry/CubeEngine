@@ -5,6 +5,7 @@
 #include <directx/d3dx12.h>
 
 #include "DXHelper.hpp"
+#include "DXInitializer.hpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -53,7 +54,7 @@ DXStructuredBuffer<T>::DXStructuredBuffer(
 	UINT bufferSize = static_cast<UINT>(data.size() * strideSize);
 
 	std::wstring targetName{ L"Structured Buffer" };
-	DXHelper::CreateFenceSet(device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
+	DXInitializer::CreateFenceSet(device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
 
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));

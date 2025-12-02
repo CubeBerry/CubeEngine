@@ -19,9 +19,10 @@ public:
 	);
 	~DXWorkGraphsStateObject() = default;
 
-	//ComPtr<ID3D12PipelineState> GetPipelineState() const { return m_pipelineState; }
+	D3D12_SET_PROGRAM_DESC& GetSetProgramDesc() { return m_setProgramDesc; }
 private:
-	//ComPtr<ID3D12PipelineState> m_pipelineState;
 	ComPtr<ID3D12StateObject> m_stateObject;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
+	ComPtr<ID3D12Resource> m_backingMemory;
+	D3D12_SET_PROGRAM_DESC m_setProgramDesc = {};
 };
