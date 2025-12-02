@@ -77,7 +77,7 @@ private:
 
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
-	ComPtr<ID3D12Device2> m_device;
+	ComPtr<ID3D12Device14> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
 	// This is required for FidelityFX CAS Upscaling
 	ComPtr<ID3D12Resource> m_lowResRenderTarget;
@@ -158,7 +158,7 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
 
-			if (m_useMeshShader)
+			if (m_meshShaderEnabled)
 			{
 				auto& bufferData3D = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>();
 				auto& buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();

@@ -488,7 +488,7 @@ void RenderManager::CreateMesh(
 	}
 
 	// Mesh Shader
-	if (m_useMeshShader)
+	if (m_meshShaderEnabled)
 	{
 		auto& bufferData3D = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>();
 
@@ -728,7 +728,7 @@ void RenderManager::ProcessMesh(
 	}
 
 	// Mesh Shader
-	if (m_useMeshShader)
+	if (m_meshShaderEnabled)
 	{
 		auto& bufferData3D = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>();
 

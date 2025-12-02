@@ -166,8 +166,12 @@ const char* Logger::CategoryToString(LogCategory category)
 	{
 	case LogCategory::Engine:
 		return "Engine";
-	case LogCategory::Graphics:
-		return "Graphics";
+	case LogCategory::OpenGL:
+		return "OpenGL";
+	case LogCategory::Vulkan:
+		return "Vulkan";
+	case LogCategory::D3D12:
+		return "D3D12";
 	case LogCategory::Level:
 		return "Level";
 	case LogCategory::Object:

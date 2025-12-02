@@ -18,7 +18,9 @@ enum class Severity
 enum class LogCategory
 {
 	Engine,
-	Graphics,
+	OpenGL,
+	Vulkan,
+	D3D12,
 	Level,
 	Object,
 	Physics,

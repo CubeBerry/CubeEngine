@@ -59,8 +59,9 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features)))
 		|| (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
 	{
-		m_useMeshShader = false;
-		OutputDebugStringA("ERROR: Mesh Shaders aren't supported!\n");
+		m_meshShaderEnabled = false;
+		Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader Not Supported");
+		OutputDebugStringA("Mesh Shaders Not Supported\n");
 	}
 	else
 	{
@@ -69,14 +70,43 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)))
 			|| (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
 		{
-			m_useMeshShader = false;
-			OutputDebugStringA("ERROR: Shader Model 6.5 is not supported\n");
+			m_meshShaderEnabled = false;
+			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader, Shader Model 6.5 Not Supported");
+			OutputDebugStringA("Mesh Shader, Shader Model 6.5 Not Supported\n");
 		}
 		else
 		{
-			m_useMeshShader = true;
-			std::cout << "D3D12 Mesh Shader Enabled\n";
+			m_meshShaderEnabled = true;
+			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader Enabled");
 			OutputDebugStringA("Mesh Shader Enabled\n");
+		}
+	}
+
+	// Check Work Graphs Support
+	D3D12_FEATURE_DATA_D3D12_OPTIONS21 options = {};
+	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options, sizeof(options)))
+		|| (options.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED))
+	{
+		m_workGraphsEnabled = false;
+		Engine::GetLogger().LogDebug(LogCategory::D3D12, "Work Graphs Not Supported");
+		OutputDebugStringA("Work Graphs Not Supported\n");
+	}
+	else
+	{
+		// Check Shader Model 6.8 Support for Work Graphs
+		D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_8 };
+		if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)))
+			|| (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_8))
+		{
+			m_workGraphsEnabled = false;
+			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Work Graphs, Shader Model 6.8 Not Supported");
+			OutputDebugStringA("Work Graphs, Shader Model 6.8 Not Supported\n");
+		}
+		else
+		{
+			m_workGraphsEnabled = true;
+			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Work Graphs Enabled");
+			OutputDebugStringA("Work Graphs Enabled\n");
 		}
 	}
 
@@ -205,7 +235,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Create root signature and pipeline for 3D
 	rootParameters.clear();
-	rootParameters.resize(m_useMeshShader ? 13 : 8, {});
+	rootParameters.resize(m_meshShaderEnabled ? 13 : 8, {});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -218,7 +248,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	if (m_useMeshShader)
+	if (m_meshShaderEnabled)
 	{
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
@@ -238,7 +268,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	if (m_useMeshShader)
+	if (m_meshShaderEnabled)
 	{
 		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
 			m_device,
@@ -314,7 +344,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
 	);
 #endif
-	
+
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Main Command List"));
@@ -465,7 +495,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
 
 	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ? m_pipeline2D->GetPipelineState().Get() :
-		m_useMeshShader ? m_meshPipeline3D->GetPipelineState().Get() :
+		m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() :
 		pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
@@ -537,7 +567,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				if (m_useMeshShader)
+				if (m_meshShaderEnabled)
 				{
 					m_commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());
 
@@ -652,7 +682,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					switch (pMode)
 					{
 					case PolygonType::FILL:
-						m_commandList->SetPipelineState(m_useMeshShader ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
+						m_commandList->SetPipelineState(m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
 						break;
 					case PolygonType::LINE:
 						m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());

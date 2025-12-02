@@ -19,12 +19,6 @@ DXMeshPipeLine::DXMeshPipeLine(
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
 	)
 {
-#ifdef _DEBUG
-	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-	UINT compileFlags = 0;
-#endif
-
 	ComPtr<ID3DBlob> errorMessages;
 
 	std::vector<char> meshShader = DXHelper::ReadShaderFile(meshPath);
