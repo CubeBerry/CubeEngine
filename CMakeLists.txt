@@ -92,6 +92,9 @@ endif()
 
 add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_SRC} ${IMGUI_SRC})
 
+# Copy packages.config to build folder for NuGet package restore (for DirectX 12 Agility SDK)
+configure_file(packages.config ${CMAKE_CURRENT_BINARY_DIR}/packages.config COPYONLY)
+
 source_group("DebugTools"       FILES ${DEBUG_TOOLS_SRC})
 source_group("Engine"           FILES ${ENGINE_SRC})
 source_group("Game"             FILES ${GAME_SRC})
@@ -117,6 +120,21 @@ DESTINATION ${CMAKE_BINARY_DIR}
 # NVIDIA Aftermath
 FILE(COPY ./Engine/libs/NVIDIA_Nsight_Aftermath_SDK_2025.1.0.25009/lib/x64/GFSDK_Aftermath_Lib.x64.dll
 DESTINATION ${CMAKE_BINARY_DIR}
+)
+# DirectX 12 Agility SDK
+set(AGILITY_SDK_VERSION "1.618.4") 
+set(NUGET_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/build/packages/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}")
+set(D3D12_CORE_DLL "${NUGET_PACKAGES_DIR}/build/native/bin/x64/D3D12Core.dll")
+set(D3D12_LAYERS_DLL "${NUGET_PACKAGES_DIR}/build/native/bin/x64/D3D12SDKLayers.dll")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+            "${D3D12_CORE_DLL}" 
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+            "${D3D12_LAYERS_DLL}" 
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
+    COMMENT "Copying Agility SDK DLLs to .exe/D3D12 folder."
 )
 
 # Link Libraries
