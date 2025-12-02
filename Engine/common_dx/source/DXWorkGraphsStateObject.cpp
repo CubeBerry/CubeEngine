@@ -4,8 +4,6 @@
 #include "DXWorkGraphsStateObject.hpp"
 #include "DXHelper.hpp"
 
-#include <d3dcompiler.h>
-
 DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 	const ComPtr<ID3D12Device14>& device,
 	//const ComPtr<ID3D12RootSignature>& rootSignature,
