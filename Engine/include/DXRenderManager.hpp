@@ -118,6 +118,9 @@ private:
 
 	// Work Graphs
 	std::unique_ptr<DXWorkGraphsStateObject> m_workGraphsStateObject;
+	void InitializeWorkGraphs();
+	void ExecuteWorkGraphs();
+	void PrintWorkGraphsResults();
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality

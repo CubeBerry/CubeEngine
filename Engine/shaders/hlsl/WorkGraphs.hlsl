@@ -1,7 +1,7 @@
 // dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 GlobalRootSignature globalRootSignature =
 {
-    "UAV(u0)"
+    "DescriptorTable(UAV(u0))"
 };
 RWStructuredBuffer<uint> UAV : register(u0);
 

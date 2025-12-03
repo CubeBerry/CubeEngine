@@ -375,7 +375,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	// Initialize for work graphs
 	if (m_workGraphsEnabled)
 	{
-		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_device, "../Engine/shaders/cso/WorkGraphs.cso");
+		InitializeWorkGraphs();
 	}
 
 	// Initialize for compute shader
