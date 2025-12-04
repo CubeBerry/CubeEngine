@@ -196,7 +196,7 @@ void DXRenderManager::PrintWorkGraphsResults()
 
 		for (int i = 0; i < 4; ++i)
 		{
-			sprintf_s(msg, "ThirdNode Count (UAV[%d]): %u (Expected: 2)\n", 4 + i, pData[4 + i]);
+			sprintf_s(msg, "ThirdNode Count (UAV[%d]): %u\n", 4 + i, pData[4 + i]);
 			OutputDebugStringA(msg);
 		}
 
