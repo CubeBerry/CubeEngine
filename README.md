@@ -78,6 +78,7 @@ dxc 3D.frag.hlsl -T ps_6_5 -E fragmentMain -Fo 3D.frag.cso
 | [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) | ➖ | ❌ | ❌ | ✅ |
 | Compute Shader | ➖ | ❌ | ❌ | ✅ |
 | Mesh Shader | ➖ | ❌ | ❌ | ✅ |
+| Work Graphs | ➖ | ❌ | ❌ | ✅ |
 | **Optimization Techniques** | | | | |
 | MSAA | ➖ | ✅ | ✅ | ✅ |
 | Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit)) | ✅ | ➖ | ➖ | ➖ |
