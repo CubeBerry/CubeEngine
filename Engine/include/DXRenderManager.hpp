@@ -125,6 +125,7 @@ private:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE m_workGraphsUavCpuHandle;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE m_workGraphsUavGpuHandle;
 	void CheckWorkGraphsSupport();
+	void CheckMeshNodesSupport();
 	void InitializeWorkGraphs();
 	void ExecuteWorkGraphs();
 	void PrintWorkGraphsResults();

@@ -3,7 +3,7 @@
 //File: DXTexture.hpp
 #pragma once
 #pragma comment(lib, "dxguid.lib")
-#include <directx/d3dx12.h>
+#include <d3dx12/d3dx12.h>
 
 #include <filesystem>
 #include <glm/mat4x4.hpp>

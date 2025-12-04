@@ -3,7 +3,7 @@
 //File: DXHelper.cpp
 #include "DXHelper.hpp"
 
-#include <directx/d3dx12_core.h>
+#include <d3dx12/d3dx12_core.h>
 #include <stdexcept>
 #include <fstream>
 

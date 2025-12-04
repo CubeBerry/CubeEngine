@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: DXVertexBuffer.hpp
 #pragma once
-#include <directx/d3dx12.h>
+#include <d3dx12/d3dx12.h>
 
 using Microsoft::WRL::ComPtr;
 

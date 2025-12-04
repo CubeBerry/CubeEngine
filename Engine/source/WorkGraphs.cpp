@@ -4,6 +4,15 @@
 #include "DXRenderManager.hpp"
 #include "Engine.hpp"
 
+// Work Graphs References:
+// https://devblogs.microsoft.com/directx/d3d12-work-graphs/
+// https://gpuopen.com/learn/gpu-work-graphs/gpu-work-graphs-intro/
+// https://github.com/microsoft/DirectX-Graphics-Samples/tree/master/Samples/Desktop/D3D12HelloWorld/src/HelloWorkGraphs
+// Work Graphs Mesh Nodes References:
+// https://devblogs.microsoft.com/directx/d3d12-mesh-nodes-in-work-graphs/
+// https://gpuopen.com/learn/work_graphs_mesh_nodes/work_graphs_mesh_nodes-intro/
+// https://github.com/microsoft/DirectX-Graphics-Samples/tree/master/Samples/Desktop/D3D12HelloWorld/src/HelloMeshNodes
+
 void DXRenderManager::CheckWorkGraphsSupport()
 {
 	// Check Work Graphs Support
@@ -33,6 +42,20 @@ void DXRenderManager::CheckWorkGraphsSupport()
 			OutputDebugStringA("Work Graphs Enabled\n");
 		}
 	}
+}
+
+// DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
+void DXRenderManager::CheckMeshNodesSupport()
+{
+	// Work Graphs Support must be enabled first
+	if (!m_workGraphsEnabled)
+	{
+		m_meshNodesEnabled = false;
+		return;
+	}
+
+	//UUID Features[2] = { D3D12ExperimentalShaderModels, D3D12StateObjectsExperiment };
+	//HRESULT hr = D3D12EnableExperimentalFeatures(_countof(Features), Features, nullptr, nullptr);
 }
 
 void DXRenderManager::InitializeWorkGraphs()
