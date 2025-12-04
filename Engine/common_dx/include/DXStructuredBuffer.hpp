@@ -33,7 +33,7 @@ public:
 	DXStructuredBuffer(const DXStructuredBuffer&&) = delete;
 	DXStructuredBuffer& operator=(const DXStructuredBuffer&&) = delete;
 
-	ComPtr<ID3D12Resource>* GetStructuredBuffer() { return &m_structuredBuffer; }
+	ID3D12Resource* GetStructuredBuffer() { return m_structuredBuffer.Get(); }
 	[[nodiscard]] D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
 		return m_structuredBuffer->GetGPUVirtualAddress();

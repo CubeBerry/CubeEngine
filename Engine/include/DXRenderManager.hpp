@@ -90,10 +90,11 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-	ComPtr<ID3D12GraphicsCommandList6> m_commandList;
+	ComPtr<ID3D12GraphicsCommandList10> m_commandList;
 
 	UINT m_rtvDescriptorSize{ 0 };
 	UINT m_srvDescriptorSize{ 0 };
+	UINT m_srvDescriptorOffset{ 0 };
 
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };
@@ -118,6 +119,11 @@ private:
 
 	// Work Graphs
 	std::unique_ptr<DXWorkGraphsStateObject> m_workGraphsStateObject;
+	std::unique_ptr<DXStructuredBuffer<uint32_t>> m_workGraphsOutputBuffer;
+	ComPtr<ID3D12Resource> m_workGraphsReadBackBuffer;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE m_workGraphsUavCpuHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE m_workGraphsUavGpuHandle;
+	void CheckWorkGraphsSupport();
 	void InitializeWorkGraphs();
 	void ExecuteWorkGraphs();
 	void PrintWorkGraphsResults();

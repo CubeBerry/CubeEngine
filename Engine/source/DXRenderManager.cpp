@@ -55,9 +55,9 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXHelper::ThrowIfFailed(m_device->SetName(L"Main Device"));
 
 	// Check Mesh Shader Support
-	D3D12_FEATURE_DATA_D3D12_OPTIONS7 features{};
-	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features)))
-		|| (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+	D3D12_FEATURE_DATA_D3D12_OPTIONS7 options{};
+	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options, sizeof(options)))
+		|| (options.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
 	{
 		m_meshShaderEnabled = false;
 		Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader Not Supported");
@@ -83,32 +83,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	}
 
 	// Check Work Graphs Support
-	D3D12_FEATURE_DATA_D3D12_OPTIONS21 options = {};
-	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options, sizeof(options)))
-		|| (options.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED))
-	{
-		m_workGraphsEnabled = false;
-		Engine::GetLogger().LogDebug(LogCategory::D3D12, "Work Graphs Not Supported");
-		OutputDebugStringA("Work Graphs Not Supported\n");
-	}
-	else
-	{
-		// Check Shader Model 6.8 Support for Work Graphs
-		D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_8 };
-		if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)))
-			|| (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_8))
-		{
-			m_workGraphsEnabled = false;
-			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Work Graphs, Shader Model 6.8 Not Supported");
-			OutputDebugStringA("Work Graphs, Shader Model 6.8 Not Supported\n");
-		}
-		else
-		{
-			m_workGraphsEnabled = true;
-			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Work Graphs Enabled");
-			OutputDebugStringA("Work Graphs Enabled\n");
-		}
-	}
+	CheckWorkGraphsSupport();
 
 #if USE_NSIGHT_AFTERMATH
 	const uint32_t aftermathFlags =
@@ -181,6 +156,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
 	DXHelper::ThrowIfFailed(m_srvHeap->SetName(L"Shader Resource View Heap"));
+	m_srvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_srvDescriptorOffset = 0;
 
 	// Create Render Target Views (RTVs)
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -766,6 +743,10 @@ void DXRenderManager::EndRender()
 		}
 	}
 
+	// Work Graphs Execution
+	ExecuteWorkGraphs();
+	PrintWorkGraphsResults();
+
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -786,8 +767,6 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Calling Present...\n");
 	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
 	//OutputDebugStringA("EndRender: Present successful.\n");
-
-	MoveToNextFrame();
 
 	// Compute Shader Render
 	//auto preResolveBarriers = {
@@ -819,7 +798,7 @@ void DXRenderManager::EndRender()
 	//DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
 	////OutputDebugStringA("EndRender: Present successful.\n");
 
-	//MoveToNextFrame();
+	MoveToNextFrame();
 
 	//OutputDebugStringA("EndRender: Finished successfully.\n");
 }
@@ -986,13 +965,13 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 
 	if (!foundBlock)
 	{
-		startIndex = m_srvDescriptorSize;
-		m_srvDescriptorSize += count;
+		startIndex = m_srvDescriptorOffset;
+		m_srvDescriptorOffset += count;
 
 		ss << "  [LOG] No available block found. Allocating new block at index " << startIndex << ".\n";
-		ss << "  [LOG] New m_srvDescriptorOffset: " << m_srvDescriptorSize << "\n";
+		ss << "  [LOG] New m_srvDescriptorOffset: " << m_srvDescriptorOffset << "\n";
 
-		if (m_srvDescriptorSize >= m_srvHeap->GetDesc().NumDescriptors)
+		if (m_srvDescriptorOffset >= m_srvHeap->GetDesc().NumDescriptors)
 		{
 			OutputDebugStringA("  [FATAL ERROR] SRV Descriptor Heap is full!\n");
 			Engine::GetLogger().LogError(LogCategory::D3D12, "SRV Descriptor Heap is full.");
@@ -1002,7 +981,7 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(
 		m_srvHeap->GetCPUDescriptorHandleForHeapStart(),
 		static_cast<INT>(startIndex),
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+		m_srvDescriptorSize
 	);
 
 	ss << "  [LOG] Allocation successful. Returning startIndex: " << startIndex << "\n";
