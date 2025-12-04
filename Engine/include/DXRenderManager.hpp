@@ -121,6 +121,7 @@ private:
 	std::unique_ptr<DXWorkGraphsStateObject> m_workGraphsStateObject;
 	std::unique_ptr<DXStructuredBuffer<uint32_t>> m_workGraphsOutputBuffer;
 	ComPtr<ID3D12Resource> m_workGraphsReadBackBuffer;
+	ComPtr<ID3D12Resource> m_zeroBuffer;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE m_workGraphsUavCpuHandle;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE m_workGraphsUavGpuHandle;
 	void CheckWorkGraphsSupport();

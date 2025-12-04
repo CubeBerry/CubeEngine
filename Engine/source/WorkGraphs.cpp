@@ -46,9 +46,11 @@ void DXRenderManager::InitializeWorkGraphs()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpuHandle(startCpuHandle, 0, m_srvDescriptorSize);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpuHandle(startCpuHandle, 1, m_srvDescriptorSize);
 
+	m_workGraphsUavCpuHandle = uavCpuHandle;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE startGpuHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 	m_workGraphsUavGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(startGpuHandle, startIndex + 1, m_srvDescriptorSize);
 
+	// Create Output Buffer
 	m_workGraphsOutputBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(
 		m_device,
 		m_commandQueue,
@@ -59,6 +61,22 @@ void DXRenderManager::InitializeWorkGraphs()
 
 	UINT64 bufferSize = sizeof(uint32_t) * initData.size();
 
+	// Create Clear Buffer
+	m_zeroBuffer = DXInitializer::CreateBufferResource(
+		m_device,
+		bufferSize,
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_HEAP_TYPE_UPLOAD,
+		D3D12_RESOURCE_STATE_GENERIC_READ
+	);
+	m_zeroBuffer->SetName(L"Zero Init Buffer");
+
+	void* pData = nullptr;
+	m_zeroBuffer->Map(0, nullptr, &pData);
+	memcpy(pData, initData.data(), bufferSize);
+	m_zeroBuffer->Unmap(0, nullptr);
+
+	// Create Readback Buffer
 	//CD3DX12_HEAP_PROPERTIES readbackHeapProperties(D3D12_HEAP_TYPE_READBACK);
 	//CD3DX12_RESOURCE_DESC readbackBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
@@ -95,13 +113,27 @@ void DXRenderManager::ExecuteWorkGraphs()
 
 	m_commandList->SetComputeRootDescriptorTable(0, m_workGraphsUavGpuHandle);
 
+	// Clear UAV buffer
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_workGraphsOutputBuffer->GetStructuredBuffer(),
 		D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATE_COPY_DEST
+	);
+	m_commandList->ResourceBarrier(1, &barrier);
+
+	m_commandList->CopyResource(
+		m_workGraphsOutputBuffer->GetStructuredBuffer(),
+		m_zeroBuffer.Get()
+	);
+
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_workGraphsOutputBuffer->GetStructuredBuffer(),
+		D3D12_RESOURCE_STATE_COPY_DEST,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 	);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	// Dispatch
 	struct EntryRecord
 	{
 		uint32_t gridSize;
