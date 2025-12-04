@@ -118,7 +118,7 @@ void DXRenderManager::ExecuteWorkGraphs()
 
 	D3D12_DISPATCH_GRAPH_DESC dispatchGraphDesc = {};
 	dispatchGraphDesc.Mode = D3D12_DISPATCH_MODE_NODE_CPU_INPUT;
-	dispatchGraphDesc.NodeCPUInput.EntrypointIndex = m_workGraphsStateObject->GetWorkGraphIndex();
+	dispatchGraphDesc.NodeCPUInput.EntrypointIndex = m_workGraphsStateObject->GetEntrypointIndex(L"broadcastNode");
 	dispatchGraphDesc.NodeCPUInput.NumRecords = numRecords;
 	dispatchGraphDesc.NodeCPUInput.pRecords = inputData.data();
 	dispatchGraphDesc.NodeCPUInput.RecordStrideInBytes = sizeof(EntryRecord);

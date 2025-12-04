@@ -68,3 +68,9 @@ D3D12_SET_PROGRAM_DESC DXWorkGraphsStateObject::GetProgramDesc()
 
 	return setProgramDesc;
 }
+
+UINT DXWorkGraphsStateObject::GetEntrypointIndex(LPCWSTR nodeName)
+{
+	D3D12_NODE_ID nodeId = { nodeName, 0 };
+	return m_workGraphProperties->GetEntrypointIndex(m_workGraphIndex, nodeId);
+}

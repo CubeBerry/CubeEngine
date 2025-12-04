@@ -27,7 +27,7 @@ static const uint numEntryRecords = 4;
 // Seems Slang Shading Language supports Work Graphs but no documentation is shown yet.
 [Shader("node")]
 [NodeLaunch("broadcasting")]
-[NodeDispatchGrid(1, 1, 1)]
+[NodeDispatchGrid(16, 1, 1)]
 
 [NumThreads(2, 1, 1)]
 // first node = broadcastNode

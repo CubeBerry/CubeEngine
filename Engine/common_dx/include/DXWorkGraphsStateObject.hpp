@@ -22,7 +22,8 @@ public:
 
 	D3D12_SET_PROGRAM_DESC GetProgramDesc();
 	ID3D12RootSignature* GetGlobalRootSignature() const { return m_rootSignature.Get(); }
-	UINT GetWorkGraphIndex() const { return m_workGraphIndex; }
+	//UINT GetWorkGraphIndex() const { return m_workGraphIndex; }
+	UINT GetEntrypointIndex(LPCWSTR nodeName);
 	//ID3D12StateObject* GetStateObject() const { return m_stateObject.Get(); }
 private:
 	const wchar_t* m_workGraphName = L"WorkGraphsTutorial";
