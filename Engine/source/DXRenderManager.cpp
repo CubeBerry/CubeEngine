@@ -744,11 +744,11 @@ void DXRenderManager::EndRender()
 	}
 
 	// Work Graphs Execution
-	if (m_workGraphsEnabled)
-	{
-		ExecuteWorkGraphs();
-		PrintWorkGraphsResults();
-	}
+	//if (m_workGraphsEnabled)
+	//{
+	//	ExecuteWorkGraphs();
+	//	PrintWorkGraphsResults();
+	//}
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
