@@ -10,7 +10,7 @@
 
 Camera::~Camera()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Deleted!");
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Deleted");
 }
 
 void Camera::Update()
