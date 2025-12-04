@@ -123,7 +123,8 @@ DESTINATION ${CMAKE_BINARY_DIR}
 )
 # DirectX 12 Agility SDK
 set(AGILITY_SDK_VERSION "1.618.4") 
-set(NUGET_PACKAGES_DIR "${CMAKE_SOURCE_DIR}/build/packages/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}")
+# CMAKE_BINARY_DIR is used to locate directory where files are built
+set(NUGET_PACKAGES_DIR "${CMAKE_BINARY_DIR}/packages/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}")
 set(D3D12_CORE_DLL "${NUGET_PACKAGES_DIR}/build/native/bin/x64/D3D12Core.dll")
 set(D3D12_LAYERS_DLL "${NUGET_PACKAGES_DIR}/build/native/bin/x64/D3D12SDKLayers.dll")
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -134,7 +135,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different 
             "${D3D12_LAYERS_DLL}" 
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
-    COMMENT "Copying Agility SDK DLLs to .exe/D3D12 folder."
+    COMMENT "Copying Agility SDK DLLs to .exe/D3D12 folder..."
 )
 
 # Link Libraries
