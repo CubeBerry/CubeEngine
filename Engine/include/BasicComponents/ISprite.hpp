@@ -67,6 +67,13 @@ public:
 	virtual void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f) = 0;
 	void DeleteFromSpriteManagerList();
 protected:
+	enum class SpriteType
+	{
+		STATIC,
+		DYNAMIC
+	};
+	SpriteType spriteType = SpriteType::DYNAMIC;
+
 	SpriteDrawType spriteDrawType = SpriteDrawType::TwoDimension;
 
 	//For RecreateMesh

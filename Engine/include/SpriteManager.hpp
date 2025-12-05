@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: SpriteManager.hpp
 #pragma once
-#include "BasicComponents/ISprite.hpp"
+#include "BasicComponents/StaticSprite.hpp"
 
 #include <vector>
 
@@ -20,8 +20,10 @@ public:
     void AddSprite(ISprite* sprite_);
     void DeleteSprite(ISprite* sprite_);
 
-    int GetSpritesAmount() { return static_cast<int>(sprites.size()); }
-    std::vector<DynamicSprite*> GetDynamicSprites() { return sprites; }
+    int GetDynamicSpritesAmount() { return static_cast<int>(dynamicSprites.size()); }
+    std::vector<DynamicSprite*> GetDynamicSprites() { return dynamicSprites; }
+    StaticSprite* GetStaticSprite() { return &staticSprite; }
 private:
-    std::vector<DynamicSprite*> sprites;
+    std::vector<DynamicSprite*> dynamicSprites;
+    StaticSprite staticSprite;
 };

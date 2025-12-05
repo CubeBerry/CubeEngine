@@ -35,15 +35,15 @@ void SpriteManager::End()
 
 void SpriteManager::AddSprite(ISprite* sprite_)
 {
-	sprites.push_back(dynamic_cast<DynamicSprite*>(sprite_));
+    dynamicSprites.push_back(dynamic_cast<DynamicSprite*>(sprite_));
 }
 
 void SpriteManager::DeleteSprite(ISprite* sprite_)
 {
-    if (!sprites.empty())
+    if (!dynamicSprites.empty())
     {
         //auto iterator = std::find(sprites.begin(), sprites.end(), sprite_);
-        auto iterator = std::ranges::find(sprites.begin(), sprites.end(), sprite_);
+        auto iterator = std::ranges::find(dynamicSprites.begin(), dynamicSprites.end(), sprite_);
         //for (auto it = iterator + 1; it != sprites.end(); ++it)
         //{
             //(*it)->SetMaterialId((*it)->GetMaterialId() - 1);
@@ -62,10 +62,10 @@ void SpriteManager::DeleteSprite(ISprite* sprite_)
             //}
         //}
         //Engine::Instance().GetRenderManager()->DeleteWithIndex(0);
-        if (iterator != sprites.end())
+        if (iterator != dynamicSprites.end())
         {
             //delete sprite_;
-            sprites.erase(iterator);
+            dynamicSprites.erase(iterator);
         }
     }
 }

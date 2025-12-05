@@ -8,7 +8,7 @@
 class StaticSprite : public ISprite
 {
 public:
-	StaticSprite() : ISprite() { Init(); };
+	StaticSprite() : ISprite() { Init(); spriteType = SpriteType::STATIC; };
 	~StaticSprite() override;
 
 	void Init() override;
