@@ -94,6 +94,7 @@ private:
 
 	UINT m_rtvDescriptorSize{ 0 };
 	UINT m_srvDescriptorSize{ 0 };
+	UINT m_textureDescriptorOffset{ 0 };
 	UINT m_srvDescriptorOffset{ 0 };
 
 	UINT m_frameIndex{ 0 };

@@ -161,14 +161,25 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	// 500 for Sprite Textures, 500 for Meshlet Structured Buffers, 5 for Skybox, 2 for Compute Shader
+	// ----------------------------------------------------------------------------------
+	// SRV Descriptor Heap Partitioning Strategy (Total: 1007)
+	// 
+	// [Range 0 ~ 499] : Texture Pool (MAX_OBJECT_SIZE)
+	//    - Reserved exclusively for 2D Sprite Textures.
+	//    - Managed by: m_textureDescriptorOffset
+	// 
+	// [Range 500 ~ 1006] : General Resource Pool
+	//    - Used for Meshlet Buffers, Skybox, Work Graphs, Compute Shaders, etc.
+	//    - Managed by: m_srvDescriptorOffset (Starts at 500)
+	// ----------------------------------------------------------------------------------
 	srvHeapDesc.NumDescriptors = 1007;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
 	DXHelper::ThrowIfFailed(m_srvHeap->SetName(L"Shader Resource View Heap"));
 	m_srvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_srvDescriptorOffset = 0;
+	m_textureDescriptorOffset = 0;
+	m_srvDescriptorOffset = MAX_OBJECT_SIZE;
 
 	// Create Render Target Views (RTVs)
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -952,6 +963,12 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 
 	for (auto it = m_availableSrvBlocks.begin(); it != m_availableSrvBlocks.end(); /*++it*/)
 	{
+		if (it->first < MAX_OBJECT_SIZE)
+		{
+			++it;
+			continue;
+		}
+
 		if (it->second >= count)
 		{
 			startIndex = it->first;
@@ -1126,11 +1143,18 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 
 	const auto& texture = textures.emplace_back(std::make_unique<DXTexture>());
 
-	auto [srvHandle, srvIndex] = AllocateSrvHandles();
-	auto deallocator = [this](UINT index)
+	if (m_textureDescriptorOffset >= MAX_OBJECT_SIZE)
 	{
-		this->DeallocateSrvBlock(index, 1);
-	};
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Texture Heap Full (Max 500)");
+	}
+
+	UINT srvIndex = m_textureDescriptorOffset++;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(
+		m_srvHeap->GetCPUDescriptorHandleForHeapStart(),
+		static_cast<INT>(srvIndex),
+		m_srvDescriptorSize
+	);
+	auto deallocator = [](UINT index) {};
 
 	DXHelper::ThrowIfFailed(tempCommandList->Reset(tempCommandAllocator.Get(), nullptr));
 	texture->LoadTexture(
@@ -1171,6 +1195,7 @@ void DXRenderManager::ClearTextures()
 	*/
 	WaitForGPU();
 	textures.clear();
+	m_textureDescriptorOffset = 0;
 }
 
 DXTexture* DXRenderManager::GetTexture(const std::string& name) const
