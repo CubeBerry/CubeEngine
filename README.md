@@ -1,6 +1,6 @@
 # CubeEngine
 
-[![Build](https://github.com/CubeBerry/CubeEngine/actions/workflows/cmake-single-platform.yml/badge.svg)](https://github.com/CubeBerry/CubeEngine/actions/workflows/cmake-single-platform.yml)
+[![build](https://github.com/CubeBerry/CubeEngine/actions/workflows/cmake-single-platform.yml/badge.svg)](https://github.com/CubeBerry/CubeEngine/actions/workflows/cmake-single-platform.yml)
 ![Static Badge](https://img.shields.io/badge/language-C%2B%2B-brightgreen)
 ![Static Badge](https://img.shields.io/badge/platform-Windows-brightgreen)
 ![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)
