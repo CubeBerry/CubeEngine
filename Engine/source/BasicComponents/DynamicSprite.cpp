@@ -1,8 +1,8 @@
 //Author: DOYEONG LEE
 //Second Author: JEYOON YU
 //Project: CubeEngine
-//File: Sprtie.cpp
-#include "BasicComponents/Sprite.hpp"
+//File: DynamicSprite.cpp
+#include "BasicComponents/DynamicSprite.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 4201)
@@ -14,7 +14,7 @@
 
 #include "Engine.hpp"
 
-Sprite::~Sprite()
+DynamicSprite::~DynamicSprite()
 {
 	RenderManager* renderManager = Engine::GetRenderManager();
 	// @TODO Make OpenGL, Vulkan version of SafeDelete, ProcessDeletionQueue function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
@@ -31,15 +31,15 @@ Sprite::~Sprite()
 	}
 	animations.clear();
 	DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Sprite");
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Static Sprite");
 }
 
-void Sprite::Init()
+void DynamicSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Sprite");
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Static Sprite");
 }
 
-void Sprite::Update(float dt)
+void DynamicSprite::Update(float dt)
 {
 	UpdateProjection();
 	UpdateView();
@@ -48,13 +48,13 @@ void Sprite::Update(float dt)
 	UpdateAnimation(dt);
 }
 
-void Sprite::End()
+void DynamicSprite::End()
 {
 	Engine::GetSpriteManager().DeleteSprite(this);
 }
 
 // @TODO Replace with bufferWrapper's Getter functions
-void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
+void DynamicSprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 {
 	glm::mat4 modelMatrix(1.0f);
 	glm::vec3 pos;
@@ -131,7 +131,7 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 	}
 }
 
-void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
+void DynamicSprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 {
 	glm::mat4 modelMatrix(1.0f);
 	glm::mat4 rotationMatrix(1.0f);
@@ -216,7 +216,7 @@ void Sprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 	}
 }
 
-void Sprite::UpdateView()
+void DynamicSprite::UpdateView()
 {
 	for (auto& subMesh : subMeshes)
 	{
@@ -242,7 +242,7 @@ void Sprite::UpdateView()
 	}
 }
 
-void Sprite::UpdateProjection()
+void DynamicSprite::UpdateProjection()
 {
 	for (auto& subMesh : subMeshes)
 	{
@@ -267,7 +267,7 @@ void Sprite::UpdateProjection()
 	}
 }
 
-void Sprite::AddQuad(glm::vec4 color_)
+void DynamicSprite::AddQuad(glm::vec4 color_)
 {
 	SubMesh subMesh;
 
@@ -322,7 +322,7 @@ void Sprite::AddQuad(glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexel_)
+void DynamicSprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexel_)
 {
 	SubMesh subMesh;
 
@@ -391,13 +391,7 @@ void Sprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexe
 	AddSpriteToManager();
 }
 
-void Sprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
-{
-	Engine::GetObjectManager().QueueComponentFunction<Sprite>(this,
-		[=](Sprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
-}
-
-void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
+void DynamicSprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
 {
 	meshType = type;
 	filePath = path;
@@ -411,15 +405,7 @@ void Sprite::CreateMesh3D(MeshType type, const std::filesystem::path& path, int 
 	AddSpriteToManager();
 }
 
-void Sprite::DeleteFromSpriteManagerList()
-{
-	if (this != nullptr)
-	{
-		Engine::GetSpriteManager().DeleteSprite(this);
-	}
-}
-
-void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
+void DynamicSprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
 {
 	hotSpotList.clear();
 	frameTexel.clear();
@@ -441,7 +427,7 @@ void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::str
 	//texturePtr = Engine::GetTextureManager().Load(text, true);
 	//frameSize = texturePtr->GetSize();
 	Engine::Instance().GetRenderManager()->LoadTexture(text, name, true);
-	AddQuadWithTexture(name, glm::vec4 (1.f), true);
+	AddQuadWithTexture(name, glm::vec4(1.f), true);
 
 	inFile >> text;
 	while (inFile.eof() == false)
@@ -524,7 +510,7 @@ void Sprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::str
 	}
 }
 
-glm::vec2 Sprite::GetHotSpot(int index)
+glm::vec2 DynamicSprite::GetHotSpot(int index)
 {
 	if (index < 0 || hotSpotList.size() <= index)
 	{
@@ -534,7 +520,7 @@ glm::vec2 Sprite::GetHotSpot(int index)
 	return hotSpotList[index];
 }
 
-void Sprite::PlayAnimation(int anim)
+void DynamicSprite::PlayAnimation(int anim)
 {
 	if (anim < 0 || animations.size() <= anim)
 	{
@@ -548,7 +534,7 @@ void Sprite::PlayAnimation(int anim)
 	}
 }
 
-void Sprite::UpdateAnimation(float dt)
+void DynamicSprite::UpdateAnimation(float dt)
 {
 	if (animations.empty() == false && currAnim >= 0 && !animations[currAnim]->IsAnimationDone())
 	{
@@ -559,248 +545,7 @@ void Sprite::UpdateAnimation(float dt)
 	}
 }
 
-void Sprite::ChangeTexture(std::string name)
-{
-	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	switch (renderManager->GetGraphicsMode())
-	{
-	case GraphicsMode::GL:
-	{
-		GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-		{
-			if (renderManagerGL->GetTexture(name) != nullptr)
-			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
-
-				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-				vertexUniform.isTex = true;
-				isTex = true;
-				textureName = name;
-			}
-			else
-			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-				vertexUniform.isTex = false;
-				isTex = false;
-			}
-		}
-		else
-		{
-			if (renderManagerGL->GetTexture(name) != nullptr)
-			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
-				fragmentUniform.isTex = true;
-				isTex = true;
-				textureName = name;
-			}
-			else
-			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				fragmentUniform.isTex = false;
-				isTex = false;
-			}
-		}
-		break;
-	}
-	case GraphicsMode::VK:
-	{
-		VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-		{
-			if (renderManagerVK->GetTexture(name) != nullptr)
-			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
-
-				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-				vertexUniform.isTex = true;
-				isTex = true;
-				textureName = name;
-			}
-			else
-			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-				vertexUniform.isTex = false;
-				isTex = false;
-			}
-		}
-		else
-		{
-			if (renderManagerVK->GetTexture(name) != nullptr)
-			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
-				fragmentUniform.isTex = true;
-				isTex = true;
-				textureName = name;
-			}
-			else
-			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				fragmentUniform.isTex = false;
-				isTex = false;
-			}
-		}
-		break;
-	}
-	case GraphicsMode::DX:
-	{
-		DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-		{
-			if (renderManagerDX->GetTexture(name) != nullptr)
-			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
-
-				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
-				vertexUniform.isTex = true;
-				isTex = true;
-				textureName = name;
-			}
-			else
-			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-				vertexUniform.isTex = false;
-				isTex = false;
-			}
-		}
-		else
-		{
-			if (renderManagerDX->GetTexture(name) != nullptr)
-			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
-				fragmentUniform.isTex = true;
-				isTex = true;
-				textureName = name;
-			}
-			else
-			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-				fragmentUniform.isTex = false;
-				isTex = false;
-			}
-		}
-		break;
-	}
-	default:
-		break;
-	}
-}
-
-void Sprite::AddSpriteToManager()
-{
-	Engine::GetSpriteManager().AddSprite(this);
-}
-
-void Sprite::SetColor(glm::vec4 color)
-{
-	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-		vertexUniform.color = color;
-	}
-	else
-	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-
-		vertexUniform.color = color;
-	}
-}
-
-glm::vec4 Sprite::GetColor()
-{
-	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-		return vertexUniform.color;
-	}
-	else
-	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
-
-		return vertexUniform.color;
-	}
-}
-
-void Sprite::SetIsTex(bool state)
-{
-	isTex = state;
-	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	switch (renderManager->GetGraphicsMode())
-	{
-	case GraphicsMode::GL:
-	{
-		//GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-		{
-			auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-			vertexUniform.isTex = state;
-		}
-		else
-		{
-			auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-			fragmentUniform.isTex = state;
-		}
-		break;
-	}
-	case GraphicsMode::DX:
-	{
-		//DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-		{
-			auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-			vertexUniform.isTex = state;
-		}
-		else
-		{
-			auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-			fragmentUniform.isTex = state;
-		}
-		break;
-	}
-	case GraphicsMode::VK:
-	{
-		//VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
-		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
-		{
-			auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-
-			vertexUniform.isTex = state;
-		}
-		else
-		{
-			auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
-
-			fragmentUniform.isTex = state;
-		}
-		break;
-	}
-	default:
-		break;
-	}
-}
-
-glm::vec2 Sprite::GetFrameTexel(int frameNum) const
+glm::vec2 DynamicSprite::GetFrameTexel(int frameNum) const
 {
 	if (frameNum < 0 || frameTexel.size() <= frameNum)
 	{

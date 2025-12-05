@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: SpriteManager.cpp
 #include "SpriteManager.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "Engine.hpp"
 
 SpriteManager::~SpriteManager()
@@ -32,12 +33,12 @@ void SpriteManager::End()
 {
 }
 
-void SpriteManager::AddSprite(Sprite* sprite_)
+void SpriteManager::AddSprite(ISprite* sprite_)
 {
-	sprites.push_back(sprite_);
+	sprites.push_back(dynamic_cast<DynamicSprite*>(sprite_));
 }
 
-void SpriteManager::DeleteSprite(Sprite* sprite_)
+void SpriteManager::DeleteSprite(ISprite* sprite_)
 {
     if (!sprites.empty())
     {

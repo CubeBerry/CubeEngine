@@ -7,7 +7,7 @@
 
 #include "ObjectType.hpp"
 #include "glm/vec3.hpp"
-#include "Component.hpp"
+#include "IComponent.hpp"
 
 class Object
 {
@@ -70,7 +70,7 @@ public:
 			return;
 		}
 		ComponentTypes* componentType = new ComponentTypes();
-		dynamic_cast<Component*>(componentType)->SetOwner(this);
+		dynamic_cast<IComponent*>(componentType)->SetOwner(this);
 		this->componentList.push_back(std::move(componentType));
 	}
 
@@ -102,7 +102,7 @@ public:
 		}
 	}
 
-	std::vector<Component*> GetComponentList() { return componentList; }
+	std::vector<IComponent*> GetComponentList() { return componentList; }
 
 	//template <typename T> bool HasComponent()
 	//{
@@ -150,5 +150,5 @@ protected:
 
 	std::string objectName = "";
 	bool isDrawAble = true;
-	std::vector<Component*> componentList;
+	std::vector<IComponent*> componentList;
 };

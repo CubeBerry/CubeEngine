@@ -20,7 +20,7 @@
 #include "DXComputeBuffer.hpp"
 #include "DXWorkGraphsContext.hpp"
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/ISprite.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10

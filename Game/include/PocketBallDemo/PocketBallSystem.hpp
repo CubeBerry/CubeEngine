@@ -4,7 +4,7 @@
 #pragma once
 
 #include <vector>
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 
 class PocketBallSystem
 {
@@ -22,8 +22,8 @@ public:
 
 	void SetPlayerBall(Object* obj);
 private:
-	Sprite* cursor = nullptr;
-	Sprite* powerMeter = nullptr;
+	DynamicSprite* cursor = nullptr;
+	DynamicSprite* powerMeter = nullptr;
 
 	glm::vec2 distanceMax { 0.f,0.f };
 	glm::vec2 playerPosition{ 0.f,0.f };

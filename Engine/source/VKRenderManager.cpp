@@ -568,7 +568,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 	//--------------------Descriptor Update--------------------//
 
-	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
+	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:

@@ -1,17 +1,17 @@
 //Author: DOYEONG LEE
 //Project: CubeEngine
-//File: Component.hpp
+//File: IComponent.hpp
 #pragma once
 #include "ComponentTypes.hpp"
 
 class Object;
-class Component
+class IComponent
 {
 public:
 	friend class Object;
 
-	Component(ComponentTypes type) : componentType(type) {};
-	virtual ~Component() { };
+	IComponent(ComponentTypes type) : componentType(type) {};
+	virtual ~IComponent() { };
 
 	virtual void Init() = 0;
 	virtual void Update(float dt) = 0;

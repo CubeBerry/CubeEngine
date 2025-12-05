@@ -8,7 +8,7 @@
 #include <string>
 
 class BEUEnemy;
-class Sprite;
+class DynamicSprite;
 class BeatEmUpDemoSystem
 {
 public:
@@ -35,8 +35,8 @@ public:
 	std::vector<BEUEnemy*> GetEnemyList() { return enemyList;}
 	void DeleteEnemy(BEUEnemy* enemy);
 protected:
-	Sprite* healthBar = nullptr;
-	Sprite* emeyHealthBar = nullptr;
+	DynamicSprite* healthBar = nullptr;
+	DynamicSprite* emeyHealthBar = nullptr;
 
 	bool isCameraMoveAble = true;
 	bool isEnemyHit = false;

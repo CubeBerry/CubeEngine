@@ -515,7 +515,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
+	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:

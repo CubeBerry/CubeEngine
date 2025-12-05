@@ -9,7 +9,6 @@
 #include "PlatformDemo/PBullet.hpp"
 #include "PlatformDemo/PEnemyBullet.hpp"
 
-#include "BasicComponents/Sprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>

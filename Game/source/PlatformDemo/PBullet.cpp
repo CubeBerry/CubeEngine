@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: PBullet.cpp
 #include "PlatformDemo/PBullet.hpp"
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "Engine.hpp"
 
@@ -14,8 +14,8 @@ PBullet::PBullet(glm::vec3 pos_, glm::vec3 size_, std::string name)
 	GetComponent<Physics2D>()->AddCollidePolygonAABB(size_ / 2.f);
 	GetComponent<Physics2D>()->SetIsGhostCollision(true);
 
-	AddComponent<Sprite>();
-	GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	AddComponent<DynamicSprite>();
+	GetComponent<DynamicSprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
 }
 
 void PBullet::Init()

@@ -5,7 +5,7 @@
 #include <string>
 #include <glm/vec4.hpp>
 #include "BasicComponents/Physics2D.hpp"
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 
 enum class ParticleType
 {
@@ -32,7 +32,7 @@ public:
     bool inUse() const { return lifeTime > 0; }
 
     void SetFadeOutAmount(float amount) { fadeOutAmount = amount; }
-    Sprite* GetSprite() { return sprite; }
+    DynamicSprite* GetSprite() { return sprite; }
     float GetLifetime() { return lifeTime; }
     Physics2D* GetPhysics() { return &pPhysics; }
 private:
@@ -49,7 +49,7 @@ private:
     ParticleType particleType = ParticleType::REC;
     std::string spriteName = "";
 
-    Sprite* sprite = nullptr;
+    DynamicSprite* sprite = nullptr;
     ParticleEffect effect;
     Physics2D pPhysics;
 };

@@ -6,7 +6,7 @@
 #include "PlatformDemo/PEnemyBullet.hpp"
 #include "PlatformDemo/PlatformDemoSystem.hpp"
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "PlatformDemo/PlatformDemoSystem.hpp"
 
@@ -22,8 +22,8 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType o
 PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, PlatformDemoSystem* sys)
 	: Object(pos_, size_, name, ObjectType::PLAYER)
 {
-	AddComponent<Sprite>();
-	GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/player.spt", "Player");
+	AddComponent<DynamicSprite>();
+	GetComponent<DynamicSprite>()->LoadAnimation("../Game/assets/PlatformDemo/player.spt", "Player");
 
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.01f, 0.1f });
@@ -32,7 +32,7 @@ PPlayer::PPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, PlatformDemo
 	GetComponent<Physics2D>()->SetMaxVelocity({ 400.f,800.f });
 	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 2.f,  size_.y / 2.f });
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
-	GetComponent<Sprite>()->PlayAnimation(0);
+	GetComponent<DynamicSprite>()->PlayAnimation(0);
 	platformDemoSystem = sys;
 }
 
@@ -65,7 +65,7 @@ void PPlayer::Update(float dt)
 
 	if (canAttack == false)
 	{
-		if (GetComponent<Sprite>()->IsAnimationDone() == true)
+		if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 		{
 			canAttack = true;
 		}
@@ -149,7 +149,7 @@ void PPlayer::Control(float /*dt*/)
 		if (canAttack == true)
 		{
 			{
-				GetComponent<Sprite>()->PlayAnimation(3);
+				GetComponent<DynamicSprite>()->PlayAnimation(3);
 				canAttack = false;
 			}
 
@@ -172,13 +172,13 @@ void PPlayer::Jumping()
 	{
 		if (GetComponent<Physics2D>()->GetVelocity().y > 0.f)
 		{
-			if (canAttack == true) GetComponent<Sprite>()->PlayAnimation(2);
+			if (canAttack == true) GetComponent<DynamicSprite>()->PlayAnimation(2);
 			SetStateOn(PlayerStates::JUMPING);
 			SetStateOff(PlayerStates::FALLING);
 		}
 		else if (GetComponent<Physics2D>()->GetVelocity().y < 0.f)
 		{
-			if (canAttack == true) GetComponent<Sprite>()->PlayAnimation(2);
+			if (canAttack == true) GetComponent<DynamicSprite>()->PlayAnimation(2);
 			SetStateOn(PlayerStates::FALLING);
 			SetStateOff(PlayerStates::JUMPING);
 		}
@@ -189,11 +189,11 @@ void PPlayer::Jumping()
 		{
 			if (abs(GetComponent<Physics2D>()->GetVelocity().x) < 5.f)
 			{
-				GetComponent<Sprite>()->PlayAnimation(0);
+				GetComponent<DynamicSprite>()->PlayAnimation(0);
 			}
 			else
 			{
-				GetComponent<Sprite>()->PlayAnimation(1);
+				GetComponent<DynamicSprite>()->PlayAnimation(1);
 			}
 		}
 	}

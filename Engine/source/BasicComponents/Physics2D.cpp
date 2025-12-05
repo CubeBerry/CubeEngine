@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: Physics2D.cpp
 #include "BasicComponents/Physics2D.hpp"
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include <glm/geometric.hpp>
 
 #include "Engine.hpp"
@@ -67,8 +67,8 @@ void Physics2D::Update(float dt)
 		velocity.y = 0.f;
 	}
 
-	Component::GetOwner()->SetXPosition(Component::GetOwner()->GetPosition().x + velocity.x * dt);
-	Component::GetOwner()->SetYPosition(Component::GetOwner()->GetPosition().y + velocity.y * dt);
+	IComponent::GetOwner()->SetXPosition(IComponent::GetOwner()->GetPosition().x + velocity.x * dt);
+	IComponent::GetOwner()->SetYPosition(IComponent::GetOwner()->GetPosition().y + velocity.y * dt);
 
 #ifdef _DEBUG
 	/*std::vector<glm::vec2> rotatedPoints1;

@@ -126,7 +126,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		break;
 	}
 
-	std::vector<Sprite*> sprites = Engine::Instance().GetSpriteManager().GetSprites();
+	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	for (const auto& sprite : sprites)
 	{
 		for (auto& subMesh : sprite->GetSubMeshes())

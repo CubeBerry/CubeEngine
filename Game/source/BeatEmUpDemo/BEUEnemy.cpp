@@ -6,7 +6,7 @@
 #include "BeatEmUpDemo/BEUPlayer.hpp"
 #include "BeatEmUpDemo/BEUAttackBox.hpp"
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "BeatEmUpDemo/BeatEmUpDemoSystem.hpp"
 
@@ -22,10 +22,10 @@ BEUEnemy::BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectType
 BEUEnemy::BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDemoSystem* sys)
 	: Object(pos_, size_, name, ObjectType::ENEMY)
 {
-	AddComponent<Sprite>();
-	GetComponent<Sprite>()->LoadAnimation("../Game/assets/BeatEmUpDemo/player.spt", "Player");
-	GetComponent<Sprite>()->PlayAnimation(0);
-	GetComponent<Sprite>()->SetColor({ 1.f,0.f,0.f,1.f });
+	AddComponent<DynamicSprite>();
+	GetComponent<DynamicSprite>()->LoadAnimation("../Game/assets/BeatEmUpDemo/player.spt", "Player");
+	GetComponent<DynamicSprite>()->PlayAnimation(0);
+	GetComponent<DynamicSprite>()->SetColor({ 1.f,0.f,0.f,1.f });
 
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.0f, 0.f });
@@ -113,7 +113,7 @@ void BEUEnemy::Update(float dt)
 				SetStateOff(BEUObjectStates::HIT);
 				if (IsStateOn(BEUObjectStates::KNOCKBACK) == false)
 				{
-					GetComponent<Sprite>()->PlayAnimation(0);
+					GetComponent<DynamicSprite>()->PlayAnimation(0);
 				}
 			}
 		}
@@ -153,7 +153,7 @@ void BEUEnemy::CollideObject(Object* obj)
 				SetStateOn(BEUObjectStates::DIRECTION);
 				Object::SetXSize(-Object::GetSize().x);
 			}
-			GetComponent<Sprite>()->PlayAnimation(7);
+			GetComponent<DynamicSprite>()->PlayAnimation(7);
 
 			switch (static_cast<BEUAttackBox*>(obj)->GetAttackBoxType())
 			{
@@ -243,9 +243,9 @@ void BEUEnemy::Moving(float dt)
 	{
 		if (IsStateOn(BEUObjectStates::MOVE) == true)
 		{
-			if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+			if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 1)
 			{
-				GetComponent<Sprite>()->PlayAnimation(1);
+				GetComponent<DynamicSprite>()->PlayAnimation(1);
 			}
 
 			if (IsStateOn(BEUObjectStates::DIRECTION) == false)
@@ -287,7 +287,7 @@ void BEUEnemy::Moving(float dt)
 		{
 			if (IsStateOn(BEUObjectStates::DIRECTION) == true)
 			{
-				GetComponent<Sprite>()->PlayAnimation(1);
+				GetComponent<DynamicSprite>()->PlayAnimation(1);
 				Object::SetXSize(-Object::GetSize().x);
 				SetStateOff(BEUObjectStates::DIRECTION);
 			}
@@ -296,7 +296,7 @@ void BEUEnemy::Moving(float dt)
 		{
 			if (IsStateOn(BEUObjectStates::DIRECTION) == false)
 			{
-				GetComponent<Sprite>()->PlayAnimation(1);
+				GetComponent<DynamicSprite>()->PlayAnimation(1);
 				Object::SetXSize(-Object::GetSize().x);
 				SetStateOn(BEUObjectStates::DIRECTION);
 			}
@@ -318,9 +318,9 @@ void BEUEnemy::Moving(float dt)
 					canAttack = true;
 				}
 			}
-			if (GetComponent<Sprite>()->GetCurrentAnim() != 0)
+			if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 0)
 			{
-				GetComponent<Sprite>()->PlayAnimation(0);
+				GetComponent<DynamicSprite>()->PlayAnimation(0);
 			}
 		}
 		else
@@ -345,7 +345,7 @@ void BEUEnemy::Attack(float dt)
 				{
 					Engine::GetSoundManager().Play("punch.wav", 0);
 					attackDelay = 0.f;
-					GetComponent<Sprite>()->PlayAnimation(3);
+					GetComponent<DynamicSprite>()->PlayAnimation(3);
 					canAttack = false;
 					SetStateOn(BEUObjectStates::ATTACK);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -362,7 +362,7 @@ void BEUEnemy::Attack(float dt)
 				break;
 			case 1:
 				Engine::GetSoundManager().Play("punch.wav", 0);
-				GetComponent<Sprite>()->PlayAnimation(3);
+				GetComponent<DynamicSprite>()->PlayAnimation(3);
 				canAttack = false;
 				SetStateOn(BEUObjectStates::ATTACK);
 				if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -378,7 +378,7 @@ void BEUEnemy::Attack(float dt)
 				break;
 			case 2:
 				Engine::GetSoundManager().Play("punch.wav", 0);
-				GetComponent<Sprite>()->PlayAnimation(5);
+				GetComponent<DynamicSprite>()->PlayAnimation(5);
 				canAttack = false;
 				SetStateOn(BEUObjectStates::ATTACK);
 				if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -397,11 +397,11 @@ void BEUEnemy::Attack(float dt)
 	}
 	else if (canAttack == false && IsStateOn(BEUObjectStates::ATTACK) == true)
 	{
-		if (GetComponent<Sprite>()->IsAnimationDone() == true)
+		if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 		{
 			//canAttack = true;
 			//SetStateOff(BEUObjectStates::ATTACK);
-			GetComponent<Sprite>()->PlayAnimation(0);
+			GetComponent<DynamicSprite>()->PlayAnimation(0);
 		}
 		glm::vec3 playerPos = Engine::GetObjectManager().FindObjectWithName("Player")->GetPosition();
 		if (!((Object::position.z < playerPos.z + 0.2f && Object::position.z > playerPos.z - 0.2f) && ((Object::position.x > playerPos.x + 1.5f && Object::position.x < playerPos.x + 2.5f)
@@ -423,11 +423,11 @@ void BEUEnemy::Jumping()
 		{
 			if (canAttack == true)
 			{
-				GetComponent<Sprite>()->PlayAnimation(2);
+				GetComponent<DynamicSprite>()->PlayAnimation(2);
 			}
 			else
 			{
-				GetComponent<Sprite>()->PlayAnimation(6);
+				GetComponent<DynamicSprite>()->PlayAnimation(6);
 			}
 
 			SetStateOn(BEUObjectStates::JUMPING);
@@ -448,7 +448,7 @@ void BEUEnemy::Jumping()
 					SetStateOff(BEUObjectStates::ATTACK);
 				}
 
-				GetComponent<Sprite>()->PlayAnimation(0);
+				GetComponent<DynamicSprite>()->PlayAnimation(0);
 			}
 		}
 		SetYPosition(0.f);
@@ -459,7 +459,7 @@ void BEUEnemy::Jumping()
 	{
 		if (canAttack == true)
 		{
-			GetComponent<Sprite>()->PlayAnimation(2);
+			GetComponent<DynamicSprite>()->PlayAnimation(2);
 		}
 
 		if (IsStateOn(BEUObjectStates::FALLING) == false)
@@ -476,7 +476,7 @@ void BEUEnemy::KnockBack(float dt)
 	{
 		if (IsStateOn(BEUObjectStates::JUMPING) == false)
 		{
-			GetComponent<Sprite>()->PlayAnimation(8);
+			GetComponent<DynamicSprite>()->PlayAnimation(8);
 			SetStateOn(BEUObjectStates::JUMPING);
 			SetStateOff(BEUObjectStates::FALLING);
 		}
@@ -489,7 +489,7 @@ void BEUEnemy::KnockBack(float dt)
 			SetStateOff(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 			SetStateOn(BEUObjectStates::LAYING);
-			GetComponent<Sprite>()->PlayAnimation(9);
+			GetComponent<DynamicSprite>()->PlayAnimation(9);
 
 			SetYPosition(0.f);
 		}
@@ -499,14 +499,14 @@ void BEUEnemy::KnockBack(float dt)
 			layingDelay += dt;
 			if (hp <= 0.f)
 			{
-				glm::vec4 color = GetComponent<Sprite>()->GetColor();
+				glm::vec4 color = GetComponent<DynamicSprite>()->GetColor();
 				if (color.w == 1.f)
 				{
-					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 0.f });
+					GetComponent<DynamicSprite>()->SetColor({ color.r, color.g, color.b, 0.f });
 				}
 				else
 				{
-					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 1.f });
+					GetComponent<DynamicSprite>()->SetColor({ color.r, color.g, color.b, 1.f });
 				}
 			}
 			if (layingDelay > 1.25f)
@@ -519,7 +519,7 @@ void BEUEnemy::KnockBack(float dt)
 					SetStateOff(BEUObjectStates::KNOCKBACK);
 					SetStateOff(BEUObjectStates::LAYING);
 					SetStateOff(BEUObjectStates::ATTACK);
-					GetComponent<Sprite>()->PlayAnimation(0);
+					GetComponent<DynamicSprite>()->PlayAnimation(0);
 					isInvincible = false;
 				}
 				else
@@ -535,7 +535,7 @@ void BEUEnemy::KnockBack(float dt)
 	{
 		if (IsStateOn(BEUObjectStates::FALLING) == false)
 		{
-			GetComponent<Sprite>()->PlayAnimation(8);
+			GetComponent<DynamicSprite>()->PlayAnimation(8);
 			SetStateOn(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 		}

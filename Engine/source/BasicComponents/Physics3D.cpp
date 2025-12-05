@@ -3,7 +3,7 @@
 //File: Physics3D.cpp
 
 #include "BasicComponents/Physics3D.hpp"
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 
 #include "Engine.hpp"
 #include <iostream>
@@ -501,7 +501,7 @@ void Physics3D::AddCollideSphere(float r)
 		Point3D temp;
 		temp.pos = { 0.f,0.f,0.f };
 		points.push_back(std::move(temp));
-		points.at(points.size() - 1).sprite = new Sprite();
+		points.at(points.size() - 1).sprite = new DynamicSprite();
 		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 30, 30, { 0.0, 1.0, 0.0, 1.0 });
 		//temp.sprite = nullptr;
 	}
@@ -648,13 +648,13 @@ void Physics3D::AddPoint(glm::vec3 pos)
 	{
 		Point3D temp;
 		temp.pos = { 0.f,0.f,0.f };
-		temp.sprite = new Sprite();
+		temp.sprite = new DynamicSprite();
 		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 		points.push_back(std::move(temp));
 	}
 	Point3D temp;
 	temp.pos = pos;
-	temp.sprite = new Sprite();
+	temp.sprite = new DynamicSprite();
 	switch (bodyType)
 	{
 	case BodyType3D::RIGID:

@@ -146,8 +146,8 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			if (isEditorMod == false)
 			{
 				Engine::GetObjectManager().AddObject<Object>(glm::vec3{ posX, posY, 0.1f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
-				/*Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-				Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });*/
+				/*Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+				Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });*/
 
 				Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
 				Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,  Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f });
@@ -157,8 +157,8 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 			else
 			{
 				Object* temp = new Object(glm::vec3{ posX, posY, 0.1f }, glm::vec3{ sizeX, sizeY, 0.f }, "Wall", ObjectType::WALL);
-				temp->AddComponent<Sprite>();
-				temp->GetComponent<Sprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
+				temp->AddComponent<DynamicSprite>();
+				temp->GetComponent<DynamicSprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
 				temp->AddComponent<Physics2D>();
 				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x / 2.f,  temp->GetSize().y / 2.f });
@@ -320,7 +320,7 @@ void PDemoMapEditorDemo::Init()
 	//if (isEditorMod == true)
 	//{
 	target = new Target();
-	target->rect = new Sprite();
+	target->rect = new DynamicSprite();
 	//target->rect->AddMeshWithTexture("", {0.f,1.f,0.f,1.f});
 	target->rect->AddQuad({ 0.f,1.f,0.f,0.f });
 	//}
@@ -333,13 +333,13 @@ void PDemoMapEditorDemo::Update(float dt)
 		for (auto& o : walls)
 		{
 			o->GetComponent<Physics2D>()->Update(dt);
-			o->GetComponent<Sprite>()->Update(dt);
+			o->GetComponent<DynamicSprite>()->Update(dt);
 		}
 		for (auto& o : objects)
 		{
 			o->GetComponent<Physics2D>()->SetGravity(0.f);
 			o->GetComponent<Physics2D>()->Update(dt);
-			o->GetComponent<Sprite>()->Update(dt);
+			o->GetComponent<DynamicSprite>()->Update(dt);
 		}
 	}
 }
@@ -585,8 +585,8 @@ void PDemoMapEditorDemo::WallCreator()
 			if (isWallSetting == true)
 			{
 				Object* temp = new Object(glm::vec3{ midPoint.x, -midPoint.y,0.f }, glm::vec3{ abs(target->endPos.x - target->startPos.x) , abs(target->endPos.y - target->startPos.y),0.f }, "Wall", ObjectType::WALL);
-				temp->AddComponent<Sprite>();
-				temp->GetComponent<Sprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
+				temp->AddComponent<DynamicSprite>();
+				temp->GetComponent<DynamicSprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
 				temp->AddComponent<Physics2D>();
 				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x / 2.f,  temp->GetSize().y / 2.f });
@@ -648,7 +648,7 @@ void PlatformDemoSystem::InitHealthBar()
 #ifdef _DEBUG
 	mapEditor->Init();
 #endif
-	healthBar = new Sprite();
+	healthBar = new DynamicSprite();
 	healthBar->AddQuad({ 0.f,1.f,0.f,1.f });
 	healthBar->SetSpriteDrawType(SpriteDrawType::UI);
 }

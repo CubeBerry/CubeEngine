@@ -47,7 +47,7 @@ void BackgroundManager::AddNormalBackground(std::string spriteName_, glm::vec2 p
 
 	if (isAnimated == true)
 	{
-		temp.sprite = new Sprite;
+		temp.sprite = new DynamicSprite;
 		temp.sprite->LoadAnimation(temp.spriteName, temp.spriteName);
 		temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 		temp.sprite->UpdateProjection();
@@ -55,7 +55,7 @@ void BackgroundManager::AddNormalBackground(std::string spriteName_, glm::vec2 p
 	}
 	else
 	{
-		temp.sprite = new Sprite;
+		temp.sprite = new DynamicSprite;
 		temp.sprite->AddQuadWithTexture(temp.spriteName);
 		temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 		temp.sprite->UpdateProjection();
@@ -102,7 +102,7 @@ void BackgroundManager::AddVerticalParallexBackground(std::string spriteName_, s
 
 		if (isAnimated == true)
 		{
-			temp.sprite = new Sprite;
+			temp.sprite = new DynamicSprite;
 			temp.sprite->LoadAnimation(temp.spriteName, temp.spriteName);
 			temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 			temp.sprite->UpdateProjection();
@@ -110,7 +110,7 @@ void BackgroundManager::AddVerticalParallexBackground(std::string spriteName_, s
 		}
 		else
 		{
-			temp.sprite = new Sprite;
+			temp.sprite = new DynamicSprite;
 			temp.sprite->AddQuadWithTexture(temp.spriteName);
 			temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 			temp.sprite->UpdateProjection();
@@ -158,7 +158,7 @@ void BackgroundManager::AddHorizonParallexBackground(std::string spriteName_, st
 
 		if (isAnimated == true)
 		{
-			temp.sprite = new Sprite;
+			temp.sprite = new DynamicSprite;
 			temp.sprite->LoadAnimation(temp.spriteName, temp.spriteName);
 			temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 			temp.sprite->UpdateProjection();
@@ -166,7 +166,7 @@ void BackgroundManager::AddHorizonParallexBackground(std::string spriteName_, st
 		}
 		else
 		{
-			temp.sprite = new Sprite;
+			temp.sprite = new DynamicSprite;
 			temp.sprite->AddQuadWithTexture(temp.spriteName);
 			temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 			temp.sprite->UpdateProjection();
@@ -194,7 +194,7 @@ void BackgroundManager::AddSaveBackgroundList(std::string spriteName_, std::stri
 
 	if (isAnimated == true)
 	{
-		temp.sprite = new Sprite;
+		temp.sprite = new DynamicSprite;
 		temp.sprite->LoadAnimation(temp.spriteName, temp.spriteName);
 		temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 		temp.sprite->UpdateProjection();
@@ -202,7 +202,7 @@ void BackgroundManager::AddSaveBackgroundList(std::string spriteName_, std::stri
 	}
 	else
 	{
-		temp.sprite = new Sprite;
+		temp.sprite = new DynamicSprite;
 		temp.sprite->AddQuadWithTexture(temp.spriteName);
 		temp.sprite->UpdateModel({ temp.position.x, temp.position.y, temp.depth }, { temp.size.x, temp.size.y, 0.f }, temp.angle);
 		temp.sprite->UpdateProjection();

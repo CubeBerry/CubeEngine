@@ -8,10 +8,10 @@
 
 void PocketBallSystem::Init()
 {
-	cursor = new Sprite();
-	cursor->AddQuadWithTexture("Arrow",{ 1.f, 1.f, 1.f, 1.f });
+	cursor = new DynamicSprite();
+	cursor->AddQuadWithTexture("Arrow", { 1.f, 1.f, 1.f, 1.f });
 
-	powerMeter = new Sprite();
+	powerMeter = new DynamicSprite();
 	powerMeter->AddQuad({ 1.f,0.f,0.f,1.f });
 	powerMeter->SetSpriteDrawType(SpriteDrawType::UI);
 }

@@ -6,16 +6,16 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-#include "Component.hpp"
+#include "IComponent.hpp"
 #ifdef _DEBUG
-#include "Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #endif
 
 #ifdef _DEBUG
 struct Point
 {
 	glm::vec2 pos = { 0.f,0.f };
-	Sprite* sprite = nullptr;
+	DynamicSprite* sprite = nullptr;
 };
 #endif
 
@@ -37,10 +37,10 @@ struct Circle
 	float radius = 0;
 };
 
-class Physics2D : public Component
+class Physics2D : public IComponent
 {
 public:
-	Physics2D() : Component(ComponentTypes::PHYSICS2D) { Init(); };
+	Physics2D() : IComponent(ComponentTypes::PHYSICS2D) { Init(); };
 	~Physics2D() override;
 
 	void Init() override ;

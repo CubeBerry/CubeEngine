@@ -178,7 +178,7 @@ void ObjectManager::ObjectControllerForImGui()
 			switch (type)
 			{
 			case ComponentTypes::SPRITE:
-				SpriteControllerForImGui(reinterpret_cast<Sprite*>(comp));
+				SpriteControllerForImGui(reinterpret_cast<DynamicSprite*>(comp));
 				break;
 			case ComponentTypes::PHYSICS3D:
 				Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
@@ -293,10 +293,10 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 	physics = nullptr;
 }
 
-void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
+void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 {
 	RenderManager* renderManager = Engine::GetRenderManager();
-	Sprite* spriteComp = sprite;
+	DynamicSprite* spriteComp = sprite;
 	bool isSelectedObjModel = false;
 	Object* currentObj = FindObjectWithId(currentIndex);
 
@@ -323,11 +323,11 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
 			if (ImGui::SliderInt("Slices", &slices, 2, 30))
 			{
@@ -335,11 +335,11 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 				std::filesystem::path modelFilePath = sprite->GetModelFilePath();
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(meshType, modelFilePath, stacks, slices, color, metallic, roughness); });
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
@@ -498,69 +498,69 @@ void ObjectManager::SpriteControllerForImGui(Sprite* sprite)
 			{
 				if (ImGui::MenuItem("Plane", "0"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->DeleteComponent<Sprite>(); });
+						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->AddComponent<Sprite>(); });
+						{ obj->AddComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::PLANE, "", 2, 2, color, metallic, roughness); });
+						{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::PLANE, "", 2, 2, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Cube", "1"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->DeleteComponent<Sprite>(); });
+						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->AddComponent<Sprite>(); });
+						{ obj->AddComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::CUBE, "", 2, 2, color, metallic, roughness); });
+						{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::CUBE, "", 2, 2, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Sphere", "2"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->DeleteComponent<Sprite>(); });
+						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->AddComponent<Sprite>(); });
+						{ obj->AddComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::SPHERE, "", 30, 30, color, metallic, roughness); });
+						{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::SPHERE, "", 30, 30, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Torus", "3"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->DeleteComponent<Sprite>(); });
+						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->AddComponent<Sprite>(); });
+						{ obj->AddComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::TORUS, "", 15, 15, color, metallic, roughness); });
+						{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::TORUS, "", 15, 15, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Cylinder", "4"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->DeleteComponent<Sprite>(); });
+						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->AddComponent<Sprite>(); });
+						{ obj->AddComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::CYLINDER, "", 10, 10, color, metallic, roughness); });
+						{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::CYLINDER, "", 10, 10, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Cone", "5"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->DeleteComponent<Sprite>(); });
+						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-					{ obj->AddComponent<Sprite>(); });
+						{ obj->AddComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-					{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::CONE, "", 10, 10, color, metallic, roughness); });
+						{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::CONE, "", 10, 10, color, metallic, roughness); });
 				}
 				if (ImGui::MenuItem("Obj Model", "6"))
 				{
@@ -797,10 +797,10 @@ void ObjectManager::AddComponentPopUpForImGui()
 				switch (static_cast<ComponentTypes>(i))
 				{
 				case ComponentTypes::SPRITE:
-					if (currentObj->HasComponent<Sprite>() == false)
+					if (currentObj->HasComponent<DynamicSprite>() == false)
 					{
-						currentObj->AddComponent<Sprite>();
-						currentObj->GetComponent<Sprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
+						currentObj->AddComponent<DynamicSprite>();
+						currentObj->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1);
 						//TBD
 					}
 					break;
@@ -863,7 +863,7 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 		ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(FLT_MAX, 4 * ImGui::GetTextLineHeightWithSpacing()));
 		ImGui::BeginChild("Scolling");
 		Object* currentObj = FindObjectWithId(currentIndex);
-		glm::vec4 color = currentObj->GetComponent<Sprite>()->GetColor();
+		glm::vec4 color = currentObj->GetComponent<DynamicSprite>()->GetColor();
 
 		//for (int i = 0; i < 9; i++)
 		{
@@ -872,14 +872,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Car"))
@@ -887,14 +887,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/car.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Diamond"))
@@ -902,14 +902,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/diamond.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Dodecahedron"))
@@ -917,14 +917,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/dodecahedron.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Gourd"))
@@ -932,14 +932,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/gourd.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Sphere"))
@@ -947,14 +947,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Teapot"))
@@ -962,14 +962,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Vase"))
@@ -977,14 +977,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/vase.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Monkey"))
@@ -992,14 +992,14 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 				isShowPopup = false;
 
 				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<Sprite>());
+				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->DeleteComponent<Sprite>(); });
+					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
-				{ obj->AddComponent<Sprite>(); });
+					{ obj->AddComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [=](Object* obj)
-				{ obj->GetComponent<Sprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", stacks, slices, color, metallic, roughness); });
+					{ obj->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", stacks, slices, color, metallic, roughness); });
 				ImGui::CloseCurrentPopup();
 			}
 		}

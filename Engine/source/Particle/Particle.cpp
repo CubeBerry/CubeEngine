@@ -20,18 +20,18 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float
 	switch (particleType)
 	{
 	case ParticleType::ANIMESPRI:
-		sprite = new Sprite();
+		sprite = new DynamicSprite();
 		sprite->LoadAnimation(spriteName, spriteName);
 		sprite->SetColor(color);
 		sprite->PlayAnimation(0);
 		break;
 	case ParticleType::SPRI:
-		sprite = new Sprite();
+		sprite = new DynamicSprite();
 		sprite->AddQuadWithTexture(spriteName);
 		sprite->SetColor(color);
 		break;
 	case ParticleType::REC:
-		sprite = new Sprite();
+		sprite = new DynamicSprite();
 		sprite->AddQuad(color);
 		break;
 	}
@@ -53,18 +53,18 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, glm::
 	switch (particleType)
 	{
 	case ParticleType::ANIMESPRI:
-		sprite = new Sprite();
+		sprite = new DynamicSprite();
 		sprite->LoadAnimation(spriteName, spriteName);
 		sprite->SetColor(color);
 		sprite->PlayAnimation(0);
 		break;
 	case ParticleType::SPRI:
-		sprite = new Sprite();
+		sprite = new DynamicSprite();
 		sprite->AddQuadWithTexture(spriteName);
 		sprite->SetColor(color);
 		break;
 	case ParticleType::REC:
-		sprite = new Sprite();
+		sprite = new DynamicSprite();
 		sprite->AddQuad(color);
 		break;
 	}

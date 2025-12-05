@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: Light.cpp
 #include "BasicComponents/Light.hpp"
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "Engine.hpp"
 
 #pragma warning(push)
@@ -114,7 +114,7 @@ void Light::AddLight(LightType lightType_, float ambient_, float specular_)
 			Engine::GetRenderManager()->AddPointLight(pLight);
 			lightlId = static_cast<int>(Engine::GetRenderManager()->GetPointLightUniforms().size() - 1);
 
-			pointLight = new Sprite();
+			pointLight = new DynamicSprite();
 			pointLight->AddMesh3D(MeshType::CUBE, "", 1, 1, color);
 		}
 	}
