@@ -3,6 +3,8 @@
 //File: DXRenderManager.cpp
 #include "DXRenderManager.hpp"
 
+#include <d3d12.h>
+
 #include "DXHelper.hpp"
 #include "Engine.hpp"
 
@@ -48,6 +50,11 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gpuCrashTracker.Initialize();
 #endif
 
+	// Enable Experimental Features for Mesh Nodes
+	// Windows Developer Mode must be enabled to use Mesh Nodes
+	UUID features[2] = { D3D12ExperimentalShaderModels, D3D12StateObjectsExperiment };
+	DXHelper::ThrowIfFailed(D3D12EnableExperimentalFeatures(_countof(features), features, nullptr, nullptr));
+
 	// Create Device
 	ComPtr<IDXGIAdapter1> hardwareAdapter;
 	GetHardwareAdapter(factory.Get(), &hardwareAdapter);
@@ -82,8 +89,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		}
 	}
 
+	// Initialize Work Graphs Context
+	m_workGraphsContext = std::make_unique<DXWorkGraphsContext>(this);
 	// Check Work Graphs Support
-	CheckWorkGraphsSupport();
+	m_workGraphsContext->CheckWorkGraphsSupport();
+	// Check Mesh Nodes Support
+	m_workGraphsContext->CheckMeshNodesSupport();
 
 #if USE_NSIGHT_AFTERMATH
 	const uint32_t aftermathFlags =
@@ -352,7 +363,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	// Initialize for work graphs
 	if (m_workGraphsEnabled)
 	{
-		InitializeWorkGraphs();
+		m_workGraphsContext->InitializeWorkGraphs();
 	}
 
 	// Initialize for compute shader
@@ -746,8 +757,8 @@ void DXRenderManager::EndRender()
 	// Work Graphs Execution
 	//if (m_workGraphsEnabled)
 	//{
-	//	ExecuteWorkGraphs();
-	//	PrintWorkGraphsResults();
+	//	m_workGraphsContext->ExecuteWorkGraphs();
+	//	m_workGraphsContext->PrintWorkGraphsResults();
 	//}
 
 	// ImGui Render

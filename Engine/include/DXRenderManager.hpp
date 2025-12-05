@@ -13,12 +13,12 @@
 
 #include "DXPipeLine.hpp"
 #include "DXMeshPipeLine.hpp"
-#include "DXWorkGraphsStateObject.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
 #include "DXRenderTarget.hpp"
 #include "DXComputeBuffer.hpp"
+#include "DXWorkGraphsContext.hpp"
 
 #include "BasicComponents/Sprite.hpp"
 
@@ -118,17 +118,9 @@ private:
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
 
 	// Work Graphs
-	std::unique_ptr<DXWorkGraphsStateObject> m_workGraphsStateObject;
-	std::unique_ptr<DXStructuredBuffer<uint32_t>> m_workGraphsOutputBuffer;
-	ComPtr<ID3D12Resource> m_workGraphsReadBackBuffer;
-	ComPtr<ID3D12Resource> m_zeroBuffer;
-	CD3DX12_CPU_DESCRIPTOR_HANDLE m_workGraphsUavCpuHandle;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE m_workGraphsUavGpuHandle;
-	void CheckWorkGraphsSupport();
-	void CheckMeshNodesSupport();
-	void InitializeWorkGraphs();
-	void ExecuteWorkGraphs();
-	void PrintWorkGraphsResults();
+	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
+	friend class DXWorkGraphsContext;
+	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
