@@ -3,37 +3,34 @@
 //File: DXVertexBuffer.cpp
 #include "DXVertexBuffer.hpp"
 
+#include "DXHelper.hpp"
+#include "DXInitializer.hpp"
+
 void DXVertexBuffer::InitVertexBuffer(const ComPtr<ID3D12Device>& device,
 	UINT strideSize, UINT totalSize, const void* data)
 {
 	std::wstring targetName{ L"Vertex Buffer" };
-	DXHelper::CreateFenceSet(device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
+	DXInitializer::CreateFenceSet(device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
 
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
-	CD3DX12_HEAP_PROPERTIES defaultHeapProps(D3D12_HEAP_TYPE_DEFAULT);
-	CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
-	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&defaultResourceDesc,
-		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)
-	));
+	m_vertexBuffer = DXInitializer::CreateBufferResource(
+		device,
+		totalSize,
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_COMMON
+	);
 	m_vertexBuffer->SetName(L"Default Vertex Buffer Resource");
 
-	CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC uploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
-	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
-		&uploadHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&uploadResourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_uploadBuffer)
-	));
+	m_uploadBuffer = DXInitializer::CreateBufferResource(
+		device,
+		totalSize,
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_HEAP_TYPE_UPLOAD,
+		D3D12_RESOURCE_STATE_GENERIC_READ
+	);
 	m_uploadBuffer->SetName(L"Upload Vertex Buffer Resource");
 
 	UINT8* pVertexDataBegin;

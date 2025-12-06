@@ -3,6 +3,8 @@
 //File: DXRenderManager.cpp
 #include "DXRenderManager.hpp"
 
+#include <d3d12.h>
+
 #include "DXHelper.hpp"
 #include "Engine.hpp"
 
@@ -48,6 +50,11 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gpuCrashTracker.Initialize();
 #endif
 
+	// Enable Experimental Features for Mesh Nodes
+	// Windows Developer Mode must be enabled to use Mesh Nodes
+	UUID features[2] = { D3D12ExperimentalShaderModels, D3D12StateObjectsExperiment };
+	DXHelper::ThrowIfFailed(D3D12EnableExperimentalFeatures(_countof(features), features, nullptr, nullptr));
+
 	// Create Device
 	ComPtr<IDXGIAdapter1> hardwareAdapter;
 	GetHardwareAdapter(factory.Get(), &hardwareAdapter);
@@ -55,12 +62,13 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXHelper::ThrowIfFailed(m_device->SetName(L"Main Device"));
 
 	// Check Mesh Shader Support
-	D3D12_FEATURE_DATA_D3D12_OPTIONS7 features{};
-	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features)))
-		|| (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+	D3D12_FEATURE_DATA_D3D12_OPTIONS7 options{};
+	if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options, sizeof(options)))
+		|| (options.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
 	{
-		m_useMeshShader = false;
-		OutputDebugStringA("ERROR: Mesh Shaders aren't supported!\n");
+		m_meshShaderEnabled = false;
+		Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader Not Supported");
+		OutputDebugStringA("Mesh Shaders Not Supported\n");
 	}
 	else
 	{
@@ -69,16 +77,24 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		if (FAILED(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)))
 			|| (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
 		{
-			m_useMeshShader = false;
-			OutputDebugStringA("ERROR: Shader Model 6.5 is not supported\n");
+			m_meshShaderEnabled = false;
+			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader, Shader Model 6.5 Not Supported");
+			OutputDebugStringA("Mesh Shader, Shader Model 6.5 Not Supported\n");
 		}
 		else
 		{
-			m_useMeshShader = true;
-			std::cout << "D3D12 Mesh Shader Enabled\n";
+			m_meshShaderEnabled = true;
+			Engine::GetLogger().LogDebug(LogCategory::D3D12, "Mesh Shader Enabled");
 			OutputDebugStringA("Mesh Shader Enabled\n");
 		}
 	}
+
+	// Initialize Work Graphs Context
+	m_workGraphsContext = std::make_unique<DXWorkGraphsContext>(this);
+	// Check Work Graphs Support
+	m_workGraphsContext->CheckWorkGraphsSupport();
+	// Check Mesh Nodes Support
+	m_workGraphsContext->CheckMeshNodesSupport();
 
 #if USE_NSIGHT_AFTERMATH
 	const uint32_t aftermathFlags =
@@ -151,6 +167,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
 	DXHelper::ThrowIfFailed(m_srvHeap->SetName(L"Shader Resource View Heap"));
+	m_srvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_srvDescriptorOffset = 0;
 
 	// Create Render Target Views (RTVs)
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -205,7 +223,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	// Create root signature and pipeline for 3D
 	rootParameters.clear();
-	rootParameters.resize(m_useMeshShader ? 13 : 8, {});
+	rootParameters.resize(m_meshShaderEnabled ? 13 : 8, {});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -218,7 +236,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	if (m_useMeshShader)
+	if (m_meshShaderEnabled)
 	{
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
@@ -238,7 +256,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	if (m_useMeshShader)
+	if (m_meshShaderEnabled)
 	{
 		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
 			m_device,
@@ -314,7 +332,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
 	);
 #endif
-	
+
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Main Command List"));
@@ -332,7 +350,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
 	{
-		throw std::runtime_error("Failed to create fence event.");
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Failed to create fence event.");
 	}
 
 	m_imguiManager = std::make_unique<DXImGuiManager>(
@@ -341,6 +359,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 
 	directionalLightUniformBuffer = new DXConstantBuffer<DirectionalLightBatch>(m_device, frameCount);
 	pointLightUniformBuffer = new DXConstantBuffer<PointLightBatch>(m_device, frameCount);
+
+	// Initialize for work graphs
+	if (m_workGraphsEnabled)
+	{
+		m_workGraphsContext->InitializeWorkGraphs();
+	}
 
 	// Initialize for compute shader
 	//m_computeBuffer = std::make_unique<DXComputeBuffer>();
@@ -465,7 +489,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
 
 	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ? m_pipeline2D->GetPipelineState().Get() :
-		m_useMeshShader ? m_meshPipeline3D->GetPipelineState().Get() :
+		m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() :
 		pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
 
@@ -537,7 +561,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				if (m_useMeshShader)
+				if (m_meshShaderEnabled)
 				{
 					m_commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());
 
@@ -652,7 +676,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					switch (pMode)
 					{
 					case PolygonType::FILL:
-						m_commandList->SetPipelineState(m_useMeshShader ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
+						m_commandList->SetPipelineState(m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
 						break;
 					case PolygonType::LINE:
 						m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
@@ -730,6 +754,13 @@ void DXRenderManager::EndRender()
 		}
 	}
 
+	// Work Graphs Execution
+	//if (m_workGraphsEnabled)
+	//{
+	//	m_workGraphsContext->ExecuteWorkGraphs();
+	//	m_workGraphsContext->PrintWorkGraphsResults();
+	//}
+
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -750,8 +781,6 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Calling Present...\n");
 	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
 	//OutputDebugStringA("EndRender: Present successful.\n");
-
-	MoveToNextFrame();
 
 	// Compute Shader Render
 	//auto preResolveBarriers = {
@@ -783,7 +812,7 @@ void DXRenderManager::EndRender()
 	//DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
 	////OutputDebugStringA("EndRender: Present successful.\n");
 
-	//MoveToNextFrame();
+	MoveToNextFrame();
 
 	//OutputDebugStringA("EndRender: Finished successfully.\n");
 }
@@ -865,7 +894,7 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 	if (FAILED(hr))
 	{
 		if (error) OutputDebugStringA(static_cast<const char*>(error->GetBufferPointer()));
-		throw std::runtime_error("Failed to serialize root signature.");
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Failed to serialize root signature.");
 	}
 
 	DXHelper::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
@@ -950,23 +979,23 @@ std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> DXRenderManager::AllocateSrvHandl
 
 	if (!foundBlock)
 	{
-		startIndex = m_srvDescriptorSize;
-		m_srvDescriptorSize += count;
+		startIndex = m_srvDescriptorOffset;
+		m_srvDescriptorOffset += count;
 
 		ss << "  [LOG] No available block found. Allocating new block at index " << startIndex << ".\n";
-		ss << "  [LOG] New m_srvDescriptorOffset: " << m_srvDescriptorSize << "\n";
+		ss << "  [LOG] New m_srvDescriptorOffset: " << m_srvDescriptorOffset << "\n";
 
-		if (m_srvDescriptorSize >= m_srvHeap->GetDesc().NumDescriptors)
+		if (m_srvDescriptorOffset >= m_srvHeap->GetDesc().NumDescriptors)
 		{
 			OutputDebugStringA("  [FATAL ERROR] SRV Descriptor Heap is full!\n");
-			throw std::runtime_error("SRV Descriptor Heap is full");
+			Engine::GetLogger().LogError(LogCategory::D3D12, "SRV Descriptor Heap is full.");
 		}
 	}
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(
 		m_srvHeap->GetCPUDescriptorHandleForHeapStart(),
 		static_cast<INT>(startIndex),
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+		m_srvDescriptorSize
 	);
 
 	ss << "  [LOG] Allocation successful. Returning startIndex: " << startIndex << "\n";
@@ -1092,7 +1121,7 @@ void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::strin
 	HANDLE tempFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (tempFenceEvent == nullptr)
 	{
-		throw std::runtime_error("Failed to create texture fence event.");
+		Engine::GetLogger().LogError(LogCategory::D3D12, "Failed to create texture fence event.");
 	}
 
 	const auto& texture = textures.emplace_back(std::make_unique<DXTexture>());

@@ -18,6 +18,7 @@
 #include "DXSkybox.hpp"
 #include "DXRenderTarget.hpp"
 #include "DXComputeBuffer.hpp"
+#include "DXWorkGraphsContext.hpp"
 
 #include "BasicComponents/Sprite.hpp"
 
@@ -77,7 +78,7 @@ private:
 
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
-	ComPtr<ID3D12Device2> m_device;
+	ComPtr<ID3D12Device14> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
 	// This is required for FidelityFX CAS Upscaling
 	ComPtr<ID3D12Resource> m_lowResRenderTarget;
@@ -89,10 +90,11 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-	ComPtr<ID3D12GraphicsCommandList6> m_commandList;
+	ComPtr<ID3D12GraphicsCommandList10> m_commandList;
 
 	UINT m_rtvDescriptorSize{ 0 };
 	UINT m_srvDescriptorSize{ 0 };
+	UINT m_srvDescriptorOffset{ 0 };
 
 	UINT m_frameIndex{ 0 };
 	HANDLE m_fenceEvent{ nullptr };
@@ -114,6 +116,11 @@ private:
 
 	// Compute Shader
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
+
+	// Work Graphs
+	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
+	friend class DXWorkGraphsContext;
+	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
@@ -158,7 +165,7 @@ public:
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount);
 			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
 
-			if (m_useMeshShader)
+			if (m_meshShaderEnabled)
 			{
 				auto& bufferData3D = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>();
 				auto& buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();

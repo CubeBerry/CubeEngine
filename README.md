@@ -1,5 +1,6 @@
 # CubeEngine
 
+[![build](https://github.com/CubeBerry/CubeEngine/actions/workflows/cmake-single-platform.yml/badge.svg)](https://github.com/CubeBerry/CubeEngine/actions/workflows/cmake-single-platform.yml)
 ![Static Badge](https://img.shields.io/badge/language-C%2B%2B-brightgreen)
 ![Static Badge](https://img.shields.io/badge/platform-Windows-brightgreen)
 ![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -52,7 +53,20 @@ slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target 
 
 ## How to Compile HLSL (High-Level Shader Language) to DXIL (DirectX Intermediate Language)
 ```
-dxc 3D.frag.hlsl -T ps_6_5 -E fragmentMain -Fo 3D.frag.cso
+// Vertex Shader
+dxc 3D.vert.hlsl -T vs_5_1 -E vertexMain -Fo 3D.vert.cso
+
+// Pixel Shader
+dxc 3D.frag.hlsl -T ps_5_1 -E fragmentMain -Fo 3D.frag.cso
+
+// Compute Shader
+dxc Compute.compute.hlsl -T cs_5_1 -E computeMain -Fo Compute.compute.cso
+
+// Mesh Shader
+dxc 3D.mesh.hlsl -T ms_6_5 -E meshMain -Fo 3D.mesh.cso
+
+// Work Graphs Shader
+dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 ```
 
 * **Legend:** ✅: Implemented / ❌: Not Supported / ➖: Not Applicable
@@ -78,6 +92,7 @@ dxc 3D.frag.hlsl -T ps_6_5 -E fragmentMain -Fo 3D.frag.cso
 | [NVIDIA Nsight Aftermath](https://developer.nvidia.com/nsight-aftermath) | ➖ | ❌ | ❌ | ✅ |
 | Compute Shader | ➖ | ❌ | ❌ | ✅ |
 | Mesh Shader | ➖ | ❌ | ❌ | ✅ |
+| Work Graphs | ➖ | ❌ | ❌ | ✅ |
 | **Optimization Techniques** | | | | |
 | MSAA | ➖ | ✅ | ✅ | ✅ |
 | Vertex Position Quantization (2D: vec2 -> uint (16 bit, 16 bit), 3D: vec3 -> uint (11 bit, 11 bit, 10 bit)) | ✅ | ➖ | ➖ | ➖ |

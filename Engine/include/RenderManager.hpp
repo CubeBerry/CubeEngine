@@ -374,8 +374,12 @@ protected:
 	bool skyboxEnabled{ false };
 
 	// Mesh Shader
-	bool m_useMeshShader{ false };
+	bool m_meshShaderEnabled{ false };
 	unsigned int m_meshletVisualization{ 0 };
+
+	// Work Graphs
+	bool m_workGraphsEnabled{ false };
+	bool m_meshNodesEnabled{ false };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp

@@ -3,11 +3,9 @@
 //File: DXIndexBuffer.cpp
 #include "DXIndexBuffer.hpp"
 #include "DXHelper.hpp"
-
-#include <d3d12.h>
+#include "DXInitializer.hpp"
 
 #include <iostream>
-#include <stdexcept>
 
 DXIndexBuffer::DXIndexBuffer(
 	const ComPtr<ID3D12Device>& device,
@@ -20,34 +18,27 @@ DXIndexBuffer::DXIndexBuffer(
 void DXIndexBuffer::InitIndexBuffer(const ComPtr<ID3D12Device>& device, const std::vector<uint32_t>* indices)
 {
 	std::wstring targetName{ L"Index Buffer" };
-	DXHelper::CreateFenceSet(device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
+	DXInitializer::CreateFenceSet(device, targetName, m_commandAllocator, m_commandList, m_fence, m_fenceEvent);
 
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
-	CD3DX12_HEAP_PROPERTIES defaultHeapProps(D3D12_HEAP_TYPE_DEFAULT);
-	CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint32_t) * indices->size());
-	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&defaultResourceDesc,
-		D3D12_RESOURCE_STATE_COMMON,
-		nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)
-	));
+	m_indexBuffer = DXInitializer::CreateBufferResource(
+		device,
+		sizeof(uint32_t) * indices->size(),
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_COMMON
+	);
 	m_indexBuffer->SetName(L"Default Index Buffer Resource");
 
-	CD3DX12_HEAP_PROPERTIES uploadHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC uploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint32_t) * indices->size());
-
-	DXHelper::ThrowIfFailed(device->CreateCommittedResource(
-		&uploadHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&uploadResourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_uploadBuffer)
-	));
+	m_uploadBuffer = DXInitializer::CreateBufferResource(
+		device,
+		sizeof(uint32_t) * indices->size(),
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_HEAP_TYPE_UPLOAD,
+		D3D12_RESOURCE_STATE_GENERIC_READ
+	);
 	m_uploadBuffer->SetName(L"Upload Index Buffer Resource");
 
 	UINT8* pIndexDataBegin;

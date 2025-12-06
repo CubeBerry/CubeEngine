@@ -9,7 +9,7 @@
 //#include "Kits/FidelityFX/api/include/dx12/ffx_api_dx12.hpp"
 
 #include <wrl.h>
-#include <directx/d3dx12.h>
+#include <d3dx12/d3dx12.h>
 
 class DXRenderTarget;
 

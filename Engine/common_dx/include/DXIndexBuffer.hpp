@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: DXIndexBuffer.hpp
 #pragma once
-#include <directx/d3dx12_core.h>
+#include <d3dx12/d3dx12_core.h>
 #include <wrl.h>
 
 #include <vector>

@@ -104,7 +104,6 @@ private:
 	bool isTex = false;
 	MeshType meshType; 
 	std::filesystem::path filePath = "";
-	//For RecreateMesh
 
 	std::string textureName = "";
 

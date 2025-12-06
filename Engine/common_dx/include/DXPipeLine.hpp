@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: DXPipeLine.hpp
 #pragma once
-#include <directx/d3dx12.h>
+#include <d3dx12/d3dx12.h>
 
 #include <initializer_list>
 #include <filesystem>

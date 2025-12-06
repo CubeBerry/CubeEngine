@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: DXRenderTarget.hpp
 #pragma once
-#include <directx/d3dx12.h>
+#include <d3dx12/d3dx12.h>
 #include <wrl.h>
 
 #include "SDL3/SDL.h"
