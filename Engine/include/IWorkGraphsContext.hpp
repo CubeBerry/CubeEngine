@@ -20,5 +20,4 @@ public:
 	virtual void InitializeWorkGraphs() = 0;
 	virtual void ExecuteWorkGraphs() = 0;
 	virtual void PrintWorkGraphsResults() = 0;
-private:
 };

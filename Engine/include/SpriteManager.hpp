@@ -11,7 +11,7 @@ class DynamicSprite;
 class SpriteManager
 {
 public:
-    SpriteManager()  = default;
+    SpriteManager() { staticSprite = std::make_unique<StaticSprite>(); }
     ~SpriteManager();
 
 	void Update(float dt);
@@ -22,8 +22,8 @@ public:
 
     int GetDynamicSpritesAmount() { return static_cast<int>(dynamicSprites.size()); }
     std::vector<DynamicSprite*> GetDynamicSprites() { return dynamicSprites; }
-    StaticSprite* GetStaticSprite() { return &staticSprite; }
+    StaticSprite* GetStaticSprite() { return staticSprite.get(); }
 private:
     std::vector<DynamicSprite*> dynamicSprites;
-    StaticSprite staticSprite;
+    std::unique_ptr<StaticSprite> staticSprite;
 };

@@ -38,6 +38,8 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 	soundManager.Initialize(8);
+	
+	spriteManager = new SpriteManager;
 
 	threadManager.Start();
 }

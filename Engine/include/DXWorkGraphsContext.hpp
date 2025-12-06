@@ -5,8 +5,25 @@
 #include "IWorkGraphsContext.hpp"
 #include "DXWorkGraphsStateObject.hpp"
 #include "DXStructuredBuffer.hpp"
+#include "BasicComponents/StaticSprite.hpp"
+#include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
+#include "glm/mat4x4.hpp"
 
 class DXRenderManager;
+
+struct ObjectData
+{
+	glm::mat4 model;
+	glm::mat4 transposeInverseModel;
+	glm::mat4 view;
+	glm::mat4 projection;
+	glm::mat4 decode;
+	glm::vec4 color;
+	glm::vec3 viewPosition;
+	uint32_t meshletOffset;
+	uint32_t meshletCount;
+};
 
 // Work Graphs References:
 // https://devblogs.microsoft.com/directx/d3d12-work-graphs/

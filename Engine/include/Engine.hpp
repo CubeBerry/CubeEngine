@@ -31,7 +31,7 @@ public:
 	static ObjectManager& GetObjectManager() { return Instance().objectManager; }
 	static CameraManager& GetCameraManager() { return Instance().cameraManager; }
 	static SoundManager& GetSoundManager() { return Instance().soundManager; }
-	static SpriteManager& GetSpriteManager() { return Instance().spriteManager; }
+	static SpriteManager& GetSpriteManager() { return *Instance().spriteManager; }
 	static ParticleManager& GetParticleManager() { return Instance().particleManager; }
 	static Timer& GetTimer() { return Instance().timer; }
 	static Logger& GetLogger() { return *Instance().logger; }
@@ -58,7 +58,7 @@ private:
 	ObjectManager objectManager;
 	CameraManager cameraManager;
 	SoundManager soundManager;
-	SpriteManager spriteManager;
+	SpriteManager* spriteManager;
 	ParticleManager particleManager;
 	ThreadManager threadManager;
 	Logger* logger;
