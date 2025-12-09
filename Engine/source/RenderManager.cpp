@@ -125,7 +125,7 @@ glm::mat4 RenderManager::CreateMesh(std::vector<TwoDimension::Vertex>& quantized
 }
 
 // 3D Mesh Creation
-void RenderManager::CreateMesh(
+void RenderManager::CreateDynamicMesh(
 	std::vector<SubMesh>& subMeshes,
 	MeshType type, const std::filesystem::path& path, int stacks, int slices,
 	glm::vec4 color, float metallic, float roughness)
@@ -521,9 +521,9 @@ void RenderManager::CreateMesh(
 		Utility::MeshletBuilder::BuildMeshletsMeshOptimizer(
 			positions,
 			indices,
-			bufferData3D.Meshlets,
-			bufferData3D.UniqueVertexIndices,
-			bufferData3D.PrimitiveIndices
+			bufferData3D.meshlets,
+			bufferData3D.uniqueVertexIndices,
+			bufferData3D.primitiveIndices
 		);
 	}
 
@@ -544,7 +544,7 @@ void RenderManager::CreateMesh(
 
 	// Initialize Buffers
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->InitializeBuffers(*subMesh, indices);
+	renderManager->InitializeDynamicBuffers(*subMesh, indices);
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
@@ -606,6 +606,431 @@ void RenderManager::CreateMesh(
 		subMesh->GetBuffer<BufferWrapper::GLBuffer>().normalVertexArray->AddVertexBuffer(std::move(*subMesh->GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
 #endif
 	}
+
+	subMeshes.push_back(std::move(subMesh));
+}
+
+void RenderManager::CreateStaticMesh(
+	std::vector<SubMesh>& subMeshes,
+	MeshType type, const std::filesystem::path& path, int stacks, int slices,
+	glm::vec4 color, float metallic, float roughness)
+{
+	if (type == MeshType::OBJ)
+	{
+		//Assimp Model Load
+		const aiScene* scene = importer.ReadFile(path.string(),
+			aiProcess_Triangulate |
+			aiProcess_GenSmoothNormals |
+			aiProcess_CalcTangentSpace |
+			aiProcess_FlipUVs |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_TransformUVCoords |
+			aiProcess_PreTransformVertices
+		);
+
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+		{
+			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
+			std::exit(EXIT_FAILURE);
+		}
+
+		glm::vec3 globalMinPos{ FLT_MAX }, globalMaxPos{ FLT_MIN };
+		for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
+		{
+			aiMesh* mesh = scene->mMeshes[m];
+			for (unsigned int v = 0; v < mesh->mNumVertices; ++v)
+			{
+				aiVector3D vertex = mesh->mVertices[v];
+				globalMinPos = glm::min(globalMinPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+				globalMaxPos = glm::max(globalMaxPos, glm::vec3{ vertex.x, vertex.y, vertex.z });
+			}
+		}
+
+		glm::vec3 center = (globalMinPos + globalMaxPos) / 2.f;
+		glm::vec3 size = globalMaxPos - globalMinPos;
+		float extent = glm::max(size.x, glm::max(size.y, size.z));
+		float unitScale = 1.f / extent;
+
+		ProcessNode(subMeshes, scene->mRootNode, scene, 0, globalMaxPos - globalMinPos, center, unitScale, color, metallic, roughness);
+		return;
+	}
+
+	SubMesh subMesh;
+	subMesh = std::make_unique<BufferWrapper>();
+	subMesh->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	auto& quantizedVertices = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
+#ifdef _DEBUG
+	auto& normalVertices = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
+#endif
+	auto& indices = subMesh->GetIndices();
+
+	//Position Vector's w value == 1.f, Direction Vector's w value == 0.f
+	std::vector<ThreeDimension::Vertex> vertices;
+	switch (type)
+	{
+	case MeshType::PLANE:
+	{
+		//Verties
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			float row = static_cast<float>(stack) / static_cast<float>(stacks);
+
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				float col = static_cast<float>(slice) / static_cast<float>(slices);
+
+				vertices.emplace_back(ThreeDimension::Vertex{
+					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
+					glm::vec3(0.0f, 0.0f, 1.0f),
+					glm::vec2(col, row)
+					});
+			}
+		}
+
+		//Indices
+		BuildIndices(vertices, indices, stacks, slices);
+	}
+	break;
+	case MeshType::CUBE:
+	{
+		std::vector<ThreeDimension::Vertex> planeVertices;
+		std::vector<uint32_t> planeIndices;
+		//Vertices
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			float row = static_cast<float>(stack) / static_cast<float>(stacks);
+
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				float col = static_cast<float>(slice) / static_cast<float>(slices);
+
+				planeVertices.emplace_back(ThreeDimension::Vertex{
+					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
+					glm::vec3(0.0f, 0.0f, 1.0f),
+					glm::vec2(col, row)
+					});
+			}
+		}
+
+		//Indices
+		BuildIndices(planeVertices, planeIndices, stacks, slices);
+
+		const glm::vec3 translateArray[] = {
+			glm::vec3(+0.0f, +0.0f, +0.5f), // Z+
+			glm::vec3(+0.0f, +0.0f, -0.5f), // Z-
+			glm::vec3(+0.5f, +0.0f, +0.0f), // X+
+			glm::vec3(-0.5f, +0.0f, +0.0f), // X-
+			glm::vec3(+0.0f, +0.5f, +0.0f), // Y+
+			glm::vec3(+0.0f, -0.5f, +0.0f), // Y-
+		};
+
+		const glm::vec2 rotateArray[] = {
+			glm::vec2(+0.0f, +0.0f),           // Z+
+			glm::vec2(+0.0f, (float)+PI),      // Z-
+			glm::vec2(+0.0f, (float)+HALF_PI), // X+
+			glm::vec2(+0.0f, (float)-HALF_PI), // X-
+			glm::vec2((float)-HALF_PI, +0.0f), // Y+
+			glm::vec2((float)+HALF_PI, +0.0f)  // Y-
+		};
+
+		/*  Transform the plane to 6 positions to form the faces of the cube */
+		for (int i = 0; i < 6; ++i)
+		{
+			const glm::mat4 transformMat = glm::translate(translateArray[i]) *
+				glm::rotate(rotateArray[i][YINDEX], glm::vec3{ 0, 1, 0 }) *
+				glm::rotate(rotateArray[i][XINDEX], glm::vec3{ 1, 0, 0 });
+
+			for (const auto& plane_vertex : planeVertices)
+			{
+				vertices.emplace_back(ThreeDimension::Vertex{
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
+					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
+					plane_vertex.uv
+					});
+			}
+
+			//Indices
+			for (const auto index : planeIndices)
+			{
+				indices.push_back(static_cast<uint32_t>(index + static_cast<int>(planeVertices.size()) * i));
+			}
+		}
+	}
+	break;
+	case MeshType::SPHERE:
+	{
+		//Vertices
+		const float radius = 0.5f;
+		for (int stack = 0; stack <= stacks; ++stack)
+		{
+			const float row = static_cast<float>(stack) / static_cast<float>(stacks);
+			const float beta = PI * (row - 0.5f);
+			const float sin_beta = sin(beta);
+			const float cos_beta = cos(beta);
+			for (int slice = 0; slice <= slices; ++slice)
+			{
+				const float col = static_cast<float>(slice) / static_cast<float>(slices);
+				const float alpha = col * PI * 2.f;
+				ThreeDimension::Vertex v;
+				v.position = glm::vec3(radius * sin(alpha) * cos_beta, radius * sin_beta, radius * cos(alpha) * cos_beta);
+				v.normal = glm::normalize(v.position);
+				v.normal /= radius;
+				v.uv = glm::vec2(col, row);
+				vertices.emplace_back(v);
+			}
+		}
+
+		//Indices
+		BuildIndices(vertices, indices, stacks, slices);
+	}
+	break;
+	case MeshType::TORUS:
+	{
+		//Vertices
+		const float R{ 0.35f };
+		const float r{ 0.15f };
+		float startAngle = 0.f, endAngle = PI * 2.f;
+		for (int i = 0; i <= stacks; ++i)
+		{
+			float row = static_cast<float>(i) / static_cast<float>(stacks);
+			float alpha = startAngle + row * (endAngle - startAngle);
+			float sinAlpha = sin(alpha);
+			float cosAlpha = cos(alpha);
+			for (int j = 0; j <= slices; ++j)
+			{
+				float col = static_cast<float>(j) / static_cast<float>(slices);
+				float beta = 2.0f * col * PI;
+
+				ThreeDimension::Vertex v;
+				v.position = glm::vec3{ (R + r * cos(beta)) * sinAlpha,r * sin(-beta),(R + r * cos(beta)) * cosAlpha };
+				v.position /= 2 * (R + r);
+
+				glm::vec3 c = { R * sin(alpha),0.f,R * cos(alpha) };
+				v.normal = v.position - c;
+				v.normal /= r;
+				v.uv.x = row;
+				v.uv.y = col;
+
+				vertices.emplace_back(v);
+			}
+		}
+
+		//Indices
+		BuildIndices(vertices, indices, stacks, slices);
+	}
+	break;
+	case MeshType::CYLINDER:
+	{
+		//Vertices
+		const float radius = 0.5f;
+		//const float height = 1.0f;
+		for (int i = 0; i <= stacks; ++i)
+		{
+			float row = static_cast<float>(i) / static_cast<float>(stacks);
+			for (int j = 0; j <= slices; ++j)
+			{
+				float col = static_cast<float>(j) / static_cast<float>(slices);
+				float alpha = col * 2.0f * PI;
+
+				ThreeDimension::Vertex v;
+				v.position = glm::vec3{ radius * sin(alpha), row - radius, radius * cos(alpha) };
+				v.normal = glm::vec3{ v.position.x / radius, v.position.y, v.position.z / radius };
+				v.uv.x = col;
+				v.uv.y = row;
+
+				vertices.emplace_back(v);
+			}
+		}
+
+		//Indices
+		BuildIndices(vertices, indices, stacks, slices);
+
+		//Top
+		ThreeDimension::Vertex P0, Pi;
+		P0.position = glm::vec3{ 0.0f,0.5f,0.0f };
+		P0.normal = glm::vec3{ 0.f, 1.f, 0.f };
+		P0.uv = glm::vec2{ 0.5f, 0.5f };
+		vertices.emplace_back(P0);
+		size_t top_cap_index = vertices.size() - 1;
+		for (int i = 0; i <= slices; ++i)
+		{
+			float col = (float)i / slices;
+			float alpha = col * 2.0f * PI;
+
+			Pi.position = glm::vec3{ radius * sin(alpha), 0.5f, radius * cos(alpha) };
+			Pi.normal = glm::vec3{ 0.f, 1.f, 0.f };
+			Pi.uv = glm::vec2{ col, 0.f };
+			vertices.emplace_back(Pi);
+
+			if (i > 0)
+			{
+				indices.push_back(static_cast<uint32_t>(top_cap_index));
+				indices.push_back(static_cast<uint32_t>(vertices.size()) - 2);
+				indices.push_back(static_cast<uint32_t>(vertices.size()) - 1);
+			}
+		}
+
+		//Bottom
+		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
+		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
+		P0.uv = glm::vec2{ 0.5f, 0.5f };
+		vertices.emplace_back(P0);
+		size_t bottom_cap_index = vertices.size() - 1;
+		size_t current_index = vertices.size();
+		for (int i = 0; i <= slices; ++i)
+		{
+			float col = static_cast<float>(i) / static_cast<float>(slices);
+			float alpha = col * 2.0f * PI;
+
+			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
+			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
+			Pi.uv = glm::vec2{ col, 0.f };
+			vertices.emplace_back(Pi);
+
+			if (i > 0)
+			{
+				indices.push_back(static_cast<uint32_t>(bottom_cap_index));
+				indices.push_back(static_cast<uint32_t>(current_index) + i);
+				indices.push_back(static_cast<uint32_t>(current_index) + i - 1);
+			}
+		}
+	}
+	break;
+	case MeshType::CONE:
+	{
+		//Vertices
+		const float height = 1.0f;
+		const float radius = 0.5f;
+		for (int i = 0; i <= stacks; ++i)
+		{
+			float row = static_cast<float>(i) / static_cast<float>(stacks);
+			for (int j = 0; j <= slices; ++j)
+			{
+				float col = static_cast<float>(j) / static_cast<float>(slices);
+				float alpha = col * 2.0f * PI;
+
+				ThreeDimension::Vertex v;
+				//row == stacks
+				v.position = glm::vec3{ radius * (height - row) * sin(alpha),row - radius ,radius * (height - row) * cos(alpha) };
+				v.normal = v.position / radius;
+				v.uv.x = col;
+				v.uv.y = 1 - row;
+
+				vertices.emplace_back(v);
+			}
+		}
+
+		//Indices
+		BuildIndices(vertices, indices, stacks, slices);
+
+		//Bottom
+		ThreeDimension::Vertex P0, Pi;
+		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
+		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
+		P0.uv = glm::vec2{ 0.5f, 0.5f };
+		vertices.emplace_back(P0);
+		size_t bottom_cap_index = vertices.size() - 1;
+		size_t current_index = vertices.size();
+		for (int i = 0; i <= slices; ++i)
+		{
+			float col = static_cast<float>(i) / slices;
+			float alpha = col * 2.0f * PI;
+
+			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
+			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
+			Pi.uv = glm::vec2{ col, 0.f };
+			vertices.emplace_back(Pi);
+
+			if (i > 0)
+			{
+				indices.push_back(static_cast<uint32_t>(bottom_cap_index));
+				indices.push_back(static_cast<uint32_t>(current_index) + i);
+				indices.push_back(static_cast<uint32_t>(current_index) + i - 1);
+			}
+		}
+	}
+	break;
+	default:
+		break;
+	}
+
+	glm::vec3 minPos(FLT_MAX), maxPos(FLT_MIN);
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	{
+		minPos = glm::min(minPos, glm::vec3(it->position));
+		maxPos = glm::max(maxPos, glm::vec3(it->position));
+	}
+
+	for (auto it = vertices.begin(); it != vertices.end(); ++it)
+	{
+#ifdef _DEBUG
+		glm::vec3 start = it->position;
+		glm::vec3 end = it->position + it->normal * 0.1f;
+
+		normalVertices.push_back(ThreeDimension::NormalVertex{ start });
+		normalVertices.push_back(ThreeDimension::NormalVertex{ end });
+#endif
+	}
+
+	// Mesh Shader
+	if (m_meshShaderEnabled)
+	{
+		auto& bufferData3D = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>();
+
+		std::vector<glm::vec3> positions;
+		positions.reserve(vertices.size());
+		for (const auto& v : vertices)
+		{
+			positions.push_back(v.position);
+		}
+
+		// Greedy Algorithm
+		//std::vector<Meshlet::Vertex> meshletVertices;
+		//std::vector<Meshlet::Triangle> meshletTriangles;
+		//Utility::MeshletBuilder::BuildAdjacency(positions, indices, meshletVertices, meshletTriangles);
+
+		// @TODO Sorting vertices according to the biggest bounding box axis length required
+		//std::vector<uint32_t> sortedVertexList(vertices.size());
+		//std::iota(sortedVertexList.begin(), sortedVertexList.end(), 0);
+
+		//Utility::MeshletBuilder::BuildMeshletsGreedy(
+		//	sortedVertexList,
+		//	meshletVertices,
+		//	meshletTriangles,
+		//	bufferData3D.Meshlets,
+		//	bufferData3D.UniqueVertexIndices,
+		//	bufferData3D.PrimitiveIndices
+		//);
+
+		// meshoptimizer Library
+		Utility::MeshletBuilder::BuildMeshletsMeshOptimizer(
+			positions,
+			indices,
+			bufferData3D.meshlets,
+			bufferData3D.uniqueVertexIndices,
+			bufferData3D.primitiveIndices
+		);
+	}
+
+	// Uniform
+	auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+	vertexUniform.model = glm::mat4(1.f);
+	vertexUniform.view = glm::mat4(1.f);
+	vertexUniform.projection = glm::mat4(1.f);
+	vertexUniform.decode = Quantize(quantizedVertices, vertices, maxPos - minPos);
+	auto& staticQuantizedVertices = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().staticVertices;
+	for (uint32_t meshIndex = 0; meshIndex < quantizedVertices.size(); ++meshIndex)
+	{
+		staticQuantizedVertices.push_back(ThreeDimension::StaticQuantizedVertex{ quantizedVertices[meshIndex], meshIndex });
+	}
+	vertexUniform.color = color;
+
+	auto& fragmentUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+	fragmentUniform.texIndex = 0;
+
+	auto& material = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material;
+	material.metallic = metallic;
+	material.roughness = roughness;
 
 	subMeshes.push_back(std::move(subMesh));
 }
@@ -760,9 +1185,9 @@ void RenderManager::ProcessMesh(
 		Utility::MeshletBuilder::BuildMeshletsMeshOptimizer(
 			positions,
 			indices,
-			bufferData3D.Meshlets,
-			bufferData3D.UniqueVertexIndices,
-			bufferData3D.PrimitiveIndices
+			bufferData3D.meshlets,
+			bufferData3D.uniqueVertexIndices,
+			bufferData3D.primitiveIndices
 		);
 	}
 
@@ -772,6 +1197,12 @@ void RenderManager::ProcessMesh(
 	vertexUniform.view = glm::mat4(1.f);
 	vertexUniform.projection = glm::mat4(1.f);
 	vertexUniform.decode = Quantize(quantizedVertices, vertices, size * unitScale);
+	// @TODO Need to divide into Dynamic and Static Meshes
+	auto& staticQuantizedVertices = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().staticVertices;
+	for (uint32_t meshIndex = 0; meshIndex < quantizedVertices.size(); ++meshIndex)
+	{
+		staticQuantizedVertices.push_back(ThreeDimension::StaticQuantizedVertex{ quantizedVertices[meshIndex], meshIndex });
+	}
 	vertexUniform.color = color;
 
 	auto& fragmentUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
@@ -783,7 +1214,9 @@ void RenderManager::ProcessMesh(
 
 	// Initialize Buffers
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->InitializeBuffers(*subMesh, indices);
+	
+	// @TODO Need to divide into Dynamic and Static Meshes
+	//renderManager->InitializeDynamicBuffers(*subMesh, indices);
 
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{

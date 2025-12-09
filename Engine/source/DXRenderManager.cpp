@@ -617,7 +617,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_commandList->SetGraphicsRootShaderResourceView(11, buffer.primitiveIndexBuffer->GetGPUVirtualAddress());
 					m_commandList->SetGraphicsRoot32BitConstants(12, 1, &m_meshletVisualization, 0);
 
-					const auto& meshlets = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().Meshlets;
+					const auto& meshlets = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().meshlets;
 					UINT numMeshlets = static_cast<UINT>(meshlets.size());
 					m_commandList->DispatchMesh(numMeshlets, 1, 1);
 				}

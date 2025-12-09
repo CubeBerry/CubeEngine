@@ -53,7 +53,6 @@ public:
 	std::vector<SubMesh>& GetSubMeshes() { return subMeshes; }
 
 	//Setter
-	void AddSpriteToManager();
 	void SetColor(glm::vec4 color);
 	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
 	void ChangeTexture(std::string name);
@@ -65,7 +64,6 @@ public:
 
 	//For CompFuncQueue
 	virtual void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f) = 0;
-	void DeleteFromSpriteManagerList();
 protected:
 	enum class SpriteType
 	{

@@ -25,13 +25,13 @@ StaticSprite::~StaticSprite()
 			dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(std::move(subMesh));
 		}
 	}
-	DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Dynamic Sprite");
+	//DeleteFromSpriteManagerList();
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Static Sprite");
 }
 
 void StaticSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Dynamic Sprite");
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Static Sprite");
 }
 
 void StaticSprite::Update(float dt)
@@ -43,7 +43,7 @@ void StaticSprite::Update(float dt)
 
 void StaticSprite::End()
 {
-	Engine::GetSpriteManager().DeleteSprite(this);
+	//Engine::GetSpriteManager().DeleteSprite(this);
 }
 
 // @TODO Replace with bufferWrapper's Getter functions
@@ -267,9 +267,24 @@ void StaticSprite::CreateMesh3D(MeshType type, const std::filesystem::path& path
 	stacks = stacks_;
 	slices = slices_;
 
+	auto& objectMap = Engine::GetObjectManager().GetObjectMap();
+	for (const auto& object : objectMap)
+	{
+		if (object.second.get()->HasComponent<StaticSprite>())
+		{
+			m_meshIndex++;
+		}
+	}
+
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->CreateMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);
+	renderManager->CreateStaticMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
-	AddSpriteToManager();
+	//AddSpriteToManager();
+}
+
+// This must be called after loading whole mesh data into BufferWrapper
+void StaticSprite::InitializeBuffers()
+{
+	Engine::GetSpriteManager().RegisterStaticSprite();
 }

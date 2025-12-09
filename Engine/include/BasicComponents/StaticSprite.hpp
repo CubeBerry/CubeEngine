@@ -23,5 +23,7 @@ public:
 
 	//For CompFuncQueue
 	void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f) override;
+	void InitializeBuffers();
 private:
+	uint32_t m_meshIndex{ 0 };
 };

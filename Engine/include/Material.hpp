@@ -61,6 +61,12 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 	};
 
+	// For StaticSprite, Check Material.hpp ThreeDimension::DynamicQuantizedVertex for StaticQuantizedVertex
+	struct StaticQuantizedVertex : public QuantizedVertex
+	{
+		uint32_t meshIndex{ 0 };
+	};
+
 #ifdef _DEBUG
 	struct alignas(16) NormalVertex
 	{

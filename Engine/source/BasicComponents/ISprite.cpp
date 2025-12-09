@@ -9,7 +9,10 @@
 void ISprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
 {
 	Engine::GetObjectManager().QueueComponentFunction<ISprite>(this,
-		[=](ISprite* sprite) { sprite->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_); });
+		[=](ISprite* sprite)
+		{
+			this->CreateMesh3D(type, path, stacks_, slices_, color, metallic_, roughness_);
+		});
 }
 
 glm::vec4 ISprite::GetColor()
@@ -26,11 +29,6 @@ glm::vec4 ISprite::GetColor()
 
 		return vertexUniform.color;
 	}
-}
-
-void ISprite::AddSpriteToManager()
-{
-	Engine::GetSpriteManager().AddSprite(this);
 }
 
 void ISprite::SetColor(glm::vec4 color)
@@ -250,13 +248,5 @@ void ISprite::SetIsTex(bool state)
 	}
 	default:
 		break;
-	}
-}
-
-void ISprite::DeleteFromSpriteManagerList()
-{
-	if (this != nullptr)
-	{
-		Engine::GetSpriteManager().DeleteSprite(this);
 	}
 }

@@ -31,12 +31,12 @@ DynamicSprite::~DynamicSprite()
 	}
 	animations.clear();
 	DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Static Sprite");
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Dynamic Sprite");
 }
 
 void DynamicSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Static Sprite");
+	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Dynamic Sprite");
 }
 
 void DynamicSprite::Update(float dt)
@@ -50,7 +50,20 @@ void DynamicSprite::Update(float dt)
 
 void DynamicSprite::End()
 {
-	Engine::GetSpriteManager().DeleteSprite(this);
+	Engine::GetSpriteManager().DeleteDynamicSprite(this);
+}
+
+void DynamicSprite::AddSpriteToManager()
+{
+	Engine::GetSpriteManager().AddDynamicSprite(this);
+}
+
+void DynamicSprite::DeleteFromSpriteManagerList()
+{
+	if (this != nullptr)
+	{
+		Engine::GetSpriteManager().DeleteDynamicSprite(this);
+	}
 }
 
 // @TODO Replace with bufferWrapper's Getter functions
@@ -297,7 +310,7 @@ void DynamicSprite::AddQuad(glm::vec4 color_)
 	auto& fragmentUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 	fragmentUniform.texIndex = 0;
 
-	renderManager->InitializeBuffers(*subMesh, indices);
+	renderManager->InitializeDynamicBuffers(*subMesh, indices);
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
 		subMesh->GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
@@ -352,7 +365,7 @@ void DynamicSprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool
 	auto& fragmentUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
 	fragmentUniform.texIndex = 0;
 
-	renderManager->InitializeBuffers(*subMesh, indices);
+	renderManager->InitializeDynamicBuffers(*subMesh, indices);
 	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 	{
 		subMesh->GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer->SetData(static_cast<GLsizei>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
@@ -399,7 +412,7 @@ void DynamicSprite::CreateMesh3D(MeshType type, const std::filesystem::path& pat
 	slices = slices_;
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->CreateMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);
+	renderManager->CreateDynamicMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	AddSpriteToManager();

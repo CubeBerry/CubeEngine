@@ -498,8 +498,6 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 			{
 				if (ImGui::MenuItem("Plane", "0"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -509,8 +507,6 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 				}
 				if (ImGui::MenuItem("Cube", "1"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -520,8 +516,6 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 				}
 				if (ImGui::MenuItem("Sphere", "2"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -531,8 +525,6 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 				}
 				if (ImGui::MenuItem("Torus", "3"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -542,8 +534,6 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 				}
 				if (ImGui::MenuItem("Cylinder", "4"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -553,8 +543,6 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 				}
 				if (ImGui::MenuItem("Cone", "5"))
 				{
-					//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 						{ obj->DeleteComponent<DynamicSprite>(); });
 					Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -871,9 +859,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			{
 				isShowPopup = false;
 
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -885,9 +870,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			if (ImGui::Selectable("Car"))
 			{
 				isShowPopup = false;
-
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
@@ -901,9 +883,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			{
 				isShowPopup = false;
 
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -915,9 +894,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			if (ImGui::Selectable("Dodecahedron"))
 			{
 				isShowPopup = false;
-
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
@@ -931,9 +907,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			{
 				isShowPopup = false;
 
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -945,9 +918,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			if (ImGui::Selectable("Sphere"))
 			{
 				isShowPopup = false;
-
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
@@ -961,9 +931,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			{
 				isShowPopup = false;
 
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -976,9 +943,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			{
 				isShowPopup = false;
 
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
-
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
@@ -990,9 +954,6 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 			if (ImGui::Selectable("Monkey"))
 			{
 				isShowPopup = false;
-
-				RenderManager* renderManager = Engine::Instance().GetRenderManager();
-				//dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(currentObj->GetComponent<DynamicSprite>());
 
 				Engine::GetObjectManager().QueueObjectFunction(currentObj, [](Object* obj)
 					{ obj->DeleteComponent<DynamicSprite>(); });

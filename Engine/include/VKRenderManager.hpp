@@ -84,7 +84,7 @@ public:
 	//--------------------Common--------------------//
 	void ClearTextures() override;
 	void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) override;
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
+	void InitializeDynamicBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
 		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = std::make_unique<VKIndexBuffer>(vkInit, &vkCommandPool, &indices);

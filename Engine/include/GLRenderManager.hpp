@@ -41,7 +41,7 @@ public:
 	//--------------------Common--------------------//
 	void ClearTextures() override;
 
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
+	void InitializeDynamicBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
 		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer = std::make_unique<GLVertexBuffer>();

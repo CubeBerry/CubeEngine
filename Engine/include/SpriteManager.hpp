@@ -1,29 +1,39 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: SpriteManager.hpp
 #pragma once
-#include "BasicComponents/StaticSprite.hpp"
-
+#include "BasicComponents/ISprite.hpp"
 #include <vector>
 
 class DynamicSprite;
+class StaticSprite;
 
 class SpriteManager
 {
 public:
-    SpriteManager() { staticSprite = std::make_unique<StaticSprite>(); }
+	SpriteManager() = default;
     ~SpriteManager();
 
 	void Update(float dt);
     void End();
 
-    void AddSprite(ISprite* sprite_);
-    void DeleteSprite(ISprite* sprite_);
+    void AddDynamicSprite(DynamicSprite* sprite);
+    void DeleteDynamicSprite(DynamicSprite* sprite);
+    void RegisterStaticSprite();
+
+    //void AllocateStaticUniform(uint32_t spriteIndex, const ThreeDimension::VertexUniform& vertexUniform);
 
     int GetDynamicSpritesAmount() { return static_cast<int>(dynamicSprites.size()); }
     std::vector<DynamicSprite*> GetDynamicSprites() { return dynamicSprites; }
-    StaticSprite* GetStaticSprite() { return staticSprite.get(); }
+    BufferWrapper* GetStaticSprite() { return staticSprite.get(); }
 private:
     std::vector<DynamicSprite*> dynamicSprites;
-    std::unique_ptr<StaticSprite> staticSprite;
+    struct StaticSpriteUniforms
+    {
+        std::vector<ThreeDimension::VertexUniform> vertexUniforms;
+        std::vector<ThreeDimension::FragmentUniform> fragmentUniforms;
+        std::vector<ThreeDimension::Material> materials;
+    } m_staticUniformBuffer;
+    SubMesh staticSprite;
 };

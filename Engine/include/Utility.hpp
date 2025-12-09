@@ -33,7 +33,12 @@ namespace Meshlet
 		uint32_t primitiveOffset{ 0 };
 	};
 
-	using UniqueVertexBuffer = DXStructuredBuffer<ThreeDimension::QuantizedVertex>;
+	template<typename VertexType>
+	using UniqueVertexBufferBase = DXStructuredBuffer<VertexType>;
+	// Dynamic
+	using DynamicUniqueVertexBuffer = UniqueVertexBufferBase<ThreeDimension::QuantizedVertex>;
+	// Static
+	using StaticUniqueVertexBuffer = UniqueVertexBufferBase<ThreeDimension::StaticQuantizedVertex>;
 	using MeshletBuffer = DXStructuredBuffer<Meshlet>;
 	using UniqueVertexIndexBuffer = DXStructuredBuffer<uint32_t>;
 	using PrimitiveIndexBuffer = DXStructuredBuffer<uint32_t>;

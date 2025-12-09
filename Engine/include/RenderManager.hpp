@@ -54,7 +54,10 @@ public:
 
 	struct BufferData3D
 	{
+		// Dynamic, Static
 		std::vector<ThreeDimension::QuantizedVertex> vertices;
+		// Static (Mesh Shader)
+		std::vector<ThreeDimension::StaticQuantizedVertex> staticVertices;
 #ifdef _DEBUG
 		std::vector<ThreeDimension::NormalVertex> normalVertices;
 #endif
@@ -63,9 +66,9 @@ public:
 		ThreeDimension::Material material;
 
 		// Mesh Shader
-		std::vector<Meshlet::Meshlet> Meshlets;
-		std::vector<uint32_t> UniqueVertexIndices;
-		std::vector<uint32_t> PrimitiveIndices;
+		std::vector<Meshlet::Meshlet> meshlets;
+		std::vector<uint32_t> uniqueVertexIndices;
+		std::vector<uint32_t> primitiveIndices;
 	};
 private:
 	struct BufferData
@@ -119,7 +122,10 @@ public:
 #endif
 		std::unique_ptr<DXIndexBuffer> indexBuffer;
 
+		// Dynamic, Static
 		std::unique_ptr<DXStructuredBuffer<ThreeDimension::QuantizedVertex>> uniqueVertexBuffer;
+		// Static (Mesh Shader)
+		std::unique_ptr<DXStructuredBuffer<ThreeDimension::StaticQuantizedVertex>> uniqueStaticVertexBuffer;
 		std::unique_ptr<DXStructuredBuffer<Meshlet::Meshlet>> meshletBuffer;
 		std::unique_ptr<DXStructuredBuffer<uint32_t>> uniqueVertexIndexBuffer;
 		std::unique_ptr<DXStructuredBuffer<uint32_t>> primitiveIndexBuffer;
@@ -270,7 +276,7 @@ public:
 
 	virtual void LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip) = 0;
 	// @TODO Change BufferWrapper& -> BufferWrapper*
-	virtual void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
+	virtual void InitializeDynamicBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) = 0;
 
 	// FidelityFX CAS
 	virtual void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) = 0;
@@ -298,7 +304,12 @@ public:
 		//}
 	}
 
-	void CreateMesh(
+	void CreateDynamicMesh(
+		std::vector<SubMesh>& subMeshes,
+		MeshType type, const std::filesystem::path& path, int stacks, int slices,
+		glm::vec4 color, float metallic, float roughness
+	);
+	void CreateStaticMesh(
 		std::vector<SubMesh>& subMeshes,
 		MeshType type, const std::filesystem::path& path, int stacks, int slices,
 		glm::vec4 color, float metallic, float roughness

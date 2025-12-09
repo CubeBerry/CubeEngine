@@ -15,6 +15,9 @@ public:
 	void Update(float dt) override;
 	void End() override;
 
+	void AddSpriteToManager();
+	void DeleteFromSpriteManagerList();
+
 	//Update Matrices
 	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle) override;
 	void UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle) override;
