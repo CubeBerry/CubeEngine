@@ -8,22 +8,8 @@
 #include "BasicComponents/StaticSprite.hpp"
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
-#include "glm/mat4x4.hpp"
 
 class DXRenderManager;
-
-struct ObjectData
-{
-	glm::mat4 model;
-	glm::mat4 transposeInverseModel;
-	glm::mat4 view;
-	glm::mat4 projection;
-	glm::mat4 decode;
-	glm::vec4 color;
-	glm::vec3 viewPosition;
-	uint32_t meshletOffset;
-	uint32_t meshletCount;
-};
 
 // Work Graphs References:
 // https://devblogs.microsoft.com/directx/d3d12-work-graphs/
@@ -39,8 +25,8 @@ class DXWorkGraphsContext : public IWorkGraphsContext
 public:
 	DXWorkGraphsContext(DXRenderManager* manager) : m_renderManager(manager) {};
 
-	void CheckWorkGraphsSupport();
-	void CheckMeshNodesSupport();
+	void CheckWorkGraphsSupport() const;
+	void CheckMeshNodesSupport() const;
 
 	void InitializeWorkGraphs() override;
 	void ExecuteWorkGraphs() override;
@@ -54,4 +40,16 @@ private:
 	ComPtr<ID3D12Resource> m_zeroBuffer;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE m_workGraphsUavCpuHandle;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE m_workGraphsUavGpuHandle;
+
+	struct CullingData
+	{
+		glm::vec4 frustumPlanes[6];
+		uint32_t numMeshlets;
+	};
+	std::unique_ptr<DXConstantBuffer<CullingData>> m_cullingDataBuffer;
+
+	struct CullEntryRecord
+	{
+		uint32_t gridSize;
+	};
 };

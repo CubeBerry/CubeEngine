@@ -5,8 +5,9 @@
 #include "DXRenderManager.hpp"
 #include "Engine.hpp"
 #include <d3d12.h>
+#include "glm/gtc/matrix_access.hpp"
 
-void DXWorkGraphsContext::CheckWorkGraphsSupport()
+void DXWorkGraphsContext::CheckWorkGraphsSupport() const
 {
 	// Check Work Graphs Support
 	D3D12_FEATURE_DATA_D3D12_OPTIONS21 options = {};
@@ -38,7 +39,7 @@ void DXWorkGraphsContext::CheckWorkGraphsSupport()
 }
 
 // DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
-void DXWorkGraphsContext::CheckMeshNodesSupport()
+void DXWorkGraphsContext::CheckMeshNodesSupport() const
 {
 	// Work Graphs Support must be enabled first
 	if (!m_renderManager->m_workGraphsEnabled)
@@ -76,24 +77,86 @@ void DXWorkGraphsContext::CheckMeshNodesSupport()
 	}
 }
 
+std::array<glm::vec4, 6> ExtractFrustumPlanes(const glm::mat4& viewProj)
+{
+	std::array<glm::vec4, 6> planes;
+	// Left
+	planes[0] = glm::row(viewProj, 3) + glm::row(viewProj, 0);
+	// Right
+	planes[1] = glm::row(viewProj, 3) - glm::row(viewProj, 0);
+	// Bottom
+	planes[2] = glm::row(viewProj, 3) + glm::row(viewProj, 1);
+	// Top
+	planes[3] = glm::row(viewProj, 3) - glm::row(viewProj, 1);
+	// Near
+	planes[4] = glm::row(viewProj, 3) + glm::row(viewProj, 2);
+	// Far
+	planes[5] = glm::row(viewProj, 3) - glm::row(viewProj, 2);
+
+	// Normalize
+	for (auto& plane : planes)
+	{
+		float length = glm::length(glm::vec3(plane));
+		plane /= length;
+	}
+	return planes;
+}
+
 // Work Graphs Frustum Culling
 void DXWorkGraphsContext::InitializeWorkGraphs()
 {
-	std::vector<ObjectData> globalObjectData;
-	std::vector<Meshlet::Meshlet> globalMeshlets;
+	m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphsFrustumCulling.cso", L"WorkGraphsFrustumCulling");
 
-	//auto [srvHandle, srvIndex] = m_renderManager->AllocateSrvHandles(4);
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexSrvHandle(srvHandle, 0, m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	//Meshlet::UniqueVertexBuffer globalUniqueVertexBuffer = std::make_unique<Meshlet::UniqueVertexBuffer>(m_renderManager->m_device, m_renderManager->m_commandQueue, vertices, uniqueVertexSrvHandle);;
-	//Meshlet::MeshletBuffer globalMeshletBuffer;
-	//Meshlet::UniqueVertexIndexBuffer globalUniqueVertexIndexBuffer;
-	//Meshlet::PrimitiveIndexBuffer globalPrimitiveIndexBuffer;
-
-	uint32_t currentMeshletOffset = 0;
+	m_cullingDataBuffer = std::make_unique<DXConstantBuffer<CullingData>>(m_renderManager->m_device, 2);
 }
 
 void DXWorkGraphsContext::ExecuteWorkGraphs()
 {
+	if (!m_renderManager->m_workGraphsEnabled || !m_renderManager->m_meshNodesEnabled) return;
+
+	auto* commandList = m_renderManager->m_commandList.Get();
+	auto* globalStaticBuffer = Engine::GetSpriteManager().GetGlobalStaticBuffer();
+	if (!globalStaticBuffer) return;
+
+	auto* spriteData = globalStaticBuffer->GetData<BufferWrapper::StaticSprite3D>();
+	auto* buffer = globalStaticBuffer->GetBuffer<BufferWrapper::DXBuffer>();
+
+	glm::mat4 viewProjection = Engine::GetCameraManager().GetProjectionMatrix() * Engine::GetCameraManager().GetViewMatrix();
+	auto planes = ExtractFrustumPlanes(viewProjection);
+	CullingData cullingData;
+	for (int i = 0; i < 6; ++i) cullingData.frustumPlanes[i] = planes[i];
+	cullingData.numMeshlets = static_cast<uint32_t>(spriteData->meshlets.size());
+	m_cullingDataBuffer->UpdateConstant(&cullingData, sizeof(CullingData), m_renderManager->m_frameIndex);
+
+	D3D12_SET_PROGRAM_DESC programDesc = m_workGraphsStateObject->GetProgramDesc();
+	commandList->SetProgram(&programDesc);
+
+	ID3D12RootSignature* globalRootSignature = m_workGraphsStateObject->GetGlobalRootSignature();
+	commandList->SetComputeRootSignature(globalRootSignature);
+
+	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	// Resource Bindings
+
+	CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHandle(
+		m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart(),
+		static_cast<INT>(buffer->srvHandle.second),
+		m_renderManager->m_srvDescriptorSize
+	);
+	commandList->SetComputeRootDescriptorTable(8, srvGpuHandle);
+
+	CullEntryRecord record;
+	record.gridSize = (cullingData.numMeshlets + 31) / 32;
+
+	D3D12_DISPATCH_GRAPH_DESC dispatchDesc = {};
+	dispatchDesc.Mode = D3D12_DISPATCH_MODE_NODE_CPU_INPUT;
+	dispatchDesc.NodeCPUInput.EntrypointIndex = m_workGraphsStateObject->GetEntrypointIndex(L"CullNode");
+	dispatchDesc.NodeCPUInput.NumRecords = 1;
+	dispatchDesc.NodeCPUInput.pRecords = &record;
+	dispatchDesc.NodeCPUInput.RecordStrideInBytes = sizeof(CullEntryRecord);
+
+	commandList->DispatchGraph(&dispatchDesc);
 }
 
 void DXWorkGraphsContext::PrintWorkGraphsResults()

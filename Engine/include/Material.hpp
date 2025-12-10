@@ -64,7 +64,7 @@ namespace ThreeDimension
 	// For StaticSprite, Check Material.hpp ThreeDimension::DynamicQuantizedVertex for StaticQuantizedVertex
 	struct StaticQuantizedVertex : public QuantizedVertex
 	{
-		uint32_t meshIndex{ 0 };
+		uint32_t objectId{ 0 };
 	};
 
 #ifdef _DEBUG
