@@ -189,6 +189,23 @@ public:
 			}
 		}
 	}
+	void InitializeGlobalUniformBuffers(
+		BufferWrapper& bufferWrapper,
+		const std::vector<ThreeDimension::VertexUniform>& vertexUniforms,
+		const std::vector<ThreeDimension::FragmentUniform>& fragmentUniforms,
+		const std::vector<ThreeDimension::Material>& materials)
+	{
+		auto* sprite = bufferWrapper.GetData<BufferWrapper::StaticSprite3D>();
+		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+
+		buffer->srvHandle = AllocateSrvHandles(3);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE vertexUniformSrvHandle(buffer->srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		sprite->SetVertexUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::VertexUniform>>(m_device, m_commandQueue, vertexUniforms, vertexUniformSrvHandle));
+		CD3DX12_CPU_DESCRIPTOR_HANDLE fragmentUniformSrvHandle(buffer->srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		sprite->SetFragmentUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::FragmentUniform>>(m_device, m_commandQueue, fragmentUniforms, fragmentUniformSrvHandle));
+		CD3DX12_CPU_DESCRIPTOR_HANDLE materialUniformIndexSrvHandle(buffer->srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		sprite->SetMaterialUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::Material>>(m_device, m_commandQueue, materials, materialUniformIndexSrvHandle));
+	}
 	void InitializeStaticBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
 	{
 		// Initialize Buffers
@@ -214,10 +231,6 @@ public:
 			CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer->srvHandle.first, 3, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 			buffer->primitiveIndexBuffer = std::make_unique<Meshlet::PrimitiveIndexBuffer>(m_device, m_commandQueue, sprite->primitiveIndices, primitiveIndexSrvHandle);
 		}
-
-		sprite->SetVertexUniformBuffer(std::make_unique<DXConstantBuffer<ThreeDimension::VertexUniform>>(m_device, frameCount));
-		sprite->SetFragmentUniformBuffer(std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount));
-		sprite->SetMaterialUniformBuffer(std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount));
 	}
 
 	// Deferred Deletion

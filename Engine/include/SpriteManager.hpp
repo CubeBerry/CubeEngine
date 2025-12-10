@@ -24,10 +24,10 @@ public:
 
     //void AllocateStaticUniform(uint32_t spriteIndex, const ThreeDimension::VertexUniform& vertexUniform);
 
-    int GetDynamicSpritesAmount() { return static_cast<int>(dynamicSprites.size()); }
+    int GetDynamicSpritesAmount() const { return static_cast<int>(dynamicSprites.size()); }
     std::vector<DynamicSprite*> GetDynamicSprites() { return dynamicSprites; }
-    BufferWrapper* GetStaticSprite() { return staticSprite.get(); }
+    BufferWrapper* GetGlobalStaticBuffer() const { return globalStaticBuffer.get(); }
 private:
     std::vector<DynamicSprite*> dynamicSprites;
-    SubMesh staticSprite;
+    SubMesh globalStaticBuffer;
 };

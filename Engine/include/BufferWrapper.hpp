@@ -89,10 +89,10 @@ public:
 
 		std::unique_ptr<DXStructuredBuffer<ThreeDimension::QuantizedVertex>> uniqueVertexBuffer;
 		std::unique_ptr<DXStructuredBuffer<ThreeDimension::StaticQuantizedVertex>> uniqueStaticVertexBuffer;
+		std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> srvHandle;
 		std::unique_ptr<DXStructuredBuffer<Meshlet::Meshlet>> meshletBuffer;
 		std::unique_ptr<DXStructuredBuffer<uint32_t>> uniqueVertexIndexBuffer;
 		std::unique_ptr<DXStructuredBuffer<uint32_t>> primitiveIndexBuffer;
-		std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> srvHandle;
 	};
 
 	// @TODO Move uniform buffers to each GLBuffer, VKBuffer, DXBuffer structs if it's proper way
@@ -372,34 +372,26 @@ public:
 		std::vector<uint32_t> uniqueVertexIndices;
 		std::vector<uint32_t> primitiveIndices;
 
-		//struct BindlessInfo
-		//{
-		//	uint32_t meshletBufferIndex{ 0 };
-		//	uint32_t uniqueVertexIndex{ 0 };
-		//	uint32_t primitiveIndex{ 0 };
-		//	uint32_t materialIndex{ 0 };
-		//} bindlessHandles;
-
-		ThreeDimension::VertexUniform vertexUniform;
-		ThreeDimension::FragmentUniform fragmentUniform;
-		ThreeDimension::Material material;
+		//ThreeDimension::VertexUniform vertexUniform;
+		//ThreeDimension::FragmentUniform fragmentUniform;
+		//ThreeDimension::Material material;
 
 		// GPU Buffers
 		//std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;
 		std::variant<
 			std::monostate,
 			std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>,
-			std::unique_ptr<DXConstantBuffer<ThreeDimension::VertexUniform>>
+			std::unique_ptr<DXStructuredBuffer<ThreeDimension::VertexUniform>>
 		> vertexUniformBuffer;
 		std::variant<
 			std::monostate,
 			std::unique_ptr<GLUniformBuffer<ThreeDimension::FragmentUniform>>,
-			std::unique_ptr<DXConstantBuffer<ThreeDimension::FragmentUniform>>
+			std::unique_ptr<DXStructuredBuffer<ThreeDimension::FragmentUniform>>
 		> fragmentUniformBuffer;
 		std::variant<
 			std::monostate,
 			std::unique_ptr<GLUniformBuffer<ThreeDimension::Material>>,
-			std::unique_ptr<DXConstantBuffer<ThreeDimension::Material>>
+			std::unique_ptr<DXStructuredBuffer<ThreeDimension::Material>>
 		> materialUniformBuffer;
 
 		void Initialize();

@@ -80,14 +80,17 @@ void SpriteManager::RegisterStaticSprite()
 	tempSubMesh = std::make_unique<BufferWrapper>(SpriteType::STATIC, true);
 
 	auto* tempSprite = tempSubMesh->GetData<BufferWrapper::StaticSprite3D>();
-	auto* tempBuffer = tempSubMesh->GetBuffer<BufferWrapper::DXBuffer>();
 
-	std::vector<ThreeDimension::StaticQuantizedVertex> tempVertices;
+	uint32_t currentMeshletOffset = 0;
+	uint32_t currentVertexIndexOffset = 0;
+	uint32_t currentPrimitiveIndexOffset = 0;
+	uint32_t currentTransformIndex = 0;
+
+	auto& tempVertices = tempSprite->vertices;
+	auto& tempIndices = tempSprite->indices;
 	auto& tempMeshlets = tempSprite->meshlets;
 	auto& tempUniqueVertexIndices = tempSprite->uniqueVertexIndices;
 	auto& tempPrimitiveIndices = tempSprite->primitiveIndices;
-
-	std::vector<uint32_t> tempIndices;
 
 	std::vector<ThreeDimension::VertexUniform> vertexUniforms;
 	std::vector<ThreeDimension::FragmentUniform> fragmentUniforms;
@@ -97,39 +100,53 @@ void SpriteManager::RegisterStaticSprite()
     auto& objectMap = Engine::GetObjectManager().GetObjectMap();
     for (const auto& object : objectMap)
     {
-        if (object.second.get()->HasComponent<StaticSprite>())
+        if (object.second->HasComponent<StaticSprite>())
         {
-            StaticSprite* sprite = object.second.get()->GetComponent<StaticSprite>();
+            StaticSprite* sprite = object.second->GetComponent<StaticSprite>();
+			sprite->ClearMeshNodeRecords();
 
 			auto& subMeshes = sprite->GetSubMeshes();
 			// Store each submesh buffer data into one buffer
-			for (uint32_t meshIndex = 0; meshIndex < subMeshes.size(); ++meshIndex)
+			for (auto& subMesh : subMeshes)
 			{
-				auto& subMesh = subMeshes[meshIndex];
-
-				auto* sprite = subMesh->GetData<BufferWrapper::StaticSprite3D>();
-				auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+				// Gather DynamicSprite3DMesh data and convert to StaticSprite3D data
+				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 
 				tempVertices.insert(tempVertices.end(),
-					sprite->vertices.begin(),
-					sprite->vertices.end());
+					spriteData->vertices.begin(),
+					spriteData->vertices.end());
 				tempMeshlets.insert(tempMeshlets.end(),
-					sprite->meshlets.begin(),
-					sprite->meshlets.end());
+					spriteData->meshlets.begin(),
+					spriteData->meshlets.end());
 				tempUniqueVertexIndices.insert(tempUniqueVertexIndices.end(),
-					sprite->uniqueVertexIndices.begin(),
-					sprite->uniqueVertexIndices.end());
+					spriteData->uniqueVertexIndices.begin(),
+					spriteData->uniqueVertexIndices.end());
 				tempPrimitiveIndices.insert(tempPrimitiveIndices.end(),
-					sprite->primitiveIndices.begin(),
-					sprite->primitiveIndices.end());
+					spriteData->primitiveIndices.begin(),
+					spriteData->primitiveIndices.end());
 				tempIndices.insert(
 					tempIndices.end(),
-					sprite->indices.begin(),
-					sprite->indices.end());
+					spriteData->indices.begin(),
+					spriteData->indices.end());
 
-				vertexUniforms.push_back(sprite->vertexUniform);
-				fragmentUniforms.push_back(sprite->fragmentUniform);
-				materials.push_back(sprite->material);
+				vertexUniforms.push_back(spriteData->vertexUniform);
+				fragmentUniforms.push_back(spriteData->fragmentUniform);
+				materials.push_back(spriteData->material);
+
+				StaticSprite::MeshNodeRecord record;
+				record.objectID = currentTransformIndex;
+				record.meshletOffset = currentMeshletOffset;
+				record.meshletCount = static_cast<uint32_t>(spriteData->meshlets.size());
+				record.vertexIndexOffset = currentVertexIndexOffset;
+				record.primitiveIndexOffset = currentPrimitiveIndexOffset;
+
+				sprite->AddMeshNodeRecord(record);
+				sprite->SetGlobalTransformIndex(currentTransformIndex);
+
+				currentMeshletOffset += record.meshletCount;
+				currentVertexIndexOffset += static_cast<uint32_t>(spriteData->uniqueVertexIndices.size());
+				currentPrimitiveIndexOffset += static_cast<uint32_t>(spriteData->primitiveIndices.size());
+				currentTransformIndex++;
 			}
 
 			subMeshes.clear();
@@ -141,7 +158,8 @@ void SpriteManager::RegisterStaticSprite()
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	dynamic_cast<DXRenderManager*>(renderManager)->InitializeStaticBuffers(*tempSubMesh, tempIndices);
-	staticSprite = std::move(tempSubMesh);
+	dynamic_cast<DXRenderManager*>(renderManager)->InitializeGlobalUniformBuffers(*tempSubMesh, vertexUniforms, fragmentUniforms, materials);
+	globalStaticBuffer = std::move(tempSubMesh);
 
 //
 //	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)

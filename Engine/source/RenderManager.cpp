@@ -123,8 +123,8 @@ void RenderManager::CreateMesh(
 	}
 
 	SubMesh subMesh;
-	//subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), true) : std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), false);
-	subMesh = std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true);
+	// Both dynamic and static sprite use DynamicSprite3DMesh structure. SpriteManager will handle the difference.
+	subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true) : std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, false);
 	
 	auto* sprite = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 	
@@ -637,8 +637,7 @@ void RenderManager::ProcessMesh(
 	glm::vec4 color, float metallic, float roughness)
 {
 	SubMesh subMesh;
-	//subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), true) : std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), false);
-	subMesh = std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true);
+	subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true) : std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, false);
 	
 	auto* sprite = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 

@@ -15,15 +15,15 @@
 
 StaticSprite::~StaticSprite()
 {
-	RenderManager* renderManager = Engine::GetRenderManager();
-	// @TODO Make OpenGL, Vulkan version of SafeDelete, ProcessDeletionQueue function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
-	if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
-	{
-		for (auto& subMesh : subMeshes)
-		{
-			dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(std::move(subMesh));
-		}
-	}
+	//RenderManager* renderManager = Engine::GetRenderManager();
+	//// @TODO Make OpenGL, Vulkan version of SafeDelete, ProcessDeletionQueue function and remove ProcessFunctionQueue(), DeleteObjectsFromList()
+	//if (renderManager->GetGraphicsMode() == GraphicsMode::DX)
+	//{
+	//	for (auto& subMesh : subMeshes)
+	//	{
+	//		dynamic_cast<DXRenderManager*>(renderManager)->SafeDelete(std::move(subMesh));
+	//	}
+	//}
 	//DeleteFromSpriteManagerList();
 	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Static Sprite");
 }
@@ -155,14 +155,14 @@ void StaticSprite::CreateMesh3D(MeshType type, const std::filesystem::path& path
 	stacks = stacks_;
 	slices = slices_;
 
-	auto& objectMap = Engine::GetObjectManager().GetObjectMap();
-	for (const auto& object : objectMap)
-	{
-		if (object.second.get()->HasComponent<StaticSprite>())
-		{
-			m_meshIndex++;
-		}
-	}
+	//auto& objectMap = Engine::GetObjectManager().GetObjectMap();
+	//for (const auto& object : objectMap)
+	//{
+	//	if (object.second.get()->HasComponent<StaticSprite>())
+	//	{
+	//		m_meshIndex++;
+	//	}
+	//}
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	renderManager->CreateMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);

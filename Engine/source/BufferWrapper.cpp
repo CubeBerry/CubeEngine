@@ -99,9 +99,9 @@ void BufferWrapper::StaticSprite3D::Initialize()
 		materialUniformBuffer.emplace<std::unique_ptr<GLUniformBuffer<ThreeDimension::Material>>>();
 		break;
 	case GraphicsMode::DX:
-		vertexUniformBuffer.emplace<std::unique_ptr<DXConstantBuffer<ThreeDimension::VertexUniform>>>();
-		fragmentUniformBuffer.emplace<std::unique_ptr<DXConstantBuffer<ThreeDimension::FragmentUniform>>>();
-		materialUniformBuffer.emplace<std::unique_ptr<DXConstantBuffer<ThreeDimension::Material>>>();
+		vertexUniformBuffer.emplace<std::unique_ptr<DXStructuredBuffer<ThreeDimension::VertexUniform>>>();
+		fragmentUniformBuffer.emplace<std::unique_ptr<DXStructuredBuffer<ThreeDimension::FragmentUniform>>>();
+		materialUniformBuffer.emplace<std::unique_ptr<DXStructuredBuffer<ThreeDimension::Material>>>();
 		break;
 	default:
 		break;
