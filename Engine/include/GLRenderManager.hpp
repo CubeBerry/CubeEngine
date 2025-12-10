@@ -44,26 +44,29 @@ public:
 	void InitializeDynamicBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().vertexBuffer = std::make_unique<GLVertexBuffer>();
+		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>();
+		buffer->vertexBuffer = std::make_unique<GLVertexBuffer>();
 #ifdef _DEBUG
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().normalVertexBuffer = std::make_unique<GLVertexBuffer>();
+		buffer->normalVertexBuffer = std::make_unique<GLVertexBuffer>();
 #endif
-		bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>().indexBuffer = std::make_unique<GLIndexBuffer>(&indices);
+		buffer->indexBuffer = std::make_unique<GLIndexBuffer>(&indices);
 		if (rMode == RenderType::TwoDimension)
 		{
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().vertexUniformBuffer = std::make_unique<GLUniformBuffer<TwoDimension::VertexUniform>>();
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().fragmentUniformBuffer = std::make_unique<GLUniformBuffer<TwoDimension::FragmentUniform>>();
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().vertexUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", sizeof(TwoDimension::VertexUniform), nullptr);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer2D>().fragmentUniformBuffer->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", sizeof(TwoDimension::FragmentUniform), nullptr);
+			auto* sprite = bufferWrapper.GetData<BufferWrapper::DynamicSprite2D>();
+			sprite->SetVertexUniformBuffer(std::make_unique<GLUniformBuffer<TwoDimension::VertexUniform>>());
+			sprite->SetFragmentUniformBuffer(std::make_unique<GLUniformBuffer<TwoDimension::FragmentUniform>>());
+			sprite->GetVertexUniformBuffer<GLUniformBuffer<TwoDimension::VertexUniform>>()->InitUniform(gl2DShader.GetProgramHandle(), 0, "vUniformMatrix", sizeof(TwoDimension::VertexUniform), nullptr);
+			sprite->GetFragmentUniformBuffer<GLUniformBuffer<TwoDimension::FragmentUniform>>()->InitUniform(gl2DShader.GetProgramHandle(), 1, "fUniformMatrix", sizeof(TwoDimension::FragmentUniform), nullptr);
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().vertexUniformBuffer = std::make_unique<GLUniformBuffer<ThreeDimension::VertexUniform>>();
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().fragmentUniformBuffer = std::make_unique<GLUniformBuffer<ThreeDimension::FragmentUniform>>();
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer = std::make_unique<GLUniformBuffer<ThreeDimension::Material>>();
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().vertexUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", sizeof(ThreeDimension::VertexUniform), nullptr);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().fragmentUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", sizeof(ThreeDimension::FragmentUniform), nullptr);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::GLUniformBuffer3D>().materialUniformBuffer->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
+			auto* sprite = bufferWrapper.GetData<BufferWrapper::DynamicSprite3DMesh>();
+			sprite->SetVertexUniformBuffer(std::make_unique<GLUniformBuffer<ThreeDimension::VertexUniform>>());
+			sprite->SetFragmentUniformBuffer(std::make_unique<GLUniformBuffer<ThreeDimension::FragmentUniform>>());
+			sprite->SetMaterialUniformBuffer(std::make_unique<GLUniformBuffer<ThreeDimension::Material>>());
+			sprite->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->InitUniform(gl3DShader.GetProgramHandle(), 2, "vUniformMatrix", sizeof(ThreeDimension::VertexUniform), nullptr);
+			sprite->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->InitUniform(gl3DShader.GetProgramHandle(), 3, "fUniformMatrix", sizeof(ThreeDimension::FragmentUniform), nullptr);
+			sprite->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->InitUniform(gl3DShader.GetProgramHandle(), 4, "fUniformMaterial", sizeof(ThreeDimension::Material), nullptr);
 		}
 	}
 

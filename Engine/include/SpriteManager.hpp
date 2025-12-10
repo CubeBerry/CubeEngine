@@ -29,11 +29,5 @@ public:
     BufferWrapper* GetStaticSprite() { return staticSprite.get(); }
 private:
     std::vector<DynamicSprite*> dynamicSprites;
-    struct StaticSpriteUniforms
-    {
-        std::vector<ThreeDimension::VertexUniform> vertexUniforms;
-        std::vector<ThreeDimension::FragmentUniform> fragmentUniforms;
-        std::vector<ThreeDimension::Material> materials;
-    } m_staticUniformBuffer;
     SubMesh staticSprite;
 };

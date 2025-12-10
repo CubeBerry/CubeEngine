@@ -5,6 +5,7 @@
 #include "ProceduralMeshes.hpp"
 #include "Engine.hpp"
 #include "BasicComponents/Light.hpp"
+#include "BasicComponents/StaticSprite.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 

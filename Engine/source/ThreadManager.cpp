@@ -4,6 +4,7 @@
 #include "Engine.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
+#include "DXRenderManager.hpp"
 
 void ThreadManager::Start()
 {

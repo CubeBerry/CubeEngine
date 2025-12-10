@@ -6,6 +6,7 @@
 #include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/StaticSprite.hpp"
 #include "Engine.hpp"
+#include "DXRenderManager.hpp"
 
 SpriteManager::~SpriteManager()
 {
@@ -76,12 +77,15 @@ void SpriteManager::DeleteDynamicSprite(DynamicSprite* sprite)
 void SpriteManager::RegisterStaticSprite()
 {
 	SubMesh tempSubMesh;
-	tempSubMesh = std::make_unique<BufferWrapper>();
-	tempSubMesh->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	tempSubMesh = std::make_unique<BufferWrapper>(SpriteType::STATIC, true);
+
+	auto* tempSprite = tempSubMesh->GetData<BufferWrapper::StaticSprite3D>();
+	auto* tempBuffer = tempSubMesh->GetBuffer<BufferWrapper::DXBuffer>();
+
 	std::vector<ThreeDimension::StaticQuantizedVertex> tempVertices;
-	auto& tempMeshlets = tempSubMesh->GetClassifiedData<BufferWrapper::BufferData3D>().meshlets;
-	auto& tempUniqueVertexIndices = tempSubMesh->GetClassifiedData<BufferWrapper::BufferData3D>().uniqueVertexIndices;
-	auto& tempPrimitiveIndices = tempSubMesh->GetClassifiedData<BufferWrapper::BufferData3D>().primitiveIndices;
+	auto& tempMeshlets = tempSprite->meshlets;
+	auto& tempUniqueVertexIndices = tempSprite->uniqueVertexIndices;
+	auto& tempPrimitiveIndices = tempSprite->primitiveIndices;
 
 	std::vector<uint32_t> tempIndices;
 
@@ -89,6 +93,7 @@ void SpriteManager::RegisterStaticSprite()
 	std::vector<ThreeDimension::FragmentUniform> fragmentUniforms;
 	std::vector<ThreeDimension::Material> materials;
 
+	// @TODO Need to destroy original static sprites' buffers to save memory
     auto& objectMap = Engine::GetObjectManager().GetObjectMap();
     for (const auto& object : objectMap)
     {
@@ -101,26 +106,30 @@ void SpriteManager::RegisterStaticSprite()
 			for (uint32_t meshIndex = 0; meshIndex < subMeshes.size(); ++meshIndex)
 			{
 				auto& subMesh = subMeshes[meshIndex];
+
+				auto* sprite = subMesh->GetData<BufferWrapper::StaticSprite3D>();
+				auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+
 				tempVertices.insert(tempVertices.end(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().staticVertices.begin(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().staticVertices.end());
+					sprite->vertices.begin(),
+					sprite->vertices.end());
 				tempMeshlets.insert(tempMeshlets.end(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().meshlets.begin(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().meshlets.end());
+					sprite->meshlets.begin(),
+					sprite->meshlets.end());
 				tempUniqueVertexIndices.insert(tempUniqueVertexIndices.end(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().uniqueVertexIndices.begin(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().uniqueVertexIndices.end());
+					sprite->uniqueVertexIndices.begin(),
+					sprite->uniqueVertexIndices.end());
 				tempPrimitiveIndices.insert(tempPrimitiveIndices.end(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().primitiveIndices.begin(),
-					subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().primitiveIndices.end());
+					sprite->primitiveIndices.begin(),
+					sprite->primitiveIndices.end());
 				tempIndices.insert(
 					tempIndices.end(),
-					subMesh->GetIndices().begin(),
-					subMesh->GetIndices().end());
+					sprite->indices.begin(),
+					sprite->indices.end());
 
-				vertexUniforms.push_back(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform);
-				fragmentUniforms.push_back(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform);
-				materials.push_back(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material);
+				vertexUniforms.push_back(sprite->vertexUniform);
+				fragmentUniforms.push_back(sprite->fragmentUniform);
+				materials.push_back(sprite->material);
 			}
 
 			subMeshes.clear();
@@ -128,20 +137,12 @@ void SpriteManager::RegisterStaticSprite()
     }
 
 	// Initialize Buffers
-	staticSprite = std::make_unique<BufferWrapper>();
-	staticSprite->Initialize(Engine::GetRenderManager()->GetGraphicsMode(), RenderType::ThreeDimension);
+	//staticSprite = std::make_unique<BufferWrapper>(SpriteType::STATIC, true);
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	dynamic_cast<DXRenderManager*>(renderManager)->InitializeStaticBuffers(
-		tempVertices,
-		tempIndices,
-		tempMeshlets,
-		tempUniqueVertexIndices,
-		tempPrimitiveIndices,
-		*staticSprite
-	);
+	dynamic_cast<DXRenderManager*>(renderManager)->InitializeStaticBuffers(*tempSubMesh, tempIndices);
+	staticSprite = std::move(tempSubMesh);
 
-	// @TODO Need to destroy original static sprites' buffers to save memory
 //
 //	if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 //	{

@@ -2,8 +2,10 @@
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: Engine.cpp
-
 #include "Engine.hpp"
+#include "GLRenderManager.hpp"
+#include "VKRenderManager.hpp"
+#include "DXRenderManager.hpp"
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {

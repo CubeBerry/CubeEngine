@@ -892,11 +892,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprites[i]->GetSubMeshes())
 			{
-				auto& buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
+				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
+				auto* buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
 				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer->vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				// Dynamic Viewport & Scissor
 				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
@@ -906,7 +907,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
 				TwoDimension::VertexUniform* vertexDest = (TwoDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				*vertexDest = spriteData->vertexUniform;
 				// @TODO do not use magic number for dynamicOffsetCount
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
 
@@ -915,14 +916,14 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
 				TwoDimension::FragmentUniform* fragmentDest = (TwoDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+				*fragmentDest = spriteData->fragmentUniform;
 
 				// @TODO do not use magic number for dynamicOffsetCount
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 1, &dynamicOffset);
 				// Change Primitive Topology
 				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 				//Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(subMesh->GetIndices().size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(spriteData->indices.size()), 1, 0, 0, 0);
 			}
 		}
 		uniformBuffer2D.vertexUniformBuffer->UnmapMemory(frameIndex);
@@ -940,15 +941,15 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				auto& buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
-
+				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+				auto* buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
 				// Bind Pipeline
 				auto* pipeline = pMode == PolygonType::FILL ? vkPipeline3D : vkPipeline3DLine;
 				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLine());
 				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer.vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer->vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
 				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer.indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 				// Dynamic Viewport & Scissor
 				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
@@ -958,7 +959,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				uint32_t dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
 				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+				*vertexDest = spriteData->vertexUniform;
 				// @TODO do not use magic number for dynamicOffsetCount
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
 
@@ -970,7 +971,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				dynamicOffsets[0] = dynamicOffset;
 
 				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				*fragmentDest = spriteData->fragmentUniform;
 
 				// Material Uniform Offset
 				uniformSize = sizeof(ThreeDimension::Material);
@@ -978,7 +979,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				dynamicOffsets[1] = dynamicOffset;
 
 				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
-				*materialDest = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material;
+				*materialDest = spriteData->material;
 
 				// @TODO do not use magic number for dynamicOffsetCount
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
@@ -991,12 +992,12 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
 				vkCmdPushConstants(*currentCommandBuffer, *pipeline->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
 				// Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(subMesh->GetIndices().size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(spriteData->indices.size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
 				if (m_normalVectorVisualization)
 				{
-					VkBuffer* normalVertexBuffer = buffer.normalVertexBuffer->GetVertexBuffer();
+					VkBuffer* normalVertexBuffer = buffer->normalVertexBuffer->GetVertexBuffer();
 					//Bind Pipeline
 					vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLine());
 					//Bind Vertex Buffer
@@ -1007,11 +1008,11 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 					//Change Primitive Topology
 					//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 					//Push Constant Model-To_NDC
-					auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+					auto& vertexUniform = spriteData->vertexUniform;
 					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
 					vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DNormal->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &modelToNDC);
 					//Draw
-					vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+					vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(spriteData->normalVertices.size()), 1, 0, 0);
 				}
 #endif
 

@@ -87,19 +87,22 @@ public:
 	void InitializeDynamicBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
-		bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().indexBuffer = std::make_unique<VKIndexBuffer>(vkInit, &vkCommandPool, &indices);
+		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>();
+		buffer->indexBuffer = std::make_unique<VKIndexBuffer>(vkInit, &vkCommandPool, &indices);
 		if (rMode == RenderType::TwoDimension)
 		{
-			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = std::make_unique<VKVertexBuffer>(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
+			auto* sprite = bufferWrapper.GetData<BufferWrapper::DynamicSprite2D>();
+			auto& vertices = sprite->vertices;
+			buffer->vertexBuffer = std::make_unique<VKVertexBuffer>(vkInit, sizeof(TwoDimension::Vertex) * vertices.size(), vertices.data());
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
-			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().vertexBuffer = std::make_unique<VKVertexBuffer>(vkInit, sizeof(ThreeDimension::QuantizedVertex) * vertices.size(), vertices.data());
+			auto* sprite = bufferWrapper.GetData<BufferWrapper::DynamicSprite3DMesh>();
+			auto& vertices = sprite->vertices;
+			buffer->vertexBuffer = std::make_unique<VKVertexBuffer>(vkInit, sizeof(ThreeDimension::QuantizedVertex) * vertices.size(), vertices.data());
 #ifdef _DEBUG
-			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
-			bufferWrapper.GetBuffer<BufferWrapper::VKBuffer>().normalVertexBuffer = std::make_unique<VKVertexBuffer>(vkInit, sizeof(ThreeDimension::NormalVertex) * normalVertices.size(), normalVertices.data());
+			auto& normalVertices = sprite->normalVertices;
+			buffer->normalVertexBuffer = std::make_unique<VKVertexBuffer>(vkInit, sizeof(ThreeDimension::NormalVertex) * normalVertices.size(), normalVertices.data());
 #endif
 		}
 	}

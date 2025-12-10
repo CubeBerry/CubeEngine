@@ -5,6 +5,9 @@
 #include "ObjectManager.hpp"
 
 #include "Engine.hpp"
+#include "GLRenderManager.hpp"
+#include "VKRenderManager.hpp"
+#include "DXRenderManager.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Light.hpp"
 #include "imgui.h"
@@ -304,8 +307,8 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 	{
 		stacks = sprite->GetStacks();
 		slices = sprite->GetSlices();
-		metallic = sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic;
-		roughness = sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness;
+		metallic = sprite->GetSubMeshes()[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.metallic;
+		roughness = sprite->GetSubMeshes()[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness;
 
 		if (ImGui::CollapsingHeader("3DMesh", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -343,12 +346,12 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 			}
 			if (ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f))
 			{
-				sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.metallic = metallic;
+				sprite->GetSubMeshes()[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.metallic = metallic;
 
 			}
 			if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
 			{
-				sprite->GetSubMeshes()[0]->GetClassifiedData<BufferWrapper::BufferData3D>().material.roughness = roughness;
+				sprite->GetSubMeshes()[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness = roughness;
 			}
 			ImGui::Spacing();
 

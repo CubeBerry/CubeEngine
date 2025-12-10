@@ -5,6 +5,9 @@
 #include "BasicComponents/ISprite.hpp"
 
 #include "Engine.hpp"
+#include "GLRenderManager.hpp"
+#include "VKRenderManager.hpp"
+#include "DXRenderManager.hpp"
 
 void ISprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
 {
@@ -19,13 +22,13 @@ glm::vec4 ISprite::GetColor()
 {
 	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+		auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 		return vertexUniform.color;
 	}
 	else
 	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+		auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
 
 		return vertexUniform.color;
 	}
@@ -35,13 +38,13 @@ void ISprite::SetColor(glm::vec4 color)
 {
 	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+		auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 		vertexUniform.color = color;
 	}
 	else
 	{
-		auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+		auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
 
 		vertexUniform.color = color;
 	}
@@ -59,8 +62,8 @@ void ISprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+				auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->fragmentUniform;
 
 				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
 				vertexUniform.isTex = true;
@@ -69,7 +72,7 @@ void ISprite::ChangeTexture(std::string name)
 			}
 			else
 			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 				vertexUniform.isTex = false;
 				isTex = false;
@@ -79,7 +82,7 @@ void ISprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerGL->GetTexture(name) != nullptr)
 			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 				fragmentUniform.texIndex = renderManagerGL->GetTexture(name)->GetTextrueId();
 				fragmentUniform.isTex = true;
@@ -88,7 +91,7 @@ void ISprite::ChangeTexture(std::string name)
 			}
 			else
 			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 				fragmentUniform.isTex = false;
 				isTex = false;
@@ -103,8 +106,8 @@ void ISprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+				auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->fragmentUniform;
 
 				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
 				vertexUniform.isTex = true;
@@ -113,7 +116,7 @@ void ISprite::ChangeTexture(std::string name)
 			}
 			else
 			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 				vertexUniform.isTex = false;
 				isTex = false;
@@ -123,7 +126,7 @@ void ISprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerVK->GetTexture(name) != nullptr)
 			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 				fragmentUniform.texIndex = renderManagerVK->GetTexture(name)->GetTextrueId();
 				fragmentUniform.isTex = true;
@@ -132,7 +135,7 @@ void ISprite::ChangeTexture(std::string name)
 			}
 			else
 			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 				fragmentUniform.isTex = false;
 				isTex = false;
@@ -147,8 +150,8 @@ void ISprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerDX->GetTexture(name) != nullptr)
 			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform;
+				auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->fragmentUniform;
 
 				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
 				vertexUniform.isTex = true;
@@ -157,7 +160,7 @@ void ISprite::ChangeTexture(std::string name)
 			}
 			else
 			{
-				auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+				auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 				vertexUniform.isTex = false;
 				isTex = false;
@@ -167,7 +170,7 @@ void ISprite::ChangeTexture(std::string name)
 		{
 			if (renderManagerDX->GetTexture(name) != nullptr)
 			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 				fragmentUniform.texIndex = renderManagerDX->GetTexture(name)->GetTextrueId();
 				fragmentUniform.isTex = true;
@@ -176,7 +179,7 @@ void ISprite::ChangeTexture(std::string name)
 			}
 			else
 			{
-				auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+				auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 				fragmentUniform.isTex = false;
 				isTex = false;
@@ -200,13 +203,13 @@ void ISprite::SetIsTex(bool state)
 		//GLRenderManager* renderManagerGL = dynamic_cast<GLRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+			auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 			vertexUniform.isTex = state;
 		}
 		else
 		{
-			auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 			fragmentUniform.isTex = state;
 		}
@@ -217,13 +220,13 @@ void ISprite::SetIsTex(bool state)
 		//DXRenderManager* renderManagerDX = dynamic_cast<DXRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+			auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 			vertexUniform.isTex = state;
 		}
 		else
 		{
-			auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 			fragmentUniform.isTex = state;
 		}
@@ -234,13 +237,13 @@ void ISprite::SetIsTex(bool state)
 		//VKRenderManager* renderManagerVK = dynamic_cast<VKRenderManager*>(renderManager);
 		if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 		{
-			auto& vertexUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform;
+			auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
 
 			vertexUniform.isTex = state;
 		}
 		else
 		{
-			auto& fragmentUniform = subMeshes[0]->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform;
+			auto& fragmentUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite3DMesh>()->fragmentUniform;
 
 			fragmentUniform.isTex = state;
 		}

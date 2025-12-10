@@ -10,9 +10,8 @@
 #include <glm/gtx/quaternion.hpp>
 #pragma warning(pop)
 
-#include <fstream>
-
 #include "Engine.hpp"
+#include "DXRenderManager.hpp"
 
 StaticSprite::~StaticSprite()
 {
@@ -54,73 +53,33 @@ void StaticSprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, float angle)
 
 	switch (Engine::GetRenderManager()->GetGraphicsMode())
 	{
-	case GraphicsMode::GL:
-		if (spriteDrawType == SpriteDrawType::ThreeDimension)
-		{
-			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
-		}
-		else
-		{
-			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-		}
+		pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(-angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
 			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	case GraphicsMode::VK:
-		if (spriteDrawType == SpriteDrawType::ThreeDimension)
-		{
-			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
+		pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
-		else
-		{
-			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	case GraphicsMode::DX:
-		if (spriteDrawType == SpriteDrawType::ThreeDimension)
-		{
-			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
+		pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
-		else
-		{
-			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
 
 	for (auto& subMesh : subMeshes)
 	{
-		switch (spriteDrawType)
-		{
-		case SpriteDrawType::TwoDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
-			break;
-		case SpriteDrawType::ThreeDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.model = modelMatrix;
-			// @TODO move to push constants later
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
-			break;
-		case SpriteDrawType::UI:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
-			break;
-		}
+		auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
+		vertexUniform.model = modelMatrix;
+		// @TODO move to push constants later
+		vertexUniform.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
 	}
 }
 
@@ -133,79 +92,34 @@ void StaticSprite::UpdateModel(glm::vec3 pos_, glm::vec3 size_, glm::vec3 angle)
 	switch (Engine::GetRenderManager()->GetGraphicsMode())
 	{
 	case GraphicsMode::GL:
-		if (spriteDrawType == SpriteDrawType::ThreeDimension)
-		{
-			rotationMatrix = glm::toMat4(glm::quat(glm::radians(-angle)));
-			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
-		}
-		else
-		{
-			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
-			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-		}
+		rotationMatrix = glm::toMat4(glm::quat(glm::radians(-angle)));
+		pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 		modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
 			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	case GraphicsMode::VK:
-		if (spriteDrawType == SpriteDrawType::ThreeDimension)
-		{
-			rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(-angle.x, -angle.y, -angle.z))));
-			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
+		rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(-angle.x, -angle.y, -angle.z))));
+		pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
-		else
-		{
-			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
-			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	case GraphicsMode::DX:
-		if (spriteDrawType == SpriteDrawType::ThreeDimension)
-		{
-			rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(-angle.x, -angle.y, -angle.z))));
-			pos = glm::vec3(pos_.x, pos_.y, pos_.z);
+		rotationMatrix = glm::toMat4(glm::quat(glm::radians(glm::vec3(-angle.x, -angle.y, -angle.z))));
+		pos = glm::vec3(pos_.x, pos_.y, pos_.z);
 
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
-		else
-		{
-			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-angle.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(-angle.z), glm::vec3(0.0f, 0.0f, 1.0f));
-			pos = glm::vec3(pos_.x * 2, pos_.y * 2, pos_.z);
-
-			modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
-				glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
-		}
+		modelMatrix = glm::translate(glm::mat4(1.0f), pos) * rotationMatrix *
+			glm::scale(glm::mat4(1.0f), glm::vec3(size_.x, size_.y, size_.z));
 		break;
 	}
 
 	for (auto& subMesh : subMeshes)
 	{
-		switch (spriteDrawType)
-		{
-		case SpriteDrawType::TwoDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
-			break;
-		case SpriteDrawType::ThreeDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.model = modelMatrix;
-			// @TODO move to push constants later
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
-			break;
-		case SpriteDrawType::UI:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.model = modelMatrix;
-			break;
-		}
+		auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
+		vertexUniform.model = modelMatrix;
+		// @TODO move to push constants later
+		vertexUniform.transposeInverseModel = glm::transpose(glm::inverse(modelMatrix));
+		break;
 	}
 }
 
@@ -213,25 +127,15 @@ void StaticSprite::UpdateView()
 {
 	for (auto& subMesh : subMeshes)
 	{
-		switch (spriteDrawType)
-		{
-		case SpriteDrawType::TwoDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
-			break;
-		case SpriteDrawType::ThreeDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
-			// @TODO move to push constants later
-			glm::mat4 inverseView = glm::inverse(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.view);
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.viewPosition = glm::vec3(
-				inverseView[3].x,
-				inverseView[3].y,
-				inverseView[3].z
-			);
-			break;
-		case SpriteDrawType::UI:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.view = glm::mat4(1.0f);
-			break;
-		}
+		auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
+		vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
+		// @TODO move to push constants later
+		glm::mat4 inverseView = glm::inverse(vertexUniform.view);
+		vertexUniform.viewPosition = glm::vec3(
+			inverseView[3].x,
+			inverseView[3].y,
+			inverseView[3].z
+		);
 	}
 }
 
@@ -239,24 +143,8 @@ void StaticSprite::UpdateProjection()
 {
 	for (auto& subMesh : subMeshes)
 	{
-		switch (spriteDrawType)
-		{
-		case SpriteDrawType::TwoDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
-			break;
-		case SpriteDrawType::ThreeDimension:
-			subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
-			break;
-		case SpriteDrawType::UI:
-			glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
-			subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
-			// Flip y-axis for Vulkan
-			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
-			{
-				subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform.projection[1][1] *= -1;
-			}
-			break;
-		}
+		auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
+		vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
 	}
 }
 
@@ -277,7 +165,7 @@ void StaticSprite::CreateMesh3D(MeshType type, const std::filesystem::path& path
 	}
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
-	renderManager->CreateStaticMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);
+	renderManager->CreateMesh(subMeshes, type, path, stacks, slices, color, metallic_, roughness_);
 
 	SetSpriteDrawType(SpriteDrawType::ThreeDimension);
 	//AddSpriteToManager();

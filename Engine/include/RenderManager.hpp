@@ -7,25 +7,14 @@
 #include <filesystem>
 #include <variant>
 #include <functional>
-#include "Material.hpp"
-#include "Utility.hpp"
 #include "Window.hpp"
+#include "Utility.hpp"
+#include "BasicComponents/ISprite.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 
 #include "FidelityFX.hpp"
-
-#include "GLVertexArray.hpp"
-#include "GLVertexBuffer.hpp"
-#include "GLIndexBuffer.hpp"
-#include "GLUniformBuffer.hpp"
-#include "VKVertexBuffer.hpp"
-#include "VKIndexBuffer.hpp"
-#include "DXVertexBuffer.hpp"
-#include "DXIndexBuffer.hpp"
-#include "DXConstantBuffer.hpp"
-#include "DXStructuredBuffer.hpp"
 
 constexpr float EPSILON = 0.00001f;
 constexpr float PI = 3.14159f;
@@ -39,203 +28,6 @@ enum class RenderType
 	TwoDimension,
 	ThreeDimension,
 };
-
-// Buffer
-struct BufferWrapper
-{
-	//--------------------Common--------------------//
-public:
-	struct BufferData2D
-	{
-		std::vector<TwoDimension::Vertex> vertices;
-		TwoDimension::VertexUniform vertexUniform;
-		TwoDimension::FragmentUniform fragmentUniform;
-	};
-
-	struct BufferData3D
-	{
-		// Dynamic, Static
-		std::vector<ThreeDimension::QuantizedVertex> vertices;
-		// Static (Mesh Shader)
-		std::vector<ThreeDimension::StaticQuantizedVertex> staticVertices;
-#ifdef _DEBUG
-		std::vector<ThreeDimension::NormalVertex> normalVertices;
-#endif
-		ThreeDimension::VertexUniform vertexUniform;
-		ThreeDimension::FragmentUniform fragmentUniform;
-		ThreeDimension::Material material;
-
-		// Mesh Shader
-		std::vector<Meshlet::Meshlet> meshlets;
-		std::vector<uint32_t> uniqueVertexIndices;
-		std::vector<uint32_t> primitiveIndices;
-	};
-private:
-	struct BufferData
-	{
-		std::vector<uint32_t> indices;
-		std::variant<std::monostate, BufferData2D, BufferData3D> classifiedData;
-	} bufferData;
-
-	//--------------------OpenGL--------------------//
-public:
-	struct GLBuffer
-	{
-		std::unique_ptr<GLVertexArray> vertexArray;
-		std::unique_ptr<GLVertexBuffer> vertexBuffer;
-#ifdef _DEBUG
-		std::unique_ptr<GLVertexArray> normalVertexArray;
-		std::unique_ptr<GLVertexBuffer> normalVertexBuffer;
-#endif
-		std::unique_ptr<GLIndexBuffer> indexBuffer;
-	};
-
-	struct GLUniformBuffer2D
-	{
-		std::unique_ptr<GLUniformBuffer<TwoDimension::VertexUniform>> vertexUniformBuffer;
-		std::unique_ptr<GLUniformBuffer<TwoDimension::FragmentUniform>> fragmentUniformBuffer;
-	};
-
-	struct GLUniformBuffer3D
-	{
-		std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>> vertexUniformBuffer;
-		std::unique_ptr<GLUniformBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
-		std::unique_ptr<GLUniformBuffer<ThreeDimension::Material>> materialUniformBuffer;
-	};
-
-	//--------------------Vulkan--------------------//
-	struct VKBuffer
-	{
-		std::unique_ptr<VKVertexBuffer> vertexBuffer;
-#ifdef _DEBUG
-		std::unique_ptr<VKVertexBuffer> normalVertexBuffer;
-#endif
-		std::unique_ptr<VKIndexBuffer> indexBuffer;
-	};
-
-	//--------------------DirectX--------------------//
-	struct DXBuffer
-	{
-		std::unique_ptr<DXVertexBuffer> vertexBuffer;
-#ifdef _DEBUG
-		std::unique_ptr<DXVertexBuffer> normalVertexBuffer;
-#endif
-		std::unique_ptr<DXIndexBuffer> indexBuffer;
-
-		// Dynamic, Static
-		std::unique_ptr<DXStructuredBuffer<ThreeDimension::QuantizedVertex>> uniqueVertexBuffer;
-		// Static (Mesh Shader)
-		std::unique_ptr<DXStructuredBuffer<ThreeDimension::StaticQuantizedVertex>> uniqueStaticVertexBuffer;
-		std::unique_ptr<DXStructuredBuffer<Meshlet::Meshlet>> meshletBuffer;
-		std::unique_ptr<DXStructuredBuffer<uint32_t>> uniqueVertexIndexBuffer;
-		std::unique_ptr<DXStructuredBuffer<uint32_t>> primitiveIndexBuffer;
-		std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> srvHandle;
-	};
-
-	struct DXConstantBuffer2D
-	{
-		std::unique_ptr<DXConstantBuffer<TwoDimension::VertexUniform>> vertexUniformBuffer;
-		std::unique_ptr<DXConstantBuffer<TwoDimension::FragmentUniform>> fragmentUniformBuffer;
-	};
-
-	struct DXConstantBuffer3D
-	{
-		std::unique_ptr<DXConstantBuffer<ThreeDimension::VertexUniform>> vertexUniformBuffer;
-		std::unique_ptr<DXConstantBuffer<ThreeDimension::FragmentUniform>> fragmentUniformBuffer;
-		std::unique_ptr<DXConstantBuffer<ThreeDimension::Material>> materialUniformBuffer;
-	};
-
-private:
-	std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;
-	std::variant<std::monostate, GLUniformBuffer2D, GLUniformBuffer3D, /*, VKUniformBuffer2D, VKUniformBuffer3D*/ DXConstantBuffer2D, DXConstantBuffer3D> uniformBuffer;
-
-public:
-	BufferWrapper() : buffer(std::monostate{}), uniformBuffer(std::monostate{})
-	{
-		bufferData.classifiedData = std::monostate{};
-	}
-	~BufferWrapper();
-
-	BufferWrapper(const BufferWrapper&) = delete;
-	BufferWrapper& operator=(const BufferWrapper&) = delete;
-	BufferWrapper(BufferWrapper&&) = default;
-	BufferWrapper& operator=(BufferWrapper&&) = default;
-
-	void Initialize(GraphicsMode mode, RenderType type)
-	{
-		switch(mode)
-		{
-			case GraphicsMode::GL:
-				buffer = GLBuffer{};
-				if (type == RenderType::TwoDimension)
-				{
-					uniformBuffer = GLUniformBuffer2D{};
-					bufferData.classifiedData = BufferData2D{};
-
-					std::get<GLBuffer>(buffer).vertexArray = std::make_unique<GLVertexArray>();
-					std::get<GLBuffer>(buffer).vertexArray->Initialize();
-				}
-				else if (type == RenderType::ThreeDimension)
-				{
-					uniformBuffer = GLUniformBuffer3D{};
-					bufferData.classifiedData = BufferData3D{};
-
-					std::get<GLBuffer>(buffer).vertexArray = std::make_unique<GLVertexArray>();
-					std::get<GLBuffer>(buffer).vertexArray->Initialize();
-#ifdef _DEBUG
-					std::get<GLBuffer>(buffer).normalVertexArray = std::make_unique<GLVertexArray>();
-					std::get<GLBuffer>(buffer).normalVertexArray->Initialize();
-#endif
-				}
-				break;
-			case GraphicsMode::VK:
-				buffer = VKBuffer{};
-				if (type == RenderType::TwoDimension)
-				{
-					//uniformBuffer = VKUniformBuffer2D{};
-					bufferData.classifiedData = BufferData2D{};
-				}
-				else if (type == RenderType::ThreeDimension)
-				{
-					//uniformBuffer = VKUniformBuffer3D{};
-					bufferData.classifiedData = BufferData3D{};
-				}
-				break;
-			case GraphicsMode::DX:
-				buffer = DXBuffer{};
-				if (type == RenderType::TwoDimension)
-				{
-					uniformBuffer = DXConstantBuffer2D{};
-					bufferData.classifiedData = BufferData2D{};
-				}
-				else if (type == RenderType::ThreeDimension)
-				{
-					uniformBuffer = DXConstantBuffer3D{};
-					bufferData.classifiedData = BufferData3D{};
-				}
-				break;
-		}
-	}
-
-	// Getter
-	//--------------------Common--------------------//
-	[[nodiscard]] std::vector<uint32_t>& GetIndices() noexcept { return bufferData.indices; }
-	// ex) T = BufferData::BufferData2D
-	template <typename T>
-	[[nodiscard]] T& GetClassifiedData() noexcept { return std::get<T>(bufferData.classifiedData); }
-	// ex) T = GLBuffer
-	template <typename T>
-	[[nodiscard]] T& GetBuffer() noexcept { return std::get<T>(buffer); }
-	// ex) T = GLUniformBuffer2D
-	template <typename T>
-	[[nodiscard]] T& GetUniformBuffer() noexcept { return std::get<T>(uniformBuffer); }
-};
-
-//struct SubMesh
-//{
-//	std::unique_ptr<BufferWrapper> bufferWrapper;
-//};
-using SubMesh = std::unique_ptr<BufferWrapper>;
 
 enum class PolygonType
 {
@@ -304,12 +96,7 @@ public:
 		//}
 	}
 
-	void CreateDynamicMesh(
-		std::vector<SubMesh>& subMeshes,
-		MeshType type, const std::filesystem::path& path, int stacks, int slices,
-		glm::vec4 color, float metallic, float roughness
-	);
-	void CreateStaticMesh(
+	void CreateMesh(
 		std::vector<SubMesh>& subMeshes,
 		MeshType type, const std::filesystem::path& path, int stacks, int slices,
 		glm::vec4 color, float metallic, float roughness

@@ -57,8 +57,8 @@ namespace ThreeDimension
 		// vec2 -> uint32_t quantization (11, 11, 10)
 		uint32_t position;
 		glm::vec3 normal;
-		glm::vec2 uv;
 		int texSubIndex{ 0 };
+		glm::vec2 uv;
 	};
 
 	// For StaticSprite, Check Material.hpp ThreeDimension::DynamicQuantizedVertex for StaticQuantizedVertex

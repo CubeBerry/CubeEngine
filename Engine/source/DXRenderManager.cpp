@@ -541,23 +541,23 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-				auto& buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
-				auto& constantBuffer = subMesh->GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>();
+				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
+				auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
 
 				// Update Constant Buffer
-				constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
-				constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData2D>().fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
+				spriteData->GetVertexUniformBuffer<DXConstantBuffer<TwoDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
+				spriteData->GetFragmentUniformBuffer<DXConstantBuffer<TwoDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
 
 				// Bind Vertex Buffer & Index Buffer
-				D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
-				D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
+				D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
+				D3D12_INDEX_BUFFER_VIEW ibv = buffer->indexBuffer->GetView();
 				m_commandList->IASetVertexBuffers(0, 1, &vbv);
 				m_commandList->IASetIndexBuffer(&ibv);
 				// Bind constant buffers to root signature
-				m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-				m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+				m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<TwoDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
+				m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<TwoDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
 
-				m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh->GetIndices().size()), 1, 0, 0, 0);
+				m_commandList->DrawIndexedInstanced(static_cast<UINT>(spriteData->indices.size()), 1, 0, 0, 0);
 			}
 		}
 	}
@@ -572,21 +572,20 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		{
 			for (auto& subMesh : sprite->GetSubMeshes())
 			{
+				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+				auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
 				if (m_meshShaderEnabled)
 				{
 					m_commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());
 
-					auto& buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
-					auto& constantBuffer = subMesh->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
-
 					// Update Constant Buffer
-					constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-					constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-					constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
+					spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
+					spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
+					spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->UpdateConstant(&spriteData->material, sizeof(ThreeDimension::Material), m_frameIndex);
 
-					m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-					m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-					m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(2, spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress(m_frameIndex));
 
 					if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
 					{
@@ -611,13 +610,13 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					}
 
 					// Bind structured buffers to root signature
-					m_commandList->SetGraphicsRootShaderResourceView(8, buffer.uniqueVertexBuffer->GetGPUVirtualAddress());
-					m_commandList->SetGraphicsRootShaderResourceView(9, buffer.meshletBuffer->GetGPUVirtualAddress());
-					m_commandList->SetGraphicsRootShaderResourceView(10, buffer.uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-					m_commandList->SetGraphicsRootShaderResourceView(11, buffer.primitiveIndexBuffer->GetGPUVirtualAddress());
+					m_commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
+					m_commandList->SetGraphicsRootShaderResourceView(9, buffer->meshletBuffer->GetGPUVirtualAddress());
+					m_commandList->SetGraphicsRootShaderResourceView(10, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+					m_commandList->SetGraphicsRootShaderResourceView(11, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
 					m_commandList->SetGraphicsRoot32BitConstants(12, 1, &m_meshletVisualization, 0);
 
-					const auto& meshlets = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().meshlets;
+					const auto& meshlets = spriteData->meshlets;
 					UINT numMeshlets = static_cast<UINT>(meshlets.size());
 					m_commandList->DispatchMesh(numMeshlets, 1, 1);
 				}
@@ -625,13 +624,10 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				{
 					m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-					auto& buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
-					auto& constantBuffer = subMesh->GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>();
-
 					// Update Constant Buffer
-					constantBuffer.vertexUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-					constantBuffer.fragmentUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-					constantBuffer.materialUniformBuffer->UpdateConstant(&subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().material, sizeof(ThreeDimension::Material), m_frameIndex);
+					spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
+					spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
+					spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->UpdateConstant(&spriteData->material, sizeof(ThreeDimension::Material), m_frameIndex);
 
 					if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
 					{
@@ -656,16 +652,16 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					}
 
 					// Bind Vertex Buffer & Index Buffer
-					D3D12_VERTEX_BUFFER_VIEW vbv = buffer.vertexBuffer->GetView();
-					D3D12_INDEX_BUFFER_VIEW ibv = buffer.indexBuffer->GetView();
+					D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
+					D3D12_INDEX_BUFFER_VIEW ibv = buffer->indexBuffer->GetView();
 					m_commandList->IASetVertexBuffers(0, 1, &vbv);
 					m_commandList->IASetIndexBuffer(&ibv);
 					// Bind constant buffers to root signature
-					m_commandList->SetGraphicsRootConstantBufferView(0, constantBuffer.vertexUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-					m_commandList->SetGraphicsRootConstantBufferView(1, constantBuffer.fragmentUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-					m_commandList->SetGraphicsRootConstantBufferView(2, constantBuffer.materialUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
+					m_commandList->SetGraphicsRootConstantBufferView(2, spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress(m_frameIndex));
 
-					m_commandList->DrawIndexedInstanced(static_cast<UINT>(subMesh->GetIndices().size()), 1, 0, 0, 0);
+					m_commandList->DrawIndexedInstanced(static_cast<UINT>(spriteData->indices.size()), 1, 0, 0, 0);
 				}
 
 #ifdef _DEBUG
@@ -675,14 +671,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
 					m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-					auto& vertexUniform = subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().vertexUniform;
+					auto& vertexUniform = spriteData->vertexUniform;
 					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
 					m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
 
-					D3D12_VERTEX_BUFFER_VIEW nvbv = subMesh->GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer->GetView();
+					D3D12_VERTEX_BUFFER_VIEW nvbv = buffer->normalVertexBuffer->GetView();
 					m_commandList->IASetVertexBuffers(0, 1, &nvbv);
 
-					m_commandList->DrawInstanced(static_cast<UINT>(subMesh->GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices.size()), 1, 0, 0);
+					m_commandList->DrawInstanced(static_cast<UINT>(spriteData->normalVertices.size()), 1, 0, 0);
 
 					switch (pMode)
 					{
