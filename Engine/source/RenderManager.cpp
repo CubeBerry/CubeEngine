@@ -123,7 +123,8 @@ void RenderManager::CreateMesh(
 	}
 
 	SubMesh subMesh;
-	subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), true) : std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), false);
+	//subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), true) : std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), false);
+	subMesh = std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true);
 	
 	auto* sprite = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 	
@@ -497,13 +498,10 @@ void RenderManager::CreateMesh(
 	// Initialize Buffers
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 
-	// @TODO Need to divide into Dynamic and Static Meshes
-	renderManager->InitializeDynamicBuffers(*subMesh, indices);
-
 	// Only dynamic sprite initialize buffers for each sub-mesh
 	if (subMesh->GetSpriteType() == SpriteType::DYNAMIC)
 	{
-		RenderManager* renderManager = Engine::Instance().GetRenderManager();
+		// @TODO Need to divide into Dynamic and Static Meshes
 		renderManager->InitializeDynamicBuffers(*subMesh, indices);
 
 		if (Engine::Instance().GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
@@ -639,7 +637,8 @@ void RenderManager::ProcessMesh(
 	glm::vec4 color, float metallic, float roughness)
 {
 	SubMesh subMesh;
-	subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), true) : std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), false);
+	//subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), true) : std::make_unique<BufferWrapper>(subMesh->GetSpriteType(), false);
+	subMesh = std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true);
 	
 	auto* sprite = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 

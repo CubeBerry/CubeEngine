@@ -32,7 +32,7 @@ int main(void)
     {
         Engine& engine = Engine::Instance();
         engine.Init("CubeEngine", 1280, 720, false, WindowMode::NORMAL);
-        engine.SetFPS(FrameRate::UNLIMIT);
+        engine.SetFPS(FrameRate::FPS_144);
 
         //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
         engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");

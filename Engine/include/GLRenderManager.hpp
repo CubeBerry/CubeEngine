@@ -45,8 +45,12 @@ public:
 	{
 		// Initialize Buffers
 		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::GLBuffer>();
+		buffer->vertexArray = std::make_unique<GLVertexArray>();
+		buffer->vertexArray->Initialize();
 		buffer->vertexBuffer = std::make_unique<GLVertexBuffer>();
 #ifdef _DEBUG
+		buffer->normalVertexArray = std::make_unique<GLVertexArray>();
+		buffer->normalVertexArray->Initialize();
 		buffer->normalVertexBuffer = std::make_unique<GLVertexBuffer>();
 #endif
 		buffer->indexBuffer = std::make_unique<GLIndexBuffer>(&indices);
