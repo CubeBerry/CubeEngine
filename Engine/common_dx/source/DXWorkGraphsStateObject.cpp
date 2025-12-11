@@ -49,12 +49,9 @@ DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 			D3D12_RESOURCE_STATE_COMMON
 		);
 	}
-
-	// @TODO Do I need this?
-	//UINT test = m_workGraphProperties->GetNumEntrypoints(workGraphIndex);
 }
 
-D3D12_SET_PROGRAM_DESC DXWorkGraphsStateObject::GetProgramDesc()
+D3D12_SET_PROGRAM_DESC DXWorkGraphsStateObject::GetProgramDesc() const
 {
 	// 3. Setup Program
 	D3D12_SET_PROGRAM_DESC setProgramDesc = {};

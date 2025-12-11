@@ -372,9 +372,9 @@ public:
 		std::vector<uint32_t> uniqueVertexIndices;
 		std::vector<uint32_t> primitiveIndices;
 
-		//ThreeDimension::VertexUniform vertexUniform;
-		//ThreeDimension::FragmentUniform fragmentUniform;
-		//ThreeDimension::Material material;
+		std::vector<ThreeDimension::VertexUniform> vertexUniforms;
+		std::vector<ThreeDimension::FragmentUniform> fragmentUniforms;
+		std::vector<ThreeDimension::Material> materials;
 
 		// GPU Buffers
 		//std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;

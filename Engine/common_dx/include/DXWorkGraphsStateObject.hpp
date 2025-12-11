@@ -20,7 +20,7 @@ public:
 	);
 	~DXWorkGraphsStateObject() = default;
 
-	D3D12_SET_PROGRAM_DESC GetProgramDesc();
+	D3D12_SET_PROGRAM_DESC GetProgramDesc() const;
 	ID3D12RootSignature* GetGlobalRootSignature() const { return m_rootSignature.Get(); }
 	//UINT GetWorkGraphIndex() const { return m_workGraphIndex; }
 	UINT GetEntrypointIndex(LPCWSTR nodeName);

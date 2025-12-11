@@ -189,22 +189,18 @@ public:
 			}
 		}
 	}
-	void InitializeGlobalUniformBuffers(
-		BufferWrapper& bufferWrapper,
-		const std::vector<ThreeDimension::VertexUniform>& vertexUniforms,
-		const std::vector<ThreeDimension::FragmentUniform>& fragmentUniforms,
-		const std::vector<ThreeDimension::Material>& materials)
+	void InitializeGlobalUniformBuffers(BufferWrapper& bufferWrapper)
 	{
 		auto* sprite = bufferWrapper.GetData<BufferWrapper::StaticSprite3D>();
 		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
 
 		buffer->srvHandle = AllocateSrvHandles(3);
 		CD3DX12_CPU_DESCRIPTOR_HANDLE vertexUniformSrvHandle(buffer->srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		sprite->SetVertexUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::VertexUniform>>(m_device, m_commandQueue, vertexUniforms, vertexUniformSrvHandle));
+		sprite->SetVertexUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::VertexUniform>>(m_device, m_commandQueue, sprite->vertexUniforms, vertexUniformSrvHandle));
 		CD3DX12_CPU_DESCRIPTOR_HANDLE fragmentUniformSrvHandle(buffer->srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		sprite->SetFragmentUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::FragmentUniform>>(m_device, m_commandQueue, fragmentUniforms, fragmentUniformSrvHandle));
+		sprite->SetFragmentUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::FragmentUniform>>(m_device, m_commandQueue, sprite->fragmentUniforms, fragmentUniformSrvHandle));
 		CD3DX12_CPU_DESCRIPTOR_HANDLE materialUniformIndexSrvHandle(buffer->srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		sprite->SetMaterialUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::Material>>(m_device, m_commandQueue, materials, materialUniformIndexSrvHandle));
+		sprite->SetMaterialUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::Material>>(m_device, m_commandQueue, sprite->materials, materialUniformIndexSrvHandle));
 	}
 	void InitializeStaticBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
 	{

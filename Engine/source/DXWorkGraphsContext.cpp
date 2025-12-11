@@ -120,6 +120,9 @@ void DXWorkGraphsContext::ExecuteWorkGraphs()
 
 	auto* spriteData = globalStaticBuffer->GetData<BufferWrapper::StaticSprite3D>();
 	auto* buffer = globalStaticBuffer->GetBuffer<BufferWrapper::DXBuffer>();
+	if (!spriteData || !buffer) return;
+
+	if (spriteData->meshlets.empty()) return;
 
 	glm::mat4 viewProjection = Engine::GetCameraManager().GetProjectionMatrix() * Engine::GetCameraManager().GetViewMatrix();
 	auto planes = ExtractFrustumPlanes(viewProjection);
@@ -138,13 +141,50 @@ void DXWorkGraphsContext::ExecuteWorkGraphs()
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	// Resource Bindings
+	// Root parameter 0: CBV(b0) - CullingData constant buffer
+	commandList->SetComputeRootConstantBufferView(0, m_cullingDataBuffer->GetConstantBuffer()->GetGPUVirtualAddress());
 
+	// Root parameter 1: DescriptorTable(SRV(t0, numDescriptors=unbounded))
+	// SRV bindings:
+	// t0: globalUniqueVertices
+	// t1: globalMeshlets  
+	// t2: globalVertexUniforms
+	// t3: globalUniqueVertexIndices
+	// t4: globalPrimitiveIndices
+	// t5: globalMeshletBounds (@TODO: needs to be created)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHandle(
 		m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart(),
 		static_cast<INT>(buffer->srvHandle.second),
 		m_renderManager->m_srvDescriptorSize
 	);
-	commandList->SetComputeRootDescriptorTable(8, srvGpuHandle);
+	commandList->SetComputeRootDescriptorTable(1, srvGpuHandle);
+
+	// Bind structured buffers to root signature
+	commandList->SetGraphicsRootShaderResourceView(0, buffer->uniqueStaticVertexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(1, buffer->meshletBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(2, spriteData->GetVertexUniformBuffer<DXStructuredBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(3, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(4, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRoot32BitConstants(5, 1, &m_renderManager->m_meshletVisualization, 0);
+
+	// Update Constant Buffer
+	if (m_renderManager->directionalLightUniformBuffer && !m_renderManager->directionalLightUniforms.empty())
+	{
+		m_renderManager->directionalLightUniformBuffer->UpdateConstant(m_renderManager->directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * m_renderManager->directionalLightUniforms.size(), m_renderManager->m_frameIndex);
+		commandList->SetGraphicsRootConstantBufferView(3, m_renderManager->directionalLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+	}
+	if (m_renderManager->pointLightUniformBuffer && !m_renderManager->pointLightUniforms.empty())
+	{
+		m_renderManager->pointLightUniformBuffer->UpdateConstant(m_renderManager->pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * m_renderManager->pointLightUniforms.size(), m_renderManager->m_frameIndex);
+		commandList->SetGraphicsRootConstantBufferView(4, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+	}
+
+	m_renderManager->pushConstants.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size());
+	m_renderManager->pushConstants.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size());
+	commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
+
+	// MeshletVisualization
+	commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	CullEntryRecord record;
 	record.gridSize = (cullingData.numMeshlets + 31) / 32;

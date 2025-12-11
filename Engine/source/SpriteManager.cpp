@@ -91,10 +91,9 @@ void SpriteManager::RegisterStaticSprite()
 	auto& tempMeshlets = tempSprite->meshlets;
 	auto& tempUniqueVertexIndices = tempSprite->uniqueVertexIndices;
 	auto& tempPrimitiveIndices = tempSprite->primitiveIndices;
-
-	std::vector<ThreeDimension::VertexUniform> vertexUniforms;
-	std::vector<ThreeDimension::FragmentUniform> fragmentUniforms;
-	std::vector<ThreeDimension::Material> materials;
+	auto& tempVertexUniforms = tempSprite->vertexUniforms;
+	auto& tempFragmentUniforms = tempSprite->fragmentUniforms;
+	auto& tempMaterialUniforms = tempSprite->materials;
 
 	// @TODO Need to destroy original static sprites' buffers to save memory
     auto& objectMap = Engine::GetObjectManager().GetObjectMap();
@@ -129,9 +128,9 @@ void SpriteManager::RegisterStaticSprite()
 					spriteData->indices.begin(),
 					spriteData->indices.end());
 
-				vertexUniforms.push_back(spriteData->vertexUniform);
-				fragmentUniforms.push_back(spriteData->fragmentUniform);
-				materials.push_back(spriteData->material);
+				tempVertexUniforms.push_back(spriteData->vertexUniform);
+				tempFragmentUniforms.push_back(spriteData->fragmentUniform);
+				tempMaterialUniforms.push_back(spriteData->material);
 
 				StaticSprite::MeshNodeRecord record;
 				record.objectID = currentTransformIndex;
@@ -158,7 +157,7 @@ void SpriteManager::RegisterStaticSprite()
 
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	dynamic_cast<DXRenderManager*>(renderManager)->InitializeStaticBuffers(*tempSubMesh, tempIndices);
-	dynamic_cast<DXRenderManager*>(renderManager)->InitializeGlobalUniformBuffers(*tempSubMesh, vertexUniforms, fragmentUniforms, materials);
+	dynamic_cast<DXRenderManager*>(renderManager)->InitializeGlobalUniformBuffers(*tempSubMesh);
 	globalStaticBuffer = std::move(tempSubMesh);
 
 //
