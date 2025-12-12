@@ -97,6 +97,9 @@ DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 	workGraphDesc->SetProgramName(m_workGraphName);
 
 	// Graphics Pipeline State Subobjects for Mesh Nodes Rendering
+	auto primitiveTopologySubobject = stateObjectDesc.CreateSubobject<CD3DX12_PRIMITIVE_TOPOLOGY_SUBOBJECT>();
+	primitiveTopologySubobject->SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+
 	auto rasterizerSubobject = stateObjectDesc.CreateSubobject<CD3DX12_RASTERIZER_SUBOBJECT>();
 	rasterizerSubobject->SetFrontCounterClockwise(true);
 	rasterizerSubobject->SetFillMode(D3D12_FILL_MODE_SOLID);
@@ -117,17 +120,17 @@ DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 	const auto genericProgramName = L"FrustumCullingGenericProgram";
 	genericProgram->SetProgramName(genericProgramName);
 
-	genericProgram->AddExport(L"CullNode");
 	genericProgram->AddExport(L"MeshNode");
 	genericProgram->AddExport(L"pixelMain");
 
+	genericProgram->AddSubobject(*primitiveTopologySubobject);
 	genericProgram->AddSubobject(*rasterizerSubobject);
 	genericProgram->AddSubobject(*depthStencilSubobject);
 	genericProgram->AddSubobject(*depthStencilFormatSubobject);
 	genericProgram->AddSubobject(*renderTargetFormatSubobject);
 
 	auto triangleNodeOverride = workGraphDesc->CreateMeshLaunchNodeOverrides(genericProgramName);
-	triangleNodeOverride->NewName({ L"FrustumCullingMeshNode", 0 });
+	triangleNodeOverride->NewName({ L"MeshNode", 0 });
 
 	DXHelper::ThrowIfFailed(device->CreateStateObject(stateObjectDesc, IID_PPV_ARGS(&m_stateObject)));
 

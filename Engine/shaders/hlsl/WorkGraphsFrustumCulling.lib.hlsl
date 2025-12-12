@@ -10,8 +10,8 @@
     Texture - (t0, space1), (t0 ~ t2, space2)
 */
 GlobalRootSignature globalRootSignature =
-{
-    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED),"\
+    {
+        "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED),"\
     "CBV(b0),"\
     "RootConstants(num32BitConstants=1, b1),"\
     "CBV(b2),"\
@@ -26,7 +26,7 @@ GlobalRootSignature globalRootSignature =
     "SRV(t6),"\
     "SRV(t7),"\
     "StaticSampler(s0, space=1, filter=FILTER_MIN_MAG_MIP_POINT, addressU=TEXTURE_ADDRESS_CLAMP, addressV=TEXTURE_ADDRESS_CLAMP),"\
-    "DescriptorTable(SRV(t0, numDescriptors = unbounded, space=1)),"\
+    "DescriptorTable(SRV(t0, numDescriptors = unbounded, space=1, flags = DESCRIPTORS_VOLATILE)),"\
     "StaticSampler(s1, space=2, filter=FILTER_MIN_MAG_MIP_LINEAR, addressU=TEXTURE_ADDRESS_CLAMP, addressV=TEXTURE_ADDRESS_CLAMP),"\
     "DescriptorTable(SRV(t0, numDescriptors = 3, space=2)),"\
 };
@@ -109,7 +109,11 @@ StructuredBuffer<uint> globalUniqueVertexIndices : register(t3);
 StructuredBuffer<uint> globalPrimitiveIndices : register(t4);
 
 ConstantBuffer<CullingData> cullingData : register(b0);
-uniform uint meshletVisualization : register(b1);
+// uniform uint meshletVisualization : register(b1);
+cbuffer MeshletVisualization : register(b1)
+{
+    uint meshletVisualization;
+};
 
 struct MeshletBounds
 {
@@ -140,7 +144,7 @@ bool IsVisible(float3 center, float3 extents)
 void CullNode(
     uint dispatchThreadID: SV_DispatchThreadID,
     DispatchNodeInputRecord<CullEntryRecord> inputRecord,
-    [MaxRecords(32)] NodeOutput<MeshNodeRecord> meshNodeOutput
+    [MaxRecords(32)] NodeOutput<MeshNodeRecord> MeshNode
 )
 {
     uint globalMeshletIndex = dispatchThreadID;
@@ -156,7 +160,7 @@ void CullNode(
 
     if (IsVisible(worldCenter, worldExtents))
     {
-        ThreadNodeOutputRecords<MeshNodeRecord> outRecord = meshNodeOutput.GetThreadNodeOutputRecords(1);
+        ThreadNodeOutputRecords<MeshNodeRecord> outRecord = MeshNode.GetThreadNodeOutputRecords(1);
 
         outRecord.Get().objectID = objectID;
         outRecord.Get().meshletOffset = globalMeshletIndex;
@@ -189,7 +193,7 @@ void MeshNode(
 
     SetMeshOutputCounts(meshlet.vertexCount, meshlet.primitiveCount);
 
-    // bool meshletVisualizationEnabled = meshletVisualization > 0;
+    bool meshletVisualizationEnabled = meshletVisualization > 0;
     // MAX_VERTICES_PER_MESHLET == 64, MAX_PRIMITIVES_PER_MESHLET == 128
     if (groupThreadID < meshlet.vertexCount)
     {
@@ -203,24 +207,24 @@ void MeshNode(
         float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
 
         verts[groupThreadID].uv = input.uv;
-        // verts[groupThreadID].meshletVisualization = meshletVisualizationEnabled;
-        // if (meshletVisualizationEnabled)
-        // {
-        //     // Mesh Shader Debug Color
-        //     uint hash = groupID.x;
-        //     hash = (hash ^ 61) ^ (hash >> 16);
-        //     hash = hash + (hash << 3);
-        //     hash = hash ^ (hash >> 4);
-        //     hash = hash * 0x27d4eb2d;
-        //     hash = hash ^ (hash >> 15);
-        //     float3 debugColor = float3(
-        //         float(hash & 0xFF) / 255.0f,
-        //         float((hash >> 8) & 0xFF) / 255.0f,
-        //         float((hash >> 16) & 0xFF) / 255.0f
-        //     );
-        //     verts[groupThreadID].color = float4(debugColor, 1.0f);
-        // }
-        // else verts[groupThreadID].color = matrix.color;
+        verts[groupThreadID].meshletVisualization = meshletVisualizationEnabled;
+        if (meshletVisualizationEnabled)
+        {
+            // Mesh Shader Debug Color
+            uint hash = record.meshletOffset;
+            hash = (hash ^ 61) ^ (hash >> 16);
+            hash = hash + (hash << 3);
+            hash = hash ^ (hash >> 4);
+            hash = hash * 0x27d4eb2d;
+            hash = hash ^ (hash >> 15);
+            float3 debugColor = float3(
+                float(hash & 0xFF) / 255.0f,
+                float((hash >> 8) & 0xFF) / 255.0f,
+                float((hash >> 16) & 0xFF) / 255.0f
+            );
+            verts[groupThreadID].color = float4(debugColor, 1.0f);
+        }
+        else verts[groupThreadID].color = matrix.color;
         verts[groupThreadID].tex_sub_index = input.tex_sub_index;
 
         // Lighting

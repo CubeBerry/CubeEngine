@@ -17,7 +17,7 @@
 // DirectX 12 Agility SDK Setup
 //extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 // DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 717; }
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 715; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 #undef main

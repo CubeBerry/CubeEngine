@@ -108,7 +108,7 @@ void DXWorkGraphsContext::InitializeWorkGraphs()
 	if (!m_renderManager->m_meshNodesEnabled)
 		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphs.cso", L"WorkGraphs");
 	else
-		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphs.cso", "../Engine/shaders/cso/WorkGraphs.cso", DXGI_FORMAT_D32_FLOAT, DXGI_FORMAT_R8G8B8A8_UNORM, L"WorkGraphsFrustumCulling");
+		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphsFrustumCulling.lib.cso", "../Engine/shaders/cso/WorkGraphsFrustumCulling.frag.cso", DXGI_FORMAT_D32_FLOAT, DXGI_FORMAT_R8G8B8A8_UNORM, L"WorkGraphsFrustumCulling");
 
 	m_cullingDataBuffer = std::make_unique<DXConstantBuffer<CullingData>>(m_renderManager->m_device, 2);
 }

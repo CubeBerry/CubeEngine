@@ -40,7 +40,7 @@ set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 # DirectX 12 Agility SDK
 # set(AGILITY_SDK_VERSION "1.618.4") 
 # DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
-set(AGILITY_SDK_VERSION "1.717.0-preview") 
+set(AGILITY_SDK_VERSION "1.715.0-preview") 
 # CMAKE_BINARY_DIR is used to locate directory where files are built
 set(NUGET_PACKAGES_ROOT "${CMAKE_BINARY_DIR}/packages")
 set(AGILITY_SDK_PATH "${NUGET_PACKAGES_ROOT}/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}")
