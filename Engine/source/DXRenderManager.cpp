@@ -865,7 +865,7 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 
 	D3D12_STATIC_SAMPLER_DESC samplers[2];
 
-	// Normal Texture Sampler
+	// Texture Sampler
 	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 	samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	samplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
