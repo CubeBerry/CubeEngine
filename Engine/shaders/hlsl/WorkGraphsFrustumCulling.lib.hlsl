@@ -10,8 +10,8 @@
     Texture - (t0, space1), (t0 ~ t2, space2)
 */
 GlobalRootSignature globalRootSignature =
-    {
-        "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED),"\
+{
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED),"\
     "CBV(b0),"\
     "RootConstants(num32BitConstants=1, b1),"\
     "CBV(b2),"\
@@ -28,7 +28,7 @@ GlobalRootSignature globalRootSignature =
     "StaticSampler(s0, space=1, filter=FILTER_MIN_MAG_MIP_POINT, addressU=TEXTURE_ADDRESS_CLAMP, addressV=TEXTURE_ADDRESS_CLAMP),"\
     "DescriptorTable(SRV(t0, numDescriptors = unbounded, space=1, flags = DESCRIPTORS_VOLATILE)),"\
     "StaticSampler(s1, space=2, filter=FILTER_MIN_MAG_MIP_LINEAR, addressU=TEXTURE_ADDRESS_CLAMP, addressV=TEXTURE_ADDRESS_CLAMP),"\
-    "DescriptorTable(SRV(t0, numDescriptors = 3, space=2)),"\
+    "DescriptorTable(SRV(t0, numDescriptors = 3, space=2), visibility = SHADER_VISIBILITY_PIXEL),"\
 };
 
 #define MAX_VERTICES_PER_MESHLET 64

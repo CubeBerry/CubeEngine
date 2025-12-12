@@ -138,35 +138,36 @@ void DXWorkGraphsContext::ExecuteWorkGraphs()
 	D3D12_SET_PROGRAM_DESC programDesc = m_workGraphsStateObject->GetProgramDesc();
 	commandList->SetProgram(&programDesc);
 
-	ID3D12RootSignature* globalRootSignature = m_workGraphsStateObject->GetGlobalRootSignature();
-	commandList->SetComputeRootSignature(globalRootSignature);
-
+	// SetDescriptorHeaps should be called before SetGraphicsRootSignature here
 	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
+	ID3D12RootSignature* globalRootSignature = m_workGraphsStateObject->GetGlobalRootSignature();
+	commandList->SetGraphicsRootSignature(globalRootSignature);
+
 	// Mesh Nodes Resource Bindings
 	// Root parameter 0: CBV(b0) - CullingData constant buffer
-	commandList->SetComputeRootConstantBufferView(0, m_cullingDataBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+	commandList->SetGraphicsRootConstantBufferView(0, m_cullingDataBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 	// Root parameter 1: CBV(b1) - meshletVisualization constant buffer
-	commandList->SetComputeRoot32BitConstant(1, m_renderManager->m_meshletVisualization, 0);
+	commandList->SetGraphicsRoot32BitConstant(1, m_renderManager->m_meshletVisualization, 0);
 
 	// Pixel Shader Resource Bindings
 	// Root parameter 2: CBV(b2) - DirectionalLight constant buffer
 	if (m_renderManager->directionalLightUniformBuffer && !m_renderManager->directionalLightUniforms.empty())
 	{
 		m_renderManager->directionalLightUniformBuffer->UpdateConstant(m_renderManager->directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * m_renderManager->directionalLightUniforms.size(), m_renderManager->m_frameIndex);
-		commandList->SetComputeRootConstantBufferView(2, m_renderManager->directionalLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+		commandList->SetGraphicsRootConstantBufferView(2, m_renderManager->directionalLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 	}
 	// Root parameter 3: CBV(b3) - PointLight constant buffer
 	if (m_renderManager->pointLightUniformBuffer && !m_renderManager->pointLightUniforms.empty())
 	{
 		m_renderManager->pointLightUniformBuffer->UpdateConstant(m_renderManager->pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * m_renderManager->pointLightUniforms.size(), m_renderManager->m_frameIndex);
-		commandList->SetComputeRootConstantBufferView(3, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+		commandList->SetGraphicsRootConstantBufferView(3, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 	}
 	// Root parameter 4: CBV(b4) - PushConstants
 	m_renderManager->pushConstants.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size());
 	m_renderManager->pushConstants.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size());
-	commandList->SetComputeRoot32BitConstants(4, 2, &m_renderManager->pushConstants, 0);
+	commandList->SetGraphicsRoot32BitConstants(4, 2, &m_renderManager->pushConstants, 0);
 
 	// Common Resource Bindings
 	// Root parameter 5 ~ 12
@@ -179,21 +180,21 @@ void DXWorkGraphsContext::ExecuteWorkGraphs()
 	// t5: globalMeshletBounds (@TODO: needs to be created)
 	// t6: globalFragmentUniforms
 	// t7: globalMaterialUniforms
-	commandList->SetComputeRootShaderResourceView(5, buffer->uniqueStaticVertexBuffer->GetGPUVirtualAddress());
-	commandList->SetComputeRootShaderResourceView(6, buffer->meshletBuffer->GetGPUVirtualAddress());
-	commandList->SetComputeRootShaderResourceView(7, spriteData->GetVertexUniformBuffer<DXStructuredBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress());
-	commandList->SetComputeRootShaderResourceView(8, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-	commandList->SetComputeRootShaderResourceView(9, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-	//commandList->SetComputeRootShaderResourceView(10, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-	commandList->SetComputeRootShaderResourceView(11, spriteData->GetFragmentUniformBuffer<DXStructuredBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress());
-	commandList->SetComputeRootShaderResourceView(12, spriteData->GetMaterialUniformBuffer<DXStructuredBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(5, buffer->uniqueStaticVertexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(6, buffer->meshletBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(7, spriteData->GetVertexUniformBuffer<DXStructuredBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(9, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+	//commandList->SetGraphicsRootShaderResourceView(10, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(11, spriteData->GetFragmentUniformBuffer<DXStructuredBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(12, spriteData->GetMaterialUniformBuffer<DXStructuredBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress());
 
 	// Root parameter 13: DescriptorTable(SRV(t0, numDescriptors = unbounded, sapce=1))
-	commandList->SetComputeRootDescriptorTable(13, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+	commandList->SetGraphicsRootDescriptorTable(13, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 	// Root parameter 14: DescriptorTable(SRV(t0, numDescriptors = 3, sapce=2))
 	if (m_renderManager->skyboxEnabled && m_renderManager->m_skybox)
 	{
-		commandList->SetComputeRootDescriptorTable(14, m_renderManager->m_skybox->GetIrradianceMapSrv());
+		commandList->SetGraphicsRootDescriptorTable(14, m_renderManager->m_skybox->GetIrradianceMapSrv());
 	}
 
 	CullEntryRecord record;
