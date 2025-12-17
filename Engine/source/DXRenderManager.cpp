@@ -50,10 +50,12 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gpuCrashTracker.Initialize();
 #endif
 
+#if USE_PREVIEW_SDK
 	// Enable Experimental Features for Mesh Nodes
 	// Windows Developer Mode must be enabled to use Mesh Nodes
 	UUID features[2] = { D3D12ExperimentalShaderModels, D3D12StateObjectsExperiment };
 	DXHelper::ThrowIfFailed(D3D12EnableExperimentalFeatures(_countof(features), features, nullptr, nullptr));
+#endif
 
 	// Create Device
 	ComPtr<IDXGIAdapter1> hardwareAdapter;
@@ -93,8 +95,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_workGraphsContext = std::make_unique<DXWorkGraphsContext>(this);
 	// Check Work Graphs Support
 	m_workGraphsContext->CheckWorkGraphsSupport();
+#if USE_PREVIEW_SDK
 	// Check Mesh Nodes Support
 	m_workGraphsContext->CheckMeshNodesSupport();
+#endif
 
 #if USE_NSIGHT_AFTERMATH
 	const uint32_t aftermathFlags =

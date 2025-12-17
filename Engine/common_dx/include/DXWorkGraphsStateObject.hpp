@@ -18,6 +18,7 @@ public:
 		const std::filesystem::path& nodePath,
 		const wchar_t* workGraphName
 	);
+#if USE_PREVIEW_SDK
 	DXWorkGraphsStateObject(
 		const ComPtr<ID3D12Device14>& device,
 		//const ComPtr<ID3D12RootSignature>& rootSignature,
@@ -27,6 +28,7 @@ public:
 		const DXGI_FORMAT& renderTargetFormat,
 		const wchar_t* workGraphName
 	);
+#endif
 	~DXWorkGraphsStateObject() = default;
 
 	D3D12_SET_PROGRAM_DESC GetProgramDesc() const;

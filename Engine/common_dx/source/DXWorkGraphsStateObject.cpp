@@ -53,6 +53,7 @@ DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 	}
 }
 
+#if USE_PREVIEW_SDK
 // Work Graphs Mesh Nodes
 DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 	const ComPtr<ID3D12Device14>& device,
@@ -154,6 +155,7 @@ DXWorkGraphsStateObject::DXWorkGraphsStateObject(
 		m_backingMemory->SetName(L"Work Graphs Backing Memory");
 	}
 }
+#endif
 
 D3D12_SET_PROGRAM_DESC DXWorkGraphsStateObject::GetProgramDesc() const
 {
