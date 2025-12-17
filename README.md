@@ -18,12 +18,31 @@ CubeEngine is a rendering engine written in C++, developed as a personal hobby p
 4. Download [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/) Minimum Version 1.4.304.0
  
 ## How to Build
-Currently it only supports MSVC compiler(Visual Studio 2022 Recommended).
-1. Open CMD at a root directory.
-2. Input "mkdir build" -> "cd build" -> "cmake .."
-3. Set "Project" project as a startup project
+### Prerequisites
+- **Compiler:** MSVC is currently the only supported compiler.
+- **IDE:** Visual Studio 2022 is recommended.
 
-All required APIs and Libraries are integrated in Project.
+### Build Instructions
+1. Open a terminal (CMD or PowerShell) at the project root directory.
+2. Create a build directory and navigate into it:
+```dos
+mkdir build
+cd build
+```
+3. Generate the project files using CMake. Choose one of the following options:
+   - **Standard Build (Recommended):**
+    ```dos
+    cmake ..
+    ```
+    - **Enable Mesh Nodes:**
+
+    **Known Issue:** Currently, there is an issue regarding Shader Model 6.9 support. Please refer to https://github.com/CubeBerry/CubeEngine/issues/79 for more details.
+
+    **Note:**  You must enable **Windows Developer Mode** in your system settings to use the Mesh Nodes preview feature.
+    ```dos
+    cmake .. -D USE_PREVIEW_SDK=ON
+    ```
+4. Open the generated solution file (```.sln```) and set **"Project"** as the startup project.
 
 ## How to Compile Slang Shading Language
 To compile Slang Shading Language, slangc is required. slangc is able to download from the following [link](https://github.com/shader-slang/slang/releases) or included in the Vulkan SDK since version 1.3.296.0.
