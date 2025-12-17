@@ -9,7 +9,7 @@
 ![Static Badge](https://img.shields.io/badge/api-Vulkan-%23A41E22?logo=vulkan)
 ![Static Badge](https://img.shields.io/badge/api-DirectX_12-limegreen)
 
-CubeEngine is a rendering engine written in C++, developed as a personal hobby project and for portfolio purposes. This engine utilizes an integrated renderer based on both OpenGL, Vulkan and DirectX 12. The primary objective of this project is to implement features learned from college courses, particularly those focused on OpenGL graphics. Furthermore, the project aims to adapt and apply these OpenGL-based techniques to Vulkan, DirectX 12, thereby gaining proficiency in three graphics APIs.
+CubeEngine is a rendering engine written in C++, developed as a personal hobby project and for portfolio purposes. This engine utilizes an integrated renderer supporting OpenGL, Vulkan and DirectX 12. The primary objective of this project is to implement features learned from college courses, particularly those focused on OpenGL graphics. Furthermore, the project aims to adapt and apply these OpenGL-based techniques to Vulkan, DirectX 12, thereby gaining proficiency in three graphics APIs.
 
 ## Minimum Requirements
 1. Latest Graphics Driver
@@ -45,7 +45,9 @@ cd build
 4. Open the generated solution file (```.sln```) and set **"Project"** as the startup project.
 
 ## How to Compile Slang Shading Language
-To compile Slang Shading Language, slangc is required. slangc is able to download from the following [link](https://github.com/shader-slang/slang/releases) or included in the Vulkan SDK since version 1.3.296.0.
+<details>
+<summary><strong>How to Compile Slang Shading Language</strong> (Click to expand)</summary>
+To compile Slang Shading Language, slangc is required. slangc is can be downloaded from the following [link](https://github.com/shader-slang/slang/releases) or included in the Vulkan SDK since version 1.3.296.0.
 
 Shaders are located in Engine/shaders.
 1. From .slang to .glsl
@@ -69,8 +71,12 @@ slangc Skybox.slang -profile sm_5_1 -entry vertexMain -stage vertex -target hlsl
 
 slangc Skybox.slang -profile sm_5_1 -entry fragmentMain -stage fragment -target hlsl -o Skybox.frag.hlsl -D__hlsl__
 ```
+</details>
 
 ## How to Compile HLSL (High-Level Shader Language) to DXIL (DirectX Intermediate Language)
+<details>
+<summary><strong>How to Compile HLSL to DXIL</strong> (Click to expand)</summary>
+
 ```
 // Vertex Shader
 dxc 3D.vert.hlsl -T vs_5_1 -E vertexMain -Fo 3D.vert.cso
@@ -87,8 +93,10 @@ dxc 3D.mesh.hlsl -T ms_6_5 -E meshMain -Fo 3D.mesh.cso
 // Work Graphs Shader
 dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 ```
+</details>
 
-* **Legend:** ✅: Implemented / ❌: Not Supported / ➖: Not Applicable
+## Features Table
+**Legend:** ✅: Implemented / ❌: Not Supported / ➖: Not Applicable
 
 | Feature | Engine Core (CPU) | OpenGL | Vulkan | DirectX 12 |
 | :--- | :---: | :---: | :---: | :---: |
