@@ -18,7 +18,7 @@
 #if USE_PREVIEW_SDK
 #define AGILITY_SDK_VER 715 // Use 1.715.0-preview SDK for Mesh Nodes
 #else
-#define AGILITY_SDK_VER 614 // Use 1.614.0 SDK for Work Graphs
+#define AGILITY_SDK_VER 618 // Use 1.618.4 SDK for Work Graphs
 #endif
 
 #define STR_HELPER(x) #x
