@@ -9,7 +9,7 @@
 #endif
 
 
-#line 45 "Skybox.slang"
+#line 45 "slang/Skybox.slang"
 TextureCube<float4 > skybox_0 : register(t0, space1);
 
 
