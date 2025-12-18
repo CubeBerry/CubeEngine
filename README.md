@@ -63,7 +63,7 @@ This script handles the conversion of Slang to SPIR-V/HLSL and HLSL to DXIL auto
 python shader_compiler.py
 ```
 
-1. **Manual Compilation:**
+2. **Manual Compilation:**
 If you prefer to compile shaders manually, use the commands below.
 
 ## How to Compile Slang Shading Language
