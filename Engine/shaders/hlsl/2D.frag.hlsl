@@ -9,14 +9,14 @@
 #endif
 
 
-#line 61 "2D.slang"
+#line 67 "slang/2D.slang"
 struct fMatrix_0
 {
     int texIndex_0;
 };
 
 
-#line 65
+#line 71
 cbuffer f_matrix_0 : register(b1)
 {
     fMatrix_0 f_matrix_0;
@@ -24,7 +24,7 @@ cbuffer f_matrix_0 : register(b1)
 Texture2D<float4 >  tex_0[int(500)] : register(t0, space1);
 
 
-#line 68
+#line 74
 SamplerState smp_0 : register(s0, space1);
 
 
@@ -38,27 +38,27 @@ struct VSOutput_0
 };
 
 
-#line 75
+#line 81
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 75
+#line 81
     VSOutput_0 _S1 = input_0;
 
 
     float4 texColor_0 = lerp(input_0.color_0, tex_0[f_matrix_0.texIndex_0].Sample(smp_0, input_0.uv_0), (float4)input_0.isTex_0);
 
-#line 83
+#line 89
     if((texColor_0.w) < 0.5f)
     {
 
-#line 83
+#line 89
         discard;
 
-#line 83
+#line 89
     }
 
-#line 94
+#line 100
     return _S1.color_0 * texColor_0;
 }
 

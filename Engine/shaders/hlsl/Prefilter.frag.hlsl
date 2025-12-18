@@ -9,12 +9,14 @@
 #endif
 
 
-#line 17 "Prefilter.slang"
+#line 17 "slang/Prefilter.slang"
 struct PrefilterUBO_0
 {
     float roughness_0;
 };
 
+
+#line 21
 cbuffer roughnessUBO_0 : register(b1)
 {
     PrefilterUBO_0 roughnessUBO_0;
@@ -28,7 +30,7 @@ TextureCube<float4 > environmentMap_0 : register(t0, space1);
 SamplerState smp_0 : register(s0, space1);
 
 
-#line 39
+#line 35
 float RadicalInverse_VdC_0(uint bits_0)
 {
     uint _S1 = (bits_0 << 16U) | (bits_0 >> 16U);
@@ -49,7 +51,7 @@ float3 ImportanceSampleGGX_0(float2 Xi_0, float3 N_1, float alpha_0)
     float phi_0 = 6.28318548202514648f * Xi_0.x;
     float _S5 = Xi_0.y;
 
-#line 57
+#line 53
     float cosTheta_0 = sqrt((1.0f - _S5) / (1.0f + (alpha_0 * alpha_0 - 1.0f) * _S5));
     float sinTheta_0 = sqrt(1.0f - cosTheta_0 * cosTheta_0);
 
@@ -58,24 +60,24 @@ float3 ImportanceSampleGGX_0(float2 Xi_0, float3 N_1, float alpha_0)
     H_0[int(1)] = sin(phi_0) * sinTheta_0;
     H_0[int(2)] = cosTheta_0;
 
-#line 63
+#line 59
     float3 up_0;
 
     if((abs(N_1.z)) < 0.99900001287460327f)
     {
 
-#line 65
+#line 61
         up_0 = float3(0.0f, 0.0f, 1.0f);
 
-#line 65
+#line 61
     }
     else
     {
 
-#line 65
+#line 61
         up_0 = float3(1.0f, 0.0f, 0.0f);
 
-#line 65
+#line 61
     }
     float3 tangent_0 = normalize(cross(up_0, N_1));
 
@@ -85,12 +87,12 @@ float3 ImportanceSampleGGX_0(float2 Xi_0, float3 N_1, float alpha_0)
 }
 
 
-#line 28
+#line 24
 float DistributionGGX_0(float alpha_1, float3 N_2, float3 H_1)
 {
     float numerator_0 = pow(alpha_1, 2.0f);
 
-#line 36
+#line 32
     return numerator_0 / max(3.14159274101257324f * pow(pow(max(dot(N_2, H_1), 0.0f), 2.0f) * (numerator_0 - 1.0f) + 1.0f, 2.0f), 9.99999997475242708e-07f);
 }
 
@@ -99,94 +101,94 @@ float DistributionGGX_0(float alpha_1, float3 N_2, float3 H_1)
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
-    float3 o_position_0 : TEXCOORD0;
+    float3 uvw_0 : TEXCOORD0;
 };
 
 
-#line 74
+#line 70
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
-    float3 N_3 = normalize(float3(input_0.o_position_0.x, input_0.o_position_0.y, input_0.o_position_0.z));
+    float3 N_3 = normalize(float3(input_0.uvw_0.x, input_0.uvw_0.y, input_0.uvw_0.z));
 
-#line 81
+#line 77
     float3 _S6 = (float3)0.0f;
 
-#line 81
+#line 77
     uint i_1 = 0U;
 
-#line 81
+#line 77
     float3 prefilteredColor_0 = _S6;
 
-#line 81
+#line 77
     float totalWeight_0 = 0.0f;
 
 
     for(;;)
     {
 
-#line 84
+#line 80
         if(i_1 < 1024U)
         {
         }
         else
         {
 
-#line 84
+#line 80
             break;
         }
 
         float3 H_2 = ImportanceSampleGGX_0(Hammersley_0(i_1, 1024U), N_3, roughnessUBO_0.roughness_0 * roughnessUBO_0.roughness_0);
         float _S7 = dot(N_3, H_2);
 
-#line 88
+#line 84
         float3 L_0 = normalize(2.0f * _S7 * H_2 - N_3);
 
         float NdotL_0 = max(dot(N_3, L_0), 0.0f);
         if(NdotL_0 > 0.0f)
         {
 
-#line 100
+#line 96
             float saSample_0 = 1.0f / (1024.0f * (DistributionGGX_0(roughnessUBO_0.roughness_0 * roughnessUBO_0.roughness_0, N_3, H_2) * max(_S7, 0.0f) / (4.0f * max(dot(H_2, N_3), 0.0f)) + 0.00009999999747379f) + 0.00009999999747379f);
 
-#line 100
+#line 96
             float mipLevel_0;
 
             if((roughnessUBO_0.roughness_0) == 0.0f)
             {
 
-#line 102
+#line 98
                 mipLevel_0 = 0.0f;
 
-#line 102
+#line 98
             }
             else
             {
 
-#line 102
+#line 98
                 mipLevel_0 = 0.5f * log2(saSample_0 / 4.99342718285333831e-07f);
 
-#line 102
+#line 98
             }
 
-#line 109
+#line 105
             float totalWeight_1 = totalWeight_0 + NdotL_0;
 
-#line 109
+#line 105
             prefilteredColor_0 = prefilteredColor_0 + environmentMap_0.SampleLevel(smp_0, L_0, mipLevel_0).xyz * NdotL_0;
 
-#line 109
+#line 105
             totalWeight_0 = totalWeight_1;
 
-#line 91
+#line 87
         }
 
-#line 84
+#line 80
         i_1 = i_1 + 1U;
 
-#line 84
+#line 80
     }
 
-#line 115
+#line 111
     return float4(prefilteredColor_0 / totalWeight_0, 1.0f);
 }
 

@@ -9,7 +9,7 @@
 #endif
 
 
-#line 12 "Equirectangular.slang"
+#line 12 "slang/Equirectangular.slang"
 Texture2D<float4 > equirectangularMap_0 : register(t0, space1);
 
 
@@ -37,7 +37,7 @@ float3 ReinhardToneMapping_0(float3 color_0)
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
-    float3 o_position_0 : TEXCOORD0;
+    float3 uvw_0 : TEXCOORD0;
 };
 
 
@@ -46,6 +46,6 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
 #line 56
-    return float4(ReinhardToneMapping_0(equirectangularMap_0.Sample(smp_0, SampleSphericalMap_0(normalize(input_0.o_position_0))).xyz), 1.0f);
+    return float4(ReinhardToneMapping_0(equirectangularMap_0.Sample(smp_0, SampleSphericalMap_0(normalize(input_0.uvw_0))).xyz), 1.0f);
 }
 

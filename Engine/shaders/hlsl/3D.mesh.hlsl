@@ -9,7 +9,7 @@
 #endif
 
 
-#line 74 "3D.slang"
+#line 74 "slang/3D.slang"
 struct Meshlet_0
 {
     uint vertexCount_0;
@@ -95,35 +95,40 @@ struct VSOutput_0
 void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[int(64)], out indices uint3  tris_0[int(128)])
 {
 
+#line 91
+    uint _S1 = groupThreadID_0;
 
+#line 91
+    uint _S2 = groupID_0;
 
+#line 98
     Meshlet_0 meshlet_0 = meshlets_0.Load(groupID_0);
     SetMeshOutputCounts(meshlet_0.vertexCount_0, meshlet_0.primitiveCount_0);
 
-    bool meshletVisualizationEnabled_0 = globalParams_0.meshletVisualization_0 > 0U;
+    bool meshletVisualizationEnabled_0 = (globalParams_0.meshletVisualization_0) > 0U;
 
-    if(groupThreadID_0 < meshlet_0.vertexCount_0)
+    if(groupThreadID_0 < (meshlet_0.vertexCount_0))
     {
 
-        VSInput_0 input_0 = uniqueVertices_0.Load(uniqueVertexIndices_0.Load(meshlet_0.vertexOffset_0 + groupThreadID_0));
+        VSInput_0 input_0 = uniqueVertices_0.Load(uniqueVertexIndices_0.Load(meshlet_0.vertexOffset_0 + _S1));
 
 #line 112
-        float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float(input_0.position_0 & 2047U), float(input_0.position_0 >> int(11) & 2047U), float(input_0.position_0 >> int(22) & 1023U)), 1.0)).xyz;
+        float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float((input_0.position_0) & 2047U), float(((input_0.position_0) >> int(11)) & 2047U), float(((input_0.position_0) >> int(22)) & 1023U)), 1.0f)).xyz;
 
-        verts_0[groupThreadID_0].uv_1 = input_0.uv_0;
-        verts_0[groupThreadID_0].meshletVisualization_1 = meshletVisualizationEnabled_0;
+        verts_0[_S1].uv_1 = input_0.uv_0;
+        verts_0[_S1].meshletVisualization_1 = meshletVisualizationEnabled_0;
         if(meshletVisualizationEnabled_0)
         {
 
 
-            uint hash_0 = groupID_0 ^ 61U ^ groupID_0 >> int(16);
+            uint hash_0 = (_S2 ^ 61U) ^ (_S2 >> int(16));
             uint hash_1 = hash_0 + (hash_0 << int(3));
 
-            uint hash_2 = (hash_1 ^ hash_1 >> int(4)) * 668265261U;
-            uint hash_3 = hash_2 ^ hash_2 >> int(15);
+            uint hash_2 = (hash_1 ^ (hash_1 >> int(4))) * 668265261U;
+            uint hash_3 = hash_2 ^ (hash_2 >> int(15));
 
 #line 130
-            verts_0[groupThreadID_0].color_1 = float4(float3(float(hash_3 & 255U) / 255.0, float(hash_3 >> int(8) & 255U) / 255.0, float(hash_3 >> int(16) & 255U) / 255.0), 1.0);
+            verts_0[_S1].color_1 = float4(float3(float(hash_3 & 255U) / 255.0f, float((hash_3 >> int(8)) & 255U) / 255.0f, float((hash_3 >> int(16)) & 255U) / 255.0f), 1.0f);
 
 #line 116
         }
@@ -131,34 +136,34 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
         {
 
 #line 132
-            verts_0[groupThreadID_0].color_1 = matrix_0.color_0;
+            verts_0[_S1].color_1 = matrix_0.color_0;
 
 #line 116
         }
 
 #line 133
-        verts_0[groupThreadID_0].tex_sub_index_1 = input_0.tex_sub_index_0;
+        verts_0[_S1].tex_sub_index_1 = input_0.tex_sub_index_0;
 
 
-        verts_0[groupThreadID_0].normal_1 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_0);
-        float4 _S1 = float4(decoded_position_0, 1.0);
+        verts_0[_S1].normal_1 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_0);
+        float4 _S3 = float4(decoded_position_0, 1.0f);
 
 #line 137
-        verts_0[groupThreadID_0].fragmentPosition_0 = mul(matrix_0.model_0, _S1).xyz;
-        verts_0[groupThreadID_0].viewPosition_1 = matrix_0.viewPosition_0;
+        verts_0[_S1].fragmentPosition_0 = mul(matrix_0.model_0, _S3).xyz;
+        verts_0[_S1].viewPosition_1 = matrix_0.viewPosition_0;
 
-        verts_0[groupThreadID_0].position_1 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, _S1)));
+        verts_0[_S1].position_1 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, _S3)));
 
 #line 103
     }
 
 #line 143
-    if(groupThreadID_0 < meshlet_0.primitiveCount_0)
+    if(_S1 < (meshlet_0.primitiveCount_0))
     {
-        uint _S2 = meshlet_0.primitiveOffset_0 + groupThreadID_0 * 3U;
+        uint _S4 = meshlet_0.primitiveOffset_0 + _S1 * 3U;
 
 
-        tris_0[groupThreadID_0] = uint3(primitiveIndices_0.Load(_S2), primitiveIndices_0.Load(_S2 + 1U), primitiveIndices_0.Load(_S2 + 2U));
+        tris_0[_S1] = uint3(primitiveIndices_0.Load(_S4), primitiveIndices_0.Load(_S4 + 1U), primitiveIndices_0.Load(_S4 + 2U));
 
 #line 143
     }

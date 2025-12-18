@@ -9,7 +9,7 @@
 #endif
 
 
-#line 13 "Normal3D.slang"
+#line 13 "slang/Normal3D.slang"
 struct PushConstants_0
 {
     float4x4 modelToNDC_0;

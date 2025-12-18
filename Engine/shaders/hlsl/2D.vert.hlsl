@@ -9,7 +9,7 @@
 #endif
 
 
-#line 18 "2D.slang"
+#line 18 "slang/2D.slang"
 struct vMatrix_0
 {
     float4x4 model_0;

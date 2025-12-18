@@ -9,7 +9,7 @@
 #endif
 
 
-#line 13 "Cubemap.slang"
+#line 13 "slang/Cubemap.slang"
 struct WorldToNDC_0
 {
     float4x4 view_0;
@@ -25,7 +25,7 @@ cbuffer worldToNDC_0 : register(b0)
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
-    float3 o_position_0 : TEXCOORD0;
+    float3 uvw_0 : TEXCOORD0;
 };
 
 
@@ -41,7 +41,7 @@ VSOutput_0 vertexMain(VSInput_0 input_0)
 {
     VSOutput_0 output_0;
 
-    output_0.o_position_0 = input_0.position_1;
+    output_0.uvw_0 = input_0.position_1;
 
     output_0.position_0 = mul(worldToNDC_0.projection_0, mul(worldToNDC_0.view_0, float4(input_0.position_1, 1.0f)));
 

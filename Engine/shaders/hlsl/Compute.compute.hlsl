@@ -9,11 +9,7 @@
 #endif
 
 
-#line 8 "Compute.slang"
-Texture2DMS<float4 > g_input_0 : register(t0);
-
-
-#line 9
+#line 9 "slang/Compute.slang"
 RWTexture2D<float4 > g_output_0 : register(u0);
 
 
@@ -22,10 +18,9 @@ RWTexture2D<float4 > g_output_0 : register(u0);
 void computeMain(uint3 dispatchThreadID_0 : SV_DispatchThreadID)
 {
 
-#line 18
-    uint2 _S1 = dispatchThreadID_0.xy;
 
-    g_output_0[_S1] = float4(1.0 - g_input_0.Load(int2(_S1), int(0)).xyz, 1.0);
+
+    g_output_0[dispatchThreadID_0.xy] = float4(1.0f, 0.0f, 0.0f, 1.0f);
     return;
 }
 

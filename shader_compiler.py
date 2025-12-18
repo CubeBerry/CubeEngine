@@ -3,6 +3,8 @@ import subprocess
 import sys
 
 SHADER_ROOT = os.path.join("Engine", "shaders")
+PROJECT_ROOT = os.getcwd()
+DXC_PATH = os.path.join(PROJECT_ROOT, "dxc.exe")
 
 DIRS = {
 	"slang": "slang",
@@ -15,6 +17,101 @@ DIRS = {
 # Slang Shader List
 # Edit this list to add/delete shaders for compile
 SLANG_SHADERS = [
+	# 2D
+	{
+		"file": "2D.slang",
+		"entry": "vertexMain",
+		"stage": "vertex",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "2D.vert"
+	},
+	{
+		"file": "2D.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "2D.frag"
+	},
+	# 3D
+	{
+		"file": "3D.slang",
+		"entry": "vertexMain",
+		"stage": "vertex",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "3D.vert"
+	},
+	{
+		"file": "3D.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "3D.frag"
+	},
+	{
+		"file": "3D.slang", # Also need to convert to DXIL
+		"entry": "meshMain",
+		"stage": "mesh",
+		"profile_hlsl": "sm_6_5",
+		"out_name": "3D.mesh"
+	},
+	{
+		"file": "Normal3D.slang",
+		"entry": "vertexMain",
+		"stage": "vertex",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Normal3D.vert"
+	},
+	{
+		"file": "Normal3D.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Normal3D.frag"
+	},
+	# IBL
+	{
+		"file": "Cubemap.slang",
+		"entry": "vertexMain",
+		"stage": "vertex",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Cubemap.vert"
+	},
+	{
+		"file": "Equirectangular.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Equirectangular.frag"
+	},
+	{
+		"file": "Irradiance.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Irradiance.frag"
+	},
+	{
+		"file": "Prefilter.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Prefilter.frag"
+	},
+	{
+		"file": "BRDF.slang",
+		"entry": "vertexMain",
+		"stage": "vertex",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "BRDF.vert"
+	},
+	{
+		"file": "BRDF.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "BRDF.frag"
+	},
+	# Skybox
 	{
 		"file": "Skybox.slang",
 		"entry": "vertexMain",
@@ -29,16 +126,45 @@ SLANG_SHADERS = [
 		"profile_hlsl": "sm_5_1",
 		"out_name": "Skybox.frag"
 	},
+	# Compute
+	{
+		"file": "Compute.slang",
+		"entry": "computeMain",
+		"stage": "compute",
+		"profile_hlsl": "sm_5_1",
+		"out_name": "Compute.compute"
+	}
 ]
 
 # DXC Shader List
 # Edit this list to add/delete shaders for compile
 DXC_SHADERS = [
+	# Mesh Shaders
+	{
+		"file": "3D.mesh.hlsl",
+		"entry": "meshMain",
+		"profile": "ms_6_5",
+		"out_name": "3D.mesh.cso"
+	},
+	# Work Graphs
 	{
 		"file": "WorkGraphs.hlsl",
 		"entry": "broadcastNode",
 		"profile": "lib_6_8",
 		"out_name": "WorkGraphs.cso"
+	},
+	# Work Graphs Frustum Culling
+	{
+		"file": "WorkGraphsFrustumCulling.lib.hlsl",
+		"entry": "CullNode",
+		"profile": "lib_6_9",
+		"out_name": "WorkGraphsFrustumCulling.lib.cso"
+	},
+	{
+		"file": "WorkGraphsFrustumCulling.frag.hlsl",
+		"entry": "pixelMain",
+		"profile": "ps_6_6",
+		"out_name": "WorkGraphsFrustumCulling.frag.cso"
 	}
 ]
 
@@ -75,7 +201,17 @@ def check_dirs():
 	return True
 
 def main():
-	print(f"[Info]: Starting Shader Compilation in: {SHADER_ROOT}\n")
+	print(f"Starting Shader Compilation in: {SHADER_ROOT}\n")
+	print(f"Project Root: {PROJECT_ROOT}")
+	print(f"Shader Root: {SHADER_ROOT}")
+	print(f"DXC Path: {DXC_PATH}\n")
+
+	# Requires dxc supports Shader Model 6.9 & Mesh Nodes Support Preview
+	# https://github.com/microsoft/DirectXShaderCompiler/releases/tag/v1.8.2405-mesh-nodes-preview
+	if not os.path.exists(DXC_PATH):
+		print(f"[Error]: 'dxc.exe' not found in project root directory.")
+		print(f"Expected path: {DXC_PATH}")
+		sys.exit(1)
 
 	if not check_dirs():
 		sys.exit(1)
@@ -123,7 +259,7 @@ def main():
 		infile = os.path.join(DIRS["hlsl"], shader["file"])
 		outfile = os.path.join(DIRS["cso"], shader["out_name"])
 		cmd_dxc = [
-			"dxc", infile,
+			DXC_PATH, infile,
 			"-T", shader["profile"],
 			"-E", shader["entry"],
 			"-Fo", outfile
