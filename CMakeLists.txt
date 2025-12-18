@@ -55,15 +55,15 @@ set(NUGET_PACKAGES_ROOT "${CMAKE_BINARY_DIR}/packages")
 # Copy packages.config to build folder for NuGet package restore (for DirectX 12 Agility SDK)
 # configure_file(packages.config ${CMAKE_CURRENT_BINARY_DIR}/packages.config COPYONLY)
 
-set(NUGET_EXE "${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe")
+set(NUGET_EXE "${CMAKE_CURRENT_SOURCE_DIR}/Tools/nuget.exe")
 if (NOT EXISTS "${NUGET_EXE}")
-    message(FATAL_ERROR "nuget.exe not found at ${NUGET_EXE}. Please download it from https://www.nuget.org/downloads and place it in the project root directory.")
+    message(FATAL_ERROR "nuget.exe not found at ${NUGET_EXE}. Please download it from https://www.nuget.org/downloads and place it in the 'Tools' directory under the project root.")
 endif()
 
 message(STATUS "Installing NuGet packages...")
 
 execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe install Microsoft.Direct3D.D3D12 -OutputDirectory ${NUGET_PACKAGES_ROOT} -Version ${AGILITY_SDK_VERSION}
+    COMMAND ${NUGET_EXE} install Microsoft.Direct3D.D3D12 -OutputDirectory ${NUGET_PACKAGES_ROOT} -Version ${AGILITY_SDK_VERSION}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     RESULT_VARIABLE NUGET_RESULT
 )
