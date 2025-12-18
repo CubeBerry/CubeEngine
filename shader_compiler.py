@@ -208,6 +208,7 @@ def main():
 
 	# Requires dxc supports Shader Model 6.9 & Mesh Nodes Support Preview
 	# https://github.com/microsoft/DirectXShaderCompiler/releases/tag/v1.8.2405-mesh-nodes-preview
+	# Above dxc version does not work with mesh shader and work graphs shader. Use latest stable version for now
 	if not os.path.exists(DXC_PATH):
 		print(f"[Error]: 'dxc.exe' not found in project root directory.")
 		print(f"Expected path: {DXC_PATH}")
