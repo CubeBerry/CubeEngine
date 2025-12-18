@@ -47,6 +47,14 @@ SLANG_SHADERS = [
 		"profile_hlsl": "sm_5_1",
 		"out_name": "3D.frag"
 	},
+	# For Mesh Shader
+	{
+		"file": "3D.slang",
+		"entry": "fragmentMain",
+		"stage": "fragment",
+		"profile_hlsl": "sm_6_5",
+		"out_name": "3DMesh.frag"
+	},
 	{
 		"file": "3D.slang", # Also need to convert to DXIL
 		"entry": "meshMain",
@@ -145,6 +153,12 @@ DXC_SHADERS = [
 		"entry": "meshMain",
 		"profile": "ms_6_5",
 		"out_name": "3D.mesh.cso"
+	},
+	{
+		"file": "3DMesh.frag.hlsl",
+		"entry": "fragmentMain",
+		"profile": "ps_6_5",
+		"out_name": "3DMesh.frag.cso"
 	},
 	# Work Graphs
 	{
