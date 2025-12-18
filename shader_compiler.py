@@ -18,168 +18,41 @@ DIRS = {
 # Edit this list to add/delete shaders for compile
 SLANG_SHADERS = [
 	# 2D
-	{
-		"file": "2D.slang",
-		"entry": "vertexMain",
-		"stage": "vertex",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "2D.vert"
-	},
-	{
-		"file": "2D.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "2D.frag"
-	},
+	{ "file": "2D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "2D.vert" },
+	{ "file": "2D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "2D.frag" },
 	# 3D
-	{
-		"file": "3D.slang",
-		"entry": "vertexMain",
-		"stage": "vertex",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "3D.vert"
-	},
-	{
-		"file": "3D.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "3D.frag"
-	},
+	{ "file": "3D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "3D.vert" },
+	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "3D.frag" },
 	# For Mesh Shader
-	{
-		"file": "3D.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_6_5",
-		"out_name": "3DMesh.frag"
-	},
-	{
-		"file": "3D.slang", # Also need to convert to DXIL
-		"entry": "meshMain",
-		"stage": "mesh",
-		"profile_hlsl": "sm_6_5",
-		"out_name": "3D.mesh"
-	},
-	{
-		"file": "Normal3D.slang",
-		"entry": "vertexMain",
-		"stage": "vertex",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Normal3D.vert"
-	},
-	{
-		"file": "Normal3D.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Normal3D.frag"
-	},
+	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "3DMesh.frag" },
+	{ "file": "3D.slang", "entry": "meshMain", "stage": "mesh", "profile_hlsl": "sm_6_5", "out_name": "3D.mesh" }, # Also need to convert to DXIL
+	{ "file": "Normal3D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.vert" },
+	{ "file": "Normal3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.frag" },
 	# IBL
-	{
-		"file": "Cubemap.slang",
-		"entry": "vertexMain",
-		"stage": "vertex",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Cubemap.vert"
-	},
-	{
-		"file": "Equirectangular.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Equirectangular.frag"
-	},
-	{
-		"file": "Irradiance.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Irradiance.frag"
-	},
-	{
-		"file": "Prefilter.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Prefilter.frag"
-	},
-	{
-		"file": "BRDF.slang",
-		"entry": "vertexMain",
-		"stage": "vertex",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "BRDF.vert"
-	},
-	{
-		"file": "BRDF.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "BRDF.frag"
-	},
+	{ "file": "Cubemap.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Cubemap.vert" },
+	{ "file": "Equirectangular.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Equirectangular.frag" },
+	{ "file": "Irradiance.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Irradiance.frag" },
+	{ "file": "Prefilter.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Prefilter.frag" },
+	{ "file": "BRDF.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "BRDF.vert" },
+	{ "file": "BRDF.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "BRDF.frag" },
 	# Skybox
-	{
-		"file": "Skybox.slang",
-		"entry": "vertexMain",
-		"stage": "vertex",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Skybox.vert"
-	},
-	{
-		"file": "Skybox.slang",
-		"entry": "fragmentMain",
-		"stage": "fragment",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Skybox.frag"
-	},
+	{ "file": "Skybox.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Skybox.vert" },
+	{ "file": "Skybox.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Skybox.frag" },
 	# Compute
-	{
-		"file": "Compute.slang",
-		"entry": "computeMain",
-		"stage": "compute",
-		"profile_hlsl": "sm_5_1",
-		"out_name": "Compute.compute"
-	}
+	{ "file": "Compute.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "Compute.compute" }
 ]
 
 # DXC Shader List
 # Edit this list to add/delete shaders for compile
 DXC_SHADERS = [
 	# Mesh Shaders
-	{
-		"file": "3D.mesh.hlsl",
-		"entry": "meshMain",
-		"profile": "ms_6_5",
-		"out_name": "3D.mesh.cso"
-	},
-	{
-		"file": "3DMesh.frag.hlsl",
-		"entry": "fragmentMain",
-		"profile": "ps_6_5",
-		"out_name": "3DMesh.frag.cso"
-	},
+	{ "file": "3D.mesh.hlsl", "entry": "meshMain", "profile": "ms_6_5", "out_name": "3D.mesh.cso" },
+	{ "file": "3DMesh.frag.hlsl", "entry": "fragmentMain", "profile": "ps_6_5", "out_name": "3DMesh.frag.cso" },
 	# Work Graphs
-	{
-		"file": "WorkGraphs.hlsl",
-		"entry": "broadcastNode",
-		"profile": "lib_6_8",
-		"out_name": "WorkGraphs.cso"
-	},
+	{ "file": "WorkGraphs.hlsl", "entry": "broadcastNode", "profile": "lib_6_8", "out_name": "WorkGraphs.cso" },
 	# Work Graphs Frustum Culling
-	{
-		"file": "WorkGraphsFrustumCulling.lib.hlsl",
-		"entry": "CullNode",
-		"profile": "lib_6_9",
-		"out_name": "WorkGraphsFrustumCulling.lib.cso"
-	},
-	{
-		"file": "WorkGraphsFrustumCulling.frag.hlsl",
-		"entry": "pixelMain",
-		"profile": "ps_6_6",
-		"out_name": "WorkGraphsFrustumCulling.frag.cso"
-	}
+	{ "file": "WorkGraphsFrustumCulling.lib.hlsl", "entry": "CullNode", "profile": "lib_6_9", "out_name": "WorkGraphsFrustumCulling.lib.cso" },
+	{ "file": "WorkGraphsFrustumCulling.frag.hlsl", "entry": "pixelMain", "profile": "ps_6_6", "out_name": "WorkGraphsFrustumCulling.frag.cso" }
 ]
 
 def run_command(cmd, description, output_file=None):
@@ -191,15 +64,27 @@ def run_command(cmd, description, output_file=None):
 			print(f"[Warning]: Could not delete old file '{output_file}': {e}")
 
 	try:
-		subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-		print(f"[Success]: {description}")
-		return True
-	except subprocess.CalledProcessError as e:
-		print(f"[Failed]:  {description}")
-		print(f"[Error]: {e.stderr.strip()}")
-		return False
+		result = subprocess.run(cmd, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='replace')
+
+		output_msg = result.stdout.strip()
+		error_msg = result.stderr.strip()
+		full_log = ""
+		if output_msg: full_log += output_msg + "\n"
+		if error_msg: full_log += error_msg
+
+		if result.returncode == 0:
+			print(f"[Success]: {description}")
+			if full_log: print(f"[Warning]: \n{full_log}")
+			return True
+		else:
+			print(f"[Failed]: {description}")
+			print(f"[Failed Command]: {' '.join(cmd)}")
+			print(f"[Error]: \n{full_log}\n")
 	except FileNotFoundError:
 		print(f"[Error]: Tool not found for command '{cmd[0]}'")
+		return False
+	except OSError as e:
+		print(f"[Error]: OS Error: {e}")
 		return False
 
 def check_dirs():
