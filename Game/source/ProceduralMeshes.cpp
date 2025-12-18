@@ -43,12 +43,12 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::PLANE, "", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
 
 	// Static Sprite
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<StaticSprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
-	// @TODO Remove ProcessFunctionQueue after implementing SafeDelete and ProcessDeletionQueue for OpenGL, Vulkan
-	Engine::GetObjectManager().ProcessFunctionQueue();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->InitializeBuffers();
+	//Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
+	//Engine::GetObjectManager().GetLastObject()->AddComponent<StaticSprite>();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/monkey.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
+	//// @TODO Remove ProcessFunctionQueue after implementing SafeDelete and ProcessDeletionQueue for OpenGL, Vulkan
+	//Engine::GetObjectManager().ProcessFunctionQueue();
+	//Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->InitializeBuffers();
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 
