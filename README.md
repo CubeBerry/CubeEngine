@@ -42,14 +42,35 @@ cd build
     ```dos
     cmake .. -D USE_PREVIEW_SDK=ON
     ```
-4. Open the generated solution file (```.sln```) and set **"Project"** as the startup project.
+4. Open the generated solution file (`.sln`) and set **"Project"** as the startup project.
+
+## How to Compile Shaders
+Shaders can be compiled automatically using the provided Python script or manually using CLI tools.
+
+1. **Automatic (Recommended):**
+This script handles the conversion of Slang to SPIR-V/HLSL and HLSL to DXIL automatically.
+
+**Prerequisites:**
+* Python 3.x installed.
+* Create a `Tools` directory in the project root.
+* Download **DirectX Shader Compiler (DXC)** and **Slang**, then extract them into the `Tools` directory.
+    * Ensure `dxc.exe` and `slangc.exe` paths match the directory structure defined in `shader_compiler.py`.
+    * **Note:** You may need to update `DXC_DIR_NAME` and `SLANG_DIR_NAME` variables in `shader_compiler.py` to match your downloaded folder names.
+* Slang can be downloaded from the following [link](https://github.com/shader-slang/slang/releases) or included in the Vulkan SDK since version 1.3.296.0.
+
+**Command:**
+```bash
+python shader_compiler.py
+```
+
+1. **Manual Compilation:**
+If you prefer to compile shaders manually, use the commands below.
 
 ## How to Compile Slang Shading Language
 <details>
 <summary><strong>How to Compile Slang Shading Language</strong> (Click to expand)</summary>
-To compile Slang Shading Language, slangc is required. slangc is can be downloaded from the following [link](https://github.com/shader-slang/slang/releases) or included in the Vulkan SDK since version 1.3.296.0.
-
 Shaders are located in Engine/shaders.
+
 1. From .slang to .glsl
 ```
 GLSL

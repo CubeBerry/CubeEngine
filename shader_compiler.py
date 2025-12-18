@@ -2,9 +2,16 @@ import os
 import subprocess
 import sys
 
-SHADER_ROOT = os.path.join("Engine", "shaders")
 PROJECT_ROOT = os.getcwd()
-DXC_PATH = os.path.join(PROJECT_ROOT, "dxc.exe")
+SHADER_ROOT = os.path.join("Engine", "shaders")
+
+TOOLS_DIR_NAME = "Tools"
+
+DXC_DIR_NAME = "dxc_2025_07_14"
+DXC_PATH = os.path.join(PROJECT_ROOT, TOOLS_DIR_NAME, DXC_DIR_NAME, "bin", "x64", "dxc.exe")
+
+SLANG_DIR_NAME = "slang-2025.24.1-windows-x86_64"
+SLANG_PATH = os.path.join(PROJECT_ROOT, TOOLS_DIR_NAME, SLANG_DIR_NAME, "bin", "slangc.exe")
 
 DIRS = {
 	"slang": "slang",
@@ -79,7 +86,7 @@ def run_command(cmd, description, output_file=None):
 		else:
 			print(f"[Failed]: {description}")
 			print(f"[Failed Command]: {' '.join(cmd)}")
-			print(f"[Error]: \n{full_log}\n")
+			print(f"[Error]: \n{full_log}")
 	except FileNotFoundError:
 		print(f"[Error]: Tool not found for command '{cmd[0]}'")
 		return False
@@ -102,14 +109,20 @@ def check_dirs():
 def main():
 	print(f"Starting Shader Compilation in: {SHADER_ROOT}\n")
 	print(f"Project Root: {PROJECT_ROOT}")
-	print(f"Shader Root: {SHADER_ROOT}")
+	print(f"Tools Directory: {os.path.join(PROJECT_ROOT, TOOLS_DIR_NAME)}")
+	print(f"Slang Path: {SLANG_PATH}")
 	print(f"DXC Path: {DXC_PATH}\n")
+
+	if not os.path.exists(SLANG_PATH):
+		print(f"[Error]: 'slangc.exe' not found.")
+		print(f"Expected path: {SLANG_PATH}")
+		sys.exit(1)
 
 	# Requires dxc supports Shader Model 6.9 & Mesh Nodes Support Preview
 	# https://github.com/microsoft/DirectXShaderCompiler/releases/tag/v1.8.2405-mesh-nodes-preview
 	# Above dxc version does not work with mesh shader and work graphs shader. Use latest stable version for now
 	if not os.path.exists(DXC_PATH):
-		print(f"[Error]: 'dxc.exe' not found in project root directory.")
+		print(f"[Error]: 'dxc.exe' not found.")
 		print(f"Expected path: {DXC_PATH}")
 		sys.exit(1)
 
@@ -129,7 +142,7 @@ def main():
 		# To SPIR-V (.spv)
 		outfile_spv = os.path.join(DIRS["spirv"], f"{shader['out_name']}.spv")
 		cmd_spv = [
-			"slangc", infile,
+			SLANG_PATH, infile,
 			"-profile", "glsl_460",
 			"-entry", shader["entry"],
 			"-stage", shader["stage"],
@@ -142,7 +155,7 @@ def main():
 		# To HLSL (.hlsl)
 		outfile_hlsl = os.path.join(DIRS["hlsl"], f"{shader['out_name']}.hlsl")
 		cmd_hlsl = [
-			"slangc", infile,
+			SLANG_PATH, infile,
 			"-profile", shader["profile_hlsl"],
 			"-entry", shader["entry"],
 			"-stage", shader["stage"],

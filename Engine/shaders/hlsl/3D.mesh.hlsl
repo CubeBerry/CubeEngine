@@ -92,7 +92,7 @@ struct VSOutput_0
 #line 91
 [shader("mesh")][numthreads(128, 1, 1)]
 [outputtopology("triangle")]
-void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[int(64)], out indices uint3  tris_0[int(128)])
+void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[64U], out indices uint3  tris_0[128U])
 {
 
 #line 91

@@ -252,8 +252,10 @@ float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightCo
 #line 397
     float alpha_3 = _S3 * _S3;
 
+    float _S5 = max(dot(L_1, mainVectors_0.N_0), 0.0f);
+
 #line 406
-    return ((1.0f - _S2) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_0(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * max(dot(L_1, mainVectors_0.N_0), 0.0f), 0.10000000149011612f)) * (lightColor_2 * attenuation_0) * max(dot(L_1, mainVectors_0.N_0), 0.0f);
+    return ((1.0f - _S2) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_0(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * _S5, 0.10000000149011612f)) * (lightColor_2 * attenuation_0) * _S5;
 }
 
 
@@ -283,9 +285,9 @@ struct VSOutput_0
 {
 
 #line 410
-    VSOutput_0 _S5 = input_0;
+    VSOutput_0 _S6 = input_0;
 
-    float3 _S6 = (float3)0.0f;
+    float3 _S7 = (float3)0.0f;
 
 #line 412
     float3 albedo_2;
@@ -296,7 +298,7 @@ struct VSOutput_0
     {
 
 #line 416
-        albedo_2 = tex_0[f_matrix_0.texIndex_0 + _S5.tex_sub_index_0].Sample(smp_0, _S5.uv_0).xyz;
+        albedo_2 = tex_0[f_matrix_0.texIndex_0 + _S6.tex_sub_index_0].Sample(smp_0, _S6.uv_0).xyz;
 
 #line 416
     }
@@ -304,22 +306,22 @@ struct VSOutput_0
     {
 
 #line 416
-        albedo_2 = _S5.color_0.xyz;
+        albedo_2 = _S6.color_0.xyz;
 
 #line 416
     }
 
 #line 423
     float3 F0_4 = lerp((float3)0.03999999910593033f, albedo_2, (float3)f_material_0.metallic_0);
-    float3 V_5 = normalize(_S5.viewPosition_0 - _S5.fragmentPosition_2);
-    float3 N_5 = normalize(_S5.normal_0);
-    MainVectors_0 _S7 = MainVectors_x24init_0(_S5.fragmentPosition_2, albedo_2, V_5, N_5, F0_4);
+    float3 V_5 = normalize(_S6.viewPosition_0 - _S6.fragmentPosition_2);
+    float3 N_5 = normalize(_S6.normal_0);
+    MainVectors_0 _S8 = MainVectors_x24init_0(_S6.fragmentPosition_2, albedo_2, V_5, N_5, F0_4);
 
 #line 426
     int l_0 = int(0);
 
 #line 426
-    float3 resultColor_0 = _S6;
+    float3 resultColor_0 = _S7;
 
 
     for(;;)
@@ -337,7 +339,7 @@ struct VSOutput_0
         }
 
 
-        float3 resultColor_1 = resultColor_0 + PBR_0(_S7, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0, false, l_0);
+        float3 resultColor_1 = resultColor_0 + PBR_0(_S8, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0, false, l_0);
 
 #line 429
         l_0 = l_0 + int(1);
@@ -367,7 +369,7 @@ struct VSOutput_0
         }
 
 
-        float3 resultColor_2 = resultColor_0 + PBR_0(_S7, pointLightList_0.lights_1[l_0].lightPosition_0, pointLightList_0.lights_1[l_0].lightColor_1, true, l_0);
+        float3 resultColor_2 = resultColor_0 + PBR_0(_S8, pointLightList_0.lights_1[l_0].lightPosition_0, pointLightList_0.lights_1[l_0].lightColor_1, true, l_0);
 
 #line 437
         l_0 = l_0 + int(1);
@@ -382,27 +384,27 @@ struct VSOutput_0
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, f_material_0.roughness_0);
 
 
-    float3 _S8 = (float3)1.0f;
+    float3 _S9 = (float3)1.0f;
 
 #line 460
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), f_material_0.roughness_0)).xy;
 
 #line 469
-    float3 resultColor_3 = (1.0f - f_material_0.metallic_0) * (_S8 - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), f_material_0.roughness_0 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
+    float3 resultColor_3 = (1.0f - f_material_0.metallic_0) * (_S9 - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), f_material_0.roughness_0 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
 
 
 
-    float3 resultColor_4 = pow(resultColor_3 / (resultColor_3 + _S8), (float3)0.45454543828964233f);
+    float3 resultColor_4 = pow(resultColor_3 / (resultColor_3 + _S9), (float3)0.45454543828964233f);
 
 #line 473
-    float4 _S9;
+    float4 _S10;
 
 #line 487
-    if(_S5.meshletVisualization_0)
+    if(_S6.meshletVisualization_0)
     {
 
 #line 487
-        _S9 = float4(_S5.color_0.xyz, 1.0f);
+        _S10 = float4(_S6.color_0.xyz, 1.0f);
 
 #line 487
     }
@@ -410,12 +412,12 @@ struct VSOutput_0
     {
 
 #line 487
-        _S9 = float4(resultColor_4, 1.0f);
+        _S10 = float4(resultColor_4, 1.0f);
 
 #line 487
     }
 
 #line 487
-    return _S9;
+    return _S10;
 }
 
