@@ -9,7 +9,7 @@
 #endif
 
 
-#line 12 "Skybox.slang"
+#line 12 "slang/Skybox.slang"
 struct WorldToNDC_0
 {
     float4x4 view_0;

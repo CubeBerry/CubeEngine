@@ -277,7 +277,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 			m_device,
 			m_rootSignature3D,
 			std::filesystem::path("../Engine/shaders/cso/3D.mesh.cso"),
-			std::filesystem::path("../Engine/shaders/cso/3D.frag.cso"),
+			std::filesystem::path("../Engine/shaders/cso/3DMesh.frag.cso"),
 			D3D12_FILL_MODE_SOLID,
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,

@@ -9,7 +9,7 @@
 #endif
 
 
-#line 12 "Irradiance.slang"
+#line 12 "slang/Irradiance.slang"
 TextureCube<float4 > environmentMap_0 : register(t0, space1);
 
 
@@ -21,14 +21,14 @@ SamplerState smp_0 : register(s0, space1);
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
-    float3 o_position_0 : TEXCOORD0;
+    float3 uvw_0 : TEXCOORD0;
 };
 
 
 #line 18
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
-    float3 N_0 = normalize(float3(input_0.o_position_0.x, input_0.o_position_0.y, input_0.o_position_0.z));
+    float3 N_0 = normalize(float3(input_0.uvw_0.x, input_0.uvw_0.y, input_0.uvw_0.z));
     float3 _S1 = (float3)0.0f;
 
 
@@ -77,12 +77,17 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
                 break;
             }
 
+            float _S3 = sin(theta_0);
+
+#line 34
+            float _S4 = cos(theta_0);
+
 #line 39
-            float3 irradiance_1 = irradiance_0 + environmentMap_0.Sample(smp_0, sin(theta_0) * cos(phi_0) * right_0 + sin(theta_0) * sin(phi_0) * _S2 + cos(theta_0) * N_0).xyz * cos(theta_0) * sin(theta_0);
+            float3 irradiance_1 = irradiance_0 + environmentMap_0.Sample(smp_0, _S3 * cos(phi_0) * right_0 + _S3 * sin(phi_0) * _S2 + _S4 * N_0).xyz * _S4 * _S3;
 
 
 
-            float _S3 = nrSamples_0 + 1.0f;
+            float _S5 = nrSamples_0 + 1.0f;
 
 #line 31
             theta_0 = theta_0 + 0.02500000037252903f;
@@ -91,7 +96,7 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
             irradiance_0 = irradiance_1;
 
 #line 31
-            nrSamples_0 = _S3;
+            nrSamples_0 = _S5;
 
 #line 31
         }

@@ -9,7 +9,7 @@
 #endif
 
 
-#line 8 "Normal3D.slang"
+#line 8 "slang/Normal3D.slang"
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;

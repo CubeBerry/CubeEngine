@@ -9,7 +9,7 @@
 #endif
 
 
-#line 27 "BRDF.slang"
+#line 40 "slang/BRDF.slang"
 float RadicalInverse_VdC_0(uint bits_0)
 {
     uint _S1 = (bits_0 << 16U) | (bits_0 >> 16U);
@@ -30,7 +30,7 @@ float3 ImportanceSampleGGX_0(float2 Xi_0, float3 N_1, float alpha_0)
     float phi_0 = 6.28318548202514648f * Xi_0.x;
     float _S5 = Xi_0.y;
 
-#line 45
+#line 58
     float cosTheta_0 = sqrt((1.0f - _S5) / (1.0f + (alpha_0 * alpha_0 - 1.0f) * _S5));
     float sinTheta_0 = sqrt(1.0f - cosTheta_0 * cosTheta_0);
 
@@ -39,24 +39,24 @@ float3 ImportanceSampleGGX_0(float2 Xi_0, float3 N_1, float alpha_0)
     H_0[int(1)] = sin(phi_0) * sinTheta_0;
     H_0[int(2)] = cosTheta_0;
 
-#line 51
+#line 64
     float3 up_0;
 
     if((abs(N_1.z)) < 0.99900001287460327f)
     {
 
-#line 53
+#line 66
         up_0 = float3(0.0f, 0.0f, 1.0f);
 
-#line 53
+#line 66
     }
     else
     {
 
-#line 53
+#line 66
         up_0 = float3(1.0f, 0.0f, 0.0f);
 
-#line 53
+#line 66
     }
     float3 tangent_0 = normalize(cross(up_0, N_1));
 
@@ -90,30 +90,30 @@ float2 IntegrateBRDF_0(float NdotV_0, float roughness_0)
     V_1[int(1)] = 0.0f;
     V_1[int(2)] = NdotV_0;
 
-#line 89
+#line 102
     float3 _S6 = float3(0.0f, 0.0f, 1.0f);
 
-#line 89
+#line 102
     uint i_1 = 0U;
 
-#line 89
+#line 102
     float A_0 = 0.0f;
 
-#line 89
+#line 102
     float B_0 = 0.0f;
 
 
     for(;;)
     {
 
-#line 92
+#line 105
         if(i_1 < 1024U)
         {
         }
         else
         {
 
-#line 92
+#line 105
             break;
         }
 
@@ -133,27 +133,27 @@ float2 IntegrateBRDF_0(float NdotV_0, float roughness_0)
 
             float B_1 = B_0 + Fc_0 * G_Vis_0;
 
-#line 109
+#line 122
             A_0 = A_0 + (1.0f - Fc_0) * G_Vis_0;
 
-#line 109
+#line 122
             B_0 = B_1;
 
-#line 102
+#line 115
         }
 
-#line 92
+#line 105
         i_1 = i_1 + 1U;
 
-#line 92
+#line 105
     }
 
-#line 114
+#line 127
     return float2(A_0 / 1024.0f, B_0 / 1024.0f);
 }
 
 
-#line 9
+#line 3
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
@@ -161,7 +161,7 @@ struct VSOutput_0
 };
 
 
-#line 118
+#line 131
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
