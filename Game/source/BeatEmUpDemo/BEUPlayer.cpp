@@ -5,7 +5,7 @@
 #include "BeatEmUpDemo/BEUPlayer.hpp"
 #include "BeatEmUpDemo/BEUAttackBox.hpp"
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "BeatEmUpDemo/BeatEmUpDemoSystem.hpp"
 
@@ -21,9 +21,9 @@ BEUPlayer::BEUPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, ObjectTy
 BEUPlayer::BEUPlayer(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDemoSystem* sys)
 	: Object(pos_, size_, name, ObjectType::PLAYER)
 {
-	AddComponent<Sprite>();
-	GetComponent<Sprite>()->LoadAnimation("../Game/assets/BeatEmUpDemo/player.spt", "Player");
-	GetComponent<Sprite>()->PlayAnimation(0);
+	AddComponent<DynamicSprite>();
+	GetComponent<DynamicSprite>()->LoadAnimation("../Game/assets/BeatEmUpDemo/player.spt", "Player");
+	GetComponent<DynamicSprite>()->PlayAnimation(0);
 
 	AddComponent<Physics2D>();
 	GetComponent<Physics2D>()->SetMinVelocity({ 0.0f, 0.f });
@@ -77,7 +77,7 @@ void BEUPlayer::Update(float dt)
 				SetStateOff(BEUObjectStates::HIT);
 				if (IsStateOn(BEUObjectStates::KNOCKBACK) == false)
 				{
-					GetComponent<Sprite>()->PlayAnimation(0);
+					GetComponent<DynamicSprite>()->PlayAnimation(0);
 				}
 			}
 		}
@@ -85,11 +85,11 @@ void BEUPlayer::Update(float dt)
 
 	if (canAttack == false)
 	{
-		if (GetComponent<Sprite>()->IsAnimationDone() == true)
+		if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 		{
 			canAttack = true;
 			SetStateOff(BEUObjectStates::ATTACK);
-			GetComponent<Sprite>()->PlayAnimation(0);
+			GetComponent<DynamicSprite>()->PlayAnimation(0);
 		}
 	}
 	if (isAttackHit == true)
@@ -113,7 +113,7 @@ void BEUPlayer::Update(float dt)
 		}
 	}
 	glm::vec3 cameraPos = Engine::GetCameraManager().GetCameraPosition();
-	if(position.x < cameraPos.x -11.f)
+	if (position.x < cameraPos.x - 11.f)
 	{
 		position.x = -11.f;
 	}
@@ -152,7 +152,7 @@ void BEUPlayer::CollideObject(Object* obj)
 				SetStateOn(BEUObjectStates::DIRECTION);
 				Object::SetXSize(-Object::GetSize().x);
 			}
-			GetComponent<Sprite>()->PlayAnimation(7);
+			GetComponent<DynamicSprite>()->PlayAnimation(7);
 
 			switch (static_cast<BEUAttackBox*>(obj)->GetAttackBoxType())
 			{
@@ -222,7 +222,7 @@ void BEUPlayer::Control(float dt)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		SetStateOff(BEUObjectStates::MOVE);
-		GetComponent<Sprite>()->PlayAnimation(0);
+		GetComponent<DynamicSprite>()->PlayAnimation(0);
 	}
 	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
@@ -231,9 +231,9 @@ void BEUPlayer::Control(float dt)
 		{
 			SetStateOn(BEUObjectStates::MOVE);
 		}
-		if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+		if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 1)
 		{
-			GetComponent<Sprite>()->PlayAnimation(1);
+			GetComponent<DynamicSprite>()->PlayAnimation(1);
 		}
 		SetZPosition(GetPosition().z + 10.f * dt);
 		if (GetPosition().z > 5.f)
@@ -244,7 +244,7 @@ void BEUPlayer::Control(float dt)
 	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::UP)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
-		GetComponent<Sprite>()->PlayAnimation(0);
+		GetComponent<DynamicSprite>()->PlayAnimation(0);
 		SetStateOff(BEUObjectStates::MOVE);
 	}
 	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP)
@@ -254,9 +254,9 @@ void BEUPlayer::Control(float dt)
 		{
 			SetStateOn(BEUObjectStates::MOVE);
 		}
-		if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+		if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 1)
 		{
-			GetComponent<Sprite>()->PlayAnimation(1);
+			GetComponent<DynamicSprite>()->PlayAnimation(1);
 		}
 		SetZPosition(GetPosition().z - 10.f * dt);
 		if (GetPosition().z < -30.f)
@@ -270,7 +270,7 @@ void BEUPlayer::Control(float dt)
 		SetStateOff(BEUObjectStates::MOVEFOWARD);
 
 		if (IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false)
-			GetComponent<Sprite>()->PlayAnimation(0);
+			GetComponent<DynamicSprite>()->PlayAnimation(0);
 	}
 	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
@@ -283,9 +283,9 @@ void BEUPlayer::Control(float dt)
 		{
 			SetStateOn(BEUObjectStates::MOVE);
 		}
-		if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+		if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 1)
 		{
-			GetComponent<Sprite>()->PlayAnimation(1);
+			GetComponent<DynamicSprite>()->PlayAnimation(1);
 		}
 		SetStateOn(BEUObjectStates::MOVEFOWARD);
 		SetStateOff(BEUObjectStates::DIRECTION);
@@ -297,7 +297,7 @@ void BEUPlayer::Control(float dt)
 		SetStateOff(BEUObjectStates::MOVEFOWARD);
 
 		if (IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false)
-			GetComponent<Sprite>()->PlayAnimation(0);
+			GetComponent<DynamicSprite>()->PlayAnimation(0);
 	}
 	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
@@ -309,11 +309,11 @@ void BEUPlayer::Control(float dt)
 		if (IsStateOn(BEUObjectStates::MOVE) == false)
 		{
 			SetStateOn(BEUObjectStates::MOVE);
-			GetComponent<Sprite>()->PlayAnimation(1);
+			GetComponent<DynamicSprite>()->PlayAnimation(1);
 		}
-		if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+		if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 1)
 		{
-			GetComponent<Sprite>()->PlayAnimation(1);
+			GetComponent<DynamicSprite>()->PlayAnimation(1);
 		}
 		SetStateOn(BEUObjectStates::DIRECTION);
 		SetStateOn(BEUObjectStates::MOVEFOWARD);
@@ -351,7 +351,7 @@ void BEUPlayer::Control(float dt)
 				switch (combo)
 				{
 				case 0:
-					GetComponent<Sprite>()->PlayAnimation(3);
+					GetComponent<DynamicSprite>()->PlayAnimation(3);
 					canAttack = false;
 					SetStateOn(BEUObjectStates::ATTACK);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -366,7 +366,7 @@ void BEUPlayer::Control(float dt)
 					}
 					break;
 				case 1:
-					GetComponent<Sprite>()->PlayAnimation(3);
+					GetComponent<DynamicSprite>()->PlayAnimation(3);
 					canAttack = false;
 					SetStateOn(BEUObjectStates::ATTACK);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -381,7 +381,7 @@ void BEUPlayer::Control(float dt)
 					}
 					break;
 				case 2:
-					GetComponent<Sprite>()->PlayAnimation(4);
+					GetComponent<DynamicSprite>()->PlayAnimation(4);
 					canAttack = false;
 					SetStateOn(BEUObjectStates::ATTACK);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -396,7 +396,7 @@ void BEUPlayer::Control(float dt)
 					}
 					break;
 				case 3:
-					GetComponent<Sprite>()->PlayAnimation(5);
+					GetComponent<DynamicSprite>()->PlayAnimation(5);
 					canAttack = false;
 					SetStateOn(BEUObjectStates::ATTACK);
 					if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -414,7 +414,7 @@ void BEUPlayer::Control(float dt)
 			}
 			else
 			{
-				GetComponent<Sprite>()->PlayAnimation(6);
+				GetComponent<DynamicSprite>()->PlayAnimation(6);
 				canAttack = false;
 				SetStateOn(BEUObjectStates::ATTACK);
 				if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -450,11 +450,11 @@ void BEUPlayer::Jumping()
 		{
 			if (canAttack == true)
 			{
-				GetComponent<Sprite>()->PlayAnimation(2);
+				GetComponent<DynamicSprite>()->PlayAnimation(2);
 			}
 			else
 			{
-				GetComponent<Sprite>()->PlayAnimation(6);
+				GetComponent<DynamicSprite>()->PlayAnimation(6);
 			}
 
 			SetStateOn(BEUObjectStates::JUMPING);
@@ -475,7 +475,7 @@ void BEUPlayer::Jumping()
 					SetStateOff(BEUObjectStates::ATTACK);
 				}
 
-				GetComponent<Sprite>()->PlayAnimation(0);
+				GetComponent<DynamicSprite>()->PlayAnimation(0);
 			}
 		}
 		SetYPosition(0.f);
@@ -486,7 +486,7 @@ void BEUPlayer::Jumping()
 	{
 		if (canAttack == true)
 		{
-			GetComponent<Sprite>()->PlayAnimation(2);
+			GetComponent<DynamicSprite>()->PlayAnimation(2);
 		}
 
 		if (IsStateOn(BEUObjectStates::FALLING) == false)
@@ -503,7 +503,7 @@ void BEUPlayer::KnockBack(float dt)
 	{
 		if (IsStateOn(BEUObjectStates::JUMPING) == false)
 		{
-			GetComponent<Sprite>()->PlayAnimation(8);
+			GetComponent<DynamicSprite>()->PlayAnimation(8);
 			SetStateOn(BEUObjectStates::JUMPING);
 			SetStateOff(BEUObjectStates::FALLING);
 		}
@@ -516,7 +516,7 @@ void BEUPlayer::KnockBack(float dt)
 			SetStateOff(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 			SetStateOn(BEUObjectStates::LAYING);
-			GetComponent<Sprite>()->PlayAnimation(9);
+			GetComponent<DynamicSprite>()->PlayAnimation(9);
 
 			SetYPosition(0.f);
 		}
@@ -526,14 +526,14 @@ void BEUPlayer::KnockBack(float dt)
 			layingDelay += dt;
 			if (beatEmUpDemoSystem->GetHp() <= 0.f)
 			{
-				glm::vec4 color = GetComponent<Sprite>()->GetColor();
+				glm::vec4 color = GetComponent<DynamicSprite>()->GetColor();
 				if (color.w == 1.f)
 				{
-					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 0.f });
+					GetComponent<DynamicSprite>()->SetColor({ color.r, color.g, color.b, 0.f });
 				}
 				else
 				{
-					GetComponent<Sprite>()->SetColor({ color.r, color.g, color.b, 1.f });
+					GetComponent<DynamicSprite>()->SetColor({ color.r, color.g, color.b, 1.f });
 				}
 			}
 			if (layingDelay > 1.25f)
@@ -546,7 +546,7 @@ void BEUPlayer::KnockBack(float dt)
 					SetStateOff(BEUObjectStates::KNOCKBACK);
 					SetStateOff(BEUObjectStates::LAYING);
 					SetStateOff(BEUObjectStates::ATTACK);
-					GetComponent<Sprite>()->PlayAnimation(0);
+					GetComponent<DynamicSprite>()->PlayAnimation(0);
 					isInvincible = false;
 					canAttack = true;
 				}
@@ -563,7 +563,7 @@ void BEUPlayer::KnockBack(float dt)
 	{
 		if (IsStateOn(BEUObjectStates::FALLING) == false)
 		{
-			GetComponent<Sprite>()->PlayAnimation(8);
+			GetComponent<DynamicSprite>()->PlayAnimation(8);
 			SetStateOn(BEUObjectStates::FALLING);
 			SetStateOff(BEUObjectStates::JUMPING);
 		}

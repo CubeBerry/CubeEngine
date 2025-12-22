@@ -19,8 +19,8 @@
 #include "DXRenderTarget.hpp"
 #include "DXComputeBuffer.hpp"
 #include "DXWorkGraphsContext.hpp"
-
-#include "BasicComponents/Sprite.hpp"
+#include "DXIndexBuffer.hpp"
+#include "DXConstantBuffer.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
@@ -94,6 +94,7 @@ private:
 
 	UINT m_rtvDescriptorSize{ 0 };
 	UINT m_srvDescriptorSize{ 0 };
+	UINT m_textureDescriptorOffset{ 0 };
 	UINT m_srvDescriptorOffset{ 0 };
 
 	UINT m_frameIndex{ 0 };
@@ -140,50 +141,91 @@ public:
 	// @TODO Should this function in public due to deallocating srv block in BufferWrapper's destructor?
 	void DeallocateSrvBlock(UINT startIndex, UINT count);
 
-	void InitializeBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
+	void InitializeDynamicBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices) override
 	{
 		// Initialize Buffers
-		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().indexBuffer = std::make_unique<DXIndexBuffer>(m_device, m_commandQueue, &indices);
+		bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>()->indexBuffer = std::make_unique<DXIndexBuffer>(m_device, m_commandQueue, &indices);
 		if (rMode == RenderType::TwoDimension)
 		{
-			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData2D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(TwoDimension::Vertex)), static_cast<UINT>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+			auto* sprite = bufferWrapper.GetData<BufferWrapper::DynamicSprite2D>();
 
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().vertexUniformBuffer = std::make_unique<DXConstantBuffer<TwoDimension::VertexUniform>>(m_device, frameCount);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer2D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<TwoDimension::FragmentUniform>>(m_device, frameCount);
+			auto& vertices = sprite->vertices;
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>()->vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(TwoDimension::Vertex)), static_cast<UINT>(sizeof(TwoDimension::Vertex) * vertices.size()), vertices.data());
+
+			sprite->SetVertexUniformBuffer(std::make_unique<DXConstantBuffer<TwoDimension::VertexUniform>>(m_device, frameCount));
+			sprite->SetFragmentUniformBuffer(std::make_unique<DXConstantBuffer<TwoDimension::FragmentUniform>>(m_device, frameCount));
 		}
 		else if (rMode == RenderType::ThreeDimension)
 		{
-			auto& vertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().vertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::QuantizedVertex)), static_cast<UINT>(sizeof(ThreeDimension::QuantizedVertex) * vertices.size()), vertices.data());
+			auto* sprite = bufferWrapper.GetData<BufferWrapper::DynamicSprite3DMesh>();
+			auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+
+			auto& vertices = sprite->vertices;
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>()->vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::QuantizedVertex)), static_cast<UINT>(sizeof(ThreeDimension::QuantizedVertex) * vertices.size()), vertices.data());
 #ifdef _DEBUG
-			auto& normalVertices = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>().normalVertices;
-			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>().normalVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::NormalVertex)), static_cast<UINT>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
+			auto& normalVertices = sprite->normalVertices;
+			bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>()->normalVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::NormalVertex)), static_cast<UINT>(sizeof(ThreeDimension::NormalVertex) * normalVertices.size()), normalVertices.data());
 #endif
 
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().vertexUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::VertexUniform>>(m_device, frameCount);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().fragmentUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount);
-			bufferWrapper.GetUniformBuffer<BufferWrapper::DXConstantBuffer3D>().materialUniformBuffer = std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount);
+			sprite->SetVertexUniformBuffer(std::make_unique<DXConstantBuffer<ThreeDimension::VertexUniform>>(m_device, frameCount));
+			sprite->SetFragmentUniformBuffer(std::make_unique<DXConstantBuffer<ThreeDimension::FragmentUniform>>(m_device, frameCount));
+			sprite->SetMaterialUniformBuffer(std::make_unique<DXConstantBuffer<ThreeDimension::Material>>(m_device, frameCount));
 
 			if (m_meshShaderEnabled)
 			{
-				auto& bufferData3D = bufferWrapper.GetClassifiedData<BufferWrapper::BufferData3D>();
-				auto& buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+				buffer->srvHandle = AllocateSrvHandles(4);
 
-				buffer.srvHandle = AllocateSrvHandles(4);
+				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexSrvHandle(buffer->srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer->uniqueVertexBuffer = std::make_unique<Meshlet::DynamicUniqueVertexBuffer>(m_device, m_commandQueue, vertices, uniqueVertexSrvHandle);
 
-				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexSrvHandle(buffer.srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				buffer.uniqueVertexBuffer = std::make_unique<DXStructuredBuffer<ThreeDimension::QuantizedVertex>>(m_device, m_commandQueue, vertices, uniqueVertexSrvHandle);
+				CD3DX12_CPU_DESCRIPTOR_HANDLE meshletSrvHandle(buffer->srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer->meshletBuffer = std::make_unique<Meshlet::MeshletBuffer>(m_device, m_commandQueue, sprite->meshlets, meshletSrvHandle);
 
-				CD3DX12_CPU_DESCRIPTOR_HANDLE meshletSrvHandle(buffer.srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				buffer.meshletBuffer = std::make_unique<DXStructuredBuffer<Meshlet::Meshlet>>(m_device, m_commandQueue, bufferData3D.Meshlets, meshletSrvHandle);
+				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexIndexSrvHandle(buffer->srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer->uniqueVertexIndexBuffer = std::make_unique<Meshlet::UniqueVertexIndexBuffer>(m_device, m_commandQueue, sprite->uniqueVertexIndices, uniqueVertexIndexSrvHandle);
 
-				CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexIndexSrvHandle(buffer.srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				buffer.uniqueVertexIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.UniqueVertexIndices, uniqueVertexIndexSrvHandle);
-
-				CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer.srvHandle.first, 3, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				buffer.primitiveIndexBuffer = std::make_unique<DXStructuredBuffer<uint32_t>>(m_device, m_commandQueue, bufferData3D.PrimitiveIndices, primitiveIndexSrvHandle);
+				CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer->srvHandle.first, 3, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				buffer->primitiveIndexBuffer = std::make_unique<Meshlet::PrimitiveIndexBuffer>(m_device, m_commandQueue, sprite->primitiveIndices, primitiveIndexSrvHandle);
 			}
+		}
+	}
+	void InitializeGlobalUniformBuffers(BufferWrapper& bufferWrapper)
+	{
+		auto* sprite = bufferWrapper.GetData<BufferWrapper::StaticSprite3D>();
+		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+
+		buffer->srvHandle = AllocateSrvHandles(3);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE vertexUniformSrvHandle(buffer->srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		sprite->SetVertexUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::VertexUniform>>(m_device, m_commandQueue, sprite->vertexUniforms, vertexUniformSrvHandle));
+		CD3DX12_CPU_DESCRIPTOR_HANDLE fragmentUniformSrvHandle(buffer->srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		sprite->SetFragmentUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::FragmentUniform>>(m_device, m_commandQueue, sprite->fragmentUniforms, fragmentUniformSrvHandle));
+		CD3DX12_CPU_DESCRIPTOR_HANDLE materialUniformIndexSrvHandle(buffer->srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		sprite->SetMaterialUniformBuffer(std::make_unique<DXStructuredBuffer<ThreeDimension::Material>>(m_device, m_commandQueue, sprite->materials, materialUniformIndexSrvHandle));
+	}
+	void InitializeStaticBuffers(BufferWrapper& bufferWrapper, std::vector<uint32_t>& indices)
+	{
+		// Initialize Buffers
+		auto* sprite = bufferWrapper.GetData<BufferWrapper::StaticSprite3D>();
+		auto* buffer = bufferWrapper.GetBuffer<BufferWrapper::DXBuffer>();
+
+		buffer->vertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(ThreeDimension::StaticQuantizedVertex)), static_cast<UINT>(sizeof(ThreeDimension::StaticQuantizedVertex) * sprite->vertices.size()), sprite->vertices.data());
+		buffer->indexBuffer = std::make_unique<DXIndexBuffer>(m_device, m_commandQueue, &indices);
+
+		if (m_meshShaderEnabled)
+		{
+			buffer->srvHandle = AllocateSrvHandles(4);
+
+			CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexSrvHandle(buffer->srvHandle.first, 0, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			buffer->uniqueStaticVertexBuffer = std::make_unique<Meshlet::StaticUniqueVertexBuffer>(m_device, m_commandQueue, sprite->vertices, uniqueVertexSrvHandle);
+
+			CD3DX12_CPU_DESCRIPTOR_HANDLE meshletSrvHandle(buffer->srvHandle.first, 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			buffer->meshletBuffer = std::make_unique<Meshlet::MeshletBuffer>(m_device, m_commandQueue, sprite->meshlets, meshletSrvHandle);
+
+			CD3DX12_CPU_DESCRIPTOR_HANDLE uniqueVertexIndexSrvHandle(buffer->srvHandle.first, 2, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			buffer->uniqueVertexIndexBuffer = std::make_unique<Meshlet::UniqueVertexIndexBuffer>(m_device, m_commandQueue, sprite->uniqueVertexIndices, uniqueVertexIndexSrvHandle);
+
+			CD3DX12_CPU_DESCRIPTOR_HANDLE primitiveIndexSrvHandle(buffer->srvHandle.first, 3, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			buffer->primitiveIndexBuffer = std::make_unique<Meshlet::PrimitiveIndexBuffer>(m_device, m_commandQueue, sprite->primitiveIndices, primitiveIndexSrvHandle);
 		}
 	}
 
@@ -193,7 +235,7 @@ public:
 	{
 		if (!bufferWrapper) return;
 
-		auto srvHandle = bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>().srvHandle;
+		auto srvHandle = bufferWrapper->GetBuffer<BufferWrapper::DXBuffer>()->srvHandle;
 		const UINT srvCount = 4;
 
 		const UINT64 queuedFrame = m_fenceValues[m_frameIndex];

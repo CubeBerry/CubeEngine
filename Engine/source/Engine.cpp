@@ -2,8 +2,10 @@
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: Engine.cpp
-
 #include "Engine.hpp"
+#include "GLRenderManager.hpp"
+#include "VKRenderManager.hpp"
+#include "DXRenderManager.hpp"
 
 void Engine::Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode)
 {
@@ -38,6 +40,8 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 
 	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 	soundManager.Initialize(8);
+	
+	spriteManager = new SpriteManager;
 
 	threadManager.Start();
 }

@@ -6,7 +6,7 @@
 #include "BeatEmUpDemo/BEUPlayer.hpp"
 #include "BeatEmUpDemo/BEUEnemy.hpp"
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "Engine.hpp"
 
@@ -18,8 +18,8 @@ BEUAttackBox::BEUAttackBox(glm::vec3 offset_, glm::vec3 size_, std::string name,
 	GetComponent<Physics2D>()->AddCollidePolygonAABB(size_ / 2.f);
 	GetComponent<Physics2D>()->SetIsGhostCollision(true);
 
-	//AddComponent<Sprite>();
-	//GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.f });
+	//AddComponent<DynamicSprite>();
+	//GetComponent<DynamicSprite>()->AddQuad({ 0.f,0.f,0.f,0.f });
 	parent = parent_;
 	lifeTime = lifeTime_;
 	offset = offset_;

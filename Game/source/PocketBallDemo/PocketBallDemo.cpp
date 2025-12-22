@@ -6,7 +6,7 @@
 #include "Engine.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 
 #include <iostream>
@@ -30,9 +30,9 @@ void PocketBallDemo::Init()
 	ballAmount = 7;
 	pocketBallSystem = new PocketBallSystem();
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-38.f,-0.1f }, glm::vec3{ 368.f*2 + 32.f, 510.f + 88.f,0.f }, "Table");
-	Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuadWithTexture("Table");
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-38.f,-0.1f }, glm::vec3{ 368.f * 2 + 32.f, 510.f + 88.f,0.f }, "Table");
+	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuadWithTexture("Table");
 	Engine::GetObjectManager().AddObject<Ball>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "White", BallType::WHITE, pocketBallSystem);
 	pocketBallSystem->SetPlayerBall(Engine::GetObjectManager().GetLastObject());
 
@@ -49,8 +49,8 @@ void PocketBallDemo::Init()
 	{
 		glm::vec2 tempS{ 0.f,0.f };
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,192.f,0.f }, glm::vec3{ 640.f, 32.f,0.f }, "Wall", ObjectType::WALL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 
 		tempS = { Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f };
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
@@ -65,8 +65,8 @@ void PocketBallDemo::Init()
 
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-192.f,0.f }, glm::vec3{ 640.f, 32.f,0.f }, "Wall", ObjectType::WALL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 		Engine::GetObjectManager().GetLastObject()->SetRotate(180.f);
 
 		tempS = { Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f };
@@ -82,8 +82,8 @@ void PocketBallDemo::Init()
 
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -336.f,0.f,0.f }, glm::vec3{ 352.f, 32.f,0.f }, "Wall", ObjectType::WALL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 
 		tempS = { Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f };
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
@@ -98,8 +98,8 @@ void PocketBallDemo::Init()
 		Engine::GetObjectManager().GetLastObject()->SetRotate(90.f);
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 336.f,0.f,0.f }, glm::vec3{ 352.f, 32.f,0.f }, "Wall", ObjectType::WALL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 1.f,1.f,1.f,0.f });
 
 		tempS = { Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f };
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
@@ -114,8 +114,8 @@ void PocketBallDemo::Init()
 		Engine::GetObjectManager().GetLastObject()->SetRotate(270.f);
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 336.f,192.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "Goal", ObjectType::GOAL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
 
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ 2.f, 2.f });
@@ -123,8 +123,8 @@ void PocketBallDemo::Init()
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->SetMass(4.f);
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -336.f,192.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "Goal", ObjectType::GOAL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
 
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ 2.f, 2.f });
@@ -132,8 +132,8 @@ void PocketBallDemo::Init()
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->SetMass(4.f);
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ -336.f,-192.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "Goal", ObjectType::GOAL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
 
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ 2.f, 2.f });
@@ -141,8 +141,8 @@ void PocketBallDemo::Init()
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->SetMass(4.f);
 
 		Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 336.f,-192.f,0.f }, glm::vec3{ 32.f, 32.f,0.f }, "Goal", ObjectType::GOAL);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Sprite>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Sprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
+		Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 0.f,0.f,0.f,0.5f });
 
 		Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
 		Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ 2.f, 2.f });

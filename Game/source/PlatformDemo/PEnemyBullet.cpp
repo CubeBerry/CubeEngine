@@ -15,8 +15,8 @@ PEnemyBullet::PEnemyBullet(glm::vec3 pos_, glm::vec3 size_, std::string name)
 	GetComponent<Physics2D>()->AddCollidePolygonAABB(size_ / 2.f);
 	GetComponent<Physics2D>()->SetIsGhostCollision(true);
 
-	AddComponent<Sprite>();
-	GetComponent<Sprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
+	AddComponent<DynamicSprite>();
+	GetComponent<DynamicSprite>()->AddQuad({ 1.f,1.f,1.f,1.f });
 }
 
 void PEnemyBullet::Init()

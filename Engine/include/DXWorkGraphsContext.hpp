@@ -5,6 +5,9 @@
 #include "IWorkGraphsContext.hpp"
 #include "DXWorkGraphsStateObject.hpp"
 #include "DXStructuredBuffer.hpp"
+#include "BasicComponents/StaticSprite.hpp"
+#include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
 
 class DXRenderManager;
 
@@ -22,8 +25,8 @@ class DXWorkGraphsContext : public IWorkGraphsContext
 public:
 	DXWorkGraphsContext(DXRenderManager* manager) : m_renderManager(manager) {};
 
-	void CheckWorkGraphsSupport();
-	void CheckMeshNodesSupport();
+	void CheckWorkGraphsSupport() const;
+	void CheckMeshNodesSupport() const;
 
 	void InitializeWorkGraphs() override;
 	void ExecuteWorkGraphs() override;
@@ -37,4 +40,16 @@ private:
 	ComPtr<ID3D12Resource> m_zeroBuffer;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE m_workGraphsUavCpuHandle;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE m_workGraphsUavGpuHandle;
+
+	struct CullingData
+	{
+		glm::vec4 frustumPlanes[6];
+		uint32_t numMeshlets;
+	};
+	std::unique_ptr<DXConstantBuffer<CullingData>> m_cullingDataBuffer;
+
+	struct CullEntryRecord
+	{
+		uint32_t gridSize;
+	};
 };

@@ -2,7 +2,6 @@
 //Project: CubeEngine
 //File: Light.hpp
 #pragma once
-#include "Component.hpp"
 #include"../include/Object.hpp"
 #include "Material.hpp"
 
@@ -16,11 +15,12 @@ enum class LightType
 	NONE
 };
 
-class Sprite;
-class Light : public Component
+class DynamicSprite;
+
+class Light : public IComponent
 {
 public:
-	Light() : Component(ComponentTypes::LIGHT) { Init(); };
+	Light() : IComponent(ComponentTypes::LIGHT) { Init(); };
 	~Light() override;
 
 	void Init() override;
@@ -74,7 +74,7 @@ private:
 	LightType lightType = LightType::NONE;
 	int lightlId = 0;
 
-	Sprite* pointLight = nullptr;
+	DynamicSprite* pointLight = nullptr;
 
 	ThreeDimension::PointLightUniform pLight;
 	ThreeDimension::DirectionalLightUniform dLight;

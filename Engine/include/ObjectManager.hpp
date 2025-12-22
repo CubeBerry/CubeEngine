@@ -11,7 +11,7 @@
 #include <vector>
 #include <iostream>
 
-class Sprite;
+class DynamicSprite;
 class Physics3D;
 class Light;
 class ObjectManager
@@ -88,7 +88,7 @@ public:
     void ProcessFunctionQueue();
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
-    void SpriteControllerForImGui(Sprite* sprite);
+    void SpriteControllerForImGui(DynamicSprite* sprite);
     void LightControllerForImGui(Light* light);
     void SelectObjectWithMouse();
     void AddComponentPopUpForImGui();

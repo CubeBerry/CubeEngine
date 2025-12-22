@@ -9,10 +9,10 @@
 #include <glm/gtc/quaternion.hpp>
 #pragma warning(default : 4201)
 
-#include "Component.hpp"
+#include "IComponent.hpp"
 #include "Object.hpp"
 #ifdef _DEBUG
-#include "Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #endif
 
 enum class CollisionDetectionMode
@@ -33,7 +33,7 @@ struct CollisionResult
 struct Point3D
 {
 	glm::vec3 pos = { 0.f,0.f,0.f };
-	Sprite* sprite = nullptr;
+	DynamicSprite* sprite = nullptr;
 };
 #endif
 
@@ -54,10 +54,10 @@ struct Sphere
 	float radius = 0;
 };
 
-class Physics3D : public Component
+class Physics3D : public IComponent
 {
 public:
-	Physics3D() : Component(ComponentTypes::PHYSICS3D) {/* Init(); */};
+	Physics3D() : IComponent(ComponentTypes::PHYSICS3D) {/* Init(); */};
 	~Physics3D() override;
 
 	void Init() override ;

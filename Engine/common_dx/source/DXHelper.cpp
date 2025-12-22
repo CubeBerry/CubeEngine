@@ -6,6 +6,11 @@
 #include <d3dx12/d3dx12_core.h>
 #include <stdexcept>
 #include <fstream>
+// For CompileShader
+//#include <dxcapi.h>
+
+#include <conio.h>
+#define ERROR_QUIT(value, ...) if(!(value)) { printf("ERROR: "); printf(__VA_ARGS__); printf("\nPress any key to terminate...\n"); _getch(); throw 0; }
 
 void DXHelper::ThrowIfFailed(HRESULT hr/*, UINT64& frameCounter*/)
 {
@@ -64,3 +69,124 @@ std::vector<char> DXHelper::ReadShaderFile(const std::filesystem::path& path)
 
     return shaderCode;
 }
+
+// @TODO AI-Generated: Review shader compilation function
+//ID3DBlob* DXHelper::CompileShader(const std::string& shaderCode, const wchar_t* entryPoint, const wchar_t* targetProfile)
+//{
+//    ID3DBlob* resultBlob = nullptr;
+//    HMODULE sDxCompilerDLL = LoadLibrary("dxcompiler.dll");
+//    ERROR_QUIT(sDxCompilerDLL, "Failed to initialize compiler.");
+//    if (sDxCompilerDLL)
+//    {
+//        DxcCreateInstanceProc pDxcCreateInstance;
+//        pDxcCreateInstance = (DxcCreateInstanceProc)GetProcAddress(sDxCompilerDLL, "DxcCreateInstance");
+//
+//        if (pDxcCreateInstance)
+//        {
+//            ComPtr<IDxcUtils> pUtils;
+//            ComPtr<IDxcCompiler> pCompiler;
+//            ComPtr<IDxcBlobEncoding> pSource;
+//            ComPtr<IDxcOperationResult> pOperationResult;
+//
+//            if (SUCCEEDED(pDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pUtils))) && SUCCEEDED(pDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler))))
+//            {
+//                if (SUCCEEDED(pUtils->CreateBlob(shaderCode.c_str(), static_cast<uint32_t>(shaderCode.length()), 0, &pSource)))
+//                {
+//                    if (SUCCEEDED(pCompiler->Compile(pSource.Get(), nullptr, entryPoint, targetProfile, nullptr, 0, nullptr, 0, nullptr, &pOperationResult)))
+//                    {
+//                        HRESULT hr;
+//                        pOperationResult->GetStatus(&hr);
+//                        if (SUCCEEDED(hr))
+//                        {
+//                            pOperationResult->GetResult((IDxcBlob**)&resultBlob);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    ERROR_QUIT(resultBlob, "Failed to compile GWG Library.");
+//    return resultBlob;
+//}
+
+// @TODO AI-Generated: Review shader compilation function
+//ID3DBlob* DXHelper::CompileShader(const std::string& shaderCode, const wchar_t* entryPoint, const wchar_t* targetProfile)
+//{
+//    ID3DBlob* resultBlob = nullptr;
+//    HMODULE sDxCompilerDLL = LoadLibrary("dxcompiler.dll");
+//    ERROR_QUIT(sDxCompilerDLL, "Failed to initialize compiler.");
+//    if (sDxCompilerDLL)
+//    {
+//        DxcCreateInstanceProc pDxcCreateInstance;
+//        pDxcCreateInstance = (DxcCreateInstanceProc)GetProcAddress(sDxCompilerDLL, "DxcCreateInstance");
+//
+//        if (pDxcCreateInstance)
+//        {
+//            ComPtr<IDxcUtils> pUtils;
+//            ComPtr<IDxcCompiler> pCompiler;
+//            ComPtr<IDxcBlobEncoding> pSource;
+//            ComPtr<IDxcOperationResult> pOperationResult;
+//
+//            if (SUCCEEDED(pDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pUtils))) && SUCCEEDED(pDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler))))
+//            {
+//                if (SUCCEEDED(pUtils->CreateBlob(shaderCode.c_str(), static_cast<uint32_t>(shaderCode.length()), 0, &pSource)))
+//                {
+//                    HRESULT compileResult = pCompiler->Compile(pSource.Get(), nullptr, entryPoint, targetProfile, nullptr, 0, nullptr, 0, nullptr, &pOperationResult);
+//
+//                    if (SUCCEEDED(compileResult) && pOperationResult)
+//                    {
+//                        HRESULT hr;
+//                        pOperationResult->GetStatus(&hr);
+//
+//                        // Always try to get error buffer for warnings/errors
+//                        ComPtr<IDxcBlobEncoding> pErrorBlob;
+//                        if (SUCCEEDED(pOperationResult->GetErrorBuffer(&pErrorBlob)) && pErrorBlob && pErrorBlob->GetBufferSize() > 0)
+//                        {
+//                            std::string errorMsg(static_cast<const char*>(pErrorBlob->GetBufferPointer()), pErrorBlob->GetBufferSize());
+//                            OutputDebugStringA("=== Shader Compilation Output ===\n");
+//                            OutputDebugStringA(errorMsg.c_str());
+//                            OutputDebugStringA("\n=================================\n");
+//
+//                            // Also print to console
+//                            printf("=== Shader Compilation Output ===\n");
+//                            printf("%s\n", errorMsg.c_str());
+//                            printf("=================================\n");
+//                        }
+//
+//                        if (SUCCEEDED(hr))
+//                        {
+//                            pOperationResult->GetResult((IDxcBlob**)&resultBlob);
+//                        }
+//                        else
+//                        {
+//                            // Print additional context on failure
+//                            printf("Shader compilation failed!\n");
+//                            printf("  Entry Point: %ls\n", entryPoint);
+//                            printf("  Target Profile: %ls\n", targetProfile);
+//                        }
+//                    }
+//                    else
+//                    {
+//                        printf("Failed to execute shader compilation. HRESULT: 0x%08X\n", compileResult);
+//                    }
+//                }
+//                else
+//                {
+//                    printf("Failed to create source blob from shader code.\n");
+//                }
+//            }
+//            else
+//            {
+//                printf("Failed to create DXC Utils or Compiler instance.\n");
+//            }
+//        }
+//        else
+//        {
+//            printf("Failed to get DxcCreateInstance from dxcompiler.dll.\n");
+//        }
+//    }
+//
+//    ERROR_QUIT(resultBlob, "Failed to compile GWG Library.");
+//    return resultBlob;
+//}

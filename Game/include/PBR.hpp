@@ -4,7 +4,6 @@
 #pragma once
 #include "GameState.hpp"
 #include "RenderManager.hpp"
-#include <array>
 
 class PBR : public GameState
 {

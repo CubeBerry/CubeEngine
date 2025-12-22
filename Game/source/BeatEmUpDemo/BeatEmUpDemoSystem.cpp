@@ -15,11 +15,11 @@ void BeatEmUpDemoSystem::Init()
 	maxHp = 30.f;
 	hp = 30.f;
 	
-	healthBar = new Sprite();
+	healthBar = new DynamicSprite();
 	healthBar->AddQuadWithTexture("hpbar", {0.f,1.f,0.f,1.f});
 	healthBar->SetSpriteDrawType(SpriteDrawType::UI);
 
-	emeyHealthBar = new Sprite();
+	emeyHealthBar = new DynamicSprite();
 	emeyHealthBar->AddQuadWithTexture("hpbar", { 0.f,0.f,0.f,0.f });
 	emeyHealthBar->SetSpriteDrawType(SpriteDrawType::UI);
 }

@@ -15,9 +15,17 @@
 #include "DebugTools.hpp"
 
 // DirectX 12 Agility SDK Setup
-//extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
+#if USE_PREVIEW_SDK
+#define AGILITY_SDK_VER 715 // Use 1.715.0-preview SDK for Mesh Nodes
+#else
+#define AGILITY_SDK_VER 618 // Use 1.618.4 SDK for Work Graphs
+#endif
+
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 // DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 717; }
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = AGILITY_SDK_VER; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 #undef main
@@ -32,7 +40,7 @@ int main(void)
     {
         Engine& engine = Engine::Instance();
         engine.Init("CubeEngine", 1280, 720, false, WindowMode::NORMAL);
-        engine.SetFPS(FrameRate::UNLIMIT);
+        engine.SetFPS(FrameRate::FPS_144);
 
         //engine.GetSoundManager().LoadSoundFilesFromFolder(L"..\\Game\\assets\\Musics");
         engine.GetSoundManager().LoadSoundFilesFromFolder("../Game/assets/Sounds");

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include <string>
 #include <map>
 #include <vector>
@@ -30,7 +30,7 @@ struct Background
 	size_t towerFloor = 0;
 
 	int towerHeight = 0;
-	Sprite* sprite;
+	DynamicSprite* sprite;
 };
 
 class BackgroundManager

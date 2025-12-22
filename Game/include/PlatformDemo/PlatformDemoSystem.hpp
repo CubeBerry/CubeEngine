@@ -4,13 +4,13 @@
 #pragma once
 
 #include <vector>
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "Background.hpp"
 #include "ObjectType.hpp"
 
 struct Target
 {
-	Sprite* rect = nullptr;
+	DynamicSprite* rect = nullptr;
 	glm::vec2 startPos{ 0.f,0.f };
 	glm::vec2 endPos{ 0.f,0.f };
 
@@ -103,7 +103,7 @@ public:
 protected:
 	BackgroundManager* backGroundManager = nullptr;
 	PDemoMapEditorDemo* mapEditor = nullptr;
-	Sprite* healthBar = nullptr;
+	DynamicSprite* healthBar = nullptr;
 
 	float maxHp = 100.f;
 	float hp = 100.f;

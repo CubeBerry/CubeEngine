@@ -38,38 +38,32 @@ set(GAME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/source")
 set(GAME_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
 set(ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 # DirectX 12 Agility SDK
-# set(AGILITY_SDK_VERSION "1.618.4") 
+# Turn on/off DirectX 12 Agility SDK Preview Version
+option(USE_PREVIEW_SDK "Enable DirectX 12 Agility SDK Preview Version (715)" OFF)
+if(USE_PREVIEW_SDK)
 # DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
-set(AGILITY_SDK_VERSION "1.717.0-preview") 
+set(AGILITY_SDK_VERSION "1.715.0-preview")
+add_compile_definitions(USE_PREVIEW_SDK=1)
+else()
+set(AGILITY_SDK_VERSION "1.618.4")
+add_compile_definitions(USE_PREVIEW_SDK=0)
+endif()
+
 # CMAKE_BINARY_DIR is used to locate directory where files are built
 set(NUGET_PACKAGES_ROOT "${CMAKE_BINARY_DIR}/packages")
-set(AGILITY_SDK_PATH "${NUGET_PACKAGES_ROOT}/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}")
-set(AGILITY_SDK_INCLUDE_DIR "${AGILITY_SDK_PATH}/build/native/include")
-set(AGILITY_SDK_BIN_DIR "${AGILITY_SDK_PATH}/build/native/bin/x64")
-# set(NUGET_PACKAGES_DIR "${CMAKE_BINARY_DIR}/packages/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}")
-# set(D3D12_CORE_DLL "${NUGET_PACKAGES_DIR}/build/native/bin/x64/D3D12Core.dll")
-# set(D3D12_LAYERS_DLL "${NUGET_PACKAGES_DIR}/build/native/bin/x64/D3D12SDKLayers.dll")
-# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12"
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-#             "${D3D12_CORE_DLL}" 
-#             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-#             "${D3D12_LAYERS_DLL}" 
-#             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
-#     COMMENT "Copying Agility SDK DLLs to .exe/D3D12 folder..."
-# )
 
 # Copy packages.config to build folder for NuGet package restore (for DirectX 12 Agility SDK)
-configure_file(packages.config ${CMAKE_CURRENT_BINARY_DIR}/packages.config COPYONLY)
+# configure_file(packages.config ${CMAKE_CURRENT_BINARY_DIR}/packages.config COPYONLY)
 
 set(NUGET_EXE "${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe")
 if (NOT EXISTS "${NUGET_EXE}")
     message(FATAL_ERROR "nuget.exe not found at ${NUGET_EXE}. Please download it from https://www.nuget.org/downloads and place it in the project root directory.")
 endif()
+
 message(STATUS "Installing NuGet packages...")
+
 execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe install ${CMAKE_CURRENT_BINARY_DIR}/packages.config -OutputDirectory ${NUGET_PACKAGES_ROOT} -Version ${AGILITY_SDK_VERSION}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe install Microsoft.Direct3D.D3D12 -OutputDirectory ${NUGET_PACKAGES_ROOT} -Version ${AGILITY_SDK_VERSION}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     RESULT_VARIABLE NUGET_RESULT
 )
@@ -77,6 +71,9 @@ execute_process(
 if (NOT NUGET_RESULT EQUAL 0)
     message(FATAL_ERROR "NuGet restore failed. Please ensure 'nuget.exe' is in your PATH.")
 endif()
+
+set(AGILITY_SDK_BIN_DIR "${NUGET_PACKAGES_ROOT}/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}/build/native/bin/x64")
+set(AGILITY_SDK_INCLUDE_DIR "${NUGET_PACKAGES_ROOT}/Microsoft.Direct3D.D3D12.${AGILITY_SDK_VERSION}/build/native/include")
 
 # Subdirectories
 # common_gl
@@ -134,13 +131,12 @@ add_executable(${PROJECT_NAME} main.cpp ${DEBUG_TOOLS_SRC} ${ENGINE_SRC} ${GAME_
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${AGILITY_SDK_BIN_DIR}/D3D12Core.dll" 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${AGILITY_SDK_BIN_DIR}/D3D12Core.dll"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-            "${AGILITY_SDK_BIN_DIR}/D3D12SDKLayers.dll" 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${AGILITY_SDK_BIN_DIR}/D3D12SDKLayers.dll"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/D3D12/"
-    COMMENT "Copying Agility SDK DLLs to .exe/D3D12 folder..."
 )
 
 source_group("DebugTools"       FILES ${DEBUG_TOOLS_SRC})
@@ -196,6 +192,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE optimized ${FFX_INC_DIR}/../bin/ff
 target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 
 # Include Directories
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AGILITY_SDK_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GL_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${VK_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${DX_DIR}/include)

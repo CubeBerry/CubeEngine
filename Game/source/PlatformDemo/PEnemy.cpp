@@ -5,7 +5,7 @@
 #include "PlatformDemo/PEnemyBullet.hpp"
 #include "PlatformDemo/PBullet.hpp"
 
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "Engine.hpp"
 
@@ -21,17 +21,17 @@ PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type
 	GetComponent<Physics2D>()->AddCollidePolygonAABB(size_ / 2.f);
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 
-	AddComponent<Sprite>();
+	AddComponent<DynamicSprite>();
 	switch (eType)
 	{
 	case EnemyType::NORMAL:
-		GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/enemy.spt", "Enemy");
-		GetComponent<Sprite>()->PlayAnimation(0);
+		GetComponent<DynamicSprite>()->LoadAnimation("../Game/assets/PlatformDemo/enemy.spt", "Enemy");
+		GetComponent<DynamicSprite>()->PlayAnimation(0);
 		hp = 1.f;
 		break;
 	case EnemyType::AIRSHIP:
-		GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/vehicle.spt", "Vehicle");
-		GetComponent<Sprite>()->PlayAnimation(0);
+		GetComponent<DynamicSprite>()->LoadAnimation("../Game/assets/PlatformDemo/vehicle.spt", "Vehicle");
+		GetComponent<DynamicSprite>()->PlayAnimation(0);
 
 		GetComponent<Physics2D>()->SetIsGhostCollision(true);
 		GetComponent<Physics2D>()->SetMaxVelocity({ 500.f,400.f });
@@ -41,15 +41,15 @@ PEnemy::PEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, EnemyType type
 		hp = 2.f;
 		break;
 	case EnemyType::BIG:
-		GetComponent<Sprite>()->LoadAnimation("../Game/assets/PlatformDemo/bigEnemy.spt", "BigEnemy");
-		GetComponent<Sprite>()->PlayAnimation(0);
+		GetComponent<DynamicSprite>()->LoadAnimation("../Game/assets/PlatformDemo/bigEnemy.spt", "BigEnemy");
+		GetComponent<DynamicSprite>()->PlayAnimation(0);
 		hp = 3.f;
 
 		Object::SetXSize(-Object::GetSize().x);
 		SetStateOff(EnemyStates::DIRECTION);
 		break;
 	case EnemyType::NONE:
-		GetComponent<Sprite>()->AddQuad({ 1.f,0.f,0.f,1.f });
+		GetComponent<DynamicSprite>()->AddQuad({ 1.f,0.f,0.f,1.f });
 		break;
 	}
 }
@@ -124,12 +124,12 @@ void PEnemy::Hit(float dt)
 {
 	if (isHit == true)
 	{
-		GetComponent<Sprite>()->SetColor({ 0.6f,0.6f,0.6f,1.f });
+		GetComponent<DynamicSprite>()->SetColor({ 0.6f,0.6f,0.6f,1.f });
 		invincibleDelay += dt;
 		isInvincible = true;
 		if (invincibleDelay >= maxInvincibleDelay)
 		{
-			GetComponent<Sprite>()->SetColor({ 1.f,1.f,1.f,1.f });
+			GetComponent<DynamicSprite>()->SetColor({ 1.f,1.f,1.f,1.f });
 			invincibleDelay = 0.f;
 			isHit = false;
 			isInvincible = false;
@@ -145,11 +145,11 @@ void PEnemy::UpdateEnemyNormal(float dt)
 		{
 			isInvincible = true;
 			SetStateOn(EnemyStates::DEATH);
-			GetComponent<Sprite>()->PlayAnimation(3);
+			GetComponent<DynamicSprite>()->PlayAnimation(3);
 		}
 		else
 		{
-			if (GetComponent<Sprite>()->IsAnimationDone() == true)
+			if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 			{
 				Engine::GetObjectManager().Destroy(id);
 			}
@@ -219,17 +219,17 @@ void PEnemy::UpdateEnemyNormal(float dt)
 				{
 					Engine::GetObjectManager().GetLastObject()->SetXSpeed(-1000.f);
 				}
-				GetComponent<Sprite>()->PlayAnimation(2);
+				GetComponent<DynamicSprite>()->PlayAnimation(2);
 				SetStateOn(EnemyStates::ATTACK);
 				attackDelay = 0.f;
 			}
 		}
 		else
 		{
-			if (GetComponent<Sprite>()->IsAnimationDone() == true)
+			if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 			{
 				SetStateOff(EnemyStates::ATTACK);
-				GetComponent<Sprite>()->PlayAnimation(0);
+				GetComponent<DynamicSprite>()->PlayAnimation(0);
 			}
 		}
 	}
@@ -243,11 +243,11 @@ void PEnemy::UpdateEnemyBig(float dt)
 		{
 			isInvincible = true;
 			SetStateOn(EnemyStates::DEATH);
-			GetComponent<Sprite>()->PlayAnimation(4);
+			GetComponent<DynamicSprite>()->PlayAnimation(4);
 		}
 		else
 		{
-			if (GetComponent<Sprite>()->IsAnimationDone() == true)
+			if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 			{
 				Engine::GetObjectManager().Destroy(Object::id);
 			}
@@ -292,18 +292,18 @@ void PEnemy::UpdateEnemyBig(float dt)
 				{
 					SetStateOff(EnemyStates::MOVE);
 					SetStateOn(EnemyStates::TARGETFOUND);
-					if (GetComponent<Sprite>()->GetCurrentAnim() != 0)
+					if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 0)
 					{
-						GetComponent<Sprite>()->PlayAnimation(0);
+						GetComponent<DynamicSprite>()->PlayAnimation(0);
 					}
 				}
 				else if ((playerPos.x < Object::position.x - 2.f && playerPos.x > Object::position.x - abs(Object::size.x) / 3.f))
 				{
 					SetStateOff(EnemyStates::MOVE);
 					SetStateOn(EnemyStates::TARGETFOUND);
-					if (GetComponent<Sprite>()->GetCurrentAnim() != 0)
+					if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 0)
 					{
-						GetComponent<Sprite>()->PlayAnimation(0);
+						GetComponent<DynamicSprite>()->PlayAnimation(0);
 					}
 				}
 				else
@@ -311,7 +311,7 @@ void PEnemy::UpdateEnemyBig(float dt)
 					if (IsStateOn(EnemyStates::MOVE) == true)
 					{
 						SetStateOff(EnemyStates::TARGETFOUND);
-						GetComponent<Sprite>()->PlayAnimation(0);
+						GetComponent<DynamicSprite>()->PlayAnimation(0);
 						SetStateOff(EnemyStates::MOVE);
 						attackDelay = 0.f;
 					}
@@ -322,9 +322,9 @@ void PEnemy::UpdateEnemyBig(float dt)
 			{
 				if (IsStateOn(EnemyStates::MOVE) == true)
 				{
-					if (GetComponent<Sprite>()->GetCurrentAnim() != 1)
+					if (GetComponent<DynamicSprite>()->GetCurrentAnim() != 1)
 					{
-						GetComponent<Sprite>()->PlayAnimation(1);
+						GetComponent<DynamicSprite>()->PlayAnimation(1);
 					}
 
 					if (IsStateOn(EnemyStates::DIRECTION) == false)
@@ -340,14 +340,14 @@ void PEnemy::UpdateEnemyBig(float dt)
 				attackDelay += dt;
 				if (attackDelay > 2.f)
 				{
-					GetComponent<Sprite>()->PlayAnimation(3);
+					GetComponent<DynamicSprite>()->PlayAnimation(3);
 					SetStateOn(EnemyStates::ATTACK);
 					attackDelay = 0.f;
 				}
 			}
 			else if (IsStateOn(EnemyStates::ATTACK) == true)
 			{
-				if (GetComponent<Sprite>()->IsAnimationDone() == true)
+				if (GetComponent<DynamicSprite>()->IsAnimationDone() == true)
 				{
 					numOfAttack++;
 					if (numOfAttack < 10)
@@ -377,13 +377,13 @@ void PEnemy::UpdateEnemyBig(float dt)
 							Engine::GetObjectManager().GetLastObject()->SetYSpeed(dirY);
 							Engine::GetObjectManager().GetLastObject()->SetXSpeed(-200.f);
 						}
-						GetComponent<Sprite>()->PlayAnimation(3);
+						GetComponent<DynamicSprite>()->PlayAnimation(3);
 					}
 					else
 					{
 						numOfAttack = 0;
 						SetStateOff(EnemyStates::ATTACK);
-						GetComponent<Sprite>()->PlayAnimation(0);
+						GetComponent<DynamicSprite>()->PlayAnimation(0);
 					}
 				}
 			}

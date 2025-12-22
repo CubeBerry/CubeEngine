@@ -4,6 +4,8 @@
 #pragma once
 #include <vector>
 #include <map>
+#include "Material.hpp"
+#include "DXStructuredBuffer.hpp"
 #include "glm/vec3.hpp"
 
 // Meshlet
@@ -30,6 +32,16 @@ namespace Meshlet
 		uint32_t primitiveCount{ 0 };
 		uint32_t primitiveOffset{ 0 };
 	};
+
+	template<typename VertexType>
+	using UniqueVertexBufferBase = DXStructuredBuffer<VertexType>;
+	// Dynamic
+	using DynamicUniqueVertexBuffer = UniqueVertexBufferBase<ThreeDimension::QuantizedVertex>;
+	// Static
+	using StaticUniqueVertexBuffer = UniqueVertexBufferBase<ThreeDimension::StaticQuantizedVertex>;
+	using MeshletBuffer = DXStructuredBuffer<Meshlet>;
+	using UniqueVertexIndexBuffer = DXStructuredBuffer<uint32_t>;
+	using PrimitiveIndexBuffer = DXStructuredBuffer<uint32_t>;
 }
 
 namespace Utility

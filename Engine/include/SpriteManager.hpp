@@ -1,25 +1,33 @@
 //Author: DOYEONG LEE
+//Second Author: JEYOON YU
 //Project: CubeEngine
 //File: SpriteManager.hpp
 #pragma once
-#include "BasicComponents/Sprite.hpp"
-
+#include "BasicComponents/ISprite.hpp"
 #include <vector>
+
+class DynamicSprite;
+class StaticSprite;
 
 class SpriteManager
 {
 public:
-    SpriteManager()  = default;
+	SpriteManager() = default;
     ~SpriteManager();
 
 	void Update(float dt);
     void End();
 
-    void AddSprite(Sprite* sprite_);
-    void DeleteSprite(Sprite* sprite_);
+    void AddDynamicSprite(DynamicSprite* sprite);
+    void DeleteDynamicSprite(DynamicSprite* sprite);
+    void RegisterStaticSprite();
 
-    int GetSpritesAmount() { return static_cast<int>(sprites.size()); }
-    std::vector<Sprite*> GetSprites() { return sprites; }
+    //void AllocateStaticUniform(uint32_t spriteIndex, const ThreeDimension::VertexUniform& vertexUniform);
+
+    int GetDynamicSpritesAmount() const { return static_cast<int>(dynamicSprites.size()); }
+    std::vector<DynamicSprite*> GetDynamicSprites() { return dynamicSprites; }
+    BufferWrapper* GetGlobalStaticBuffer() const { return globalStaticBuffer.get(); }
 private:
-    std::vector<Sprite*> sprites;
+    std::vector<DynamicSprite*> dynamicSprites;
+    SubMesh globalStaticBuffer;
 };

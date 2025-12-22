@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: Ball.cpp
 #include "PocketBallDemo/Ball.hpp"
-#include "BasicComponents/Sprite.hpp"
+#include "BasicComponents/DynamicSprite.hpp"
 #include "BasicComponents/Physics2D.hpp"
 #include "PocketBallDemo/PocketBallSystem.hpp"
 
@@ -20,12 +20,12 @@ Ball::Ball(glm::vec3 pos_, glm::vec3 size_, std::string name, BallType ballType_
 	switch (ballType)
 	{
 	case BallType::WHITE:
-		AddComponent<Sprite>();
-		GetComponent<Sprite>()->AddQuadWithTexture(name);
+		AddComponent<DynamicSprite>();
+		GetComponent<DynamicSprite>()->AddQuadWithTexture(name);
 		break;
 	case BallType::OTHER:
-		AddComponent<Sprite>();
-		GetComponent<Sprite>()->AddQuadWithTexture(name);
+		AddComponent<DynamicSprite>();
+		GetComponent<DynamicSprite>()->AddQuadWithTexture(name);
 		break;
 	}
 	AddComponent<Physics2D>();

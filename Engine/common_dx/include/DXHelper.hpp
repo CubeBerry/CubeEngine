@@ -5,6 +5,8 @@
 #include <wrl.h>
 #include <vector>
 #include <filesystem>
+// For CompileShader
+//#include <d3dcommon.h>
 
 #include "DebugTools.hpp"
 
@@ -35,4 +37,7 @@ namespace DXHelper
 
     // Read in precompiled shader
     std::vector<char> ReadShaderFile(const std::filesystem::path& path);
+
+    // @TODO AI-Generated: Review shader compilation function
+    //ID3DBlob* CompileShader(const std::string& shaderCode, const wchar_t* entryPoint, const wchar_t* targetProfile);
 }

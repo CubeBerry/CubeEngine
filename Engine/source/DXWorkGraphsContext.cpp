@@ -5,8 +5,9 @@
 #include "DXRenderManager.hpp"
 #include "Engine.hpp"
 #include <d3d12.h>
+#include "glm/gtc/matrix_access.hpp"
 
-void DXWorkGraphsContext::CheckWorkGraphsSupport()
+void DXWorkGraphsContext::CheckWorkGraphsSupport() const
 {
 	// Check Work Graphs Support
 	D3D12_FEATURE_DATA_D3D12_OPTIONS21 options = {};
@@ -38,8 +39,9 @@ void DXWorkGraphsContext::CheckWorkGraphsSupport()
 }
 
 // DirectX 12 Agility SDK 1.715.0-preview or later is required for Mesh Nodes
-void DXWorkGraphsContext::CheckMeshNodesSupport()
+void DXWorkGraphsContext::CheckMeshNodesSupport() const
 {
+#if USE_PREVIEW_SDK
 	// Work Graphs Support must be enabled first
 	if (!m_renderManager->m_workGraphsEnabled)
 	{
@@ -74,24 +76,46 @@ void DXWorkGraphsContext::CheckMeshNodesSupport()
 			OutputDebugStringA("Mesh Nodes Enabled\n");
 		}
 	}
+#endif
+}
+
+std::array<glm::vec4, 6> ExtractFrustumPlanes(const glm::mat4& viewProj)
+{
+	std::array<glm::vec4, 6> planes;
+	// Left
+	planes[0] = glm::row(viewProj, 3) + glm::row(viewProj, 0);
+	// Right
+	planes[1] = glm::row(viewProj, 3) - glm::row(viewProj, 0);
+	// Bottom
+	planes[2] = glm::row(viewProj, 3) + glm::row(viewProj, 1);
+	// Top
+	planes[3] = glm::row(viewProj, 3) - glm::row(viewProj, 1);
+	// Near
+	planes[4] = glm::row(viewProj, 3) + glm::row(viewProj, 2);
+	// Far
+	planes[5] = glm::row(viewProj, 3) - glm::row(viewProj, 2);
+
+	// Normalize
+	for (auto& plane : planes)
+	{
+		float length = glm::length(glm::vec3(plane));
+		plane /= length;
+	}
+	return planes;
 }
 
 // Work Graphs Frustum Culling
-//void DXWorkGraphsContext::InitializeWorkGraphs()
-//{
-//}
-//
-//void DXWorkGraphsContext::ExecuteWorkGraphs()
-//{
-//}
-//
-//void DXWorkGraphsContext::PrintWorkGraphsResults()
-//{
-//}
-
-// Simple Work Graphs example
 void DXWorkGraphsContext::InitializeWorkGraphs()
 {
+#if USE_PREVIEW_SDK
+	if (!m_renderManager->m_meshNodesEnabled)
+		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphs.cso", L"WorkGraphs");
+	else
+	{
+		m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphsFrustumCulling.lib.cso", "../Engine/shaders/cso/WorkGraphsFrustumCulling.frag.cso", DXGI_FORMAT_D32_FLOAT, DXGI_FORMAT_R8G8B8A8_UNORM, L"WorkGraphsFrustumCulling");
+		m_cullingDataBuffer = std::make_unique<DXConstantBuffer<CullingData>>(m_renderManager->m_device, 2);
+	}
+#else
 	m_workGraphsStateObject = std::make_unique<DXWorkGraphsStateObject>(m_renderManager->m_device, "../Engine/shaders/cso/WorkGraphs.cso", L"WorkGraphsTutorial");
 
 	std::vector<uint32_t> initData(1024, 0);
@@ -151,10 +175,106 @@ void DXWorkGraphsContext::InitializeWorkGraphs()
 		D3D12_RESOURCE_STATE_COPY_DEST
 	);
 	m_workGraphsReadBackBuffer->SetName(L"Work Graphs Readback Buffer");
+#endif
 }
 
 void DXWorkGraphsContext::ExecuteWorkGraphs()
 {
+#if USE_PREVIEW_SDK
+	if (!m_renderManager->m_workGraphsEnabled || !m_renderManager->m_meshNodesEnabled) return;
+
+	auto* commandList = m_renderManager->m_commandList.Get();
+	auto* globalStaticBuffer = Engine::GetSpriteManager().GetGlobalStaticBuffer();
+	if (!globalStaticBuffer) return;
+
+	auto* spriteData = globalStaticBuffer->GetData<BufferWrapper::StaticSprite3D>();
+	auto* buffer = globalStaticBuffer->GetBuffer<BufferWrapper::DXBuffer>();
+	if (!spriteData || !buffer) return;
+
+	if (spriteData->meshlets.empty()) return;
+
+	// Update Culling Data
+	glm::mat4 viewProjection = Engine::GetCameraManager().GetProjectionMatrix() * Engine::GetCameraManager().GetViewMatrix();
+	auto planes = ExtractFrustumPlanes(viewProjection);
+	CullingData cullingData;
+	for (int i = 0; i < 6; ++i) cullingData.frustumPlanes[i] = planes[i];
+	cullingData.numMeshlets = static_cast<uint32_t>(spriteData->meshlets.size());
+	m_cullingDataBuffer->UpdateConstant(&cullingData, sizeof(CullingData), m_renderManager->m_frameIndex);
+
+	D3D12_SET_PROGRAM_DESC programDesc = m_workGraphsStateObject->GetProgramDesc();
+	commandList->SetProgram(&programDesc);
+
+	// SetDescriptorHeaps should be called before SetGraphicsRootSignature here
+	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	ID3D12RootSignature* globalRootSignature = m_workGraphsStateObject->GetGlobalRootSignature();
+	commandList->SetGraphicsRootSignature(globalRootSignature);
+
+	// Mesh Nodes Resource Bindings
+	// Root parameter 0: CBV(b0) - CullingData constant buffer
+	commandList->SetGraphicsRootConstantBufferView(0, m_cullingDataBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+	// Root parameter 1: CBV(b1) - meshletVisualization constant buffer
+	commandList->SetGraphicsRoot32BitConstant(1, m_renderManager->m_meshletVisualization, 0);
+
+	// Pixel Shader Resource Bindings
+	// Root parameter 2: CBV(b2) - DirectionalLight constant buffer
+	if (m_renderManager->directionalLightUniformBuffer && !m_renderManager->directionalLightUniforms.empty())
+	{
+		m_renderManager->directionalLightUniformBuffer->UpdateConstant(m_renderManager->directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * m_renderManager->directionalLightUniforms.size(), m_renderManager->m_frameIndex);
+		commandList->SetGraphicsRootConstantBufferView(2, m_renderManager->directionalLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+	}
+	// Root parameter 3: CBV(b3) - PointLight constant buffer
+	if (m_renderManager->pointLightUniformBuffer && !m_renderManager->pointLightUniforms.empty())
+	{
+		m_renderManager->pointLightUniformBuffer->UpdateConstant(m_renderManager->pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * m_renderManager->pointLightUniforms.size(), m_renderManager->m_frameIndex);
+		commandList->SetGraphicsRootConstantBufferView(3, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+	}
+	// Root parameter 4: CBV(b4) - PushConstants
+	m_renderManager->pushConstants.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size());
+	m_renderManager->pushConstants.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size());
+	commandList->SetGraphicsRoot32BitConstants(4, 2, &m_renderManager->pushConstants, 0);
+
+	// Common Resource Bindings
+	// Root parameter 5 ~ 12
+	// SRV bindings:
+	// t0: globalUniqueVertices
+	// t1: globalMeshlets
+	// t2: globalVertexUniforms
+	// t3: globalUniqueVertexIndices
+	// t4: globalPrimitiveIndices
+	// t5: globalMeshletBounds (@TODO: needs to be created)
+	// t6: globalFragmentUniforms
+	// t7: globalMaterialUniforms
+	commandList->SetGraphicsRootShaderResourceView(5, buffer->uniqueStaticVertexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(6, buffer->meshletBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(7, spriteData->GetVertexUniformBuffer<DXStructuredBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(9, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+	//commandList->SetGraphicsRootShaderResourceView(10, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(11, spriteData->GetFragmentUniformBuffer<DXStructuredBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootShaderResourceView(12, spriteData->GetMaterialUniformBuffer<DXStructuredBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress());
+
+	// Root parameter 13: DescriptorTable(SRV(t0, numDescriptors = unbounded, sapce=1))
+	commandList->SetGraphicsRootDescriptorTable(13, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+	// Root parameter 14: DescriptorTable(SRV(t0, numDescriptors = 3, sapce=2))
+	if (m_renderManager->skyboxEnabled && m_renderManager->m_skybox)
+	{
+		commandList->SetGraphicsRootDescriptorTable(14, m_renderManager->m_skybox->GetIrradianceMapSrv());
+	}
+
+	CullEntryRecord record;
+	record.gridSize = (cullingData.numMeshlets + 31) / 32;
+
+	D3D12_DISPATCH_GRAPH_DESC dispatchDesc = {};
+	dispatchDesc.Mode = D3D12_DISPATCH_MODE_NODE_CPU_INPUT;
+	dispatchDesc.NodeCPUInput.EntrypointIndex = m_workGraphsStateObject->GetEntrypointIndex(L"CullNode");
+	dispatchDesc.NodeCPUInput.NumRecords = 1;
+	dispatchDesc.NodeCPUInput.pRecords = &record;
+	dispatchDesc.NodeCPUInput.RecordStrideInBytes = sizeof(CullEntryRecord);
+
+	commandList->DispatchGraph(&dispatchDesc);
+#else
 	if (!m_renderManager->m_workGraphsEnabled) return;
 
 	D3D12_SET_PROGRAM_DESC programDesc = m_workGraphsStateObject->GetProgramDesc();
@@ -230,10 +350,13 @@ void DXWorkGraphsContext::ExecuteWorkGraphs()
 		D3D12_RESOURCE_STATE_COMMON
 	);
 	m_renderManager->m_commandList->ResourceBarrier(1, &barrier);
+#endif
 }
 
 void DXWorkGraphsContext::PrintWorkGraphsResults()
 {
+#if USE_PREVIEW_SDK
+#else
 	m_renderManager->WaitForGPU();
 
 	uint32_t* pData{ nullptr };
@@ -257,4 +380,5 @@ void DXWorkGraphsContext::PrintWorkGraphsResults()
 
 		m_workGraphsReadBackBuffer->Unmap(0, nullptr);
 	}
+#endif
 }
