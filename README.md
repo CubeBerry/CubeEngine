@@ -21,6 +21,7 @@ CubeEngine is a rendering engine written in C++, developed as a personal hobby p
 ### Prerequisites
 - **Compiler:** MSVC is currently the only supported compiler.
 - **IDE:** Visual Studio 2022 is recommended.
+- **Build System:** CMake is required to generate project files.
 
 ### Build Instructions
 1. Open a terminal (CMD or PowerShell) at the project root directory.
