@@ -135,6 +135,10 @@ void VKInit::InitDevice()
 	}
 	//deviceFeatures.fillModeNonSolid = VK_TRUE;
 
+	VkPhysicalDeviceVulkan11Features version11Features{};
+	version11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+	version11Features.shaderDrawParameters = VK_TRUE;
+
 	//Create 12Features info (for descriptor array)
 	VkPhysicalDeviceVulkan12Features version12Features{};
 	version12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
@@ -143,6 +147,7 @@ void VKInit::InitDevice()
 	//versionFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 	//versionFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
 	//versionFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+	version12Features.pNext = &version11Features;
 
 	//Create Robustness2Features info (for nullDescriptor)
 	VkPhysicalDeviceRobustness2FeaturesEXT robustness2Features{};
