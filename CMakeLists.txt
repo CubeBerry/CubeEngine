@@ -98,6 +98,8 @@ FILE(GLOB ENGINE_SRC
     "${ENGINE_SRC_DIR}/*.cpp"
     "${ENGINE_INC_DIR}/BasicComponents/*.hpp"
     "${ENGINE_SRC_DIR}/BasicComponents/*.cpp"
+    "${ENGINE_INC_DIR}/SkeletalAnimation/*.hpp"
+    "${ENGINE_SRC_DIR}/SkeletalAnimation/*.cpp"
     "${ENGINE_INC_DIR}/Particle/*.hpp"
     "${ENGINE_SRC_DIR}/Particle/*.cpp"
 )

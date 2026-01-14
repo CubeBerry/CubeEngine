@@ -10,7 +10,9 @@ enum class ComponentTypes
     PHYSICS2D,
     PHYSICS3D,
     LIGHT,
-    INVALID 
+    SKETANIMATOR,
+    SKETANIMASTATE,
+    INVALID
 };
 
 inline ComponentTypes StringToComponent(const std::string& string)

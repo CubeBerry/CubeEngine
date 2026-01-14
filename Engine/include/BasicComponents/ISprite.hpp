@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <map>
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -63,6 +65,10 @@ public:
 
 	//For CompFuncQueue
 	virtual void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f) = 0;
+
+	// BoneInfoMap
+	std::map<std::string, ThreeDimension::BoneInfo>& GetBoneInfoMap() { return m_BoneInfoMap; }
+	int& GetBoneCount() { return m_BoneCount; }
 protected:
 	SpriteType spriteType = SpriteType::DYNAMIC;
 
@@ -79,4 +85,8 @@ protected:
 
 	// Buffer
 	std::vector<SubMesh> subMeshes;
+
+	// Store bone information extracted from Assimp
+	std::map<std::string, ThreeDimension::BoneInfo> m_BoneInfoMap;
+	int m_BoneCount = 0;
 };

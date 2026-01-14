@@ -6,6 +6,8 @@
 #include "Engine.hpp"
 #include "BasicComponents/Light.hpp"
 #include "BasicComponents/StaticSprite.hpp"
+#include "BasicComponents/SkeletalAnimator.hpp"
+#include "BasicComponents/SkeletalAnimationStateMachine.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -49,6 +51,17 @@ void ProceduralMeshes::Init()
 	//// @TODO Remove ProcessFunctionQueue after implementing SafeDelete and ProcessDeletionQueue for OpenGL, Vulkan
 	//Engine::GetObjectManager().ProcessFunctionQueue();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->InitializeBuffers();
+
+
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), "Player");
+	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/AnimationModels/character.fbx", 1, 1);
+
+	Engine::GetObjectManager().GetLastObject()->AddComponent<SkeletalAnimator>();
+	Engine::GetObjectManager().GetLastObject()->AddComponent<SkeletalAnimationStateMachine>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Idle", "../Game/assets/Models/AnimationModels/Idle.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Run", "../Game/assets/Models/AnimationModels/Quad Punch.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->ChangeState("Idle");
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 

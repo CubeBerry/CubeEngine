@@ -6,6 +6,8 @@
 
 #include <variant>
 #include <type_traits>
+#include <map>
+#include <string>
 
 #include "GLVertexArray.hpp"
 #include "GLVertexBuffer.hpp"
@@ -271,6 +273,11 @@ public:
 		ThreeDimension::VertexUniform vertexUniform;
 		ThreeDimension::FragmentUniform fragmentUniform;
 		ThreeDimension::Material material;
+
+		// Bone Information Storage (Replacing Model class functionality)
+		// Stores the mapping from bone name to BoneInfo (ID and Offset Matrix)
+		std::map<std::string, ThreeDimension::BoneInfo> boneInfoMap;
+		int boneCount = 0;
 
 		// GPU Buffers
 		//std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;

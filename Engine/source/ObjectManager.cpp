@@ -8,9 +8,38 @@
 #include "GLRenderManager.hpp"
 #include "VKRenderManager.hpp"
 #include "DXRenderManager.hpp"
+
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Light.hpp"
+#include "BasicComponents/SkeletalAnimator.hpp"
+#include "BasicComponents/SkeletalAnimationStateMachine.hpp"
+#include "SkeletalAnimation/SkeletalAnimation.hpp"
+
 #include "imgui.h"
+
+// Helper function to world-to-screen transform for ImGui drawing
+glm::vec2 WorldToScreen(glm::vec3 worldPos, glm::mat4 view, glm::mat4 proj)
+{
+	// Transform world space to clip space
+	glm::vec4 clipSpace = proj * view * glm::vec4(worldPos, 1.0f);
+
+	// Discard points behind the camera
+	if (clipSpace.w <= 0.0f) return glm::vec2(-1, -1);
+
+	// Perspective divide to get Normalized Device Coordinates (NDC)
+	glm::vec3 ndc = glm::vec3(clipSpace) / clipSpace.w;
+
+	// Map NDC to screen coordinates using ImGui viewport data
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { viewport->Pos.x, viewport->Pos.y };
+	glm::vec2 windowSize = { viewport->Size.x, viewport->Size.y };
+
+	// Convert NDC to screen space and flip Y-axis for ImGui coordinate system
+	float screenX = (ndc.x + 1.0f) * 0.5f * windowSize.x + windowPos.x;
+	float screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+
+	return glm::vec2(screenX, screenY);
+}
 
 ObjectManager::ObjectManager()
 {
@@ -188,6 +217,12 @@ void ObjectManager::ObjectControllerForImGui()
 				break;
 			case ComponentTypes::LIGHT:
 				LightControllerForImGui(reinterpret_cast<Light*>(comp));
+				break;
+			case ComponentTypes::SKETANIMATOR:
+				SkeletalAnimatorControllerForImGui(reinterpret_cast<SkeletalAnimator*>(comp));
+				break;
+			case ComponentTypes::SKETANIMASTATE:
+				AnimationStateMachineControllerForImGui(reinterpret_cast<SkeletalAnimationStateMachine*>(comp));
 				break;
 			}
 		}
@@ -680,6 +715,194 @@ void ObjectManager::LightControllerForImGui(Light* light)
 		ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 		ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 		ImGui::End();
+	}
+}
+
+void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animator)
+{
+	if (!animator) return;
+
+	if (ImGui::CollapsingHeader("Skeletal Animator"))
+	{
+		ImGui::Text("Animation Controls");
+
+		// Playback Controls
+		if (ImGui::Button("Play")) 
+		{
+			animator->Play();
+		}
+		ImGui::SameLine();
+
+		if (ImGui::Button("Pause")) 
+		{
+			animator->Pause();
+		}
+		ImGui::SameLine();
+
+		if (ImGui::Button("Stop")) 
+		{
+			animator->Stop();
+		}
+
+		// Parameters
+		float speed = animator->GetSpeed();
+		if (ImGui::DragFloat("Speed", &speed, 0.1f, 0.0f, 5.0f))
+		{
+			animator->SetSpeed(speed);
+		}
+
+		// Debug Toggle
+		ImGui::Checkbox("Show Bones", &isShowBone);
+
+		// Information
+		SkeletalAnimation* anim = animator->GetCurrentAnimation();
+		if (anim)
+		{
+			float currentTime = animator->GetCurrentAnimationTime();
+			float duration = anim->GetDuration();
+			ImGui::SliderFloat("Time", &currentTime, 0.0f, duration, "%.2f");
+			animator->SetCurrentAnimationTime(currentTime);
+		}
+		else
+		{
+			ImGui::Text("No Animation Playing");
+		}
+
+		Object* currentObj = FindObjectWithId(currentIndex);
+		if (isShowBone && currentObj->HasComponent<SkeletalAnimator>())
+		{
+			SkeletalAnimator* animator = currentObj->GetComponent<SkeletalAnimator>();
+			SkeletalAnimation* currentAnim = animator->GetCurrentAnimation();
+			if (currentAnim)
+			{
+				const auto& transforms = animator->GetGlobalBoneTransforms();
+
+				// Get Model Matrix from object
+				glm::vec3 pos = currentObj->GetPosition();
+				glm::vec3 rot = currentObj->GetRotate3D();
+				glm::vec3 scale = currentObj->GetSize();
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
+				model = glm::rotate(model, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+				model = glm::rotate(model, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+				model = glm::rotate(model, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+				model = glm::scale(model, scale);
+
+				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
+			}
+		}
+	}
+}
+
+void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationStateMachine* fsm)
+{
+	if (!fsm) return;
+
+	if (ImGui::CollapsingHeader("Animation State Machine"))
+	{
+		ImGui::Text("Current State: %s", fsm->GetCurrentStateName().c_str());
+
+		std::vector<std::string> states = fsm->GetStateNames();
+		static int selectedStateIndex = 0;
+
+		if (states.empty()) return;
+
+		// Combo box to select state
+		if (ImGui::BeginCombo("States", states[selectedStateIndex].c_str()))
+		{
+			for (int i = 0; i < states.size(); i++)
+			{
+				bool isSelected = (selectedStateIndex == i);
+				if (ImGui::Selectable(states[i].c_str(), isSelected))
+				{
+					selectedStateIndex = i;
+				}
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		if (ImGui::Button("Transition"))
+		{
+			fsm->ChangeState(states[selectedStateIndex]);
+		}
+	}
+}
+
+void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 parentTransform)
+{
+	glm::mat4 globalTransform = parentTransform;
+
+	// Apply animation transform if available
+	if (animatedTransforms.count(node->name))
+	{
+		globalTransform = parentTransform * animatedTransforms.at(node->name);
+	}
+	else
+	{
+		globalTransform = parentTransform * node->transformation;
+	}
+
+	// Prepare for drawing
+	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
+	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	glm::vec3 currentPos = glm::vec3(globalTransform[3]); // Extract translation
+	glm::vec2 screenPos = WorldToScreen(currentPos, view, proj);
+
+	// Draw Joint (Circle)
+	if (screenPos.x != -1) // Check if the point is visible on the screen
+	{
+		ImU32 color = IM_COL32(0, 255, 0, 255);
+		if (node->name == selectedBoneName) 
+		{
+			color = IM_COL32(255, 0, 0, 255);
+		}
+		drawList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 4.0f, color);
+	}
+
+	// Draw Connections to Children
+	for (const auto& child : node->children)
+	{
+		glm::mat4 childTransform = globalTransform; // Start from current global
+
+		// We need to look ahead to find child position
+		if (animatedTransforms.count(child.name))
+		{
+			// Note: In strict Skeletal systems, transforms are usually local relative to parent.
+			// But if 'animatedTransforms' from Animator contains Local transforms:
+			// childTransform = globalTransform * animatedTransforms.at(child.name);
+
+			// IF 'animatedTransforms' contains Global transforms (relative to Root Bone):
+			// We need to be careful. The provided Animator calculates GlobalTransform relative to mesh root.
+			// So:
+			// glm::mat4 childGlobal = RootModelMatrix * AnimatorGlobalTransforms[child.name];
+		}
+
+		// Recurse
+		RenderBoneHierarchy(&child, animatedTransforms, parentTransform);
+
+		// Draw Line
+		glm::mat4 childFinalMatrix = parentTransform; // Base
+		if (animatedTransforms.count(child.name))
+		{
+			childFinalMatrix = parentTransform * animatedTransforms.at(child.name);
+		}
+		else
+		{
+			childFinalMatrix = globalTransform * child.transformation;
+		}
+
+		glm::vec3 childPos = glm::vec3(childFinalMatrix[3]);
+		glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
+
+		if (screenPos.x > 0 && childScreenPos.x > 0)
+		{
+			drawList->AddLine(ImVec2(screenPos.x, screenPos.y), ImVec2(childScreenPos.x, childScreenPos.y), IM_COL32(255, 255, 0, 255), 2.0f);
+		}
 	}
 }
 

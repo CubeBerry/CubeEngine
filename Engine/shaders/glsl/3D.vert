@@ -14,6 +14,10 @@ layout(location = 1) in vec3 i_normal;
 layout(location = 2) in vec2 i_uv;
 layout(location = 3) in int tex_sub_index;
 
+// Attributes for Skeletal Animation
+layout(location = 7) in ivec4 i_boneIds;
+layout(location = 8) in vec4 i_weights;
+
 layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_col;
 layout(location = 2) out int o_tex_sub_index;
@@ -33,6 +37,9 @@ struct vMatrix
     vec4 color;
     // @TODO move to push constants later
     vec3 viewPosition;
+
+    // Bone Matrices
+    mat4 finalBones[128];
 };
 
 #if VULKAN
@@ -52,15 +59,49 @@ void main()
     float z = float((i_pos >> 22) & 0x3FFu);
     vec3 decoded_position = (matrix.decode * vec4(vec3(x, y, z), 1.0)).xyz;
 
+    // Skinning Logic
+    vec4 totalPosition = vec4(0.0f);
+    vec3 totalNormal = vec3(0.0f);
+
+    // If no weights (static mesh), default to identity
+    // Check if the first weight is 0, assuming it's not a skinned mesh
+    if (i_weights[0] == 0.0f) 
+    {
+        totalPosition = vec4(decoded_position, 1.0f);
+        totalNormal = i_normal;
+    }
+    else
+    {
+        for(int i = 0 ; i < 4 ; i++)
+        {
+            if(i_boneIds[i] == -1) 
+                continue;
+            if(i_boneIds[i] >= 100) 
+                continue;
+
+            vec4 localPosition = matrix.finalBones[i_boneIds[i]] * vec4(decoded_position, 1.0f);
+            totalPosition += localPosition * i_weights[i];
+
+            vec3 localNormal = mat3(matrix.finalBones[i_boneIds[i]]) * i_normal;
+            totalNormal += localNormal * i_weights[i];
+        }
+    }
+
+
     o_uv = i_uv;
     o_col = matrix.color;
     o_tex_sub_index = tex_sub_index;
+    
     //Lighting
     // o_normal = vec3(transpose(inverse(matrix[object_index].model)) * vec4(i_normal, 0.0));
-    o_normal = mat3(matrix.transposeInverseModel) * i_normal;
+    //o_normal = mat3(matrix.transposeInverseModel) * i_normal;
     //o_normal = mat3(matrix[object_index].model) * i_normal;
-    o_fragment_position = vec3(matrix.model * vec4(decoded_position, 1.0));
+    o_normal = mat3(matrix.transposeInverseModel) * totalNormal;
+    
+    //o_fragment_position = vec3(matrix.model * vec4(decoded_position, 1.0));
+    o_fragment_position = vec3(matrix.model * totalPosition);
     o_view_position = inverse(matrix.view)[3].xyz;
 
-    gl_Position = matrix.projection * matrix.view * matrix.model * vec4(decoded_position, 1.0);
+    //gl_Position = matrix.projection * matrix.view * matrix.model * vec4(decoded_position, 1.0);
+    gl_Position = matrix.projection * matrix.view * matrix.model * totalPosition;
 }
