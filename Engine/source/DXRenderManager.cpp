@@ -236,117 +236,9 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 
-	// Create root signature and pipeline for 3D
-	rootParameters.clear();
-	rootParameters.resize(m_meshShaderEnabled ? 13 : 8, {});
-	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[3].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[4].InitAsConstantBufferView(4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[5].InitAsConstants(2, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	rootParameters[6].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	CD3DX12_DESCRIPTOR_RANGE1 iblSrvRange;
-	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	if (m_meshShaderEnabled)
-	{
-		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
-		// ThreeDimension::QuantizedVertex data is transfer via SRV
-		rootParameters[8].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[9].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[10].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[11].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[12].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
-	}
-
-	CreateRootSignature(m_rootSignature3D, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"3D Root Signature"));
-
-	positionLayout.offset = offsetof(ThreeDimension::QuantizedVertex, position);
-	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-
-	if (m_meshShaderEnabled)
-	{
-		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
-			m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/cso/3D.mesh.cso"),
-			std::filesystem::path("../Engine/shaders/cso/3DMesh.frag.cso"),
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			true,
-			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
-	}
-	else
-	{
-		m_pipeline3D = std::make_unique<DXPipeLine>(
-			m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			true,
-			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
-
-		m_pipeline3DLine = std::make_unique<DXPipeLine>(
-			m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
-			D3D12_FILL_MODE_WIREFRAME,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			true,
-			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
-	}
-
-#ifdef _DEBUG
-	// Create root signature and pipeline for Normal 3D
-	rootParameters.clear();
-	rootParameters.resize(1, {});
-	rootParameters[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-
-	CreateRootSignature(m_rootSignature3DNormal, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
-
-	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
-	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
-
-	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignature3DNormal,
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
-	);
-#endif
+	// Create Forward Render Context
+	m_forwardRenderContext = std::make_unique<DXForwardRenderContext>(this);
+	m_forwardRenderContext->Initialize();
 
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
@@ -502,11 +394,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 	DXHelper::ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
-
-	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ? m_pipeline2D->GetPipelineState().Get() :
-		m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() :
-		pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
 
 	// Set the viewport and scissor rect
 	// This is weird but FidelityFX class takes care of viewport size (display size, render size)
@@ -530,11 +418,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:
 	{
+		m_commandList->SetPipelineState(m_pipeline2D->GetPipelineState().Get());
+
+		std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
+
 		m_commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
 		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ID3D12DescriptorHeap* ppHeaps2D[] = { m_srvHeap.Get() };
@@ -568,143 +459,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	break;
 	case RenderType::ThreeDimension:
 	{
-		if (m_workGraphsEnabled && m_meshNodesEnabled)
-		{
-			m_workGraphsContext->ExecuteWorkGraphs();
-		}
-		else
-		{
-			m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
-			ID3D12DescriptorHeap* ppHeaps3D[] = { m_srvHeap.Get() };
-			m_commandList->SetDescriptorHeaps(_countof(ppHeaps3D), ppHeaps3D);
-
-			for (const auto& sprite : sprites)
-			{
-				for (auto& subMesh : sprite->GetSubMeshes())
-				{
-					auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
-					auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
-					if (m_meshShaderEnabled)
-					{
-						m_commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());
-
-						// Update Constant Buffer
-						spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-						spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-						spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->UpdateConstant(&spriteData->material, sizeof(ThreeDimension::Material), m_frameIndex);
-
-						m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(2, spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress(m_frameIndex));
-
-						if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
-						{
-							directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-						if (pointLightUniformBuffer && !pointLightUniforms.empty())
-						{
-							pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-
-						pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-						pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-						m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
-
-						m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-
-						if (skyboxEnabled && m_skybox)
-						{
-							m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
-						}
-
-						// Bind structured buffers to root signature
-						m_commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRootShaderResourceView(9, buffer->meshletBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRootShaderResourceView(10, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRootShaderResourceView(11, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRoot32BitConstants(12, 1, &m_meshletVisualization, 0);
-
-						const auto& meshlets = spriteData->meshlets;
-						UINT numMeshlets = static_cast<UINT>(meshlets.size());
-						m_commandList->DispatchMesh(numMeshlets, 1, 1);
-					}
-					else
-					{
-						m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-						// Update Constant Buffer
-						spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-						spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-						spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->UpdateConstant(&spriteData->material, sizeof(ThreeDimension::Material), m_frameIndex);
-
-						if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
-						{
-							directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-						if (pointLightUniformBuffer && !pointLightUniforms.empty())
-						{
-							pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-
-						pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-						pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-						m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
-
-						m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-
-						if (skyboxEnabled && m_skybox)
-						{
-							m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
-						}
-
-						// Bind Vertex Buffer & Index Buffer
-						D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
-						D3D12_INDEX_BUFFER_VIEW ibv = buffer->indexBuffer->GetView();
-						m_commandList->IASetVertexBuffers(0, 1, &vbv);
-						m_commandList->IASetIndexBuffer(&ibv);
-						// Bind constant buffers to root signature
-						m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(2, spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress(m_frameIndex));
-
-						m_commandList->DrawIndexedInstanced(static_cast<UINT>(spriteData->indices.size()), 1, 0, 0, 0);
-					}
-
-#ifdef _DEBUG
-					if (m_normalVectorVisualization)
-					{
-						m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
-						m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
-						m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-						auto& vertexUniform = spriteData->vertexUniform;
-						glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-						m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
-
-						D3D12_VERTEX_BUFFER_VIEW nvbv = buffer->normalVertexBuffer->GetView();
-						m_commandList->IASetVertexBuffers(0, 1, &nvbv);
-
-						m_commandList->DrawInstanced(static_cast<UINT>(spriteData->normalVertices.size()), 1, 0, 0);
-
-						switch (pMode)
-						{
-						case PolygonType::FILL:
-							m_commandList->SetPipelineState(m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
-							break;
-						case PolygonType::LINE:
-							m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
-							break;
-						}
-						m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
-					}
-#endif
-				}
-			}
-		}
+		DXForwardRenderContext::DXCommandListWrapper wrapper(m_commandList.Get());
+		if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
+		else m_forwardRenderContext->Execute(&wrapper);
 
 		if (skyboxEnabled)
 		{

@@ -12,7 +12,6 @@
 #endif
 
 #include "DXPipeLine.hpp"
-#include "DXMeshPipeLine.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
@@ -21,6 +20,7 @@
 #include "DXWorkGraphsContext.hpp"
 #include "DXIndexBuffer.hpp"
 #include "DXConstantBuffer.hpp"
+#include "DXForwardRenderContext.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
@@ -29,6 +29,9 @@ using Microsoft::WRL::ComPtr;
 
 class DXRenderManager : public RenderManager
 {
+	friend class DXForwardRenderContext;
+	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
+	friend class DXWorkGraphsContext;
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
 	~DXRenderManager() override;
@@ -85,7 +88,6 @@ private:
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
-	ComPtr<ID3D12RootSignature> m_rootSignature3D;
 	// rtv = Render Target View
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
@@ -103,13 +105,9 @@ private:
 	UINT64 m_fenceValues[frameCount]{};
 
 	std::unique_ptr<DXPipeLine> m_pipeline2D;
-	std::unique_ptr<DXPipeLine> m_pipeline3D;
-	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
-	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
-#ifdef _DEBUG
-	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
-	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
-#endif
+
+	// Forward Render Context
+	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
 
 	// MSAA
 	// Depth
@@ -119,8 +117,6 @@ private:
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
 
 	// Work Graphs
-	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
-	friend class DXWorkGraphsContext;
 	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
 #if USE_NSIGHT_AFTERMATH
