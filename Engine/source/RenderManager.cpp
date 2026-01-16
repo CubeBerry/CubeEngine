@@ -1027,13 +1027,15 @@ void RenderManager::RenderingControllerForImGui()
 			auto currentEffect = fidelityFX->GetCurrentEffect();
 			FfxFsr1QualityMode currentFsrMode = fidelityFX->GetFSR1QualityMode();
 			FidelityFX::CASScalePreset currentCasScalePreset = fidelityFX->GetSCASScalePreset();
+			static FidelityFX::UpscaleEffect lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
+			if (currentEffect != FidelityFX::UpscaleEffect::NONE) lastActiveEffect = currentEffect;
 
 			// Enable/Disable FidelityFX
 			bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
-			int effectMode = (currentEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
+			int effectMode = (lastActiveEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
 			if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
 			{
-				FidelityFX::UpscaleEffect newEffect = ffxEnabled ? FidelityFX::UpscaleEffect::FSR1 : FidelityFX::UpscaleEffect::NONE;
+				FidelityFX::UpscaleEffect newEffect = ffxEnabled ? lastActiveEffect : FidelityFX::UpscaleEffect::NONE;
 				UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
 			}
 
@@ -1042,11 +1044,13 @@ void RenderManager::RenderingControllerForImGui()
 				// Enable FSR1/CAS
 				if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
 				{
+					lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
 					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
 				}
 				ImGui::SameLine();
 				if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
 				{
+					lastActiveEffect = FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
 					UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
 				}
 
@@ -1073,6 +1077,7 @@ void RenderManager::RenderingControllerForImGui()
 					if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
 					{
 						FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
+						lastActiveEffect = newEffect;
 						UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
 					}
 					if (casUpscalingEnabled)
