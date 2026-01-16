@@ -9,7 +9,7 @@
 #include <glm/gtc/quaternion.hpp>
 #pragma warning(default : 4201)
 
-#include "IComponent.hpp"
+#include "Interface/IComponent.hpp"
 #include "Object.hpp"
 #ifdef _DEBUG
 #include "BasicComponents/DynamicSprite.hpp"

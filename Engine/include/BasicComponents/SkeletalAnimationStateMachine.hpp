@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "IComponent.hpp"
+#include "Interface/IComponent.hpp"
 #include <string>
 #include <map>
 #include <memory>

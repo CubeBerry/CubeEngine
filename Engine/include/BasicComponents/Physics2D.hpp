@@ -6,7 +6,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-#include "IComponent.hpp"
+#include "Interface/IComponent.hpp"
 #ifdef _DEBUG
 #include "BasicComponents/DynamicSprite.hpp"
 #endif

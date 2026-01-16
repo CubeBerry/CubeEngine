@@ -9,7 +9,7 @@
 #include <functional>
 #include "Window.hpp"
 #include "Utility.hpp"
-#include "BasicComponents/ISprite.hpp"
+#include "Interface/ISprite.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

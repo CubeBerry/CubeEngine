@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "IComponent.hpp"
+#include "Interface/IComponent.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include <vector>

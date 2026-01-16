@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: DXWorkGraphsContext.hpp
 #pragma once
-#include "IWorkGraphsContext.hpp"
+#include "Interface/IWorkGraphsContext.hpp"
 #include "DXWorkGraphsStateObject.hpp"
 #include "DXStructuredBuffer.hpp"
 #include "BasicComponents/StaticSprite.hpp"

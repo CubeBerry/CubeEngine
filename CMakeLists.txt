@@ -102,6 +102,8 @@ FILE(GLOB ENGINE_SRC
     "${ENGINE_SRC_DIR}/SkeletalAnimation/*.cpp"
     "${ENGINE_INC_DIR}/Particle/*.hpp"
     "${ENGINE_SRC_DIR}/Particle/*.cpp"
+    "${ENGINE_INC_DIR}/Interface/*.hpp"
+    "${ENGINE_SRC_DIR}/Interface/*.cpp"
 )
 FILE(GLOB GAME_SRC
     "${GAME_INC_DIR}/*.hpp"
