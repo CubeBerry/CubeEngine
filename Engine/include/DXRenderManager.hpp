@@ -21,6 +21,7 @@
 #include "DXIndexBuffer.hpp"
 #include "DXConstantBuffer.hpp"
 #include "DXForwardRenderContext.hpp"
+#include "DXSkyboxRenderContext.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
@@ -30,6 +31,7 @@ using Microsoft::WRL::ComPtr;
 class DXRenderManager : public RenderManager
 {
 	friend class DXForwardRenderContext;
+	friend class DXSkyboxRenderContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
 	friend class DXWorkGraphsContext;
 public:
@@ -108,6 +110,11 @@ private:
 
 	// Forward Render Context
 	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
+	// Skybox Render Context
+	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
+	// @TODO Remove LoadSkybox() and DeleteSkybox() after SkyboxRenderContext is implemented on all graphics APIs
+	void LoadSkybox(const std::filesystem::path& path) override;
+	void DeleteSkybox() override;
 
 	// MSAA
 	// Depth
@@ -262,9 +269,6 @@ public:
 	const std::vector<std::unique_ptr<DXTexture>>& GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
-
-	void LoadSkybox(const std::filesystem::path& path) override;
-	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
 	std::vector<std::unique_ptr<DXTexture>> textures;
@@ -285,10 +289,4 @@ private:
 		int activeDirectionalLight;
 		int activePointLight;
 	} pushConstants;
-
-	//Skybox
-	std::unique_ptr<DXVertexBuffer> m_skyboxVertexBuffer;
-	ComPtr<ID3D12RootSignature> m_rootSignatureSkybox;
-	std::unique_ptr<DXPipeLine> m_pipelineSkybox;
-	std::unique_ptr<DXSkybox> m_skybox;
 };

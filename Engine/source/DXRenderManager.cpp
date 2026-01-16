@@ -5,6 +5,7 @@
 
 #include <d3d12.h>
 
+#include "DXCommandListWrapper.hpp"
 #include "DXHelper.hpp"
 #include "Engine.hpp"
 
@@ -240,6 +241,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_forwardRenderContext = std::make_unique<DXForwardRenderContext>(this);
 	m_forwardRenderContext->Initialize();
 
+	// Create Skybox Render Context
+	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
+	m_skyboxRenderContext->Initialize();
+
 	// Create Command List
 	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Main Command List"));
@@ -374,6 +379,8 @@ void DXRenderManager::OnResize()
 		m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
 	}
 
+	m_skyboxRenderContext->OnResize();
+
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
 
@@ -459,28 +466,10 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	break;
 	case RenderType::ThreeDimension:
 	{
-		DXForwardRenderContext::DXCommandListWrapper wrapper(m_commandList.Get());
+		DXCommandListWrapper wrapper(m_commandList.Get());
 		if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
 		else m_forwardRenderContext->Execute(&wrapper);
-
-		if (skyboxEnabled)
-		{
-			m_commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
-			m_commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
-			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_srvHeap.Get() };
-			m_commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
-
-			glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
-			m_commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
-			m_commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
-
-			D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
-			m_commandList->IASetVertexBuffers(0, 1, &vbv);
-
-			m_commandList->DrawInstanced(36, 1, 0, 0);
-		}
-
+		m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
 	}
@@ -976,108 +965,10 @@ DXTexture* DXRenderManager::GetTexture(const std::string& name) const
 
 void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
-	float skyboxVertices[] = {
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
-	};
-
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
-
-	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2, CD3DX12_ROOT_PARAMETER1{});
-	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
-	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-	rootParameters[1].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	CreateRootSignature(m_rootSignatureSkybox, rootParameters);
-
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderTarget->GetMSAAQualityLevel();
-
-	m_pipelineSkybox = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignatureSkybox,
-		"../Engine/shaders/hlsl/Skybox.vert.hlsl",
-		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
-
-	WaitForGPU();
-	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap);
-	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5> skyboxSrvHandles;
-	auto [startHandle, startIndex] = AllocateSrvHandles(5);
-	for (int i = 0; i < 5; ++i)
-	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE currentHandle(startHandle, i, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		skyboxSrvHandles[i] = { currentHandle, startIndex + i };
-	}
-	auto deallocator = [this](UINT index)
-	{
-		this->DeallocateSrvBlock(index, 1);
-	};
-	m_skybox->Initialize(path, skyboxSrvHandles, deallocator);
-
-	skyboxEnabled = true;
+	if (m_skyboxRenderContext) m_skyboxRenderContext->LoadSkybox(path);
 }
 
 void DXRenderManager::DeleteSkybox()
 {
-	m_skyboxVertexBuffer.reset();
-
-	m_rootSignatureSkybox.Reset();
-
-	m_pipelineSkybox.reset();
-
-	m_skybox.reset();
-
-	skyboxEnabled = false;
+	if (m_skyboxRenderContext) m_skyboxRenderContext->DeleteSkybox();
 }

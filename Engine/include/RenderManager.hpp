@@ -166,10 +166,10 @@ protected:
 #endif
 
 	//Assimp
-	Assimp::Importer importer;
+	Assimp::Importer m_importer;
 
 	//Skybox
-	bool skyboxEnabled{ false };
+	bool m_skyboxEnabled{ false };
 
 	// Mesh Shader
 	bool m_meshShaderEnabled{ false };

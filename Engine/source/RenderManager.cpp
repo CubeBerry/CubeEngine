@@ -111,7 +111,7 @@ void RenderManager::CreateMesh(
 	if (type == MeshType::OBJ)
 	{
 		//Assimp Model Load
-		const aiScene* scene = importer.ReadFile(path.string(),
+		const aiScene* scene = m_importer.ReadFile(path.string(),
 			aiProcess_Triangulate |
 			aiProcess_GenSmoothNormals |
 			aiProcess_CalcTangentSpace |
@@ -123,7 +123,7 @@ void RenderManager::CreateMesh(
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
+			std::cerr << "ERROR::ASSIMP:: " << m_importer.GetErrorString() << '\n';
 			std::exit(EXIT_FAILURE);
 		}
 

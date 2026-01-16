@@ -4,13 +4,8 @@
 #pragma once
 #include "Interface/IRenderContext.hpp"
 
-#include <d3d12.h>
-#include <wrl\client.h>
-
 #include "DXPipeLine.hpp"
 #include "DXMeshPipeLine.hpp"
-
-using Microsoft::WRL::ComPtr;
 
 class DXRenderManager;
 
@@ -38,14 +33,4 @@ private:
 #ifdef _DEBUG
 	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
 #endif
-public:
-	class DXCommandListWrapper : public ICommandListWrapper
-	{
-	public:
-		DXCommandListWrapper(ID3D12GraphicsCommandList10* commandList) : m_commandList(commandList) {}
-		void* GetNativeHandle() const override { return m_commandList; }
-		ID3D12GraphicsCommandList10* GetDXCommandList() const { return m_commandList; }
-	private:
-		ID3D12GraphicsCommandList10* m_commandList;
-	};
 };

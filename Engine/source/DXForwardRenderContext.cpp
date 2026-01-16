@@ -2,7 +2,9 @@
 //Project: CubeEngine
 //File: DXForwardRenderContext.cpp
 #include "DXForwardRenderContext.hpp"
+#include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
+#include "DXSkyboxRenderContext.hpp"
 #include "Engine.hpp"
 
 void DXForwardRenderContext::Initialize()
@@ -180,9 +182,9 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
-				if (m_renderManager->skyboxEnabled && m_renderManager->m_skybox)
+				if (m_renderManager->m_skyboxEnabled && m_renderManager->m_skyboxRenderContext->GetSkybox())
 				{
-					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skybox->GetIrradianceMapSrv());
+					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv());
 				}
 
 				// Bind structured buffers to root signature
@@ -222,9 +224,9 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
-				if (m_renderManager->skyboxEnabled && m_renderManager->m_skybox)
+				if (m_renderManager->m_skyboxEnabled && m_renderManager->m_skyboxRenderContext->GetSkybox())
 				{
-					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skybox->GetIrradianceMapSrv());
+					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv());
 				}
 
 				// Bind Vertex Buffer & Index Buffer
