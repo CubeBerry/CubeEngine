@@ -20,6 +20,7 @@
 #include "DXWorkGraphsContext.hpp"
 #include "DXIndexBuffer.hpp"
 #include "DXConstantBuffer.hpp"
+#include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
 #include "DXSkyboxRenderContext.hpp"
 
@@ -30,6 +31,7 @@ using Microsoft::WRL::ComPtr;
 
 class DXRenderManager : public RenderManager
 {
+	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
 	friend class DXSkyboxRenderContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
@@ -106,8 +108,8 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValues[frameCount]{};
 
-	std::unique_ptr<DXPipeLine> m_pipeline2D;
-
+	// 2D Render Context
+	std::unique_ptr<DX2DRenderContext> m_2dRenderContext;
 	// Forward Render Context
 	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
 	// Skybox Render Context

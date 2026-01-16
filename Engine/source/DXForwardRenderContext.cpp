@@ -10,6 +10,7 @@
 void DXForwardRenderContext::Initialize()
 {
 	// Create root signature and pipeline for 3D
+	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
 	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 13 : 8, CD3DX12_ROOT_PARAMETER1{});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -276,5 +277,4 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 
 void DXForwardRenderContext::CleanUp()
 {
-
 }
