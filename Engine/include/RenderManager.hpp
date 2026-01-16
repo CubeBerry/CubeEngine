@@ -72,8 +72,6 @@ public:
 
 	// FidelityFX CAS
 	virtual void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) = 0;
-	uint32_t GetRenderWidth() const { return m_fidelityFX->GetRenderWidth(); }
-	uint32_t GetRenderHeight() const { return m_fidelityFX->GetRenderHeight(); }
 
 	//--------------------2D Render--------------------//
 	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
@@ -135,8 +133,6 @@ protected:
 	RenderType rMode = RenderType::TwoDimension;
 	// Polygon Mode
 	PolygonType pMode = PolygonType::FILL;
-	// FidelityFX CAS
-	std::unique_ptr<FidelityFX> m_fidelityFX;
 
 	//--------------------2D Render--------------------//
 

@@ -23,6 +23,7 @@
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
 #include "DXSkyboxRenderContext.hpp"
+#include "DXPostProcessContext.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
@@ -34,6 +35,7 @@ class DXRenderManager : public RenderManager
 	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
 	friend class DXSkyboxRenderContext;
+	friend class DXPostProcessContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
 	friend class DXWorkGraphsContext;
 public:
@@ -47,14 +49,17 @@ public:
 
 	void Initialize(SDL_Window* window);
 	void SetResize();
+
+	bool BeginRender(glm::vec3 bgColor) override;
+	void EndRender() override;
+
+	DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
+private:
 	int m_width, m_height;
 	bool m_isResize{ false };
 	void OnResize();
 	void WaitForGPU();
 
-	bool BeginRender(glm::vec3 bgColor) override;
-	void EndRender() override;
-private:
 	// Initialize DirectX 12 components
 	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
 	void CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters) const;
@@ -87,8 +92,6 @@ private:
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device14> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
-	// This is required for FidelityFX CAS Upscaling
-	ComPtr<ID3D12Resource> m_lowResRenderTarget;
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
@@ -114,9 +117,10 @@ private:
 	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
 	// Skybox Render Context
 	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
-	// @TODO Remove LoadSkybox() and DeleteSkybox() after SkyboxRenderContext is implemented on all graphics APIs
 	void LoadSkybox(const std::filesystem::path& path) override;
 	void DeleteSkybox() override;
+	// Post-Process Render Context
+	std::unique_ptr<DXPostProcessContext> m_postProcessContext;
 
 	// MSAA
 	// Depth

@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: RenderManager.cpp
 #include "RenderManager.hpp"
-#include "GLRenderManager.hpp"
+#include "DXRenderManager.hpp"
 
 #include <iostream>
 // std::iota
@@ -1017,71 +1017,78 @@ void RenderManager::RenderingControllerForImGui()
 
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
-		// FidelityFX
-		auto currentEffect = m_fidelityFX->GetCurrentEffect();
-		FfxFsr1QualityMode currentFsrMode = m_fidelityFX->GetFSR1QualityMode();
-		FidelityFX::CASScalePreset currentCasScalePreset = m_fidelityFX->GetSCASScalePreset();
-		
-		// Enable/Disable FidelityFX
-		bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
-		int effectMode = (currentEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
-		if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
+		auto* dxRenderManager = dynamic_cast<DXRenderManager*>(renderManager);
+		auto* postProcessContext = dxRenderManager->GetPostProcessContext();
+		auto* fidelityFX = postProcessContext->GetFidelityFX();
+
+		if (fidelityFX)
 		{
-			FidelityFX::UpscaleEffect newEffect = ffxEnabled ? FidelityFX::UpscaleEffect::FSR1 : FidelityFX::UpscaleEffect::NONE;
-			UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
-		}
+			// FidelityFX
+			auto currentEffect = fidelityFX->GetCurrentEffect();
+			FfxFsr1QualityMode currentFsrMode = fidelityFX->GetFSR1QualityMode();
+			FidelityFX::CASScalePreset currentCasScalePreset = fidelityFX->GetSCASScalePreset();
 
-		if (ffxEnabled)
-		{
-			// Enable FSR1/CAS
-			if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
+			// Enable/Disable FidelityFX
+			bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
+			int effectMode = (currentEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
+			if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
 			{
-				UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
-			}
-			ImGui::SameLine();
-			if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
-			{
-				UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
+				FidelityFX::UpscaleEffect newEffect = ffxEnabled ? FidelityFX::UpscaleEffect::FSR1 : FidelityFX::UpscaleEffect::NONE;
+				UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
 			}
 
-			bool rcasEnabled = m_fidelityFX->GetEnableRCAS();
-			bool casUpscalingEnabled = (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
-			// FSR1
-			if (currentEffect == FidelityFX::UpscaleEffect::FSR1)
+			if (ffxEnabled)
 			{
-				if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
+				// Enable FSR1/CAS
+				if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
 				{
-					m_fidelityFX->SetEnableRCAS(rcasEnabled);
+					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
+				}
+				ImGui::SameLine();
+				if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
+				{
+					UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
 				}
 
-				const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
-				int currentFsrModeInt = static_cast<int>(currentFsrMode);
-				if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
+				bool rcasEnabled = fidelityFX->GetEnableRCAS();
+				bool casUpscalingEnabled = (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
+				// FSR1
+				if (currentEffect == FidelityFX::UpscaleEffect::FSR1)
 				{
-					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
-				}
-			}
-			// CAS
-			else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
-			{
-				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
-				{
-					FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
-					UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
-				}
-				if (casUpscalingEnabled)
-				{
-					const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
-					int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
-					if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
+					if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
 					{
-						UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
+						fidelityFX->SetEnableRCAS(rcasEnabled);
+					}
+
+					const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
+					int currentFsrModeInt = static_cast<int>(currentFsrMode);
+					if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
+					{
+						UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
 					}
 				}
-			}
+				// CAS
+				else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
+				{
+					if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
+					{
+						FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
+						UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
+					}
+					if (casUpscalingEnabled)
+					{
+						const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
+						int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
+						if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
+						{
+							UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
+						}
+					}
+				}
 
-			// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
-			if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
+				// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
+				if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &fidelityFX->m_sharpness, 0.0f, 1.f);
+			}
 		}
 
 		// Meshlet Visualization
