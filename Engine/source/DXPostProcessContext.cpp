@@ -81,6 +81,7 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 			{
 				m_fidelityFX->OnResize(m_renderManager->m_device, m_renderManager->m_width, m_renderManager->m_height);
 
+				// @TODO Recreate Render Target should not be here! It's just temporary solution, must be handled properly in RenderManager
 				m_renderManager->m_renderTarget.reset();
 				m_renderManager->m_renderTarget = std::make_unique<DXRenderTarget>(
 					m_renderManager->m_device, Engine::GetWindow().GetWindow(),
