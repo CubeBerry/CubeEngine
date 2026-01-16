@@ -4,7 +4,6 @@
 #include "DX2DRenderContext.hpp"
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
-#include "DXSkyboxRenderContext.hpp"
 #include "Engine.hpp"
 
 void DX2DRenderContext::Initialize()

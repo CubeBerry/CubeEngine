@@ -5,7 +5,6 @@
 #include "Interface/IRenderContext.hpp"
 
 #include "DXPipeLine.hpp"
-#include "DXMeshPipeLine.hpp"
 
 class DXRenderManager;
 
