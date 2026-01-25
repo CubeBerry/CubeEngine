@@ -2,7 +2,7 @@
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: ISprite.cpp
-#include "BasicComponents/ISprite.hpp"
+#include "Interface/ISprite.hpp"
 
 #include "Engine.hpp"
 #include "GLRenderManager.hpp"
