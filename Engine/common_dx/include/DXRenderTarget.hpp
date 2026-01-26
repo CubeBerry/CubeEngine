@@ -10,6 +10,7 @@
 using Microsoft::WRL::ComPtr;
 
 // @TODO Class Name should be changed!
+// This class manages MSAA Render Target and Depth Buffer
 class DXRenderTarget
 {
 public:

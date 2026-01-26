@@ -93,6 +93,7 @@ private:
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device14> m_device;
+	// Main Render Target Views for Swap Chain
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;

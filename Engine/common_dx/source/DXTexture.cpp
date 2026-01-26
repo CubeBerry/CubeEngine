@@ -3,7 +3,6 @@
 //File: DXTexture.cpp
 #include "DXTexture.hpp"
 #include "DXHelper.hpp"
-#include <iostream>
 
 #include "stb-master/stb_image.h"
 

@@ -9,8 +9,69 @@
 
 void DXGBufferContext::Initialize()
 {
+	// Create Descriptor Heaps
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = static_cast<UINT>(m_gBuffers.size()); // Albedo, Normal, World Position, Material
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+	DXHelper::ThrowIfFailed(m_rtvHeap->SetName(L"G-Buffer Render Target View Heap"));
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = static_cast<UINT>(m_gBuffers.size()); // Albedo, Normal, World Position, Material
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
+	DXHelper::ThrowIfFailed(m_srvHeap->SetName(L"G-Buffer Shader Resource View Heap"));
+
+	UINT rtvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	UINT srvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart());
+
 	// Create G-Buffer Render Targets
-	
+	int width = m_renderManager->m_width;
+	int height = m_renderManager->m_height;
+	for (auto& gBuffer : m_gBuffers)
+	{
+		D3D12_RESOURCE_DESC textureDesc = {};
+		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		textureDesc.Alignment = 0;
+		textureDesc.Width = static_cast<UINT64>(width);
+		textureDesc.Height = static_cast<UINT>(height);
+		textureDesc.DepthOrArraySize = 1;
+		textureDesc.MipLevels = 1;
+		textureDesc.Format = gBuffer.format;
+		textureDesc.SampleDesc.Count = 1;
+		textureDesc.SampleDesc.Quality = 0;
+		textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+		D3D12_CLEAR_VALUE clearValue = {};
+		clearValue.Format = gBuffer.format;
+		clearValue.Color[0] = 0.0f;
+		clearValue.Color[1] = 0.0f;
+		clearValue.Color[2] = 0.0f;
+		clearValue.Color[3] = 1.0f;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+		DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&textureDesc,
+			D3D12_RESOURCE_STATE_COMMON,
+			&clearValue,
+			IID_PPV_ARGS(&gBuffer.resource)
+		));
+		DXHelper::ThrowIfFailed(gBuffer.resource->SetName(gBuffer.name.c_str()));
+
+		m_renderManager->m_device->CreateRenderTargetView(gBuffer.resource.Get(), nullptr, rtvHandle);
+		m_renderManager->m_device->CreateShaderResourceView(gBuffer.resource.Get(), nullptr, srvHandle);
+
+		// Move to the next descriptor
+		rtvHandle.Offset(1, rtvDescriptorSize);
+		srvHandle.Offset(1, srvDescriptorSize);
+	}
 
 	// Create root signature and pipeline for 3D
 	// The slot of a root signature version 1.1

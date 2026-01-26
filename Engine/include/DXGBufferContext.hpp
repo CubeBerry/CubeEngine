@@ -6,12 +6,30 @@
 
 #include <d3d12.h>
 #include <wrl.h>
+#include <array>
+#include <string>
 //#include "DXPipeLine.hpp"
 //#include "DXMeshPipeLine.hpp"
 
 using Microsoft::WRL::ComPtr;
 
 class DXRenderManager;
+
+enum class GBufferType : size_t
+{
+	Albedo = 0,
+	Normal,
+	WorldPosition,
+	Material,
+	Count
+};
+
+struct GBufferData
+{
+	DXGI_FORMAT format;
+	ComPtr<ID3D12Resource> resource;
+	std::wstring name;
+};
 
 class DXGBufferContext : public IRenderContext
 {
@@ -43,8 +61,11 @@ private:
 	// SRV Heap for G-Buffer
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 
-	ComPtr<ID3D12Resource> m_gBufferAlbedo;
-	ComPtr<ID3D12Resource> m_gBufferNormal;
-	ComPtr<ID3D12Resource> m_gBufferWorldPosition;
-	ComPtr<ID3D12Resource> m_gBufferMaterial;
+	std::array<GBufferData, static_cast<size_t>(GBufferType::Count)> m_gBuffers =
+	{
+		GBufferData{ DXGI_FORMAT_R8G8B8A8_UNORM, nullptr, L"G-Buffer Albedo" },
+		GBufferData{ DXGI_FORMAT_R16G16B16A16_FLOAT, nullptr, L"G-Buffer Normal" },
+		GBufferData{ DXGI_FORMAT_R32G32B32A32_FLOAT, nullptr, L"G-Buffer World Position" },
+		GBufferData{ DXGI_FORMAT_R8G8B8A8_UNORM, nullptr, L"G-Buffer Material" }
+	};
 };
