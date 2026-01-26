@@ -52,7 +52,6 @@ void ProceduralMeshes::Init()
 	//Engine::GetObjectManager().ProcessFunctionQueue();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->InitializeBuffers();
 
-
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), "Player");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/AnimationModels/character.fbx", 1, 1);

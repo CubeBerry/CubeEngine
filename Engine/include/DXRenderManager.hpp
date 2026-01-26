@@ -22,6 +22,7 @@
 #include "DXConstantBuffer.hpp"
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
+#include "DXGBufferContext.hpp"
 #include "DXSkyboxRenderContext.hpp"
 #include "DXPostProcessContext.hpp"
 
@@ -34,6 +35,7 @@ class DXRenderManager : public RenderManager
 {
 	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
+	friend class DXGBufferContext;
 	friend class DXSkyboxRenderContext;
 	friend class DXPostProcessContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
@@ -96,6 +98,7 @@ private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
 	// rtv = Render Target View
+	// RTV Heap for Swap Chain
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
@@ -115,22 +118,24 @@ private:
 	std::unique_ptr<DX2DRenderContext> m_2dRenderContext;
 	// Forward Render Context
 	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
+	// G-Buffer Render Context
+	std::unique_ptr<DXGBufferContext> m_gBufferContext;
 	// Skybox Render Context
 	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
 	void LoadSkybox(const std::filesystem::path& path) override;
 	void DeleteSkybox() override;
 	// Post-Process Render Context
 	std::unique_ptr<DXPostProcessContext> m_postProcessContext;
+	// Work Graphs Context
+	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
 	// MSAA
 	// Depth
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
 
 	// Compute Shader
+	// @TODO Make Compute Shader Context Later
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
-
-	// Work Graphs
-	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
