@@ -1,6 +1,6 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: DXForwardRenderContext.hpp
+//File: DXLightingContext.hpp
 #pragma once
 #include "Interface/IRenderContext.hpp"
 
@@ -9,11 +9,11 @@
 
 class DXRenderManager;
 
-class DXForwardRenderContext : public IRenderContext
+class DXLightingContext : public IRenderContext
 {
 public:
-	DXForwardRenderContext(DXRenderManager* renderManager) : m_renderManager(renderManager) {}
-	~DXForwardRenderContext() override = default;
+	DXLightingContext(DXRenderManager* renderManager) : m_renderManager(renderManager) {}
+	~DXLightingContext() override = default;
 
 	void Initialize() override;
 	void OnResize() override;

@@ -1,13 +1,13 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: DXForwardRenderContext.cpp
-#include "DXForwardRenderContext.hpp"
+//File: DXLightingContext.cpp
+#include "DXLightingContext.hpp"
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
 #include "DXSkyboxRenderContext.hpp"
 #include "Engine.hpp"
 
-void DXForwardRenderContext::Initialize()
+void DXLightingContext::Initialize()
 {
 	// Create root signature and pipeline for 3D
 	// The slot of a root signature version 1.1
@@ -128,12 +128,12 @@ void DXForwardRenderContext::Initialize()
 #endif
 }
 
-void DXForwardRenderContext::OnResize()
+void DXLightingContext::OnResize()
 {
 
 }
 
-void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -275,6 +275,6 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	}
 }
 
-void DXForwardRenderContext::CleanUp()
+void DXLightingContext::CleanUp()
 {
 }

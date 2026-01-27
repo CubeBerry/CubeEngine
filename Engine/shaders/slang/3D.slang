@@ -13,7 +13,6 @@ struct VSInput
     float3 normal : NORMAL0;
     int tex_sub_index : TEXCOORD1;
     float2 uv : TEXCOORD0;
-
     int4 boneIDs;
     float4 weights;
 }
@@ -95,7 +94,7 @@ void meshMain(
     uint groupThreadID: SV_GroupThreadID,
     uint groupID: SV_GroupID,
     OutputVertices<VSOutput, MAX_VERTICES_PER_MESHLET> verts,
-    OutputIndices<uint3, MAX_PRIMITIVES_PER_MESHLET> tris,
+    OutputIndices<uint3, MAX_PRIMITIVES_PER_MESHLET> tris
 )
 {
     Meshlet meshlet = meshlets[groupID.x];

@@ -22,6 +22,7 @@
 #include "DXConstantBuffer.hpp"
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
+#include "DXLightingContext.hpp"
 #include "DXGBufferContext.hpp"
 #include "DXSkyboxRenderContext.hpp"
 #include "DXPostProcessContext.hpp"
@@ -36,6 +37,7 @@ class DXRenderManager : public RenderManager
 	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
 	friend class DXGBufferContext;
+	friend class DXLightingContext;
 	friend class DXSkyboxRenderContext;
 	friend class DXPostProcessContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters

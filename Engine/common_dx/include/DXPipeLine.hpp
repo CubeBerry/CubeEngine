@@ -38,7 +38,20 @@ public:
 		const DXGI_SAMPLE_DESC& sampleDesc,
 		bool isCCW,
 		bool isDepth,
-		DXGI_FORMAT rtvFormat = DXGI_FORMAT_R8G8B8A8_UNORM,
+		const DXGI_FORMAT& rtvFormat,
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+	);
+	DXPipeLine(
+		const ComPtr<ID3D12Device>& device,
+		const ComPtr<ID3D12RootSignature>& rootSignature,
+		const std::filesystem::path& vertexPath, const std::filesystem::path& pixelPath,
+		std::initializer_list<DXAttributeLayout> layout,
+		D3D12_FILL_MODE fillMode,
+		D3D12_CULL_MODE cullMode,
+		const DXGI_SAMPLE_DESC& sampleDesc,
+		bool isCCW,
+		bool isDepth,
+		const std::vector<DXGI_FORMAT>& rtvFormats,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 	~DXPipeLine() = default;

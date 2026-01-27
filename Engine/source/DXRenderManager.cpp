@@ -212,6 +212,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_forwardRenderContext = std::make_unique<DXForwardRenderContext>(this);
 	m_forwardRenderContext->Initialize();
 
+	// Create G-Buffer Context
+	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
+	m_gBufferContext->Initialize();
+
 	// Create Skybox Render Context
 	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
 	m_skyboxRenderContext->Initialize();
@@ -343,7 +347,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
 
 	// Set the viewport and scissor rect
-	// This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
 	uint32_t renderWidth = m_postProcessContext->GetFidelityFX()->GetRenderWidth();
 	uint32_t renderHeight = m_postProcessContext->GetFidelityFX()->GetRenderHeight();
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
@@ -374,9 +378,16 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	break;
 	case RenderType::ThreeDimension:
 	{
-		if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
-		else m_forwardRenderContext->Execute(&wrapper);
-		m_skyboxRenderContext->Execute(&wrapper);
+		//if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
+		//else m_forwardRenderContext->Execute(&wrapper);
+		// --------------------Testing G-Buffer Rendering--------------------
+		m_gBufferContext->Execute(&wrapper);
+		rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+		dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
+		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+		m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		// ------------------Testing G-Buffer Rendering End------------------
+		//m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
 	}

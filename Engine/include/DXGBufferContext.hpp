@@ -8,8 +8,8 @@
 #include <wrl.h>
 #include <array>
 #include <string>
-//#include "DXPipeLine.hpp"
-//#include "DXMeshPipeLine.hpp"
+#include "DXPipeLine.hpp"
+#include "DXMeshPipeLine.hpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -44,17 +44,13 @@ public:
 private:
 	DXRenderManager* m_renderManager;
 
-//	ComPtr<ID3D12RootSignature> m_rootSignature3D;
-//#ifdef _DEBUG
-//	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
-//#endif
-//
-//	std::unique_ptr<DXPipeLine> m_pipeline3D;
-//	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
-//	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
-//#ifdef _DEBUG
-//	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
-//#endif
+	ComPtr<ID3D12RootSignature> m_rootSignature3D;
+#ifdef _DEBUG
+	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
+#endif
+
+	std::unique_ptr<DXPipeLine> m_pipeline3D;
+	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
 
 	// RTV Heap for G-Buffer
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;

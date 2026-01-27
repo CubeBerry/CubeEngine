@@ -99,6 +99,7 @@ void DXForwardRenderContext::Initialize()
 		);
 	}
 
+	// @TODO Separate to Normal Vector Visualization Render Context
 #ifdef _DEBUG
 	// Create root signature and pipeline for Normal 3D
 	rootParameters.clear();

@@ -31,8 +31,12 @@ SLANG_SHADERS = [
 	{ "file": "3D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "3D.vert" },
 	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "3D.frag" },
 	# For Mesh Shader
-	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "3DMesh.frag" },
 	{ "file": "3D.slang", "entry": "meshMain", "stage": "mesh", "profile_hlsl": "sm_6_5", "out_name": "3D.mesh" }, # Also need to convert to DXIL
+	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "3DMesh.frag" },
+	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
+	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GBuffer.frag" },
+	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" },
+	# Normal Vector Visualization
 	{ "file": "Normal3D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.vert" },
 	{ "file": "Normal3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.frag" },
 	# IBL
@@ -55,6 +59,8 @@ DXC_SHADERS = [
 	# Mesh Shaders
 	{ "file": "3D.mesh.hlsl", "entry": "meshMain", "profile": "ms_6_5", "out_name": "3D.mesh.cso" },
 	{ "file": "3DMesh.frag.hlsl", "entry": "fragmentMain", "profile": "ps_6_5", "out_name": "3DMesh.frag.cso" },
+	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
+	{ "file": "GBufferMesh.frag.hlsl", "entry": "fragmentMain", "profile": "ps_6_5", "out_name": "GBufferMesh.frag.cso" },
 	# Work Graphs
 	{ "file": "WorkGraphs.hlsl", "entry": "broadcastNode", "profile": "lib_6_8", "out_name": "WorkGraphs.cso" },
 	# Work Graphs Frustum Culling
