@@ -36,7 +36,7 @@ struct vMatrix
     mat4 decode;
     vec4 color;
     // @TODO move to push constants later
-    vec3 viewPosition;
+    vec4 viewPosition;
 
     // Bone Matrices
     mat4 finalBones[128];
@@ -60,23 +60,24 @@ void main()
     vec3 decoded_position = (matrix.decode * vec4(vec3(x, y, z), 1.0)).xyz;
 
     // Skinning Logic
-    vec4 totalPosition = vec4(0.0f);
-    vec3 totalNormal = vec3(0.0f);
+    vec4 totalPosition;
+    vec3 totalNormal;
 
-    // If no weights (static mesh), default to identity
-    // Check if the first weight is 0, assuming it's not a skinned mesh
-    if (i_weights[0] == 0.0f) 
+    // Check if the mesh has skinning weights
+    // If any weight is non-zero, this is a skinned mesh
+    float totalWeight = i_weights[0] + i_weights[1] + i_weights[2] + i_weights[3];
+    
+    if (totalWeight > 0.01f) 
     {
-        totalPosition = vec4(decoded_position, 1.0f);
-        totalNormal = i_normal;
-    }
-    else
-    {
+        // Skinned mesh: apply bone transformations
+        totalPosition = vec4(0.0f);
+        totalNormal = vec3(0.0f);
+        
         for(int i = 0 ; i < 4 ; i++)
         {
-            if(i_boneIds[i] == -1) 
+            if(i_boneIds[i] < 0 || i_boneIds[i] >= 128) 
                 continue;
-            if(i_boneIds[i] >= 100) 
+            if(i_weights[i] <= 0.0f)
                 continue;
 
             vec4 localPosition = matrix.finalBones[i_boneIds[i]] * vec4(decoded_position, 1.0f);
@@ -86,7 +87,12 @@ void main()
             totalNormal += localNormal * i_weights[i];
         }
     }
-
+    else
+    {
+        // Non-skinned mesh: use vertex position/normal directly
+        totalPosition = vec4(decoded_position, 1.0f);
+        totalNormal = i_normal;
+    }
 
     o_uv = i_uv;
     o_col = matrix.color;
@@ -100,7 +106,8 @@ void main()
     
     //o_fragment_position = vec3(matrix.model * vec4(decoded_position, 1.0));
     o_fragment_position = vec3(matrix.model * totalPosition);
-    o_view_position = inverse(matrix.view)[3].xyz;
+    //o_view_position = inverse(matrix.view)[3].xyz;
+    o_view_position = matrix.viewPosition.xyz;
 
     //gl_Position = matrix.projection * matrix.view * matrix.model * vec4(decoded_position, 1.0);
     gl_Position = matrix.projection * matrix.view * matrix.model * totalPosition;

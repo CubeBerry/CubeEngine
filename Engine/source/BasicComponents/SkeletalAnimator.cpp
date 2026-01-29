@@ -65,10 +65,22 @@ void SkeletalAnimator::End()
 
 void SkeletalAnimator::Update(float dt)
 {
+    //Debug
+    static int updateCount = 0;
+    if (updateCount < 5) 
+    {
+        std::cout << "[SkeletalAnimator] Update called #" << updateCount 
+                  << ", dt=" << dt 
+                  << ", currentAnimation=" << (currentAnimation ? "EXISTS" : "NULL")
+                  << ", playbackState=" << static_cast<int>(playbackState) << std::endl;
+        updateCount++;
+    }
+    //Debug
+
     if (!currentAnimation) return;
 
-    // 1. Update Blend Factor
-    if (blendFactor < 1.0f)
+    // 1. Handle Blending
+    if (currentAnimation)
     {
         if (currentBlendDuration <= 0.0f) currentBlendDuration = 0.01f;
         blendFactor += dt / currentBlendDuration;
@@ -124,10 +136,48 @@ void SkeletalAnimator::Update(float dt)
     }
 
     // 3. Calculate Bone Transforms
+    // Object transform 
+    Object* owner = GetOwner();
+    glm::mat4 rootTransform = glm::mat4(1.0f);
+    if (owner)
+    {
+        glm::vec3 scale = owner->GetSize();
+        rootTransform = glm::scale(glm::mat4(1.0f), scale);
+    }
+    
     CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f));
+    
+    //Debug
+    static int debugCount = 0;
+    if (debugCount < 3)
+    {
+        debugCount++;
+        std::cout << "\n[SkeletalAnimator] finalBoneMatrices[0]:" << std::endl;
+        for (int row = 0; row < 4; ++row)
+        {
+            std::cout << "  [" 
+                      << finalBoneMatrices[0][row][0] << ", "
+                      << finalBoneMatrices[0][row][1] << ", "
+                      << finalBoneMatrices[0][row][2] << ", "
+                      << finalBoneMatrices[0][row][3] << "]" << std::endl;
+        }
+        
+        // bone's identity
+        bool allIdentity = true;
+        for (int i = 0; i < 5; ++i) 
+        {
+            glm::mat4 identity(1.0f);
+            if (finalBoneMatrices[i] != identity)
+            {
+                allIdentity = false;
+                break;
+            }
+        }
+        std::cout << "All bones are identity: " << (allIdentity ? "YES" : "NO") << std::endl;
+    } 
+    //Debug
 
     // 4. Upload Matrices to DynamicSprite (GPU)
-    Object* owner = GetOwner();
     if (owner)
     {
         DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
@@ -256,7 +306,10 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
         glm::mat4 offset = boneInfoMap.at(nodeName).offset;
         if (index < finalBoneMatrices.size())
         {
-            finalBoneMatrices[index] = globalTransformation * offset;
+            // FBX unit transform (cm → m)
+            float unitScale = 0.01f;
+            glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(unitScale));
+            finalBoneMatrices[index] = scaleMatrix * globalTransformation * offset;
         }
     }
 

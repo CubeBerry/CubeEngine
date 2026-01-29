@@ -13,6 +13,7 @@
 #include "BufferWrapper.hpp"
 
 #include <iostream> // For debugging
+#include <Engine.hpp>
 
 SkeletalAnimationStateMachine::SkeletalAnimationStateMachine() : IComponent(ComponentTypes::SKETANIMASTATE) {}
 
@@ -32,12 +33,68 @@ void SkeletalAnimationStateMachine::End() {}
 
 void SkeletalAnimationStateMachine::AddState(const std::string& name, std::shared_ptr<SkeletalAnimation> anim)
 {
+    Engine::GetObjectManager().QueueComponentFunction<SkeletalAnimationStateMachine>(this,
+        [=](SkeletalAnimationStateMachine* sAnimator)
+    {
+        this->AddStateForQueue(name, anim);
+    });
+}
+
+void SkeletalAnimationStateMachine::AddState(const std::string& name, const std::string& animationFilePath)
+{
+    Engine::GetObjectManager().QueueComponentFunction<SkeletalAnimationStateMachine>(this,
+        [=](SkeletalAnimationStateMachine* sAnimator)
+    {
+        this->AddStateForQueue(name, animationFilePath);
+    });
+}
+
+void SkeletalAnimationStateMachine::ChangeState(const std::string& name, bool isLoop, float speed, float blendDuration)
+{
+        Engine::GetObjectManager().QueueComponentFunction<SkeletalAnimationStateMachine>(this,
+            [=](SkeletalAnimationStateMachine* sAnimator)
+    {
+        this->ChangeStateForQueue(name, isLoop, speed, blendDuration);
+    });
+}
+
+std::vector<std::string> SkeletalAnimationStateMachine::GetStateNames() const
+{
+    // Collect and return all keys from the states map
+    std::vector<std::string> names;
+    for (const auto& pair : states)
+    {
+        names.push_back(pair.first);
+    }
+    return names;
+}
+
+std::string SkeletalAnimationStateMachine::GetCurrentStateName() const
+{
+    if (currentState == nullptr)
+    {
+        return "None";
+    }
+
+    // Search the map to find the name corresponding to the current state pointer
+    for (const auto& pair : states)
+    {
+        if (pair.second.get() == currentState)
+        {
+            return pair.first;
+        }
+    }
+    return "Unknown";
+}
+
+void SkeletalAnimationStateMachine::AddStateForQueue(const std::string& name, std::shared_ptr<SkeletalAnimation> anim)
+{
     // Create a new State with the provided animation pointer and add it to the map
     states.emplace(name, std::make_unique<State>(anim));
     currentState = states[name].get();
 }
 
-void SkeletalAnimationStateMachine::AddState(const std::string& name, const std::string& animationFilePath)
+void SkeletalAnimationStateMachine::AddStateForQueue(const std::string& name, const std::string& animationFilePath)
 {
     Object* owner_ = GetOwner();
     if (!owner_) return;
@@ -58,7 +115,7 @@ void SkeletalAnimationStateMachine::AddState(const std::string& name, const std:
     states.emplace(name, std::make_unique<State>(animation));
 }
 
-void SkeletalAnimationStateMachine::ChangeState(const std::string& name, bool isLoop, float speed, float blendDuration)
+void SkeletalAnimationStateMachine::ChangeStateForQueue(const std::string& name, bool isLoop, float speed, float blendDuration)
 {
     // Ensure the animator pointer is valid before changing states
     if (animator == nullptr)
@@ -90,33 +147,4 @@ void SkeletalAnimationStateMachine::ChangeState(const std::string& name, bool is
             }
         }
     }
-}
-
-std::vector<std::string> SkeletalAnimationStateMachine::GetStateNames() const
-{
-    // Collect and return all keys from the states map
-    std::vector<std::string> names;
-    for (const auto& pair : states)
-    {
-        names.push_back(pair.first);
-    }
-    return names;
-}
-
-std::string SkeletalAnimationStateMachine::GetCurrentStateName() const
-{
-    if (currentState == nullptr)
-    {
-        return "None";
-    }
-
-    // Search the map to find the name corresponding to the current state pointer
-    for (const auto& pair : states)
-    {
-        if (pair.second.get() == currentState)
-        {
-            return pair.first;
-        }
-    }
-    return "Unknown";
 }

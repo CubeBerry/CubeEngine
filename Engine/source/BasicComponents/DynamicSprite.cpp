@@ -3,6 +3,7 @@
 //Project: CubeEngine
 //File: DynamicSprite.cpp
 #include "BasicComponents/DynamicSprite.hpp"
+#include "BasicComponents/SkeletalAnimator.hpp"
 #include "Animation.hpp"
 
 #pragma warning(push)
@@ -47,7 +48,19 @@ void DynamicSprite::Update(float dt)
 {
 	UpdateProjection();
 	UpdateView();
-	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate3D());
+	
+	// Check Skinned mesh 
+	bool hasSkeleton = GetOwner()->HasComponent<SkeletalAnimator>();
+	if (hasSkeleton)
+	{
+		// model -> identity (Maybe need to change apply Obj's TRS)
+		UpdateModel(glm::vec3(0), glm::vec3(1), glm::vec3(0));
+	}
+	else
+	{
+		// object transform 
+		UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate3D());
+	}
 
 	UpdateAnimation(dt);
 }
@@ -269,10 +282,11 @@ void DynamicSprite::UpdateView()
 			vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
 			// @TODO move to push constants later
 			glm::mat4 inverseView = glm::inverse(vertexUniform.view);
-			vertexUniform.viewPosition = glm::vec3(
+			vertexUniform.viewPosition = glm::vec4(
 				inverseView[3].x,
 				inverseView[3].y,
-				inverseView[3].z
+				inverseView[3].z,
+				1.0f
 			);
 			break;
 		}
