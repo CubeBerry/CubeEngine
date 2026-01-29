@@ -54,13 +54,14 @@ namespace ThreeDimension
 
 	struct alignas(16) Vertex
 	{
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec2 uv;
+		glm::vec3 position{};
+		glm::vec3 normal{};
+		glm::vec2 uv{};
 		int texSubIndex{ 0 };
 
-		int boneIDs[MAX_BONE_INFLUENCE];
-		float weights[MAX_BONE_INFLUENCE];
+		// Initialize bone data with default values
+		int boneIDs[MAX_BONE_INFLUENCE]{ -1, -1, -1, -1 };
+		float weights[MAX_BONE_INFLUENCE]{ 0.0f, 0.0f, 0.0f, 0.0f };
 	};
 
 	// @TODO Should add alignas(16) for 3D pipeline but mesh pipeline does not require alignas(16) for Structured Buffer
@@ -102,7 +103,7 @@ namespace ThreeDimension
 		glm::mat4 decode;
 		glm::vec4 color;
 		// @TODO move to push constants later
-		glm::vec3 viewPosition;
+		glm::vec4 viewPosition;
 
 		// Array of final bone matrices for shader
 		glm::mat4 finalBones[MAX_BONES];

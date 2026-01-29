@@ -831,78 +831,79 @@ void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationSta
 	}
 }
 
-void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 parentTransform)
+void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 objectTransform)
 {
-	glm::mat4 globalTransform = parentTransform;
-
-	// Apply animation transform if available
-	if (animatedTransforms.count(node->name))
+	// 1. 현재 노드의 뼈 행렬 가져오기
+	if (animatedTransforms.find(node->name) == animatedTransforms.end())
 	{
-		globalTransform = parentTransform * animatedTransforms.at(node->name);
-	}
-	else
-	{
-		globalTransform = parentTransform * node->transformation;
+		// 맵에 없는 노드(더미 등)는 그냥 자식으로 통과시킵니다.
+		for (const auto& child : node->children)
+		{
+			RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
+		}
+		return;
 	}
 
-	// Prepare for drawing
+	// 2. 최종 월드 좌표 계산
+	glm::mat4 nodeGlobalMatrix = animatedTransforms.at(node->name);
+	glm::mat4 nodeWorldMatrix = objectTransform * nodeGlobalMatrix;
+
+	// 3. 화면 좌표 변환
 	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
 	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
-	glm::vec3 currentPos = glm::vec3(globalTransform[3]); // Extract translation
+	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]);
 	glm::vec2 screenPos = WorldToScreen(currentPos, view, proj);
 
-	// Draw Joint (Circle)
-	if (screenPos.x != -1) // Check if the point is visible on the screen
+	// [디버깅] 뼈 위치 정보 출력
+	static bool debugPrint = true;
+	if (debugPrint && node->name.find("Armature") == std::string::npos)
 	{
-		ImU32 color = IM_COL32(0, 255, 0, 255);
-		if (node->name == selectedBoneName) 
-		{
-			color = IM_COL32(255, 0, 0, 255);
-		}
-		drawList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 4.0f, color);
+		char debugBuffer[256];
+		snprintf(debugBuffer, sizeof(debugBuffer),
+			"Bone: %s | GlobalPos: (%.2f, %.2f, %.2f) | ScreenPos: (%.2f, %.2f)",
+			node->name.c_str(),
+			currentPos.x, currentPos.y, currentPos.z,
+			screenPos.x, screenPos.y);
+		Engine::GetLogger().LogDebug(LogCategory::Engine, debugBuffer);
 	}
 
-	// Draw Connections to Children
+	// 4. 조인트(점) 그리기
+	if (screenPos.x != -1 && screenPos.y != -1)
+	{
+		ImU32 color = IM_COL32(0, 255, 0, 255);
+		if (node->name == selectedBoneName) color = IM_COL32(255, 0, 0, 255);
+
+		drawList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 5.0f, color);
+	}
+
+	// 5. 자식 노드 처리
 	for (const auto& child : node->children)
 	{
-		glm::mat4 childTransform = globalTransform; // Start from current global
-
-		// We need to look ahead to find child position
-		if (animatedTransforms.count(child.name))
+		// 자식 뼈가 맵에 존재할 때만 선을 그립니다.
+		if (animatedTransforms.find(child.name) != animatedTransforms.end())
 		{
-			// Note: In strict Skeletal systems, transforms are usually local relative to parent.
-			// But if 'animatedTransforms' from Animator contains Local transforms:
-			// childTransform = globalTransform * animatedTransforms.at(child.name);
+			glm::mat4 childGlobalMatrix = animatedTransforms.at(child.name);
+			glm::mat4 childWorldMatrix = objectTransform * childGlobalMatrix;
 
-			// IF 'animatedTransforms' contains Global transforms (relative to Root Bone):
-			// We need to be careful. The provided Animator calculates GlobalTransform relative to mesh root.
-			// So:
-			// glm::mat4 childGlobal = RootModelMatrix * AnimatorGlobalTransforms[child.name];
+			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
+			glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
+
+			// 두 점이 모두 유효한 경우만 선 그리기
+			if (screenPos.x >= 0 && screenPos.y >= 0 &&
+				childScreenPos.x >= 0 && childScreenPos.y >= 0)
+			{
+				drawList->AddLine(
+					ImVec2(screenPos.x, screenPos.y),
+					ImVec2(childScreenPos.x, childScreenPos.y),
+					IM_COL32(255, 255, 0, 255),
+					2.0f);
+			}
 		}
 
-		// Recurse
-		RenderBoneHierarchy(&child, animatedTransforms, parentTransform);
-
-		// Draw Line
-		glm::mat4 childFinalMatrix = parentTransform; // Base
-		if (animatedTransforms.count(child.name))
-		{
-			childFinalMatrix = parentTransform * animatedTransforms.at(child.name);
-		}
-		else
-		{
-			childFinalMatrix = globalTransform * child.transformation;
-		}
-
-		glm::vec3 childPos = glm::vec3(childFinalMatrix[3]);
-		glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
-
-		if (screenPos.x > 0 && childScreenPos.x > 0)
-		{
-			drawList->AddLine(ImVec2(screenPos.x, screenPos.y), ImVec2(childScreenPos.x, childScreenPos.y), IM_COL32(255, 255, 0, 255), 2.0f);
-		}
+		// 재귀 호출
+		RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
 	}
 }
 
@@ -1049,7 +1050,7 @@ void ObjectManager::AddComponentPopUpForImGui()
 
 		if (ImGui::Button("Close"))
 		{
-			isShowPopup = false;
+		 isShowPopup = false;
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1196,7 +1197,7 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 
 		if (ImGui::Button("Close"))
 		{
-			isShowPopup = false;
+		 isShowPopup = false;
 			ImGui::CloseCurrentPopup();
 		}
 
