@@ -34,6 +34,9 @@ public:
     std::string GetCurrentStateName() const;
 
 private:
+	void AddStateForQueue(const std::string& name, std::shared_ptr<SkeletalAnimation> anim);
+    void AddStateForQueue(const std::string& name, const std::string& animationFilePath);
+    void ChangeStateForQueue(const std::string& name, bool isLoop = true, float speed = 1.f, float blendDuration = 0.25f);
     // Internal class representing a single animation state
     class State
     {
