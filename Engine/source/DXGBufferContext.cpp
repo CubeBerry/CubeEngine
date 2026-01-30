@@ -106,7 +106,7 @@ void DXGBufferContext::Initialize()
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
-			D3D12_RESOURCE_STATE_COMMON,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			&clearValue,
 			IID_PPV_ARGS(&gBuffer.resource)
 		));
@@ -222,7 +222,7 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 	{
 		barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
 			gBuffer.resource.Get(),
-			D3D12_RESOURCE_STATE_COMMON,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET
 		));
 	}

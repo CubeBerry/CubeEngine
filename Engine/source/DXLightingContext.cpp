@@ -82,6 +82,10 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	ID3D12PipelineState* initialState = m_pipeline->GetPipelineState().Get();
 	commandList->SetPipelineState(initialState);
 
+	// @TODO Need to set proper RTV for Non-MSAA (Create Non-MSAA RTV Heap in DXRenderTarget)
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get()};
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
