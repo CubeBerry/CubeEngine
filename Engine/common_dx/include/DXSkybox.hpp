@@ -69,6 +69,11 @@ public:
 		handle.Offset(m_srvHandles[4].second, m_srvDescriptorSize);
 		return handle;
 	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE GetIrradianceMapCpuHandle() const
+	{
+		return m_srvHandles[2].first;
+	}
 private:
 	std::unique_ptr<DXTexture> m_equirectangularMap;
 

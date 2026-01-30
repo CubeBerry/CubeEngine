@@ -41,6 +41,8 @@ public:
 	void OnResize() override;
 	void Execute(ICommandListWrapper* commandListWrapper) override;
 	void CleanUp() override;
+
+	ID3D12DescriptorHeap* GetSRVHeap() const { return m_srvHeap.Get(); }
 private:
 	DXRenderManager* m_renderManager;
 

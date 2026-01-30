@@ -32,10 +32,13 @@ SLANG_SHADERS = [
 	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "3D.frag" },
 	# For Mesh Shader
 	{ "file": "3D.slang", "entry": "meshMain", "stage": "mesh", "profile_hlsl": "sm_6_5", "out_name": "3D.mesh" }, # Also need to convert to DXIL
-	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "3DMesh.frag" },
+	{ "file": "3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "3DMesh.frag" }, # Also need to convert to DXIL
 	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GBuffer.frag" },
-	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" },
+	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" }, # Also need to convert to DXIL
+	# Lighting Pass
+	{ "file": "LightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "LightingPass.vert" },
+	{ "file": "LightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "LightingPass.frag" },
 	# Normal Vector Visualization
 	{ "file": "Normal3D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.vert" },
 	{ "file": "Normal3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.frag" },

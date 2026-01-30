@@ -5,7 +5,7 @@
 #include "Interface/IRenderContext.hpp"
 
 #include "DXPipeLine.hpp"
-#include "DXMeshPipeLine.hpp"
+#include <glm/vec3.hpp>
 
 class DXRenderManager;
 
@@ -22,15 +22,17 @@ public:
 private:
 	DXRenderManager* m_renderManager;
 
-	ComPtr<ID3D12RootSignature> m_rootSignature3D;
-#ifdef _DEBUG
-	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
-#endif
+	ComPtr<ID3D12RootSignature> m_rootSignature;
+	std::unique_ptr<DXPipeLine> m_pipeline;
+	// Copies G-Buffer SRV and IBL SRV from GBufferContext's m_srvHeap and DXRenderManager's m_srvHeap
+	// @TODO Optimize by sharing descriptor heaps instead of copying or other methods (Think of a better way to refactor managing descriptor heaps)
+	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 
-	std::unique_ptr<DXPipeLine> m_pipeline3D;
-	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
-	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
-#ifdef _DEBUG
-	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
-#endif
+	// Push Constants for Lighting Pass
+	struct alignas(16) PushConstants
+	{
+		glm::vec3 viewPosition;
+		int activeDirectionalLight;
+		int activePointLight;
+	} pushConstants;
 };

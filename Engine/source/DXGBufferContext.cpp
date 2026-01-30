@@ -100,7 +100,7 @@ void DXGBufferContext::Initialize()
 	}
 
 	m_renderManager->CreateRootSignature(m_rootSignature3D, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"3D Root Signature"));
+	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"G-Buffer Root Signature"));
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, offsetof(ThreeDimension::QuantizedVertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
@@ -277,7 +277,7 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 		barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
 			gBuffer.resource.Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_COMMON
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 		));
 	}
 	commandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());

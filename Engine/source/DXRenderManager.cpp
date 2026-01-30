@@ -216,6 +216,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
 	m_gBufferContext->Initialize();
 
+	// Create Lighting Context
+	m_lightingContext = std::make_unique<DXLightingContext>(this);
+	m_lightingContext->Initialize();
+
 	// Create Skybox Render Context
 	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
 	m_skyboxRenderContext->Initialize();
@@ -380,13 +384,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	{
 		//if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
 		//else m_forwardRenderContext->Execute(&wrapper);
-		// --------------------Testing G-Buffer Rendering--------------------
 		m_gBufferContext->Execute(&wrapper);
-		rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
-		dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
-		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-		m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-		// ------------------Testing G-Buffer Rendering End------------------
+		m_lightingContext->Execute(&wrapper);
 		//m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
@@ -501,6 +500,7 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 
 	D3D12_STATIC_SAMPLER_DESC samplers[2];
 
+	// @TODO Take texture samplers as parameters to be customizable
 	// Texture Sampler
 	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 	samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;

@@ -123,6 +123,9 @@ private:
 	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
 	// G-Buffer Render Context
 	std::unique_ptr<DXGBufferContext> m_gBufferContext;
+	DXGBufferContext* GetGBufferContext() const { return m_gBufferContext.get(); }
+	// Lighting Context
+	std::unique_ptr<DXLightingContext> m_lightingContext;
 	// Skybox Render Context
 	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
 	void LoadSkybox(const std::filesystem::path& path) override;
@@ -298,6 +301,7 @@ private:
 	};
 	DXConstantBuffer<DirectionalLightBatch>* directionalLightUniformBuffer{ nullptr };
 	DXConstantBuffer<PointLightBatch>* pointLightUniformBuffer{ nullptr };
+	// Push Constants for forward rendering
 	struct alignas(16) PushConstants
 	{
 		int activeDirectionalLight;
