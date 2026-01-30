@@ -51,6 +51,7 @@ private:
 	// Depth
 	void CreateDepthBuffer(int width, int height);
 
+	// @TODO Move this to Forward Render Context later
 	ComPtr<ID3D12Resource> m_depthStencil;
 	// dsv = Depth Stencil View
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
