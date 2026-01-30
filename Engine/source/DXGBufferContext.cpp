@@ -255,11 +255,6 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	commandList->OMSetRenderTargets(static_cast<UINT>(rtvHandles.size()), rtvHandles.data(), FALSE, &dsvHandle);
 
-	D3D12_VIEWPORT viewport = { 0.0f, 0.0f, static_cast<FLOAT>(m_renderManager->m_width), static_cast<FLOAT>(m_renderManager->m_height), 0.0f, 1.0f };
-	D3D12_RECT scissorRect = { 0, 0, m_renderManager->m_width, m_renderManager->m_height };
-	commandList->RSSetViewports(1, &viewport);
-	commandList->RSSetScissorRects(1, &scissorRect);
-
 	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	for (const auto& sprite : sprites)
 	{
@@ -323,7 +318,6 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	barriers.clear();
 	// Transition G-Buffer Render Targets to Pixel Shader Resource for lighting pass
-	// @TODO gBuffer needs to be D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE after lighting pass is implemented
 	for (const auto& gBuffer : m_gBuffers)
 	{
 		barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
