@@ -65,7 +65,7 @@ void DXGBufferContext::Initialize()
 			&heapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&depthStencilDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			D3D12_RESOURCE_STATE_COMMON,
 			&clearValue,
 			IID_PPV_ARGS(&m_depthStencil)
 		));
