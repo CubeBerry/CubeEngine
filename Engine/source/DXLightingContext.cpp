@@ -82,8 +82,14 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	ID3D12PipelineState* initialState = m_pipeline->GetPipelineState().Get();
 	commandList->SetPipelineState(initialState);
 
-	// @TODO Need to set proper RTV for Non-MSAA (Create Non-MSAA RTV Heap in DXRenderTarget)
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+		D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATE_RENDER_TARGET
+	);
+	commandList->ResourceBarrier(1, &barrier);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -118,6 +124,13 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3, 1, 0, 0);
+
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_COMMON
+	);
+	commandList->ResourceBarrier(1, &barrier);
 }
 
 void DXLightingContext::CleanUp()
