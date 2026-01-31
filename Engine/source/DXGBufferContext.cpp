@@ -123,7 +123,7 @@ void DXGBufferContext::Initialize()
 	// Create root signature and pipeline for 3D
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 13 : 8, CD3DX12_ROOT_PARAMETER1{});
+	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 12 : 7, CD3DX12_ROOT_PARAMETER1{});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -139,11 +139,11 @@ void DXGBufferContext::Initialize()
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
 		// ThreeDimension::QuantizedVertex data is transfer via SRV
-		rootParameters[8].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[9].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[10].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[11].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[12].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[7].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[8].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[9].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[10].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[11].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
 	}
 
 	m_renderManager->CreateRootSignature(m_rootSignature3D, rootParameters);
@@ -178,7 +178,7 @@ void DXGBufferContext::Initialize()
 			sampleDesc,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			rtvFormats,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 	}
@@ -278,11 +278,11 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 				// Bind structured buffers to root signature
-				commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(9, buffer->meshletBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(10, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(11, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRoot32BitConstants(12, 1, &m_renderManager->m_meshletVisualization, 0);
+				commandList->SetGraphicsRootShaderResourceView(7, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(8, buffer->meshletBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(9, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(10, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRoot32BitConstants(11, 1, &m_renderManager->m_meshletVisualization, 0);
 
 				const auto& meshlets = spriteData->meshlets;
 				UINT numMeshlets = static_cast<UINT>(meshlets.size());
