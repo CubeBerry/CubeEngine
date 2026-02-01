@@ -21,13 +21,17 @@ VSOutput_0 vertexMain(uint vertexID_0 : SV_VertexID)
 {
 
 
-    float2 texcoord_0 = float2(float(vertexID_0 << int(1)) * 2.0f, float(vertexID_0 & 2U));
+    float2 texcoord_0 = float2(float((vertexID_0 << int(1)) & 2U), float(vertexID_0 & 2U));
 
 #line 19
     VSOutput_0 output_0;
 
 
+
     output_0.position_0 = float4(texcoord_0 * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f), 0.0f, 1.0f);
+
+
+
     output_0.uv_0 = texcoord_0;
 
     return output_0;

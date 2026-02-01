@@ -18,8 +18,12 @@ VSOutput vertexMain(uint vertexID : SV_VertexID)
 {
     VSOutput output;
 
-    float2 texcoord = float2(float(vertexID << 1) * 2.0, float(vertexID & 2));
+    float2 texcoord = float2((vertexID << 1) & 2, vertexID & 2);
+#if defined(__hlsl__)
     output.position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
+#else
+    output.position = float4(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0, 0.0, 1.0);
+#endif
     output.uv = texcoord;
     
     return output;

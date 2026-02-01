@@ -9,7 +9,7 @@
 #endif
 
 
-#line 73 "slang/LightingPass.slang"
+#line 77 "slang/LightingPass.slang"
 Texture2D<float4 > gAlbedo_0 : register(t0, space1);
 
 
@@ -17,19 +17,19 @@ Texture2D<float4 > gAlbedo_0 : register(t0, space1);
 SamplerState gSampler_0 : register(s0, space1);
 
 
-#line 74
+#line 78
 Texture2D<float4 > gNormal_0 : register(t1, space1);
 
 
-#line 75
+#line 79
 Texture2D<float4 > gPosition_0 : register(t2, space1);
 
 
-#line 76
+#line 80
 Texture2D<float4 > gMaterial_0 : register(t3, space1);
 
 
-#line 61
+#line 65
 struct PushConstants_0
 {
     float3 viewPosition_0;
@@ -42,7 +42,7 @@ cbuffer pushConstants_0 : register(b2)
     PushConstants_0 pushConstants_0;
 }
 
-#line 29
+#line 33
 struct fDirectionalLight_0
 {
     float3 lightDirection_0;
@@ -57,13 +57,13 @@ struct fDirectionalLightList_0
 };
 
 
-#line 41
+#line 45
 cbuffer directionalLightList_0 : register(b0)
 {
     fDirectionalLightList_0 directionalLightList_0;
 }
 
-#line 43
+#line 47
 struct fPointLight_0
 {
     float3 lightPosition_0;
@@ -82,28 +82,28 @@ struct fPointLightList_0
 };
 
 
-#line 59
+#line 63
 cbuffer pointLightList_0 : register(b1)
 {
     fPointLightList_0 pointLightList_0;
 }
 
-#line 80
+#line 84
 TextureCube<float4 > irradianceMap_0 : register(t0, space2);
 
 
 SamplerState iblSmp_0 : register(s1, space2);
 
 
-#line 81
+#line 85
 TextureCube<float4 > prefilterMap_0 : register(t1, space2);
 
 
-#line 82
+#line 86
 Texture2D<float4 > brdfLUT_0 : register(t2, space2);
 
 
-#line 175
+#line 179
 struct MainVectors_0
 {
     float3 worldPosition_0;
@@ -115,11 +115,11 @@ struct MainVectors_0
 };
 
 
-#line 175
+#line 179
 MainVectors_0 MainVectors_x24init_0(float3 worldPosition_1, float3 albedo_1, float4 material_1, float3 V_1, float3 N_1, float3 F0_1)
 {
 
-#line 175
+#line 179
     MainVectors_0 _S1;
 
     _S1.worldPosition_0 = worldPosition_1;
@@ -129,24 +129,24 @@ MainVectors_0 MainVectors_x24init_0(float3 worldPosition_1, float3 albedo_1, flo
     _S1.N_0 = N_1;
     _S1.F0_0 = F0_1;
 
-#line 175
+#line 179
     return _S1;
 }
 
 
-#line 165
+#line 169
 float3 F_0(float3 F0_2, float3 V_2, float3 H_0)
 {
     return F0_2 + ((float3)1.0f - F0_2) * pow(1.0f - max(dot(V_2, H_0), 0.0f), 5.0f);
 }
 
 
-#line 135
+#line 139
 float D_0(float alpha_0, float3 N_2, float3 H_1)
 {
     float numerator_0 = pow(alpha_0, 2.0f);
 
-#line 143
+#line 147
     return numerator_0 / max(3.14159274101257324f * pow(pow(max(dot(N_2, H_1), 0.0f), 2.0f) * (numerator_0 - 1.0f) + 1.0f, 2.0f), 9.99999997475242708e-07f);
 }
 
@@ -169,37 +169,37 @@ float G_0(float alpha_2, float3 N_4, float3 V_3, float3 L_0)
 }
 
 
-#line 186
+#line 190
 float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightColor_2, bool isPointLight_0, int lightIndex_0)
 {
     float metallic_0 = mainVectors_0.material_0.x;
     float roughness_0 = mainVectors_0.material_0.y;
 
-#line 189
+#line 193
     float distance_0;
 
 
     if(isPointLight_0)
     {
 
-#line 192
+#line 196
         distance_0 = length(lightPosition_1 - mainVectors_0.worldPosition_0);
 
-#line 192
+#line 196
     }
     else
     {
 
-#line 192
+#line 196
         distance_0 = 1.0f;
 
-#line 192
+#line 196
     }
 
-#line 192
+#line 196
     float attenuation_0;
 
-#line 192
+#line 196
     float3 L_1;
 
 
@@ -209,43 +209,43 @@ float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightCo
 
         float _S2 = 1.0f / (pointLightList_0.lights_1[lightIndex_0].constant_0 + pointLightList_0.lights_1[lightIndex_0].linear_0 * distance_0 + pointLightList_0.lights_1[lightIndex_0].quadratic_0 * (distance_0 * distance_0));
 
-#line 199
+#line 203
         L_1 = normalize(lightPosition_1 - mainVectors_0.worldPosition_0);
 
-#line 199
+#line 203
         attenuation_0 = _S2;
 
-#line 196
+#line 200
     }
     else
     {
 
-#line 196
+#line 200
         L_1 = normalize(- lightPosition_1);
 
-#line 196
+#line 200
         attenuation_0 = 1.0f;
 
-#line 196
+#line 200
     }
 
-#line 208
+#line 212
     float3 H_2 = normalize(mainVectors_0.V_0 + L_1);
 
 
     float3 Ks_0 = F_0(mainVectors_0.F0_0, mainVectors_0.V_0, H_2);
 
-#line 217
+#line 221
     float alpha_3 = roughness_0 * roughness_0;
 
     float _S3 = max(dot(L_1, mainVectors_0.N_0), 0.0f);
 
-#line 226
+#line 230
     return ((1.0f - metallic_0) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_0(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * _S3, 0.10000000149011612f)) * (lightColor_2 * attenuation_0) * _S3;
 }
 
 
-#line 170
+#line 174
 float3 Froughness_0(float3 F0_3, float3 V_4, float3 H_3, float roughness_1)
 {
     return F0_3 + (max((float3)(1.0f - roughness_1), F0_3) - F0_3) * pow(clamp(1.0f - max(dot(H_3, V_4), 0.0f), 0.0f, 1.0f), 5.0f);
@@ -260,11 +260,11 @@ struct VSOutput_0
 };
 
 
-#line 230
+#line 234
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 230
+#line 234
     VSOutput_0 _S4 = input_0;
 
     float3 _S5 = (float3)0.0f;
@@ -273,10 +273,10 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     if((albedoSample_0.w) < 0.00999999977648258f)
     {
 
-#line 235
+#line 239
         discard;
 
-#line 235
+#line 239
     }
     float3 albedo_2 = albedoSample_0.xyz;
 
@@ -293,82 +293,82 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     float3 N_5 = normalize(gNormal_0.Sample(gSampler_0, _S4.uv_0).xyz);
     MainVectors_0 _S6 = MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, V_5, N_5, F0_4);
 
-#line 249
+#line 253
     int l_0 = int(0);
 
-#line 249
+#line 253
     float3 resultColor_0 = _S5;
 
 
     for(;;)
     {
 
-#line 252
+#line 256
         if(l_0 < (pushConstants_0.activeDirectionalLights_0))
         {
         }
         else
         {
 
-#line 252
+#line 256
             break;
         }
 
 
         float3 resultColor_1 = resultColor_0 + PBR_0(_S6, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0, false, l_0);
 
-#line 252
+#line 256
         l_0 = l_0 + int(1);
 
-#line 252
+#line 256
         resultColor_0 = resultColor_1;
 
-#line 252
+#line 256
     }
 
-#line 252
+#line 256
     l_0 = int(0);
 
-#line 260
+#line 264
     for(;;)
     {
 
-#line 260
+#line 264
         if(l_0 < (pushConstants_0.activePointLights_0))
         {
         }
         else
         {
 
-#line 260
+#line 264
             break;
         }
 
 
         float3 resultColor_2 = resultColor_0 + PBR_0(_S6, pointLightList_0.lights_1[l_0].lightPosition_0, pointLightList_0.lights_1[l_0].lightColor_1, true, l_0);
 
-#line 260
+#line 264
         l_0 = l_0 + int(1);
 
-#line 260
+#line 264
         resultColor_0 = resultColor_2;
 
-#line 260
+#line 264
     }
 
-#line 269
+#line 273
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, roughness_2);
 
 
     float3 _S7 = (float3)1.0f;
 
-#line 283
+#line 287
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), roughness_2)).xy;
 
-#line 292
+#line 296
     float3 resultColor_3 = (1.0f - metallic_1) * (_S7 - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
 
-#line 309
+#line 313
     return float4(pow(resultColor_3 / (resultColor_3 + _S7), (float3)0.45454543828964233f), 1.0f);
 }
 
