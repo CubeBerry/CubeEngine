@@ -46,8 +46,8 @@ struct VSInput_0
 {
     uint position_1 : POSITION0;
     float3 normal_1 : NORMAL0;
-    int tex_sub_index_1 : TEXCOORD1;
     float2 uv_1 : TEXCOORD0;
+    int tex_sub_index_1 : TEXCOORD1;
     int4 boneIDs_0;
     float4 weights_0;
 };

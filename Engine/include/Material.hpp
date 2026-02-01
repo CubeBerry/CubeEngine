@@ -71,8 +71,8 @@ namespace ThreeDimension
 		// vec2 -> uint32_t quantization (11, 11, 10)
 		uint32_t position;
 		glm::vec3 normal;
-		int texSubIndex{ 0 };
 		glm::vec2 uv;
+		int texSubIndex{ 0 };
 
 		// Bone IDs and Weights (For simplicity in this guide, we use raw types not packed)
 		glm::ivec4 boneIDs;
