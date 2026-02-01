@@ -33,7 +33,7 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->ResourceBarrier(1, &preResolveBarrier);
 
 	FidelityFX::UpscaleEffect currentEffect = m_fidelityFX->GetCurrentEffect();
-	bool useUpscaling = (currentEffect == FidelityFX::UpscaleEffect::FSR1) || (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
+	const bool useUpscaling = currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING;
 
 	if (useUpscaling)
 	{
@@ -76,8 +76,7 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 		{
 			m_renderManager->WaitForGPU();
 
-			bool isUpdate = m_fidelityFX->UpdatePreset(effect, mode, preset);
-			if (isUpdate)
+			if (m_fidelityFX->UpdatePreset(effect, mode, preset))
 			{
 				m_fidelityFX->OnResize(m_renderManager->m_device, m_renderManager->m_width, m_renderManager->m_height);
 
