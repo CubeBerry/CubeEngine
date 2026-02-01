@@ -86,6 +86,7 @@ private:
 	// Descriptor Start Index, Block Size
 	std::map<UINT, UINT> m_availableSrvBlocks;
 	// SRV Handle, Descriptor Index
+	// @TODO Make struct that contains DeallocateSrvBlock inside destructor later
 	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvHandles(const UINT& count = 1);
 	//void DeallocateSrvBlock(UINT startIndex, UINT count);
 	std::string LogSrvBlocks();
@@ -135,9 +136,9 @@ private:
 	// Work Graphs Context
 	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
-	// MSAA
-	// Depth
+	// Intermediate, MSAA, Depth
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> m_intermediateSrvHandle;
 
 	// Compute Shader
 	// @TODO Make Compute Shader Context Later

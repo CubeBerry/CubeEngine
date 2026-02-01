@@ -24,9 +24,7 @@ private:
 
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	std::unique_ptr<DXPipeLine> m_pipeline;
-	// Copies G-Buffer SRV and IBL SRV from GBufferContext's m_srvHeap and DXRenderManager's m_srvHeap
-	// @TODO Optimize by sharing descriptor heaps instead of copying or other methods (Think of a better way to refactor managing descriptor heaps)
-	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, UINT> m_gBufferSrvHandle;
 
 	// Push Constants for Lighting Pass
 	struct alignas(16) PushConstants

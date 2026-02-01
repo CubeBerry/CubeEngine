@@ -9,13 +9,11 @@
 
 void DXLightingContext::Initialize()
 {
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = 7;
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvHeap)));
-	m_srvHeap->SetName(L"Lighting Context Integrated Heap");
+	// Copy G-Buffer SRV handles to Main SRV Heap
+	m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(4);
+	D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
+	D3D12_CPU_DESCRIPTOR_HANDLE srcHandle = m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart();
+	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	// Create root signature and pipeline
 	// The slot of a root signature version 1.1
@@ -49,6 +47,8 @@ void DXLightingContext::Initialize()
 		sampleDesc,
 		false,
 		false,
+		// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
+		// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
@@ -56,7 +56,10 @@ void DXLightingContext::Initialize()
 
 void DXLightingContext::OnResize()
 {
-
+	// Copy G-Buffer SRV handles to Main SRV Heap
+	D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
+	D3D12_CPU_DESCRIPTOR_HANDLE srcHandle = m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart();
+	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
@@ -64,36 +67,22 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
-	// Copy G-Buffer SRV and IBL SRV to local heap
-	ID3D12Device14* device = m_renderManager->m_device.Get();
-	UINT srvSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dstHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart());
-	CD3DX12_CPU_DESCRIPTOR_HANDLE srcGBuffer(
-		m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart()
-	);
-	device->CopyDescriptorsSimple(4, dstHandle, srcGBuffer, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	dstHandle.Offset(4, srvSize);
-	if (m_renderManager->m_skyboxEnabled && m_renderManager->m_skyboxRenderContext->GetSkybox())
-	{
-		D3D12_CPU_DESCRIPTOR_HANDLE srcIBL = m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapCpuHandle();
-		device->CopyDescriptorsSimple(3, dstHandle, srcIBL, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-
 	ID3D12PipelineState* initialState = m_pipeline->GetPipelineState().Get();
 	commandList->SetPipelineState(initialState);
 
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		m_renderManager->m_renderTarget->GetRenderTarget().Get(),
-		D3D12_RESOURCE_STATE_COMMON,
-		D3D12_RESOURCE_STATE_RENDER_TARGET
-	);
-	commandList->ResourceBarrier(1, &barrier);
+	// It is already in RENDER_TARGET state from DXRenderManager::BeginRender
+	//auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+	//	m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+	//	D3D12_RESOURCE_STATE_COMMON,
+	//	D3D12_RESOURCE_STATE_RENDER_TARGET
+	//);
+	//commandList->ResourceBarrier(1, &barrier);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get()};
+	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	if (m_renderManager->directionalLightUniformBuffer && !m_renderManager->directionalLightUniforms.empty())
@@ -117,15 +106,19 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	);
 	commandList->SetGraphicsRoot32BitConstants(2, sizeof(PushConstants) / 4, &pushConstants, 0);
 
-	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-	commandList->SetGraphicsRootDescriptorTable(3, gpuHandle);
-	gpuHandle.Offset(4, srvSize);
-	if (m_renderManager->m_skyboxEnabled) commandList->SetGraphicsRootDescriptorTable(4, gpuHandle);
+	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+	gBufferGpuHandle.ptr += static_cast<UINT64>(m_gBufferSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
+	commandList->SetGraphicsRootDescriptorTable(3, gBufferGpuHandle);
+	if (m_renderManager->m_skyboxEnabled)
+	{
+		auto skyboxGpuHandle = m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv();
+		commandList->SetGraphicsRootDescriptorTable(4, skyboxGpuHandle);
+	}
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3, 1, 0, 0);
 
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_renderManager->m_renderTarget->GetRenderTarget().Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATE_COMMON

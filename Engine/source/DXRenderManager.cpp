@@ -197,7 +197,7 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_postProcessContext = std::make_unique<DXPostProcessContext>(this);
 	m_postProcessContext->Initialize();
 
-	// Create Render Target (MSAA, Depth)
+	// Create Render Target (Intermediate, MSAA, Depth)
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, window,
 		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
@@ -398,7 +398,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_gBufferContext->Execute(&wrapper);
 			m_lightingContext->Execute(&wrapper);
 		}
-		m_skyboxRenderContext->Execute(&wrapper);
+		//m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
 	}

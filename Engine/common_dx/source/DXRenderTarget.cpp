@@ -31,6 +31,8 @@ void DXRenderTarget::CreateRenderTarget(int width, int height)
 	textureDesc.DepthOrArraySize = 1;
 	textureDesc.MipLevels = 1;
 	// @TODO Do I need to set format to DXGI_FORMAT_R16G16B16A16_FLOAT for HDR rendering?
+	// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
+	// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
