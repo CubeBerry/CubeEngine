@@ -9,11 +9,11 @@
 #endif
 
 
-#line 45 "slang/Skybox.slang"
+#line 41 "slang/Skybox.slang"
 TextureCube<float4 > skybox_0 : register(t0, space1);
 
 
-#line 44
+#line 40
 SamplerState smp_0 : register(s0, space1);
 
 
@@ -25,11 +25,11 @@ struct VSOutput_0
 };
 
 
-#line 51
+#line 47
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 58
+#line 54
     return float4(skybox_0.Sample(smp_0, input_0.uvw_0).xyz, 1.0f);
 }
 

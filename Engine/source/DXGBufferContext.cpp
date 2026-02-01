@@ -24,13 +24,6 @@ void DXGBufferContext::Initialize()
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
 	DXHelper::ThrowIfFailed(m_srvHeap->SetName(L"G-Buffer Shader Resource View Heap"));
 
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
-	DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"G-Buffer Depth Stencil View Heap"));
-
 	UINT rtvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	UINT srvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
@@ -38,45 +31,6 @@ void DXGBufferContext::Initialize()
 
 	int width = m_renderManager->m_width;
 	int height = m_renderManager->m_height;
-
-	// Create Depth Stencil Buffer Resource
-	{
-		D3D12_RESOURCE_DESC depthStencilDesc = {};
-		depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		depthStencilDesc.Alignment = 0;
-		depthStencilDesc.Width = static_cast<UINT64>(width);
-		depthStencilDesc.Height = static_cast<UINT>(height);
-		depthStencilDesc.DepthOrArraySize = 1;
-		depthStencilDesc.MipLevels = 1;
-		// @TODO Use ID3D12Device::CheckFeatureSupport to find supported format
-		depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		depthStencilDesc.SampleDesc.Count = 1;
-		depthStencilDesc.SampleDesc.Quality = 0;
-		depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-		D3D12_CLEAR_VALUE clearValue = {};
-		clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-		clearValue.DepthStencil.Depth = 1.0f;
-		clearValue.DepthStencil.Stencil = 0;
-
-		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-		DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
-			&heapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&depthStencilDesc,
-			D3D12_RESOURCE_STATE_COMMON,
-			&clearValue,
-			IID_PPV_ARGS(&m_depthStencil)
-		));
-		DXHelper::ThrowIfFailed(m_depthStencil->SetName(L"G-Buffer Depth/Stencil View"));
-
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-		m_renderManager->m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-	}
 
 	// Create G-Buffer Render Targets
 	for (auto& gBuffer : m_gBuffers)
@@ -228,15 +182,10 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 			D3D12_RESOURCE_STATE_RENDER_TARGET
 		));
 	}
-	barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
-		m_depthStencil.Get(),
-		D3D12_RESOURCE_STATE_COMMON,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE
-	));
 	commandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 
 	auto rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
-	auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+	auto dsvHandle = m_renderManager->m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
 	UINT rtvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	// Clear G-Buffer Render Targets
@@ -246,8 +195,6 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		commandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 	}
-	// Clear Depth Stencil
-	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvHandles;
 	for (size_t i = 0; i < m_gBuffers.size(); ++i)
@@ -328,11 +275,6 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 		));
 	}
-	barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
-		m_depthStencil.Get(),
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		D3D12_RESOURCE_STATE_COMMON
-	));
 	commandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 }
 

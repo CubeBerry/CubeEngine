@@ -58,10 +58,6 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// SRV Heap for G-Buffer
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-	// dsv = Depth Stencil View
-	// DSV Heap for Depth Stencil (No MSAA)
-	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
-	ComPtr<ID3D12Resource> m_depthStencil;
 
 	std::array<GBufferData, static_cast<size_t>(GBufferType::Count)> m_gBuffers =
 	{

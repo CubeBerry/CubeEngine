@@ -27,15 +27,11 @@ VSOutput vertexMain(VSInput input)
 
     output.uvw = input.position;
 
-    float4x4 view =
-        {
-            float4(worldToNDC.view[0].xyz, 0.0f),
-            float4(worldToNDC.view[1].xyz, 0.0f),
-            float4(worldToNDC.view[2].xyz, 0.0f),
-            float4(0.0f)
-        };
-    float4 position = mul(worldToNDC.projection, mul(view, float4(input.position, 1.0f)));
-    output.position = position.xyww;
+    float3x3 viewRotation = (float3x3)worldToNDC.view;
+    float3 viewPosition = mul(viewRotation, input.position);
+    float4 clipPosistion = mul(worldToNDC.projection, float4(viewPosition, 1.0f));
+    // Set w component to match z to ensure depth is at maximum value
+    output.position = clipPosistion.xyww;
     
     return output;
 }
