@@ -18,7 +18,7 @@ public:
 	void Execute(ICommandListWrapper* commandListWrapper) override;
 	void CleanUp() override;
 
-	void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset);
+	void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) const;
 
 	FidelityFX* GetFidelityFX() const { return m_fidelityFX.get(); }
 private:

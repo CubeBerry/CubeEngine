@@ -69,7 +69,7 @@ void DXPostProcessContext::CleanUp()
 	//m_lowResRenderTarget.Reset();
 }
 
-void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
+void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) const
 {
 	m_renderManager->QueueDeferredFunction(
 		[this, effect, mode, preset]() -> bool

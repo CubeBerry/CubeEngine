@@ -27,10 +27,12 @@ public:
 	DXRenderTarget& operator=(const DXRenderTarget&&) = delete;
 
 	// Intermediate Render Target Resources
+	// For Forward Rendering MSAA resolve & Deferred Lighting Pass
 	ComPtr<ID3D12Resource> GetRenderTarget() const { return m_renderTarget; }
 	ComPtr<ID3D12DescriptorHeap> GetRtvHeap() const { return m_rtvHeap; }
 
 	// MSAA
+	// For Forward Rendering
 	UINT GetMSAASampleCount() const { return m_msaaSampleCount; }
 	UINT GetMSAAQualityLevel() const { return m_msaaQualityLevel; }
 	ComPtr<ID3D12Resource> GetMSAARenderTarget() const { return m_msaaRenderTarget; }
