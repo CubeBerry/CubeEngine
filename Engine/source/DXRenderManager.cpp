@@ -360,16 +360,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_commandList->ResourceBarrier(1, &barrier);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
-	// @TODO What does OMSetRenderTargets do?
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
 	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
-	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	DXCommandListWrapper wrapper(m_commandList.Get());
@@ -382,10 +374,28 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	break;
 	case RenderType::ThreeDimension:
 	{
-		if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
-		else m_forwardRenderContext->Execute(&wrapper);
-		//m_gBufferContext->Execute(&wrapper);
-		//m_lightingContext->Execute(&wrapper);
+		// Forward Rendering
+		if (!m_deferredRenderingEnabled)
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+
+			// MSAA Target: RESOLVE_SOURCE -> RENDER_TARGET
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_commandList->ResourceBarrier(1, &barrier);
+			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+			if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
+			else m_forwardRenderContext->Execute(&wrapper);
+		}
+		// Deferred Rendering
+		else
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+			m_gBufferContext->Execute(&wrapper);
+			m_lightingContext->Execute(&wrapper);
+		}
 		m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;

@@ -139,6 +139,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderManager->m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
+	// @TODO What does OMSetRenderTargets do?
+	m_renderManager->m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
 	ID3D12PipelineState* initialState = m_renderManager->m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() :
 		m_renderManager->pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
 	commandList->SetPipelineState(initialState);

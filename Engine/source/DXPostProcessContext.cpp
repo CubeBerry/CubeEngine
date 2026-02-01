@@ -32,18 +32,18 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 	if (!m_renderManager->m_deferredRenderingEnabled)
 	{
 		auto* msaaTarget = m_renderManager->m_renderTarget->GetMSAARenderTarget().Get();
+		D3D12_RESOURCE_BARRIER barriers[2];
 		// MSAA Target: RENDER_TARGET -> RESOLVE_SOURCE
-		auto barrierMSAA = CD3DX12_RESOURCE_BARRIER::Transition(msaaTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
+		barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(msaaTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
 		// Intermediate: COMMON -> RESOLVE_DEST
-		auto barrierIRT = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RESOLVE_DEST);
-		D3D12_RESOURCE_BARRIER barriers[2] = { barrierMSAA, barrierIRT };
+		barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RESOLVE_DEST);
 		commandList->ResourceBarrier(2, barriers);
 
 		// Resolve
 		commandList->ResolveSubresource(intermediateRenderTarget.Get(), 0, msaaTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 		// Intermediate: RESOLVE_DEST -> COMMON
-		barrierIRT = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
+		auto barrierIRT = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
 		commandList->ResourceBarrier(1, &barrierIRT);
 	}
 
@@ -54,22 +54,20 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 	}
 	else
 	{
+		D3D12_RESOURCE_BARRIER barriers[2];
 		// Main Render Target: PRESENT -> COPY_DEST
-		auto barrierMRT = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+		barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 		// Intermediate: COMMON -> COPY_SOURCE
-		auto barrierIRT = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		D3D12_RESOURCE_BARRIER barriers[2] = { barrierMRT, barrierIRT };
+		barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
 		commandList->ResourceBarrier(2, barriers);
 
 		// Copy
 		commandList->CopyResource(backBuffer, intermediateRenderTarget.Get());
 
-		// Intermediate: COPY_SOURCE -> COMMON
-		barrierIRT = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
 		// Main Render Target: COPY_DEST -> RENDER_TARGET
-		barrierMRT = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		barriers[0] = barrierIRT;
-		barriers[1] = barrierMRT;
+		barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		// Intermediate: COPY_SOURCE -> COMMON
+		barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
 		commandList->ResourceBarrier(2, barriers);
 	}
 }
@@ -77,7 +75,6 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 void DXPostProcessContext::CleanUp()
 {
 	m_fidelityFX.reset();
-	//m_lowResRenderTarget.Reset();
 }
 
 void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) const
