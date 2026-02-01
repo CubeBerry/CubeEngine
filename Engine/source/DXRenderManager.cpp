@@ -288,9 +288,9 @@ void DXRenderManager::OnResize()
 	WaitForGPU();
 	//OutputDebugStringA("OnResize: GPU wait finished.\n");
 
-	for (UINT i = 0; i < frameCount; ++i)
+	for (auto& renderTarget : m_renderTargets)
 	{
-		m_renderTargets[i].Reset();
+		renderTarget.Reset();
 	}
 	//OutputDebugStringA("OnResize: Old resources released.\n");
 
