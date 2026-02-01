@@ -37,6 +37,7 @@ void DX2DRenderContext::Initialize()
 		sampleDesc,
 		true,
 		true,
+		true,
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);

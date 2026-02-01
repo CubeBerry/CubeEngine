@@ -16,6 +16,7 @@ DXPipeLine::DXPipeLine(
 	const DXGI_SAMPLE_DESC& sampleDesc,
 	bool isCCW,
 	bool isDepth,
+	bool isDepthWrite,
 	const DXGI_FORMAT& rtvFormat,
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
 	)
@@ -111,7 +112,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.RasterizerState = desc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	psoDesc.DepthStencilState.DepthWriteMask = isDepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.InputLayout = { inputElementDescs.data(), static_cast<UINT>(inputElementDescs.size()) };
@@ -136,6 +137,7 @@ DXPipeLine::DXPipeLine(
 	const DXGI_SAMPLE_DESC& sampleDesc,
 	bool isCCW,
 	bool isDepth,
+	bool isDepthWrite,
 	const std::vector<DXGI_FORMAT>& rtvFormats,
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
 )
@@ -231,7 +233,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.RasterizerState = desc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	psoDesc.DepthStencilState.DepthWriteMask = isDepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.InputLayout = { inputElementDescs.data(), static_cast<UINT>(inputElementDescs.size()) };

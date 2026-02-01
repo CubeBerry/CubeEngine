@@ -178,6 +178,7 @@ void DXGBufferContext::Initialize()
 			sampleDesc,
 			true,
 			true,
+			true,
 			rtvFormats,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
@@ -193,6 +194,7 @@ void DXGBufferContext::Initialize()
 			D3D12_FILL_MODE_SOLID,
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
+			true,
 			true,
 			true,
 			rtvFormats,

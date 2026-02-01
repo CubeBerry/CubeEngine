@@ -17,7 +17,8 @@ public:
 	DXRenderTarget(
 		const ComPtr<ID3D12Device>& device,
 		SDL_Window* window,
-		int width, int height
+		int width, int height,
+		bool deferred
 	);
 	~DXRenderTarget() = default;
 
@@ -61,7 +62,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_msaaRtvHeap;
 
 	// Depth
-	void CreateDepthBuffer(int width, int height);
+	void CreateDepthBuffer(int width, int height, bool deferred);
 
 	// @TODO Move this to Forward Render Context later because G-Buffer Context has its own depth buffer
 	ComPtr<ID3D12Resource> m_depthStencil;

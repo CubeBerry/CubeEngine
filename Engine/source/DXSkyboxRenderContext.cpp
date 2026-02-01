@@ -20,8 +20,8 @@ void DXSkyboxRenderContext::Initialize()
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderManager->m_renderTarget->GetMSAAQualityLevel();
+	sampleDesc.Count = m_renderManager->m_deferredRenderingEnabled ? 1 : m_renderManager->m_renderTarget->GetMSAASampleCount();
+	sampleDesc.Quality = m_renderManager->m_deferredRenderingEnabled ? 0 : m_renderManager->m_renderTarget->GetMSAAQualityLevel();
 
 	m_pipelineSkybox = std::make_unique<DXPipeLine>(
 		m_renderManager->m_device,
@@ -34,6 +34,9 @@ void DXSkyboxRenderContext::Initialize()
 		sampleDesc,
 		true,
 		true,
+		false,
+		// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
+		// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
@@ -42,26 +45,7 @@ void DXSkyboxRenderContext::Initialize()
 void DXSkyboxRenderContext::OnResize()
 {
 	m_pipelineSkybox.reset();
-
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderManager->m_renderTarget->GetMSAAQualityLevel();
-
-	m_pipelineSkybox = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignatureSkybox,
-		"../Engine/shaders/hlsl/Skybox.vert.hlsl",
-		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	Initialize();
 }
 
 void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
@@ -71,9 +55,16 @@ void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_deferredRenderingEnabled ?
+		m_renderManager->m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart() :
+		m_renderManager->m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderManager->m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
 	commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
 	commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
 
@@ -85,6 +76,16 @@ void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->IASetVertexBuffers(0, 1, &vbv);
 
 	commandList->DrawInstanced(36, 1, 0, 0);
+
+	if (m_renderManager->m_deferredRenderingEnabled)
+	{
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_COMMON
+		);
+		commandList->ResourceBarrier(1, &barrier);
+	}
 }
 
 void DXSkyboxRenderContext::CleanUp()

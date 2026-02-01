@@ -174,6 +174,7 @@ void DXSkybox::EquirectangularToCube()
 		sampleDesc,
 		false,
 		false,
+		false,
 		texDesc.Format
 	);
 
@@ -325,6 +326,7 @@ void DXSkybox::CalculateIrradiance()
 		sampleDesc,
 		false,
 		false,
+		false,
 		texDesc.Format
 	);
 
@@ -462,6 +464,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
+		false,
 		false,
 		false,
 		texDesc.Format
@@ -603,6 +606,7 @@ void DXSkybox::BRDFLUT()
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
+		false,
 		false,
 		false,
 		texDesc.Format

@@ -62,6 +62,7 @@ void DXForwardRenderContext::Initialize()
 			sampleDesc,
 			true,
 			true,
+			true,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
@@ -79,6 +80,7 @@ void DXForwardRenderContext::Initialize()
 			sampleDesc,
 			true,
 			true,
+			true,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
@@ -92,6 +94,7 @@ void DXForwardRenderContext::Initialize()
 			D3D12_FILL_MODE_WIREFRAME,
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
+			true,
 			true,
 			true,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -121,6 +124,7 @@ void DXForwardRenderContext::Initialize()
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_BACK,
 		sampleDesc,
+		true,
 		true,
 		true,
 		DXGI_FORMAT_R8G8B8A8_UNORM,

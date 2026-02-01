@@ -47,6 +47,7 @@ void DXLightingContext::Initialize()
 		sampleDesc,
 		false,
 		false,
+		false,
 		// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
 		// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
 		DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -118,12 +119,16 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3, 1, 0, 0);
 
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		m_renderManager->m_renderTarget->GetRenderTarget().Get(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_COMMON
-	);
-	commandList->ResourceBarrier(1, &barrier);
+	// Skybox context will handle the transition back to COMMON state if skybox is enabled
+	if (!m_renderManager->m_skyboxEnabled)
+	{
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_COMMON
+		);
+		commandList->ResourceBarrier(1, &barrier);
+	}
 }
 
 void DXLightingContext::CleanUp()

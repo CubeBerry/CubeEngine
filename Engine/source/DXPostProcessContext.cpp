@@ -93,7 +93,8 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 				m_renderManager->m_renderTarget = std::make_unique<DXRenderTarget>(
 					m_renderManager->m_device, Engine::GetWindow().GetWindow(),
 					m_fidelityFX->GetRenderWidth(),
-					m_fidelityFX->GetRenderHeight()
+					m_fidelityFX->GetRenderHeight(),
+					m_renderManager->m_deferredRenderingEnabled
 				);
 			}
 

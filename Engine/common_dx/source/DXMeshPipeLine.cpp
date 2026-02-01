@@ -15,6 +15,7 @@ DXMeshPipeLine::DXMeshPipeLine(
 	const DXGI_SAMPLE_DESC& sampleDesc,
 	bool isCCW,
 	bool isDepth,
+	bool isDepthWrite,
 	DXGI_FORMAT rtvFormat,
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
 	)
@@ -42,7 +43,7 @@ DXMeshPipeLine::DXMeshPipeLine(
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.RasterizerState = desc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	psoDesc.DepthStencilState.DepthWriteMask = isDepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.PrimitiveTopologyType = primitiveTopology;
@@ -70,6 +71,7 @@ DXMeshPipeLine::DXMeshPipeLine(
 	const DXGI_SAMPLE_DESC& sampleDesc,
 	bool isCCW,
 	bool isDepth,
+	bool isDepthWrite,
 	const std::vector<DXGI_FORMAT>& rtvFormats,
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology
 )
@@ -97,7 +99,7 @@ DXMeshPipeLine::DXMeshPipeLine(
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.RasterizerState = desc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	psoDesc.DepthStencilState.DepthWriteMask = isDepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.PrimitiveTopologyType = primitiveTopology;

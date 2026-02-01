@@ -7,12 +7,13 @@
 DXRenderTarget::DXRenderTarget(
 	const ComPtr<ID3D12Device>& device,
 	SDL_Window* window,
-	int width, int height
+	int width, int height,
+	bool deferred
 	) : m_device(device), m_window(window)
 {
 	CreateRenderTarget(width, height);
 	CreateMSAARenderTarget(width, height);
-	CreateDepthBuffer(width, height);
+	CreateDepthBuffer(width, height, deferred);
 }
 
 void DXRenderTarget::CreateRenderTarget(int width, int height)
@@ -129,7 +130,7 @@ void DXRenderTarget::CreateMSAARenderTarget(int width, int height)
 }
 
 // Depth
-void DXRenderTarget::CreateDepthBuffer(int width, int height)
+void DXRenderTarget::CreateDepthBuffer(int width, int height, bool deferred)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
 	dsvHeapDesc.NumDescriptors = 1;
@@ -148,8 +149,8 @@ void DXRenderTarget::CreateDepthBuffer(int width, int height)
 	depthStencilDesc.MipLevels = 1;
 	// @TODO Use ID3D12Device::CheckFeatureSupport to find supported format
 	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthStencilDesc.SampleDesc.Count = m_msaaSampleCount;
-	depthStencilDesc.SampleDesc.Quality = m_msaaQualityLevel;
+	depthStencilDesc.SampleDesc.Count = deferred ? 1 : m_msaaSampleCount;
+	depthStencilDesc.SampleDesc.Quality = deferred ? 0 : m_msaaQualityLevel;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 

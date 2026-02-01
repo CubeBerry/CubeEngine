@@ -201,7 +201,8 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, window,
 		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
-		m_postProcessContext->GetFidelityFX()->GetRenderHeight()
+		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
+		m_deferredRenderingEnabled
 	);
 
 	// Create 2D Forward Render Context
@@ -323,7 +324,8 @@ void DXRenderManager::OnResize()
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, Engine::GetWindow().GetWindow(),
 		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
-		m_postProcessContext->GetFidelityFX()->GetRenderHeight()
+		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
+		m_deferredRenderingEnabled
 	);
 
 	m_skyboxRenderContext->OnResize();
@@ -399,7 +401,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_gBufferContext->Execute(&wrapper);
 			m_lightingContext->Execute(&wrapper);
 		}
-		//m_skyboxRenderContext->Execute(&wrapper);
+		m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
 	}

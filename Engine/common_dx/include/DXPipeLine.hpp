@@ -38,6 +38,7 @@ public:
 		const DXGI_SAMPLE_DESC& sampleDesc,
 		bool isCCW,
 		bool isDepth,
+		bool isDepthWrite,
 		const DXGI_FORMAT& rtvFormat,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
@@ -51,6 +52,7 @@ public:
 		const DXGI_SAMPLE_DESC& sampleDesc,
 		bool isCCW,
 		bool isDepth,
+		bool isDepthWrite,
 		const std::vector<DXGI_FORMAT>& rtvFormats,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
