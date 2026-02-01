@@ -85,6 +85,7 @@ void DXForwardRenderContext::Initialize()
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 
+		// @TODO Separate to Wireframe Render Context (Debug Context)
 		m_pipeline3DLine = std::make_unique<DXPipeLine>(
 			m_renderManager->m_device,
 			m_rootSignature3D,
@@ -102,7 +103,7 @@ void DXForwardRenderContext::Initialize()
 		);
 	}
 
-	// @TODO Separate to Normal Vector Visualization Render Context
+	// @TODO Separate to Normal Vector Visualization Render Context (Debug Context)
 #ifdef _DEBUG
 	// Create root signature and pipeline for Normal 3D
 	rootParameters.clear();
