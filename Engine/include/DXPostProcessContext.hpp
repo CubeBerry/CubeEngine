@@ -24,7 +24,4 @@ public:
 private:
 	DXRenderManager* m_renderManager;
 	std::unique_ptr<FidelityFX> m_fidelityFX;
-	ComPtr<ID3D12Resource> m_lowResRenderTarget;
-
-	void RecreateLowResRenderTarget();
 };
