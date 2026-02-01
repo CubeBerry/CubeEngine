@@ -378,7 +378,6 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		if (!m_deferredRenderingEnabled)
 		{
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
-
 			// MSAA Target: RESOLVE_SOURCE -> RENDER_TARGET
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			m_commandList->ResourceBarrier(1, &barrier);
@@ -391,6 +390,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		else
 		{
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+			// Intermediate: COMMON -> RENDER_TARGET
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_commandList->ResourceBarrier(1, &barrier);
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			m_gBufferContext->Execute(&wrapper);
