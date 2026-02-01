@@ -360,7 +360,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
-	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
+	float clearColor[4] = { bgColor.r, bgColor.g, bgColor.b, 1.f };
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -393,6 +393,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			// Intermediate: COMMON -> RENDER_TARGET
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			m_commandList->ResourceBarrier(1, &barrier);
+			clearColor[3] = 0.f; // Set alpha to 0 for discarding in lighting pass shader
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			m_gBufferContext->Execute(&wrapper);

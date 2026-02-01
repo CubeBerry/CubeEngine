@@ -44,7 +44,7 @@ void DXRenderTarget::CreateRenderTarget(int width, int height)
 	clearValue.Color[0] = 0.f;
 	clearValue.Color[1] = 0.f;
 	clearValue.Color[2] = 0.f;
-	clearValue.Color[3] = 1.f;
+	clearValue.Color[3] = 0.f;
 
 	// heapProps(D3D12_HEAP_TYPE_DEFAULT)
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);

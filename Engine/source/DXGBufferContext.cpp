@@ -99,7 +99,7 @@ void DXGBufferContext::Initialize()
 		clearValue.Color[0] = 0.0f;
 		clearValue.Color[1] = 0.0f;
 		clearValue.Color[2] = 0.0f;
-		clearValue.Color[3] = 1.0f;
+		clearValue.Color[3] = 0.0f;
 
 		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 		DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
@@ -241,7 +241,7 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 	for (size_t i = 0; i < m_gBuffers.size(); ++i)
 	{
 		CD3DX12_CPU_DESCRIPTOR_HANDLE currentRtvHandle(rtvHandle, static_cast<INT>(i), rtvDescriptorSize);
-		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		commandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 	}
 	// Clear Depth Stencil
