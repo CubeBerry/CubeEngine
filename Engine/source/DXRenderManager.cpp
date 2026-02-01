@@ -382,11 +382,11 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	break;
 	case RenderType::ThreeDimension:
 	{
-		//if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
-		//else m_forwardRenderContext->Execute(&wrapper);
-		m_gBufferContext->Execute(&wrapper);
+		if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
+		else m_forwardRenderContext->Execute(&wrapper);
+		//m_gBufferContext->Execute(&wrapper);
 		//m_lightingContext->Execute(&wrapper);
-		//m_skyboxRenderContext->Execute(&wrapper);
+		m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
 	}
