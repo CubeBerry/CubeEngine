@@ -29,8 +29,8 @@ void DXGBufferContext::Initialize()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart());
 
-	int width = m_renderManager->m_width;
-	int height = m_renderManager->m_height;
+	int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
+	int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
 	// Create G-Buffer Render Targets
 	for (auto& gBuffer : m_gBuffers)
@@ -159,9 +159,8 @@ void DXGBufferContext::Initialize()
 
 void DXGBufferContext::OnResize()
 {
-
-	int width = m_renderManager->m_width;
-	int height = m_renderManager->m_height;
+	int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
+	int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
 	UINT rtvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	UINT srvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
