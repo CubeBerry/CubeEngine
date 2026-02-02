@@ -330,13 +330,19 @@ void DXRenderManager::OnResize()
 
 	m_skyboxRenderContext->OnResize();
 
+	if (m_deferredRenderingEnabled)
+	{
+		m_gBufferContext->OnResize();
+		m_lightingContext->OnResize();
+	}
+
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
 
 	UINT64 completedValue = m_fence->GetCompletedValue();
-	for (UINT i = 0; i < frameCount; ++i)
+	for (auto& fenceValue : m_fenceValues)
 	{
-		m_fenceValues[i] = completedValue;
+		fenceValue = completedValue;
 	}
 }
 

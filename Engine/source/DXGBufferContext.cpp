@@ -159,6 +159,59 @@ void DXGBufferContext::Initialize()
 
 void DXGBufferContext::OnResize()
 {
+
+	int width = m_renderManager->m_width;
+	int height = m_renderManager->m_height;
+
+	UINT rtvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	UINT srvDescriptorSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	// Create G-Buffer Render Targets
+	for (auto& gBuffer : m_gBuffers)
+	{
+		// Release the previous resource
+		gBuffer.resource.Reset();
+
+		D3D12_RESOURCE_DESC textureDesc = {};
+		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		textureDesc.Alignment = 0;
+		textureDesc.Width = static_cast<UINT64>(width);
+		textureDesc.Height = static_cast<UINT>(height);
+		textureDesc.DepthOrArraySize = 1;
+		textureDesc.MipLevels = 1;
+		textureDesc.Format = gBuffer.format;
+		textureDesc.SampleDesc.Count = 1;
+		textureDesc.SampleDesc.Quality = 0;
+		textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+		D3D12_CLEAR_VALUE clearValue = {};
+		clearValue.Format = gBuffer.format;
+		clearValue.Color[0] = 0.0f;
+		clearValue.Color[1] = 0.0f;
+		clearValue.Color[2] = 0.0f;
+		clearValue.Color[3] = 0.0f;
+
+		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+		DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&textureDesc,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			&clearValue,
+			IID_PPV_ARGS(&gBuffer.resource)
+		));
+		DXHelper::ThrowIfFailed(gBuffer.resource->SetName(gBuffer.name.c_str()));
+
+		m_renderManager->m_device->CreateRenderTargetView(gBuffer.resource.Get(), nullptr, rtvHandle);
+		m_renderManager->m_device->CreateShaderResourceView(gBuffer.resource.Get(), nullptr, srvHandle);
+
+		// Move to the next descriptor
+		rtvHandle.Offset(1, rtvDescriptorSize);
+		srvHandle.Offset(1, srvDescriptorSize);
+	}
 }
 
 void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
