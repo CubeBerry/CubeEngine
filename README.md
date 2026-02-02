@@ -129,7 +129,8 @@ dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 | Logger (CMD, CSV) | ✅ | ➖ | ➖ | ➖ |
 | **Rendering Features** | | | | |
 | 2D (Sprite Based Animation) Rendering | ➖ | ✅ | ✅ | ✅ |
-| 3D Mesh Rendering | ➖ | ✅ | ✅ | ✅ |
+| 3D Mesh Forward Rendering | ➖ | ✅ | ✅ | ✅ |
+| 3D Mesh Deferred Rendering | ➖ | ❌ | ❌ | ✅ |
 | PBR (Physically Based Rendering) | ➖ | ✅ | ✅ | ✅ |
 | IBL (Image Based Lighting) | ➖ | ✅ | ✅ | ✅ |
 | Skybox | ➖ | ✅ | ✅ | ✅ |
