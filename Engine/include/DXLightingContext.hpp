@@ -30,6 +30,7 @@ private:
 	struct alignas(16) PushConstants
 	{
 		glm::vec3 viewPosition;
+		int meshletVisualization;
 		int activeDirectionalLight;
 		int activePointLight;
 	} pushConstants;

@@ -97,14 +97,18 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->SetGraphicsRootConstantBufferView(1, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 	}
 
-	pushConstants.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size());
-	pushConstants.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size());
 	glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
-	pushConstants.viewPosition = glm::vec3(
+	pushConstants = {
+		.viewPosition = pushConstants.viewPosition = glm::vec3(
 		inverseView[3].x,
 		inverseView[3].y,
 		inverseView[3].z
-	);
+		),
+		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
+		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
+		.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+	};
+
 	commandList->SetGraphicsRoot32BitConstants(2, sizeof(PushConstants) / 4, &pushConstants, 0);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();

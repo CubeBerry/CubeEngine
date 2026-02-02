@@ -65,6 +65,7 @@ struct fPointLightList
 struct PushConstants
 {
     float3 viewPosition;
+    int meshletVisualization;
     int activeDirectionalLights;
     int activePointLights;
 }
@@ -238,6 +239,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float4 albedoSample = gAlbedo.Sample(gSampler, input.uv);
     if (albedoSample.a < 0.01) discard;
     float3 albedo = albedoSample.rgb;
+    if (pushConstants.meshletVisualization > 0) return float4(albedo, 1.0f);
     float3 normal = gNormal.Sample(gSampler, input.uv).rgb;
     float3 worldPosition = gPosition.Sample(gSampler, input.uv).rgb;
     float4 material = gMaterial.Sample(gSampler, input.uv);
