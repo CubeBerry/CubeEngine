@@ -41,12 +41,26 @@ namespace TwoDimension
 //3D
 namespace ThreeDimension
 {
+	// Define Max Bones
+	constexpr int MAX_BONES = 128;
+	constexpr int MAX_BONE_INFLUENCE = 4;
+
+	// Struct to hold bone offset matrix and id
+	struct BoneInfo
+	{
+		int id;
+		glm::mat4 offset;
+	};
+
 	struct alignas(16) Vertex
 	{
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec2 uv;
 		int texSubIndex{ 0 };
+
+		int boneIDs[MAX_BONE_INFLUENCE];
+		float weights[MAX_BONE_INFLUENCE];
 	};
 
 	// @TODO Should add alignas(16) for 3D pipeline but mesh pipeline does not require alignas(16) for Structured Buffer
@@ -57,8 +71,12 @@ namespace ThreeDimension
 		// vec2 -> uint32_t quantization (11, 11, 10)
 		uint32_t position;
 		glm::vec3 normal;
-		int texSubIndex{ 0 };
 		glm::vec2 uv;
+		int texSubIndex{ 0 };
+
+		// Bone IDs and Weights (For simplicity in this guide, we use raw types not packed)
+		glm::ivec4 boneIDs;
+		glm::vec4 weights;
 	};
 
 	// For StaticSprite, Check Material.hpp ThreeDimension::DynamicQuantizedVertex for StaticQuantizedVertex
@@ -85,6 +103,9 @@ namespace ThreeDimension
 		glm::vec4 color;
 		// @TODO move to push constants later
 		glm::vec3 viewPosition;
+
+		// Array of final bone matrices for shader
+		glm::mat4 finalBones[MAX_BONES];
 	};
 
 	struct alignas(16) FragmentUniform

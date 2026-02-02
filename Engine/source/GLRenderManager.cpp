@@ -18,7 +18,7 @@ GLRenderManager::~GLRenderManager()
 	delete pointLightUniformBuffer;
 
 	//Destroy Skybox
-	if (skyboxEnabled)
+	if (m_skyboxEnabled)
 	{
 		delete skybox;
 		delete skyboxVertexBuffer;
@@ -221,7 +221,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 	//}
 
 	//Skybox
-	if (skyboxEnabled)
+	if (m_skyboxEnabled)
 	{
 		skyboxShader.Use(true);
 		//if (vertexUniform3D != nullptr)
@@ -363,12 +363,12 @@ void GLRenderManager::LoadSkybox(const std::filesystem::path& path)
 		glBindTexture(GL_TEXTURE_2D, textures[0]->GetTextureHandle());
 	}
 
-	skyboxEnabled = true;
+	m_skyboxEnabled = true;
 }
 
 void GLRenderManager::DeleteSkybox()
 {
 	delete skyboxVertexBuffer;
 	delete skybox;
-	skyboxEnabled = false;
+	m_skyboxEnabled = false;
 }

@@ -5,6 +5,7 @@
 
 #include <d3d12.h>
 
+#include "DXCommandListWrapper.hpp"
 #include "DXHelper.hpp"
 #include "Engine.hpp"
 
@@ -151,19 +152,6 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
 	DXHelper::ThrowIfFailed(m_rtvHeap->SetName(L"Render Target View Heap"));
 
-	//D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	//dsvHeapDesc.NumDescriptors = 1;
-	//dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	//dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	//DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
-	//DXHelper::ThrowIfFailed(m_dsvHeap->SetName(L"Depth/Stencil View Heap"));
-
-	m_renderTarget = std::make_unique<DXRenderTarget>(
-		m_device, window,
-		static_cast<int>(Engine::GetWindow().GetWindowSize().x),
-		static_cast<int>(Engine::GetWindow().GetWindowSize().y)
-	);
-
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	// ----------------------------------------------------------------------------------
 	// SRV Descriptor Heap Partitioning Strategy (Total: 1007)
@@ -203,153 +191,42 @@ void DXRenderManager::Initialize(SDL_Window* window)
 		DXHelper::ThrowIfFailed(m_commandAllocators[i]->SetName((L"Command Allocator " + std::to_wstring(i)).c_str()));
 	}
 
-	// Create root signature and pipeline for 2D
-	// The slot of a root signature version 1.1
-	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(3, CD3DX12_ROOT_PARAMETER1{});
-	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
-	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_OBJECT_SIZE, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-	rootParameters[2].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	// Create Post-Process Context
+	m_width = static_cast<int>(Engine::GetWindow().GetWindowSize().x);
+	m_height = static_cast<int>(Engine::GetWindow().GetWindowSize().y);
+	m_postProcessContext = std::make_unique<DXPostProcessContext>(this);
+	m_postProcessContext->Initialize();
 
-	CreateRootSignature(m_rootSignature2D, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature2D->SetName(L"2D Root Signature"));
-
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderTarget->GetMSAAQualityLevel();
-
-	m_pipeline2D = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignature2D,
-		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
+	// Create Render Target (Intermediate, MSAA, Depth)
+	m_renderTarget = std::make_unique<DXRenderTarget>(
+		m_device, window,
+		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
+		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
+		m_deferredRenderingEnabled
 	);
 
-	// Create root signature and pipeline for 3D
-	rootParameters.clear();
-	rootParameters.resize(m_meshShaderEnabled ? 13 : 8, {});
-	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[3].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[4].InitAsConstantBufferView(4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[5].InitAsConstants(2, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	// Create 2D Forward Render Context
+	m_2dRenderContext = std::make_unique<DX2DRenderContext>(this);
+	m_2dRenderContext->Initialize();
 
-	rootParameters[6].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	CD3DX12_DESCRIPTOR_RANGE1 iblSrvRange;
-	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	// Create Forward Render Context
+	m_forwardRenderContext = std::make_unique<DXForwardRenderContext>(this);
+	m_forwardRenderContext->Initialize();
 
-	if (m_meshShaderEnabled)
-	{
-		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
-		// ThreeDimension::QuantizedVertex data is transfer via SRV
-		rootParameters[8].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[9].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[10].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[11].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[12].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
-	}
+	// Create G-Buffer Context
+	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
+	m_gBufferContext->Initialize();
 
-	CreateRootSignature(m_rootSignature3D, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature3D->SetName(L"3D Root Signature"));
+	// Create Lighting Context
+	m_lightingContext = std::make_unique<DXLightingContext>(this);
+	m_lightingContext->Initialize();
 
-	positionLayout.offset = offsetof(ThreeDimension::QuantizedVertex, position);
-	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-
-	if (m_meshShaderEnabled)
-	{
-		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
-			m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/cso/3D.mesh.cso"),
-			std::filesystem::path("../Engine/shaders/cso/3DMesh.frag.cso"),
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			true,
-			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
-	}
-	else
-	{
-		m_pipeline3D = std::make_unique<DXPipeLine>(
-			m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			true,
-			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
-
-		m_pipeline3DLine = std::make_unique<DXPipeLine>(
-			m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
-			D3D12_FILL_MODE_WIREFRAME,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			true,
-			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
-	}
-
-#ifdef _DEBUG
-	// Create root signature and pipeline for Normal 3D
-	rootParameters.clear();
-	rootParameters.resize(1, {});
-	rootParameters[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-
-	CreateRootSignature(m_rootSignature3DNormal, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
-
-	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
-	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
-
-	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignature3DNormal,
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
-	);
-#endif
+	// Create Skybox Render Context
+	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
+	m_skyboxRenderContext->Initialize();
 
 	// Create Command List
-	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipeline2D->GetPipelineState().Get(), IID_PPV_ARGS(&m_commandList)));
+	DXHelper::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 	DXHelper::ThrowIfFailed(m_commandList->SetName(L"Main Command List"));
 #if USE_NSIGHT_AFTERMATH
 	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(m_commandList.Get(), &m_hAftermathCommandListContext));
@@ -385,14 +262,6 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	//m_computeBuffer = std::make_unique<DXComputeBuffer>();
 	//m_computeBuffer->InitComputeBuffer(m_device, "../Engine/shaders/hlsl/Compute.compute.hlsl", 1280, 720, m_srvHeap, m_renderTarget);
 
-	// Initialize FidelityFX
-	m_width = 1280;
-	m_height = 720;
-	m_fidelityFX = std::make_unique<FidelityFX>();
-	m_fidelityFX->InitializeBackend(m_device, m_width, m_height);
-	m_fidelityFX->CreateCasContext();
-	m_fidelityFX->CreateFSR1Context();
-
 	WaitForGPU();
 
 	SDL_ShowWindow(window);
@@ -419,9 +288,9 @@ void DXRenderManager::OnResize()
 	WaitForGPU();
 	//OutputDebugStringA("OnResize: GPU wait finished.\n");
 
-	for (UINT i = 0; i < frameCount; ++i)
+	for (auto& renderTarget : m_renderTargets)
 	{
-		m_renderTargets[i].Reset();
+		renderTarget.Reset();
 	}
 	//OutputDebugStringA("OnResize: Old resources released.\n");
 
@@ -447,48 +316,33 @@ void DXRenderManager::OnResize()
 	//m_computeBuffer->OnResize(m_device, width, height, m_srvHeap, m_renderTarget);
 
 	// Recreate FidelityFX
-	m_fidelityFX->OnResize(m_device, m_width, m_height);
+	m_postProcessContext->OnResize();
 
 	// unique_ptr's release() == give up ownership, does not deallocate memory
 	// unique_ptr's reset() == deallocate the memory
 	m_renderTarget.reset();
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, Engine::GetWindow().GetWindow(),
-		m_fidelityFX->GetRenderWidth(),
-		m_fidelityFX->GetRenderHeight()
+		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
+		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
+		m_deferredRenderingEnabled
 	);
 
-	m_lowResRenderTarget.Reset();
-	auto currentEffect = m_fidelityFX->GetCurrentEffect();
-	if (currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
-	{
-		auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			m_fidelityFX->GetRenderWidth(),
-			m_fidelityFX->GetRenderHeight(),
-			1, 1, 1, 0,
-			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-		);
+	m_skyboxRenderContext->OnResize();
 
-		CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-		DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-			&heapProps,
-			D3D12_HEAP_FLAG_NONE,
-			&textureDesc,
-			D3D12_RESOURCE_STATE_COMMON,
-			nullptr,
-			IID_PPV_ARGS(&m_lowResRenderTarget)
-		));
-		m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
+	if (m_deferredRenderingEnabled)
+	{
+		m_gBufferContext->OnResize();
+		m_lightingContext->OnResize();
 	}
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	//OutputDebugStringA("OnResize: Finished successfully.\n");
 
 	UINT64 completedValue = m_fence->GetCompletedValue();
-	for (UINT i = 0; i < frameCount; ++i)
+	for (auto& fenceValue : m_fenceValues)
 	{
-		m_fenceValues[i] = completedValue;
+		fenceValue = completedValue;
 	}
 }
 
@@ -502,228 +356,58 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 	DXHelper::ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
-
-	ID3D12PipelineState* initialState = rMode == RenderType::TwoDimension ? m_pipeline2D->GetPipelineState().Get() :
-		m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() :
-		pMode == PolygonType::FILL ? m_pipeline3D->GetPipelineState().Get() : m_pipeline3DLine->GetPipelineState().Get();
-	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), initialState));
+	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
 
 	// Set the viewport and scissor rect
-	// This is weird but FidelityFX class takes care of viewport size (display size, render size)
-	uint32_t renderWidth = m_fidelityFX->GetRenderWidth();
-	uint32_t renderHeight = m_fidelityFX->GetRenderHeight();
+	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	uint32_t renderWidth = m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+	uint32_t renderHeight = m_postProcessContext->GetFidelityFX()->GetRenderHeight();
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
 
 	m_commandList->RSSetViewports(1, &viewport);
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_commandList->ResourceBarrier(1, &barrier);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	float clearColor[4] = { bgColor.r, bgColor.g, bgColor.b, 1.f };
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
-	// @TODO What does OMSetRenderTargets do?
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-	const float clearColor[] = { bgColor.r, bgColor.g, bgColor.b, 1.0f };
-	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
+	DXCommandListWrapper wrapper(m_commandList.Get());
 	switch (rMode)
 	{
 	case RenderType::TwoDimension:
 	{
-		m_commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
-		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ID3D12DescriptorHeap* ppHeaps2D[] = { m_srvHeap.Get() };
-		m_commandList->SetDescriptorHeaps(_countof(ppHeaps2D), ppHeaps2D);
-		m_commandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-
-		for (const auto& sprite : sprites)
-		{
-			for (auto& subMesh : sprite->GetSubMeshes())
-			{
-				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
-				auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
-
-				// Update Constant Buffer
-				spriteData->GetVertexUniformBuffer<DXConstantBuffer<TwoDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(TwoDimension::VertexUniform), m_frameIndex);
-				spriteData->GetFragmentUniformBuffer<DXConstantBuffer<TwoDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(TwoDimension::FragmentUniform), m_frameIndex);
-
-				// Bind Vertex Buffer & Index Buffer
-				D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
-				D3D12_INDEX_BUFFER_VIEW ibv = buffer->indexBuffer->GetView();
-				m_commandList->IASetVertexBuffers(0, 1, &vbv);
-				m_commandList->IASetIndexBuffer(&ibv);
-				// Bind constant buffers to root signature
-				m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<TwoDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-				m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<TwoDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-
-				m_commandList->DrawIndexedInstanced(static_cast<UINT>(spriteData->indices.size()), 1, 0, 0, 0);
-			}
-		}
+		m_2dRenderContext->Execute(&wrapper);
 	}
 	break;
 	case RenderType::ThreeDimension:
 	{
-		if (m_workGraphsEnabled && m_meshNodesEnabled)
+		// Forward Rendering
+		if (!m_deferredRenderingEnabled)
 		{
-			m_workGraphsContext->ExecuteWorkGraphs();
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+			// MSAA Target: RESOLVE_SOURCE -> RENDER_TARGET
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_commandList->ResourceBarrier(1, &barrier);
+			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+			if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
+			else m_forwardRenderContext->Execute(&wrapper);
 		}
+		// Deferred Rendering
 		else
 		{
-			m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
-			ID3D12DescriptorHeap* ppHeaps3D[] = { m_srvHeap.Get() };
-			m_commandList->SetDescriptorHeaps(_countof(ppHeaps3D), ppHeaps3D);
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+			// Intermediate: COMMON -> RENDER_TARGET
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_commandList->ResourceBarrier(1, &barrier);
+			clearColor[3] = 0.f; // Set alpha to 0 for discarding in lighting pass shader
+			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-			for (const auto& sprite : sprites)
-			{
-				for (auto& subMesh : sprite->GetSubMeshes())
-				{
-					auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
-					auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
-					if (m_meshShaderEnabled)
-					{
-						m_commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());
-
-						// Update Constant Buffer
-						spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-						spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-						spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->UpdateConstant(&spriteData->material, sizeof(ThreeDimension::Material), m_frameIndex);
-
-						m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(2, spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress(m_frameIndex));
-
-						if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
-						{
-							directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-						if (pointLightUniformBuffer && !pointLightUniforms.empty())
-						{
-							pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-
-						pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-						pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-						m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
-
-						m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-
-						if (skyboxEnabled && m_skybox)
-						{
-							m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
-						}
-
-						// Bind structured buffers to root signature
-						m_commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRootShaderResourceView(9, buffer->meshletBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRootShaderResourceView(10, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRootShaderResourceView(11, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-						m_commandList->SetGraphicsRoot32BitConstants(12, 1, &m_meshletVisualization, 0);
-
-						const auto& meshlets = spriteData->meshlets;
-						UINT numMeshlets = static_cast<UINT>(meshlets.size());
-						m_commandList->DispatchMesh(numMeshlets, 1, 1);
-					}
-					else
-					{
-						m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-						// Update Constant Buffer
-						spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(ThreeDimension::VertexUniform), m_frameIndex);
-						spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->UpdateConstant(&spriteData->fragmentUniform, sizeof(ThreeDimension::FragmentUniform), m_frameIndex);
-						spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->UpdateConstant(&spriteData->material, sizeof(ThreeDimension::Material), m_frameIndex);
-
-						if (directionalLightUniformBuffer && !directionalLightUniforms.empty())
-						{
-							directionalLightUniformBuffer->UpdateConstant(directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * directionalLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(3, directionalLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-						if (pointLightUniformBuffer && !pointLightUniforms.empty())
-						{
-							pointLightUniformBuffer->UpdateConstant(pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * pointLightUniforms.size(), m_frameIndex);
-							m_commandList->SetGraphicsRootConstantBufferView(4, pointLightUniformBuffer->GetGPUVirtualAddress(m_frameIndex));
-						}
-
-						pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-						pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-						m_commandList->SetGraphicsRoot32BitConstants(5, 2, &pushConstants, 0);
-
-						m_commandList->SetGraphicsRootDescriptorTable(6, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
-
-						if (skyboxEnabled && m_skybox)
-						{
-							m_commandList->SetGraphicsRootDescriptorTable(7, m_skybox->GetIrradianceMapSrv());
-						}
-
-						// Bind Vertex Buffer & Index Buffer
-						D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
-						D3D12_INDEX_BUFFER_VIEW ibv = buffer->indexBuffer->GetView();
-						m_commandList->IASetVertexBuffers(0, 1, &vbv);
-						m_commandList->IASetIndexBuffer(&ibv);
-						// Bind constant buffers to root signature
-						m_commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(1, spriteData->GetFragmentUniformBuffer<DXConstantBuffer<ThreeDimension::FragmentUniform>>()->GetGPUVirtualAddress(m_frameIndex));
-						m_commandList->SetGraphicsRootConstantBufferView(2, spriteData->GetMaterialUniformBuffer<DXConstantBuffer<ThreeDimension::Material>>()->GetGPUVirtualAddress(m_frameIndex));
-
-						m_commandList->DrawIndexedInstanced(static_cast<UINT>(spriteData->indices.size()), 1, 0, 0, 0);
-					}
-
-#ifdef _DEBUG
-					if (m_normalVectorVisualization)
-					{
-						m_commandList->SetPipelineState(m_pipeline3DNormal->GetPipelineState().Get());
-						m_commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
-						m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-						auto& vertexUniform = spriteData->vertexUniform;
-						glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-						m_commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
-
-						D3D12_VERTEX_BUFFER_VIEW nvbv = buffer->normalVertexBuffer->GetView();
-						m_commandList->IASetVertexBuffers(0, 1, &nvbv);
-
-						m_commandList->DrawInstanced(static_cast<UINT>(spriteData->normalVertices.size()), 1, 0, 0);
-
-						switch (pMode)
-						{
-						case PolygonType::FILL:
-							m_commandList->SetPipelineState(m_meshShaderEnabled ? m_meshPipeline3D->GetPipelineState().Get() : m_pipeline3D->GetPipelineState().Get());
-							break;
-						case PolygonType::LINE:
-							m_commandList->SetPipelineState(m_pipeline3DLine->GetPipelineState().Get());
-							break;
-						}
-						m_commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
-					}
-#endif
-				}
-			}
+			m_gBufferContext->Execute(&wrapper);
+			m_lightingContext->Execute(&wrapper);
 		}
-
-		if (skyboxEnabled)
-		{
-			m_commandList->SetPipelineState(m_pipelineSkybox->GetPipelineState().Get());
-			m_commandList->SetGraphicsRootSignature(m_rootSignatureSkybox.Get());
-			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_srvHeap.Get() };
-			m_commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
-
-			glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
-			m_commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
-			m_commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
-
-			D3D12_VERTEX_BUFFER_VIEW vbv = m_skyboxVertexBuffer->GetView();
-			m_commandList->IASetVertexBuffers(0, 1, &vbv);
-
-			m_commandList->DrawInstanced(36, 1, 0, 0);
-		}
-
+		m_skyboxRenderContext->Execute(&wrapper);
 	}
 	break;
 	}
@@ -737,47 +421,15 @@ void DXRenderManager::EndRender()
 {
 	//OutputDebugStringA("EndRender: Entered.\n");
 
-	auto preResolveBarriers = {
-		CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE),
-	};
-	m_commandList->ResourceBarrier(static_cast<UINT>(preResolveBarriers.size()), preResolveBarriers.begin());
-
-	FidelityFX::UpscaleEffect currentEffect = m_fidelityFX->GetCurrentEffect();
-	bool useUpscaling = (currentEffect == FidelityFX::UpscaleEffect::FSR1) || (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
-
-	if (useUpscaling)
-	{
-		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RESOLVE_DEST);
-		m_commandList->ResourceBarrier(1, &barrier);
-		m_commandList->ResolveSubresource(m_lowResRenderTarget.Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_lowResRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-		m_commandList->ResourceBarrier(1, &barrier);
-		m_fidelityFX->Execute(m_commandList, m_lowResRenderTarget.Get(), m_renderTargets[m_frameIndex].Get());
-	}
-	else
-	{
-		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RESOLVE_DEST);
-		m_commandList->ResourceBarrier(1, &barrier);
-		m_commandList->ResolveSubresource(m_renderTargets[m_frameIndex].Get(), 0, m_renderTarget->GetMSAARenderTarget().Get(), 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-		if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY)
-		{
-			barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-			m_commandList->ResourceBarrier(1, &barrier);
-			m_fidelityFX->Execute(m_commandList, m_renderTargets[m_frameIndex].Get(), m_renderTargets[m_frameIndex].Get());
-		}
-		else
-		{
-			auto postResolveBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-			m_commandList->ResourceBarrier(1, &postResolveBarrier);
-		}
-	}
-
 	// Work Graphs Execution
 	//if (m_workGraphsEnabled)
 	//{
 	//	m_workGraphsContext->ExecuteWorkGraphs();
 	//	m_workGraphsContext->PrintWorkGraphsResults();
 	//}
+
+	DXCommandListWrapper wrapper(m_commandList.Get());
+	m_postProcessContext->Execute(&wrapper);
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
@@ -869,6 +521,7 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 
 	D3D12_STATIC_SAMPLER_DESC samplers[2];
 
+	// @TODO Take texture samplers as parameters to be customizable
 	// Texture Sampler
 	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 	samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -1076,51 +729,7 @@ void DXRenderManager::DeallocateSrvBlock(UINT startIndex, UINT count)
 
 void DXRenderManager::UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset)
 {
-	QueueDeferredFunction(
-		[this, effect, mode, preset]() -> bool
-		{
-			WaitForGPU();
-
-			bool isUpdate = m_fidelityFX->UpdatePreset(effect, mode, preset);
-			if (isUpdate)
-			{
-				m_fidelityFX->OnResize(m_device, m_width, m_height);
-
-				m_renderTarget.reset();
-				m_renderTarget = std::make_unique<DXRenderTarget>(
-					m_device, Engine::GetWindow().GetWindow(),
-					m_fidelityFX->GetRenderWidth(),
-					m_fidelityFX->GetRenderHeight()
-				);
-
-				m_lowResRenderTarget.Reset();
-				auto currentEffect = m_fidelityFX->GetCurrentEffect();
-				if (currentEffect == FidelityFX::UpscaleEffect::FSR1 || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
-				{
-					auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-						DXGI_FORMAT_R8G8B8A8_UNORM,
-						m_fidelityFX->GetRenderWidth(),
-						m_fidelityFX->GetRenderHeight(),
-						1, 1, 1, 0,
-						D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-					);
-
-					CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-					DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
-						&heapProps,
-						D3D12_HEAP_FLAG_NONE,
-						&textureDesc,
-						D3D12_RESOURCE_STATE_COMMON,
-						nullptr,
-						IID_PPV_ARGS(&m_lowResRenderTarget)
-					));
-					m_lowResRenderTarget->SetName(L"Fidelity FX CAS Upscaling Low Resolution Render Target");
-				}
-			}
-
-			return true;
-		}
-	);
+	m_postProcessContext->UpdateScalePreset(effect, mode, preset);
 }
 
 void DXRenderManager::LoadTexture(const std::filesystem::path& path_, std::string name_, bool flip)
@@ -1219,108 +828,10 @@ DXTexture* DXRenderManager::GetTexture(const std::string& name) const
 
 void DXRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
-	float skyboxVertices[] = {
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
-	};
-
-	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(float)) * 3, static_cast<UINT>(sizeof(float)) * 108, skyboxVertices);
-
-	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2, CD3DX12_ROOT_PARAMETER1{});
-	rootParameters[0].InitAsConstants(32, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
-	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-	rootParameters[1].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	CreateRootSignature(m_rootSignatureSkybox, rootParameters);
-
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
-
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderTarget->GetMSAAQualityLevel();
-
-	m_pipelineSkybox = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignatureSkybox,
-		"../Engine/shaders/hlsl/Skybox.vert.hlsl",
-		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
-
-	WaitForGPU();
-	m_skybox = std::make_unique<DXSkybox>(m_device, m_commandQueue, m_srvHeap);
-	std::array<std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT>, 5> skyboxSrvHandles;
-	auto [startHandle, startIndex] = AllocateSrvHandles(5);
-	for (int i = 0; i < 5; ++i)
-	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE currentHandle(startHandle, i, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		skyboxSrvHandles[i] = { currentHandle, startIndex + i };
-	}
-	auto deallocator = [this](UINT index)
-	{
-		this->DeallocateSrvBlock(index, 1);
-	};
-	m_skybox->Initialize(path, skyboxSrvHandles, deallocator);
-
-	skyboxEnabled = true;
+	if (m_skyboxRenderContext) m_skyboxRenderContext->LoadSkybox(path);
 }
 
 void DXRenderManager::DeleteSkybox()
 {
-	m_skyboxVertexBuffer.reset();
-
-	m_rootSignatureSkybox.Reset();
-
-	m_pipelineSkybox.reset();
-
-	m_skybox.reset();
-
-	skyboxEnabled = false;
+	if (m_skyboxRenderContext) m_skyboxRenderContext->DeleteSkybox();
 }

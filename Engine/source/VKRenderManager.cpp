@@ -62,7 +62,7 @@ VKRenderManager::~VKRenderManager()
 #endif
 
 	//Destroy Skybox
-	if (skyboxEnabled)
+	if (m_skyboxEnabled)
 	{
 		delete skybox;
 		delete skyboxShader;
@@ -457,7 +457,7 @@ VKTexture* VKRenderManager::GetTexture(std::string name)
 
 void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 {
-	if (skyboxEnabled) return;
+	if (m_skyboxEnabled) return;
 
 	skyboxShader = new VKShader(vkInit->GetDevice());
 	std::cout << '\n';
@@ -523,7 +523,7 @@ void VKRenderManager::LoadSkybox(const std::filesystem::path& path)
 
 	skybox = new VKSkybox(path, vkInit, &vkCommandPool);
 
-	skyboxEnabled = true;
+	m_skyboxEnabled = true;
 }
 
 void VKRenderManager::DeleteSkybox()
@@ -533,7 +533,7 @@ void VKRenderManager::DeleteSkybox()
 	delete skyboxDescriptor;
 	delete vkPipeline3DSkybox;
 	delete skyboxVertexBuffer;
-	skyboxEnabled = false;
+	m_skyboxEnabled = false;
 }
 
 bool VKRenderManager::BeginRender(glm::vec3 bgColor)
@@ -783,7 +783,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 			}
 		}
 
-		if (skyboxEnabled)
+		if (m_skyboxEnabled)
 		{
 			//Skybox Fragment Descriptor
 			currentFragmentSkyboxDescriptorSet = &(*skyboxDescriptor->GetFragmentDescriptorSets())[frameIndex];
@@ -1024,7 +1024,7 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 		uniformBuffer3D.fragmentUniformBuffer->UnmapMemory(frameIndex);
 		uniformBuffer3D.materialUniformBuffer->UnmapMemory(frameIndex);
 
-		if (skyboxEnabled)
+		if (m_skyboxEnabled)
 		{
 			//Skybox
 			//Bind Vertex Buffer

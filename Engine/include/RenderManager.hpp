@@ -9,7 +9,7 @@
 #include <functional>
 #include "Window.hpp"
 #include "Utility.hpp"
-#include "BasicComponents/ISprite.hpp"
+#include "Interface/ISprite.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -72,8 +72,6 @@ public:
 
 	// FidelityFX CAS
 	virtual void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) = 0;
-	uint32_t GetRenderWidth() const { return m_fidelityFX->GetRenderWidth(); }
-	uint32_t GetRenderHeight() const { return m_fidelityFX->GetRenderHeight(); }
 
 	//--------------------2D Render--------------------//
 	glm::mat4 CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices);
@@ -135,8 +133,6 @@ protected:
 	RenderType rMode = RenderType::TwoDimension;
 	// Polygon Mode
 	PolygonType pMode = PolygonType::FILL;
-	// FidelityFX CAS
-	std::unique_ptr<FidelityFX> m_fidelityFX;
 
 	//--------------------2D Render--------------------//
 
@@ -166,10 +162,10 @@ protected:
 #endif
 
 	//Assimp
-	Assimp::Importer importer;
+	Assimp::Importer m_importer;
 
 	//Skybox
-	bool skyboxEnabled{ false };
+	bool m_skyboxEnabled{ false };
 
 	// Mesh Shader
 	bool m_meshShaderEnabled{ false };
@@ -178,6 +174,9 @@ protected:
 	// Work Graphs
 	bool m_workGraphsEnabled{ false };
 	bool m_meshNodesEnabled{ false };
+
+	// Deferred Rendering
+	bool m_deferredRenderingEnabled{ true };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp

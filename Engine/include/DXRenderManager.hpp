@@ -12,7 +12,6 @@
 #endif
 
 #include "DXPipeLine.hpp"
-#include "DXMeshPipeLine.hpp"
 #include "DXTexture.hpp"
 #include "DXImGuiManager.hpp"
 #include "DXSkybox.hpp"
@@ -21,6 +20,12 @@
 #include "DXWorkGraphsContext.hpp"
 #include "DXIndexBuffer.hpp"
 #include "DXConstantBuffer.hpp"
+#include "DX2DRenderContext.hpp"
+#include "DXForwardRenderContext.hpp"
+#include "DXLightingContext.hpp"
+#include "DXGBufferContext.hpp"
+#include "DXSkyboxRenderContext.hpp"
+#include "DXPostProcessContext.hpp"
 
 #define MAX_OBJECT_SIZE 500
 #define MAX_LIGHT_SIZE 10
@@ -29,6 +34,14 @@ using Microsoft::WRL::ComPtr;
 
 class DXRenderManager : public RenderManager
 {
+	friend class DX2DRenderContext;
+	friend class DXForwardRenderContext;
+	friend class DXGBufferContext;
+	friend class DXLightingContext;
+	friend class DXSkyboxRenderContext;
+	friend class DXPostProcessContext;
+	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
+	friend class DXWorkGraphsContext;
 public:
 	DXRenderManager() { gMode = GraphicsMode::DX; }
 	~DXRenderManager() override;
@@ -40,14 +53,17 @@ public:
 
 	void Initialize(SDL_Window* window);
 	void SetResize();
+
+	bool BeginRender(glm::vec3 bgColor) override;
+	void EndRender() override;
+
+	DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
+private:
 	int m_width, m_height;
 	bool m_isResize{ false };
 	void OnResize();
 	void WaitForGPU();
 
-	bool BeginRender(glm::vec3 bgColor) override;
-	void EndRender() override;
-private:
 	// Initialize DirectX 12 components
 	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
 	void CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSignature, const std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters) const;
@@ -70,6 +86,7 @@ private:
 	// Descriptor Start Index, Block Size
 	std::map<UINT, UINT> m_availableSrvBlocks;
 	// SRV Handle, Descriptor Index
+	// @TODO Make struct that contains DeallocateSrvBlock inside destructor later
 	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> AllocateSrvHandles(const UINT& count = 1);
 	//void DeallocateSrvBlock(UINT startIndex, UINT count);
 	std::string LogSrvBlocks();
@@ -79,14 +96,13 @@ private:
 	// m = member
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device14> m_device;
+	// Main Render Target Views for Swap Chain
 	ComPtr<ID3D12Resource> m_renderTargets[frameCount];
-	// This is required for FidelityFX CAS Upscaling
-	ComPtr<ID3D12Resource> m_lowResRenderTarget;
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[frameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature2D;
-	ComPtr<ID3D12RootSignature> m_rootSignature3D;
 	// rtv = Render Target View
+	// RTV Heap for Swap Chain
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	// cbv/srv = Constant Buffer View / Shader Resource View
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
@@ -102,26 +118,31 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValues[frameCount]{};
 
-	std::unique_ptr<DXPipeLine> m_pipeline2D;
-	std::unique_ptr<DXPipeLine> m_pipeline3D;
-	std::unique_ptr<DXMeshPipeLine> m_meshPipeline3D;
-	std::unique_ptr<DXPipeLine> m_pipeline3DLine;
-#ifdef _DEBUG
-	std::unique_ptr<DXPipeLine> m_pipeline3DNormal;
-	ComPtr<ID3D12RootSignature> m_rootSignature3DNormal;
-#endif
+	// 2D Render Context
+	std::unique_ptr<DX2DRenderContext> m_2dRenderContext;
+	// Forward Render Context
+	std::unique_ptr<DXForwardRenderContext> m_forwardRenderContext;
+	// G-Buffer Render Context
+	std::unique_ptr<DXGBufferContext> m_gBufferContext;
+	DXGBufferContext* GetGBufferContext() const { return m_gBufferContext.get(); }
+	// Lighting Context
+	std::unique_ptr<DXLightingContext> m_lightingContext;
+	// Skybox Render Context
+	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
+	void LoadSkybox(const std::filesystem::path& path) override;
+	void DeleteSkybox() override;
+	// Post-Process Render Context
+	std::unique_ptr<DXPostProcessContext> m_postProcessContext;
+	// Work Graphs Context
+	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
-	// MSAA
-	// Depth
+	// Intermediate, MSAA, Depth
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> m_intermediateSrvHandle;
 
 	// Compute Shader
+	// @TODO Make Compute Shader Context Later
 	std::unique_ptr<DXComputeBuffer> m_computeBuffer;
-
-	// Work Graphs
-	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
-	friend class DXWorkGraphsContext;
-	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
 #if USE_NSIGHT_AFTERMATH
 	// App-managed marker functionality
@@ -266,9 +287,6 @@ public:
 	const std::vector<std::unique_ptr<DXTexture>>& GetTextures() { return textures; }
 
 	//--------------------3D Render--------------------//
-
-	void LoadSkybox(const std::filesystem::path& path) override;
-	void DeleteSkybox() override;
 private:
 	//--------------------Common--------------------//
 	std::vector<std::unique_ptr<DXTexture>> textures;
@@ -284,15 +302,10 @@ private:
 	};
 	DXConstantBuffer<DirectionalLightBatch>* directionalLightUniformBuffer{ nullptr };
 	DXConstantBuffer<PointLightBatch>* pointLightUniformBuffer{ nullptr };
+	// Push Constants for forward rendering
 	struct alignas(16) PushConstants
 	{
 		int activeDirectionalLight;
 		int activePointLight;
 	} pushConstants;
-
-	//Skybox
-	std::unique_ptr<DXVertexBuffer> m_skyboxVertexBuffer;
-	ComPtr<ID3D12RootSignature> m_rootSignatureSkybox;
-	std::unique_ptr<DXPipeLine> m_pipelineSkybox;
-	std::unique_ptr<DXSkybox> m_skybox;
 };

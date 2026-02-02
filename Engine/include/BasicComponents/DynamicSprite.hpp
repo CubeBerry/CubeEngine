@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: DynamicSprite.hpp
 #pragma once
-#include "ISprite.hpp"
+#include "Interface/ISprite.hpp"
 
 class Animation;
 

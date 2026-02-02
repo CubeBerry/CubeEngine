@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: SpriteManager.hpp
 #pragma once
-#include "BasicComponents/ISprite.hpp"
+#include "Interface/ISprite.hpp"
 #include <vector>
 
 class DynamicSprite;

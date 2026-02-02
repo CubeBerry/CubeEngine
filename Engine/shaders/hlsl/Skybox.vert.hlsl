@@ -43,8 +43,8 @@ VSOutput_0 vertexMain(VSInput_0 input_0)
 
     output_0.uvw_0 = input_0.position_1;
 
-#line 38
-    output_0.position_0 = mul(worldToNDC_0.projection_0, mul(float4x4(float4(worldToNDC_0.view_0[int(0)].xyz, 0.0f), float4(worldToNDC_0.view_0[int(1)].xyz, 0.0f), float4(worldToNDC_0.view_0[int(2)].xyz, 0.0f), (float4)0.0f), float4(input_0.position_1, 1.0f))).xyww;
+#line 34
+    output_0.position_0 = mul(worldToNDC_0.projection_0, float4(mul(float3x3(worldToNDC_0.view_0[int(0)].xyz, worldToNDC_0.view_0[int(1)].xyz, worldToNDC_0.view_0[int(2)].xyz), input_0.position_1), 1.0f)).xyww;
 
     return output_0;
 }

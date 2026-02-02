@@ -3,7 +3,7 @@
 //Project: CubeEngine
 //File: StaticSprite.hpp
 #pragma once
-#include "ISprite.hpp"
+#include "Interface/ISprite.hpp"
 
 class StaticSprite : public ISprite
 {

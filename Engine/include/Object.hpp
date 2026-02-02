@@ -7,7 +7,7 @@
 
 #include "ObjectType.hpp"
 #include "glm/vec3.hpp"
-#include "IComponent.hpp"
+#include "Interface/IComponent.hpp"
 
 class Object
 {

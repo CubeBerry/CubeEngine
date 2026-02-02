@@ -2,7 +2,7 @@
 //Project: CubeEngine
 //File: RenderManager.cpp
 #include "RenderManager.hpp"
-#include "GLRenderManager.hpp"
+#include "DXRenderManager.hpp"
 
 #include <iostream>
 // std::iota
@@ -11,6 +11,32 @@
 #include <assimp/postprocess.h>
 
 #include "Engine.hpp"
+
+// Helper function to populate bone data into vertices
+// This function finds the first empty slot in the vertex's bone array and fills it.
+void SetVertexBoneData(ThreeDimension::Vertex& vertex, int boneID, float weight)
+{
+	for (int i = 0; i < ThreeDimension::MAX_BONE_INFLUENCE; ++i)
+	{
+		if (vertex.boneIDs[i] < 0)
+		{
+			vertex.boneIDs[i] = boneID;
+			vertex.weights[i] = weight;
+			return;
+		}
+	}
+	// If more than 4 bones influence this vertex, excess ones are ignored.
+}
+// Convert Assimp matrix to GLM matrix
+glm::mat4 AssimpToGLMMatrix(const aiMatrix4x4& from)
+{
+	glm::mat4 to;
+	to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+	to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+	to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+	to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+	return to;
+}
 
 // 2D Mesh Creation
 glm::mat4 RenderManager::CreateMesh(std::vector<TwoDimension::Vertex>& quantizedVertices)
@@ -85,7 +111,7 @@ void RenderManager::CreateMesh(
 	if (type == MeshType::OBJ)
 	{
 		//Assimp Model Load
-		const aiScene* scene = importer.ReadFile(path.string(),
+		const aiScene* scene = m_importer.ReadFile(path.string(),
 			aiProcess_Triangulate |
 			aiProcess_GenSmoothNormals |
 			aiProcess_CalcTangentSpace |
@@ -97,7 +123,7 @@ void RenderManager::CreateMesh(
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << '\n';
+			std::cerr << "ERROR::ASSIMP:: " << m_importer.GetErrorString() << '\n';
 			std::exit(EXIT_FAILURE);
 		}
 
@@ -653,12 +679,55 @@ void RenderManager::ProcessMesh(
 	{
 		aiVector3D vertex = mesh->mVertices[v];
 		aiVector3D normal = mesh->mNormals[v];
+
+		// Initialize bone IDs and weights to default values
+		/*int boneIDs[ThreeDimension::MAX_BONE_INFLUENCE] = { -1,-1,-1,-1 };
+		float weights[ThreeDimension::MAX_BONE_INFLUENCE] = { 0.0f,0.0f,0.0f,0.0f };*/
+
+
 		vertices.emplace_back(ThreeDimension::Vertex{
 			glm::vec3(vertex.x, vertex.y, vertex.z),
 			glm::vec3(normal.x, normal.y, normal.z),
 			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
-			childCount }
+			childCount, { -1,-1,-1,-1 }, { 0.0f,0.0f,0.0f,0.0f } }
 			);
+	}
+
+	// Process Bones (Skeletal Animation Data)
+	// We populate the boneInfoMap stored in the DynamicSprite3DMesh
+	for (unsigned int i = 0; i < mesh->mNumBones; i++)
+	{
+		int boneID = -1;
+		std::string boneName = mesh->mBones[i]->mName.C_Str();
+
+		// Check if bone already exists in the map
+		if (sprite->boneInfoMap.find(boneName) == sprite->boneInfoMap.end())
+		{
+			// New bone found, register it
+			ThreeDimension::BoneInfo newBoneInfo;
+			newBoneInfo.id = sprite->boneCount;
+			newBoneInfo.offset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+
+			sprite->boneInfoMap[boneName] = newBoneInfo;
+			boneID = sprite->boneCount;
+			sprite->boneCount++;
+		}
+		else
+		{
+			// Bone already exists
+			boneID = sprite->boneInfoMap[boneName].id;
+		}
+
+		// Assign weights to vertices affected by this bone
+		auto weights = mesh->mBones[i]->mWeights;
+		int numWeights = mesh->mBones[i]->mNumWeights;
+
+		for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+		{
+			int vertexId = weights[weightIndex].mVertexId;
+			float weight = weights[weightIndex].mWeight;
+			SetVertexBoneData(vertices[vertexId], boneID, weight);
+		}
 	}
 
 	// Indices
@@ -800,7 +869,28 @@ void RenderManager::ProcessMesh(
 			tex_sub_index_layout.offset = 0;
 			tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
-			buffer->vertexArray->AddVertexBuffer(std::move(*buffer->vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+			// Bone IDs Layout (Location 7)
+			// We use GLAttributeLayout::Int for integer attributes (glVertexAttribIFormat)
+			GLAttributeLayout bone_id_layout;
+			bone_id_layout.component_type = GLAttributeLayout::Int;
+			bone_id_layout.component_dimension = GLAttributeLayout::_4;
+			bone_id_layout.normalized = false; // Integers are not normalized
+			bone_id_layout.vertex_layout_location = 7;
+			bone_id_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+			bone_id_layout.offset = 0;
+			bone_id_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, boneIDs);
+
+			// Weights Layout (Location 8)
+			GLAttributeLayout weight_layout;
+			weight_layout.component_type = GLAttributeLayout::Float;
+			weight_layout.component_dimension = GLAttributeLayout::_4;
+			weight_layout.normalized = false;
+			weight_layout.vertex_layout_location = 8;
+			weight_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+			weight_layout.offset = 0;
+			weight_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, weights);
+
+			buffer->vertexArray->AddVertexBuffer(std::move(*buffer->vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout, bone_id_layout, weight_layout });
 			buffer->vertexArray->SetIndexBuffer(std::move(*buffer->indexBuffer));
 
 #ifdef _DEBUG
@@ -883,6 +973,16 @@ glm::mat4 RenderManager::Quantize(
 		quantizedPositions[i] = qp;
 
 		minQuantizedPos = glm::min(minQuantizedPos, qp);
+
+		// Copy skeletal data directly
+		quantizedVertices[i].boneIDs = glm::ivec4(
+			vertices[i].boneIDs[0], vertices[i].boneIDs[1],
+			vertices[i].boneIDs[2], vertices[i].boneIDs[3]
+		);
+		quantizedVertices[i].weights = glm::vec4(
+			vertices[i].weights[0], vertices[i].weights[1],
+			vertices[i].weights[2], vertices[i].weights[3]
+		);
 	}
 
 	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
@@ -917,71 +1017,83 @@ void RenderManager::RenderingControllerForImGui()
 
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
-		// FidelityFX
-		auto currentEffect = m_fidelityFX->GetCurrentEffect();
-		FfxFsr1QualityMode currentFsrMode = m_fidelityFX->GetFSR1QualityMode();
-		FidelityFX::CASScalePreset currentCasScalePreset = m_fidelityFX->GetSCASScalePreset();
-		
-		// Enable/Disable FidelityFX
-		bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
-		int effectMode = (currentEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
-		if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
+		auto* dxRenderManager = dynamic_cast<DXRenderManager*>(renderManager);
+		auto* postProcessContext = dxRenderManager->GetPostProcessContext();
+		auto* fidelityFX = postProcessContext->GetFidelityFX();
+
+		if (fidelityFX)
 		{
-			FidelityFX::UpscaleEffect newEffect = ffxEnabled ? FidelityFX::UpscaleEffect::FSR1 : FidelityFX::UpscaleEffect::NONE;
-			UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
-		}
+			// FidelityFX
+			auto currentEffect = fidelityFX->GetCurrentEffect();
+			FfxFsr1QualityMode currentFsrMode = fidelityFX->GetFSR1QualityMode();
+			FidelityFX::CASScalePreset currentCasScalePreset = fidelityFX->GetSCASScalePreset();
+			static FidelityFX::UpscaleEffect lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
+			if (currentEffect != FidelityFX::UpscaleEffect::NONE) lastActiveEffect = currentEffect;
 
-		if (ffxEnabled)
-		{
-			// Enable FSR1/CAS
-			if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
+			// Enable/Disable FidelityFX
+			bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
+			int effectMode = (lastActiveEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
+			if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
 			{
-				UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
-			}
-			ImGui::SameLine();
-			if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
-			{
-				UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
+				FidelityFX::UpscaleEffect newEffect = ffxEnabled ? lastActiveEffect : FidelityFX::UpscaleEffect::NONE;
+				UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
 			}
 
-			bool rcasEnabled = m_fidelityFX->GetEnableRCAS();
-			bool casUpscalingEnabled = (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
-			// FSR1
-			if (currentEffect == FidelityFX::UpscaleEffect::FSR1)
+			if (ffxEnabled)
 			{
-				if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
+				// Enable FSR1/CAS
+				if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
 				{
-					m_fidelityFX->SetEnableRCAS(rcasEnabled);
+					lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
+					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
+				}
+				ImGui::SameLine();
+				if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
+				{
+					lastActiveEffect = FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
+					UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
 				}
 
-				const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
-				int currentFsrModeInt = static_cast<int>(currentFsrMode);
-				if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
+				bool rcasEnabled = fidelityFX->GetEnableRCAS();
+				bool casUpscalingEnabled = (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
+				// FSR1
+				if (currentEffect == FidelityFX::UpscaleEffect::FSR1)
 				{
-					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
-				}
-			}
-			// CAS
-			else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
-			{
-				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
-				{
-					FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
-					UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
-				}
-				if (casUpscalingEnabled)
-				{
-					const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
-					int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
-					if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
+					if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
 					{
-						UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
+						fidelityFX->SetEnableRCAS(rcasEnabled);
+					}
+
+					const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
+					int currentFsrModeInt = static_cast<int>(currentFsrMode);
+					if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
+					{
+						UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
 					}
 				}
-			}
+				// CAS
+				else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
+				{
+					if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
+					{
+						FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
+						lastActiveEffect = newEffect;
+						UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
+					}
+					if (casUpscalingEnabled)
+					{
+						const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
+						int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
+						if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
+						{
+							UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
+						}
+					}
+				}
 
-			// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
-			if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
+				// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
+				if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &fidelityFX->m_sharpness, 0.0f, 1.f);
+			}
 		}
 
 		// Meshlet Visualization

@@ -9,7 +9,7 @@
 #endif
 
 
-#line 74 "slang/3D.slang"
+#line 76 "slang/3D.slang"
 struct Meshlet_0
 {
     uint vertexCount_0;
@@ -22,7 +22,7 @@ struct Meshlet_0
 StructuredBuffer<Meshlet_0 > meshlets_0 : register(t9);
 
 
-#line 84
+#line 86
 StructuredBuffer<uint > uniqueVertexIndices_0 : register(t10);
 
 
@@ -33,14 +33,16 @@ struct VSInput_0
     float3 normal_0 : NORMAL0;
     float2 uv_0 : TEXCOORD0;
     int tex_sub_index_0 : TEXCOORD1;
+    int4 boneIDs_0;
+    float4 weights_0;
 };
 
 
-#line 82
+#line 84
 StructuredBuffer<VSInput_0 > uniqueVertices_0 : register(t8);
 
 
-#line 31
+#line 33
 struct vMatrix_0
 {
     float4x4 model_0;
@@ -58,24 +60,24 @@ cbuffer matrix_0 : register(b0)
     vMatrix_0 matrix_0;
 }
 
-#line 85
+#line 87
 StructuredBuffer<uint > primitiveIndices_0 : register(t11);
 
 
-#line 85
+#line 87
 struct GlobalParams_0
 {
     uint meshletVisualization_0;
 };
 
 
-#line 264
+#line 266
 cbuffer globalParams_0 : register(b6)
 {
     GlobalParams_0 globalParams_0;
 }
 
-#line 18
+#line 20
 struct VSOutput_0
 {
     float4 position_1 : SV_POSITION;
@@ -89,19 +91,19 @@ struct VSOutput_0
 };
 
 
-#line 91
+#line 93
 [shader("mesh")][numthreads(128, 1, 1)]
 [outputtopology("triangle")]
 void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_GroupID, out vertices VSOutput_0  verts_0[64U], out indices uint3  tris_0[128U])
 {
 
-#line 91
+#line 93
     uint _S1 = groupThreadID_0;
 
-#line 91
+#line 93
     uint _S2 = groupID_0;
 
-#line 98
+#line 100
     Meshlet_0 meshlet_0 = meshlets_0.Load(groupID_0);
     SetMeshOutputCounts(meshlet_0.vertexCount_0, meshlet_0.primitiveCount_0);
 
@@ -112,7 +114,7 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
 
         VSInput_0 input_0 = uniqueVertices_0.Load(uniqueVertexIndices_0.Load(meshlet_0.vertexOffset_0 + _S1));
 
-#line 112
+#line 114
         float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float((input_0.position_0) & 2047U), float(((input_0.position_0) >> int(11)) & 2047U), float(((input_0.position_0) >> int(22)) & 1023U)), 1.0f)).xyz;
 
         verts_0[_S1].uv_1 = input_0.uv_0;
@@ -127,37 +129,37 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
             uint hash_2 = (hash_1 ^ (hash_1 >> int(4))) * 668265261U;
             uint hash_3 = hash_2 ^ (hash_2 >> int(15));
 
-#line 130
+#line 132
             verts_0[_S1].color_1 = float4(float3(float(hash_3 & 255U) / 255.0f, float((hash_3 >> int(8)) & 255U) / 255.0f, float((hash_3 >> int(16)) & 255U) / 255.0f), 1.0f);
 
-#line 116
+#line 118
         }
         else
         {
 
-#line 132
+#line 134
             verts_0[_S1].color_1 = matrix_0.color_0;
 
-#line 116
+#line 118
         }
 
-#line 133
+#line 135
         verts_0[_S1].tex_sub_index_1 = input_0.tex_sub_index_0;
 
 
         verts_0[_S1].normal_1 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_0);
         float4 _S3 = float4(decoded_position_0, 1.0f);
 
-#line 137
+#line 139
         verts_0[_S1].fragmentPosition_0 = mul(matrix_0.model_0, _S3).xyz;
         verts_0[_S1].viewPosition_1 = matrix_0.viewPosition_0;
 
         verts_0[_S1].position_1 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, _S3)));
 
-#line 103
+#line 105
     }
 
-#line 143
+#line 145
     if(_S1 < (meshlet_0.primitiveCount_0))
     {
         uint _S4 = meshlet_0.primitiveOffset_0 + _S1 * 3U;
@@ -165,10 +167,10 @@ void meshMain(uint groupThreadID_0 : SV_GroupThreadID, uint groupID_0 : SV_Group
 
         tris_0[_S1] = uint3(primitiveIndices_0.Load(_S4), primitiveIndices_0.Load(_S4 + 1U), primitiveIndices_0.Load(_S4 + 2U));
 
-#line 143
+#line 145
     }
 
-#line 189
+#line 191
     return;
 }
 

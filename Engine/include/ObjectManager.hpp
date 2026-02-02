@@ -11,9 +11,16 @@
 #include <vector>
 #include <iostream>
 
+#include "glm/matrix.hpp"
+
 class DynamicSprite;
 class Physics3D;
 class Light;
+
+class SkeletalAnimator;
+class SkeletalAnimationStateMachine;
+struct AssimpNodeData;
+
 class ObjectManager
 {
 public:
@@ -90,6 +97,11 @@ private:
     void Physics3DControllerForImGui(Physics3D* phy);
     void SpriteControllerForImGui(DynamicSprite* sprite);
     void LightControllerForImGui(Light* light);
+
+    void SkeletalAnimatorControllerForImGui(SkeletalAnimator* animator);
+    void AnimationStateMachineControllerForImGui(SkeletalAnimationStateMachine* fsm);
+    void RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 parentTransform);
+
     void SelectObjectWithMouse();
     void AddComponentPopUpForImGui();
     void SelectObjModelPopUpForImGui();
@@ -115,4 +127,8 @@ private:
 
     std::vector<std::function<void()>> functionQueue;
     //For ObjectController
+    
+    // Debug Options
+    bool isShowBone{ false };
+    std::string selectedBoneName = "";
 };
