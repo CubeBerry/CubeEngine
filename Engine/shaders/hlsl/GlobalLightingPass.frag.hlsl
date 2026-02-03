@@ -9,7 +9,7 @@
 #endif
 
 
-#line 78 "slang/LightingPass.slang"
+#line 78 "slang/GlobalLightingPass.slang"
 Texture2D<float4 > gAlbedo_0 : register(t0, space1);
 
 

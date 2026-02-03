@@ -35,6 +35,7 @@ void DX2DRenderContext::Initialize()
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
+		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
 		true,
 		true,
 		true,

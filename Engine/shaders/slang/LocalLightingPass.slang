@@ -7,43 +7,41 @@
 #define PI 3.14159265358979323846f
 
 // Vertex Shader
+struct VSInput
+{
+    float3 position : POSITION0;
+};
+
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float2 uv : TEXCOORD0;
 };
 
+struct PushConstants
+{
+    float4x4 model;
+    float4x4 viewProjection;
+    float3 viewPosition;
+    int lightIndex;
+    float2 screenSize;
+}
+#if defined(__hlsl__)
+ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
+#else
+[[vk::push_constant]] PushConstants pushConstants;
+#endif
+
 [shader("vertex")]
-VSOutput vertexMain(uint vertexID : SV_VertexID)
+VSOutput vertexMain(VSInput input)
 {
     VSOutput output;
 
-    float2 texcoord = float2((vertexID << 1) & 2, vertexID & 2);
-#if defined(__hlsl__)
-    output.position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
-#else
-    output.position = float4(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0, 0.0, 1.0);
-#endif
-    output.uv = texcoord;
-    
+    float4 worldPosition = mul(pushConstants.model, float4(input.position, 1.0));
+    output.position = mul(pushConstants.viewProjection, worldPosition);
     return output;
 }
 
 // Fragment Shader
-struct fDirectionalLight
-{
-    float3 lightDirection;
-    float ambientStrength;
-    float3 lightColor;
-    float specularStrength;
-}
-
-struct fDirectionalLightList
-{
-    fDirectionalLight lights[MAX_LIGHTS];
-}
-[[vk::binding(3, 1)]] ConstantBuffer<fDirectionalLightList> directionalLightList : register(b0, space0);
-
 struct fPointLight
 {
     float3 lightPosition;
@@ -54,26 +52,14 @@ struct fPointLight
     float constant;
     float linear;
     float quadratic;
+    float radius;
 }
 
 struct fPointLightList
 {
     fPointLight lights[MAX_LIGHTS];
 }
-[[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList : register(b1, space0);
-
-struct PushConstants
-{
-    float3 viewPosition;
-    int meshletVisualization;
-    int activeDirectionalLights;
-    int activePointLights;
-}
-#if defined(__hlsl__)
-ConstantBuffer<PushConstants> pushConstants : register(b2, space0);
-#else
-[[vk::push_constant]] PushConstants pushConstants;
-#endif
+[[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList : register(b0, space0);
 
 Texture2D gAlbedo : register(t0, space1);
 Texture2D gNormal : register(t1, space1);
@@ -188,30 +174,19 @@ struct MainVectors
 };
 
 // Rendering Equation for one light source
-float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, bool isPointLight, int lightIndex)
+float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, int lightIndex)
 {
     float metallic = mainVectors.material.r;
     float roughness = mainVectors.material.g;
     // float ao = mainVectors.material.b;
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - mainVectors.worldPosition) : 1.0;
+    float distance = length(lightPosition - mainVectors.worldPosition);
 
-    float3 L = float3(0.0);
-    float attenuation = 0.0;
-    if (isPointLight)
-    {
-        L = normalize(lightPosition - mainVectors.worldPosition);
-        attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
-    }
-    else
-    {
-        L = normalize(-lightPosition);
-        attenuation = 1.0;
-    }
+    float3 L = normalize(lightPosition - mainVectors.worldPosition);
 
     // Half Vector
     float3 H = normalize(mainVectors.V + L);
-    float3 radiance = lightColor * attenuation;
+    float3 radiance = lightColor;
 
     float3 Ks = F(mainVectors.F0, mainVectors.V, H);
     float3 Kd = (1.0 - metallic) * (float3(1.0) - Ks);
@@ -234,19 +209,25 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, boo
 [shader("fragment")]
 float4 fragmentMain(VSOutput input) : SV_Target
 {
-    float3 resultColor = float3(0.0);
+    float2 uv = input.position.xy / pushConstants.screenSize;
 
-    float4 albedoSample = gAlbedo.Sample(gSampler, input.uv);
+    float4 albedoSample = gAlbedo.Sample(gSampler, uv);
     if (albedoSample.a < 0.01) discard;
     float3 albedo = albedoSample.rgb;
-    if (pushConstants.meshletVisualization > 0) return float4(albedo, 1.0f);
-    float3 normal = gNormal.Sample(gSampler, input.uv).rgb;
-    float3 worldPosition = gPosition.Sample(gSampler, input.uv).rgb;
-    float4 material = gMaterial.Sample(gSampler, input.uv);
+    float3 normal = gNormal.Sample(gSampler, uv).rgb;
+    float3 worldPosition = gPosition.Sample(gSampler, uv).rgb;
+    float4 material = gMaterial.Sample(gSampler, uv);
     // R == Metallic, G == Roughness, B == AO, A == (Unused)
     float metallic = material.r;
     float roughness = material.g;
     // float ao; = material.b;
+
+    // Calculate Point Lights
+    fPointLight light = pointLightList.lights[pushConstants.lightIndex];
+    float distance = length(light.lightPosition - worldPosition);
+    if (distance > light.radius) discard;
+
+    float attenuation = max(0.0, (1.0 / (distance * distance)) - (1.0 / (light.radius * light.radius)));
 
     // float3 F0 = mix(float3(0.04), albedo, f_material.metallic);
     float3 F0 = lerp(float3(0.04), albedo, metallic);
@@ -254,52 +235,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 N = normalize(normal);
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
-    // Calculate Directional Lights
-    for (int l = 0; l < pushConstants.activeDirectionalLights; ++l)
-    {
-        fDirectionalLight currentLight = directionalLightList.lights[l];
-        // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
-    }
-
-    // Calculate Point Lights
-    for (int l = 0; l < pushConstants.activePointLights; ++l)
-    {
-        fPointLight currentLight = pointLightList.lights[l];
-        // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
-    }
-
-    // PBR IBL Ambient Lighting
-    float3 R = reflect(-V, N);
-    float3 F = Froughness(F0, V, N, roughness);
-
-    float3 Ks = F;
-    float3 Kd = (1.0 - metallic) * (float3(1.0) - Ks);
-#if defined(__hlsl__)
-    float3 irradiance = irradianceMap.Sample(iblSmp, N).rgb;
-#else
-    float3 irradiance = irradianceMap.Sample(N).rgb;
-#endif
-    float3 diffuse = irradiance * albedo;
-
-    const float MAX_REFLECTION_LOD = 4.0;
-#if defined(__hlsl__)
-    float3 prefilteredColor = prefilterMap.SampleLevel(iblSmp, R, roughness * MAX_REFLECTION_LOD).rgb;
-    float2 brdf = brdfLUT.Sample(iblSmp, float2(max(dot(N, V), 0.0), roughness)).rg;
-#else
-    float3 prefilteredColor = prefilterMap.SampleLevel(R, roughness * MAX_REFLECTION_LOD).rgb;
-    float2 brdf = brdfLUT.Sample(float2(max(dot(N, V), 0.0), roughness)).rg;
-#endif
-    float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
-
-    // 1.0 == ao
-    float3 ambient = (Kd * diffuse + specular) * 1.0;
-    resultColor = ambient + resultColor;
-
-    // PBR Gamma Correction
-    resultColor = resultColor / (resultColor + float3(1.0));
-    resultColor = pow(resultColor, float3(1.0 / 2.2));
+    // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
+    float3 resultColor = PBR(mainVectors, light.lightPosition, light.lightColor, pushConstants.lightIndex) * attenuation;
 
     // Blinn-Phong Result Color
     // if (f_matrix.isTex)

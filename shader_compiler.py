@@ -36,9 +36,12 @@ SLANG_SHADERS = [
 	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GBuffer.frag" },
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" }, # Also need to convert to DXIL
-	# Lighting Pass
-	{ "file": "LightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "LightingPass.vert" },
-	{ "file": "LightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "LightingPass.frag" },
+	# Global Lighting Pass
+	{ "file": "GlobalLightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "GlobalLightingPass.vert" },
+	{ "file": "GlobalLightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GlobalLightingPass.frag" },
+	# Local Lighting Pass
+	{ "file": "LocalLightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "LocalLightingPass.vert" },
+	{ "file": "LocalLightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "LocalLightingPass.frag" },
 	# Normal Vector Visualization
 	{ "file": "Normal3D.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.vert" },
 	{ "file": "Normal3D.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Normal3D.frag" },

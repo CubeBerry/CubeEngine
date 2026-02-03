@@ -9,7 +9,7 @@
 #endif
 
 
-#line 10 "slang/LightingPass.slang"
+#line 10 "slang/GlobalLightingPass.slang"
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;

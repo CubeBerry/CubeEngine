@@ -1,6 +1,6 @@
-//Author: DOYEONG LEE
+//Author: JEYOON YU
 //Project: CubeEngine
-//File: Camera.hpp
+//File: BufferWrapper.hpp
 #pragma once
 #include "Utility.hpp"
 

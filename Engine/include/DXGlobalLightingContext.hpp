@@ -26,7 +26,7 @@ private:
 	std::unique_ptr<DXPipeLine> m_pipeline;
 	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, UINT> m_gBufferSrvHandle;
 
-	// Push Constants for Lighting Pass
+	// Push Constants for Global Lighting Pass
 	struct alignas(16) PushConstants
 	{
 		glm::vec3 viewPosition;

@@ -5,9 +5,13 @@
 #include "Interface/IRenderContext.hpp"
 
 #include "DXPipeLine.hpp"
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 class DXRenderManager;
+class DXVertexBuffer;
+class DXIndexBuffer;
 
 class DXLocalLightingContext : public IRenderContext
 {
@@ -26,12 +30,18 @@ private:
 	std::unique_ptr<DXPipeLine> m_pipeline;
 	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, UINT> m_gBufferSrvHandle;
 
-	// Push Constants for Lighting Pass
+	// Push Constants for Local Lighting Pass
 	struct alignas(16) PushConstants
 	{
+		glm::mat4 model;
+		glm::mat4 viewProjection;
 		glm::vec3 viewPosition;
-		int meshletVisualization;
-		int activeDirectionalLight;
-		int activePointLight;
-	} pushConstants;
+		int lightIndex;
+		glm::vec2 screenSize;
+	};
+
+	void CreateUnitSphere();
+	std::unique_ptr<DXVertexBuffer> m_unitSphereVertexBuffer;
+	std::unique_ptr<DXIndexBuffer> m_unitSphereIndexBuffer;
+	UINT m_sphereIndexCount;
 };

@@ -117,8 +117,9 @@ public:
 		pointLightUniforms.clear();
 		pointLightUniforms.shrink_to_fit();
 	}
-	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; };
-	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; };
+	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; }
+	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; }
+	static float CalculatePointLightRadius(const glm::vec3& lightColor, float constant, float linear, float quadratic);
 
 	void RenderingControllerForImGui();
 

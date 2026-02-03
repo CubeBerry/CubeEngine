@@ -649,9 +649,18 @@ void ObjectManager::LightControllerForImGui(Light* light)
 				ImGui::Spacing();
 				//ImGui::DragFloat3("Light Rotation", &rotation.x, 0.5f);
 
-				ImGui::SliderFloat("constant", &constant, 0.f, 1.f);
-				ImGui::SliderFloat("linear", &linear, 0.f, 1.f);
-				ImGui::SliderFloat("quadratic", &quadratic, 0.f, 1.f);
+				if (ImGui::SliderFloat("constant", &constant, 0.f, 1.f))
+				{
+					light->SetConstant(constant);
+				}
+				if (ImGui::SliderFloat("linear", &linear, 0.f, 1.f))
+				{
+					light->SetLinear(linear);
+				}
+				if (ImGui::SliderFloat("quadratic", &quadratic, 0.f, 1.f))
+				{
+					light->SetQuadratic(quadratic);
+				}
 
 				light->SetXPosition(position.x);
 				light->SetYPosition(position.y);
@@ -660,10 +669,6 @@ void ObjectManager::LightControllerForImGui(Light* light)
 				{
 					light->SetRotate(rotation);
 				}*/
-
-				light->SetConstant(constant);
-				light->SetLinear(linear);
-				light->SetQuadratic(quadratic);
 			}
 
 			ImGui::SliderFloat("Ambient Strength", &ambient, 0.f, 1.f);
