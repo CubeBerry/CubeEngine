@@ -205,7 +205,7 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 218
     }
 
-#line 243
+#line 241
     return float4(PBR_0(MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, normalize(pushConstants_0.viewPosition_0 - worldPosition_2), normalize(normal_0), lerp((float3)0.03999999910593033f, albedo_2, (float3)metallic_0)), light_0.lightPosition_0, light_0.lightColor_0, _S3.lightIndex_1) * max(0.0f, 1.0f / (distance_0 * distance_0) - 1.0f / (light_0.radius_0 * light_0.radius_0)), 1.0f);
 }
 

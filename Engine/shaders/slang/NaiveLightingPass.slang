@@ -54,6 +54,7 @@ struct fPointLight
     float constant;
     float linear;
     float quadratic;
+    float radius;
 }
 
 struct fPointLightList
@@ -201,7 +202,9 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, boo
     if (isPointLight)
     {
         L = normalize(lightPosition - mainVectors.worldPosition);
-        attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
+        float radius = pointLightList.lights[lightIndex].radius;
+        // attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
+        attenuation = distance > radius ? 0 : max(0.0, (1.0 / (distance * distance)) - (1.0 / (radius * radius)));
     }
     else
     {
@@ -310,7 +313,5 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 
     // PBR Result Color
-    // return float4(resultColor, 1.0);
-
     return float4(resultColor, 1.0);
 }

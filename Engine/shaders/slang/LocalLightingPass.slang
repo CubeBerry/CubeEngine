@@ -238,7 +238,5 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 
     // PBR Result Color
-    // return float4(resultColor, 1.0);
-
     return float4(resultColor, 1.0);
 }

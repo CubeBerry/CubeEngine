@@ -71,7 +71,7 @@ struct GlobalParams_0
 };
 
 
-#line 266
+#line 267
 cbuffer globalParams_0 : register(b6)
 {
     GlobalParams_0 globalParams_0;
