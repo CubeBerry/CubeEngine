@@ -142,21 +142,21 @@ float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightCo
 
     float roughness_0 = mainVectors_0.material_0.y;
 
-#line 174
-    float3 L_1 = normalize(lightPosition_1 - mainVectors_0.worldPosition_0);
 
+
+    float3 L_1 = normalize(lightPosition_1 - mainVectors_0.worldPosition_0);
 
     float3 H_2 = normalize(mainVectors_0.V_0 + L_1);
 
 
     float3 Ks_0 = F_0(mainVectors_0.F0_0, mainVectors_0.V_0, H_2);
 
-#line 186
+#line 184
     float alpha_3 = roughness_0 * roughness_0;
 
     float _S2 = max(dot(L_1, mainVectors_0.N_0), 0.0f);
 
-#line 195
+#line 193
     return ((1.0f - mainVectors_0.material_0.x) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_0(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * _S2, 0.10000000149011612f)) * lightColor_1 * _S2;
 }
 
@@ -168,7 +168,7 @@ struct VSOutput_0
 };
 
 
-#line 199
+#line 197
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
     float2 uv_0 = input_0.position_0.xy / pushConstants_0.screenSize_0;
@@ -177,10 +177,10 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     if((albedoSample_0.w) < 0.00999999977648258f)
     {
 
-#line 204
+#line 202
         discard;
 
-#line 204
+#line 202
     }
     float3 albedo_2 = albedoSample_0.xyz;
     float3 normal_0 = gNormal_0.Sample(gSampler_0, uv_0).xyz;
@@ -189,19 +189,19 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 
     float metallic_0 = material_2.x;
 
-#line 215
+#line 213
     fPointLight_0 light_0 = pointLightList_0.lights_0[pushConstants_0.lightIndex_0];
     float distance_0 = length(pointLightList_0.lights_0[pushConstants_0.lightIndex_0].lightPosition_0 - worldPosition_2);
     if(distance_0 > (pointLightList_0.lights_0[pushConstants_0.lightIndex_0].radius_0))
     {
 
-#line 217
+#line 215
         discard;
 
-#line 217
+#line 215
     }
 
-#line 241
+#line 239
     return float4(PBR_0(MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, normalize(pushConstants_0.viewPosition_0 - worldPosition_2), normalize(normal_0), lerp((float3)0.03999999910593033f, albedo_2, (float3)metallic_0)), light_0.lightPosition_0, light_0.lightColor_0, pushConstants_0.lightIndex_0) * max(0.0f, 1.0f / (distance_0 * distance_0) - 1.0f / (light_0.radius_0 * light_0.radius_0)), 1.0f);
 }
 

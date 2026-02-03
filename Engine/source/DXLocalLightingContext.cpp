@@ -108,7 +108,7 @@ void DXLocalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->IASetIndexBuffer(&ibv);
 
 	auto& lights = m_renderManager->pointLightUniforms;
-	for (int l = 0; l < lights.size(); ++l)
+	for (int l = 0; l < static_cast<int>(lights.size()); ++l)
 	{
 		glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(lights[l].lightPosition));
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(lights[l].radius));

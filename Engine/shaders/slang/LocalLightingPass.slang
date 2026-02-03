@@ -169,10 +169,8 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, int
     float roughness = mainVectors.material.g;
     // float ao = mainVectors.material.b;
     float ao = 1.0;
-    float distance = length(lightPosition - mainVectors.worldPosition);
 
     float3 L = normalize(lightPosition - mainVectors.worldPosition);
-
     // Half Vector
     float3 H = normalize(mainVectors.V + L);
     float3 radiance = lightColor;
