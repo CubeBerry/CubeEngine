@@ -18,8 +18,8 @@ void DXLocalLightingContext::Initialize()
 	// Create root signature and pipeline
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(4);
-	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters.resize(3);
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
 	rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 1, 0, D3D12_SHADER_VISIBILITY_ALL);
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
 	gBufferSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 1);
@@ -107,29 +107,22 @@ void DXLocalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->IASetVertexBuffers(0, 1, &vbv);
 	commandList->IASetIndexBuffer(&ibv);
 
-	auto& lights = m_renderManager->pointLightUniforms;
-	for (int l = 0; l < static_cast<int>(lights.size()); ++l)
-	{
-		glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(lights[l].lightPosition));
-		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(lights[l].radius));
-		glm::mat4 model = translate * scale;
+	glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
+	PushConstants pushConstants = {
+		.viewProjection = Engine::GetCameraManager().GetProjectionMatrix() * Engine::GetCameraManager().GetViewMatrix(),
+		.viewPosition = glm::vec3(
+		inverseView[3].x,
+		inverseView[3].y,
+		inverseView[3].z
+		),
+		.intensity = 1.f,
+		.screenSize = { m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth() ,m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight() }
+	};
+	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
-		glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
-		PushConstants pushConstants = {
-			.model = model,
-			.viewProjection = Engine::GetCameraManager().GetProjectionMatrix() * Engine::GetCameraManager().GetViewMatrix(),
-			.viewPosition = glm::vec3(
-			inverseView[3].x,
-			inverseView[3].y,
-			inverseView[3].z
-			),
-			.lightIndex = l,
-			.screenSize = { m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth() ,m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight() }
-		};
-		commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
-
-		commandList->DrawIndexedInstanced(m_sphereIndexCount, 1, 0, 0, 0);
-	}
+	int lightCount = static_cast<int>(m_renderManager->pointLightUniforms.size());
+	if (lightCount > 0)
+	commandList->DrawIndexedInstanced(m_sphereIndexCount, lightCount, 0, 0, 0);
 }
 
 void DXLocalLightingContext::CleanUp()
@@ -156,7 +149,7 @@ void DXLocalLightingContext::CreateUnitSphere()
 		{
 			const float col = static_cast<float>(slice) / static_cast<float>(slices);
 			const float alpha = col * PI * 2.f;
-			vertices.emplace(vertices.end(), glm::vec3{ radius * sin(alpha) * cos_beta, radius * sin_beta, radius * cos(alpha) * cos_beta });
+			vertices.emplace(vertices.end(), radius * sin(alpha) * cos_beta, radius * sin_beta, radius * cos(alpha) * cos_beta);
 		}
 	}
 

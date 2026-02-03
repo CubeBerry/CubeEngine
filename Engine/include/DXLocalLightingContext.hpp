@@ -33,10 +33,9 @@ private:
 	// Push Constants for Local Lighting Pass
 	struct alignas(16) PushConstants
 	{
-		glm::mat4 model;
 		glm::mat4 viewProjection;
 		glm::vec3 viewPosition;
-		int lightIndex;
+		float intensity;
 		glm::vec2 screenSize;
 	};
 

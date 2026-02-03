@@ -15,33 +15,9 @@ struct VSInput
 struct VSOutput
 {
     float4 position : SV_POSITION;
+    nointerpolation int lightIndex : TEXCOORD1;
 };
 
-struct PushConstants
-{
-    float4x4 model;
-    float4x4 viewProjection;
-    float3 viewPosition;
-    int lightIndex;
-    float2 screenSize;
-}
-#if defined(__hlsl__)
-ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
-#else
-[[vk::push_constant]] PushConstants pushConstants;
-#endif
-
-[shader("vertex")]
-VSOutput vertexMain(VSInput input)
-{
-    VSOutput output;
-
-    float4 worldPosition = mul(pushConstants.model, float4(input.position, 1.0));
-    output.position = mul(pushConstants.viewProjection, worldPosition);
-    return output;
-}
-
-// Fragment Shader
 struct fPointLight
 {
     float3 lightPosition;
@@ -61,6 +37,33 @@ struct fPointLightList
 }
 [[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList : register(b0, space0);
 
+struct PushConstants
+{
+    float4x4 viewProjection;
+    float3 viewPosition;
+    float intensity;
+    float2 screenSize;
+}
+#if defined(__hlsl__)
+ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
+#else
+[[vk::push_constant]] PushConstants pushConstants;
+#endif
+
+[shader("vertex")]
+VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
+{
+    VSOutput output;
+
+    fPointLight light = pointLightList.lights[instanceID];
+    float3 scaledPosition = input.position * light.radius;
+    float3 worldPosition = scaledPosition + light.lightPosition;
+    output.position = mul(pushConstants.viewProjection, float4(worldPosition, 1.0));
+    output.lightIndex = int(instanceID);
+    return output;
+}
+
+// Fragment Shader
 Texture2D gAlbedo : register(t0, space1);
 Texture2D gNormal : register(t1, space1);
 Texture2D gPosition : register(t2, space1);
@@ -210,7 +213,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // float ao; = material.b;
 
     // Calculate Point Lights
-    fPointLight light = pointLightList.lights[pushConstants.lightIndex];
+    fPointLight light = pointLightList.lights[input.lightIndex];
     float distance = length(light.lightPosition - worldPosition);
     if (distance > light.radius) discard;
 
@@ -220,10 +223,11 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 F0 = lerp(float3(0.04), albedo, metallic);
     float3 V = normalize(pushConstants.viewPosition - worldPosition);
     float3 N = normalize(normal);
+
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
     // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-    float3 resultColor = PBR(mainVectors, light.lightPosition, light.lightColor, pushConstants.lightIndex) * attenuation;
+    float3 resultColor = PBR(mainVectors, light.lightPosition, light.lightColor, input.lightIndex) * attenuation;
 
     // Blinn-Phong Result Color
     // if (f_matrix.isTex)
