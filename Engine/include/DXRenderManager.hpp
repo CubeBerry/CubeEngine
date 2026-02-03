@@ -22,6 +22,7 @@
 #include "DXConstantBuffer.hpp"
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
+#include "DXNaiveLightingContext.hpp"
 #include "DXGlobalLightingContext.hpp"
 #include "DXLocalLightingContext.hpp"
 #include "DXGBufferContext.hpp"
@@ -38,6 +39,7 @@ class DXRenderManager : public RenderManager
 	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
 	friend class DXGBufferContext;
+	friend class DXNaiveLightingContext;
 	friend class DXGlobalLightingContext;
 	friend class DXLocalLightingContext;
 	friend class DXSkyboxRenderContext;
@@ -127,6 +129,8 @@ private:
 	// G-Buffer Render Context
 	std::unique_ptr<DXGBufferContext> m_gBufferContext;
 	DXGBufferContext* GetGBufferContext() const { return m_gBufferContext.get(); }
+	// Naive Lighting Context
+	std::unique_ptr<DXNaiveLightingContext> m_naiveLightingContext;
 	// Global (Directional) Lighting Context
 	std::unique_ptr<DXGlobalLightingContext> m_globalLightingContext;
 	// Local (Point) Lighting Context

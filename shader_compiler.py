@@ -36,6 +36,9 @@ SLANG_SHADERS = [
 	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GBuffer.frag" },
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" }, # Also need to convert to DXIL
+	# Naive Lighting Pass
+	{ "file": "NaiveLightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "NaiveLightingPass.vert" },
+	{ "file": "NaiveLightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "NaiveLightingPass.frag" },
 	# Global Lighting Pass
 	{ "file": "GlobalLightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "GlobalLightingPass.vert" },
 	{ "file": "GlobalLightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GlobalLightingPass.frag" },

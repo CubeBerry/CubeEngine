@@ -217,6 +217,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
 	m_gBufferContext->Initialize();
 
+	// Create Naive Render Context
+	m_naiveLightingContext = std::make_unique<DXNaiveLightingContext>(this);
+	m_naiveLightingContext->Initialize();
+
 	// Create Global Lighting Context
 	m_globalLightingContext = std::make_unique<DXGlobalLightingContext>(this);
 	m_globalLightingContext->Initialize();
@@ -338,7 +342,8 @@ void DXRenderManager::OnResize()
 	{
 		m_gBufferContext->OnResize();
 		m_globalLightingContext->OnResize();
-		//m_localLightingContext->OnResize();
+		m_localLightingContext->OnResize();
+		m_naiveLightingContext->OnResize();
 	}
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -410,8 +415,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			m_gBufferContext->Execute(&wrapper);
-			m_globalLightingContext->Execute(&wrapper);
-			if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper);
+			m_naiveLightingContext->Execute(&wrapper);
+			//m_globalLightingContext->Execute(&wrapper);
+			//if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper);
 		}
 		m_skyboxRenderContext->Execute(&wrapper);
 	}
