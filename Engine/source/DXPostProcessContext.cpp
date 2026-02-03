@@ -100,7 +100,8 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 				if (m_renderManager->m_deferredRenderingEnabled)
 				{
 					m_renderManager->m_gBufferContext->OnResize();
-					m_renderManager->m_lightingContext->OnResize();
+					m_renderManager->m_globalLightingContext->OnResize();
+					//m_renderManager->m_localLightingContext->OnResize();
 				}
 			}
 

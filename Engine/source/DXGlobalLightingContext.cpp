@@ -1,13 +1,13 @@
 //Author: JEYOON YU
 //Project: CubeEngine
-//File: DXLightingContext.cpp
-#include "DXLightingContext.hpp"
+//File: DXGlobalLightingContext.cpp
+#include "DXGlobalLightingContext.hpp"
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
 #include "DXSkyboxRenderContext.hpp"
 #include "Engine.hpp"
 
-void DXLightingContext::Initialize()
+void DXGlobalLightingContext::Initialize()
 {
 	// Copy G-Buffer SRV handles to Main SRV Heap
 	m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(4);
@@ -55,7 +55,7 @@ void DXLightingContext::Initialize()
 	);
 }
 
-void DXLightingContext::OnResize()
+void DXGlobalLightingContext::OnResize()
 {
 	// Copy G-Buffer SRV handles to Main SRV Heap
 	D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
@@ -63,7 +63,7 @@ void DXLightingContext::OnResize()
 	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -135,6 +135,6 @@ void DXLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	}
 }
 
-void DXLightingContext::CleanUp()
+void DXGlobalLightingContext::CleanUp()
 {
 }

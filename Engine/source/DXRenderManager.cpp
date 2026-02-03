@@ -217,9 +217,13 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
 	m_gBufferContext->Initialize();
 
-	// Create Lighting Context
-	m_lightingContext = std::make_unique<DXLightingContext>(this);
-	m_lightingContext->Initialize();
+	// Create Global Lighting Context
+	m_globalLightingContext = std::make_unique<DXGlobalLightingContext>(this);
+	m_globalLightingContext->Initialize();
+
+	// Create Local Lighting Context
+	m_localLightingContext = std::make_unique<DXLocalLightingContext>(this);
+	m_localLightingContext->Initialize();
 
 	// Create Skybox Render Context
 	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
@@ -333,7 +337,8 @@ void DXRenderManager::OnResize()
 	if (m_deferredRenderingEnabled)
 	{
 		m_gBufferContext->OnResize();
-		m_lightingContext->OnResize();
+		m_globalLightingContext->OnResize();
+		//m_localLightingContext->OnResize();
 	}
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -405,7 +410,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			m_gBufferContext->Execute(&wrapper);
-			m_lightingContext->Execute(&wrapper);
+			m_globalLightingContext->Execute(&wrapper);
+			//m_localLightingContext->Execute(&wrapper);
 		}
 		m_skyboxRenderContext->Execute(&wrapper);
 	}
