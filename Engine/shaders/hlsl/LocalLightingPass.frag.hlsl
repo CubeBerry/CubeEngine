@@ -70,7 +70,7 @@ cbuffer pointLightList_0 : register(b0)
     fPointLightList_0 pointLightList_0;
 }
 
-#line 166
+#line 155
 struct MainVectors_0
 {
     float3 worldPosition_0;
@@ -82,11 +82,11 @@ struct MainVectors_0
 };
 
 
-#line 166
+#line 155
 MainVectors_0 MainVectors_x24init_0(float3 worldPosition_1, float3 albedo_1, float4 material_1, float3 V_1, float3 N_1, float3 F0_1)
 {
 
-#line 166
+#line 155
     MainVectors_0 _S1;
 
     _S1.worldPosition_0 = worldPosition_1;
@@ -96,24 +96,24 @@ MainVectors_0 MainVectors_x24init_0(float3 worldPosition_1, float3 albedo_1, flo
     _S1.N_0 = N_1;
     _S1.F0_0 = F0_1;
 
-#line 166
+#line 155
     return _S1;
 }
 
 
-#line 156
+#line 145
 float3 F_0(float3 F0_2, float3 V_2, float3 H_0)
 {
     return F0_2 + ((float3)1.0f - F0_2) * pow(1.0f - max(dot(V_2, H_0), 0.0f), 5.0f);
 }
 
 
-#line 126
+#line 115
 float D_0(float alpha_0, float3 N_2, float3 H_1)
 {
     float numerator_0 = pow(alpha_0, 2.0f);
 
-#line 134
+#line 123
     return numerator_0 / max(3.14159274101257324f * pow(pow(max(dot(N_2, H_1), 0.0f), 2.0f) * (numerator_0 - 1.0f) + 1.0f, 2.0f), 9.99999997475242708e-07f);
 }
 
@@ -136,13 +136,13 @@ float G_0(float alpha_2, float3 N_4, float3 V_3, float3 L_0)
 }
 
 
-#line 177
+#line 166
 float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightColor_1, int lightIndex_1)
 {
 
     float roughness_0 = mainVectors_0.material_0.y;
 
-#line 185
+#line 174
     float3 L_1 = normalize(lightPosition_1 - mainVectors_0.worldPosition_0);
 
 
@@ -151,12 +151,12 @@ float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightCo
 
     float3 Ks_0 = F_0(mainVectors_0.F0_0, mainVectors_0.V_0, H_2);
 
-#line 197
+#line 186
     float alpha_3 = roughness_0 * roughness_0;
 
     float _S2 = max(dot(L_1, mainVectors_0.N_0), 0.0f);
 
-#line 206
+#line 195
     return ((1.0f - mainVectors_0.material_0.x) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_0(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * _S2, 0.10000000149011612f)) * lightColor_1 * _S2;
 }
 
@@ -168,7 +168,7 @@ struct VSOutput_0
 };
 
 
-#line 210
+#line 199
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
     float2 uv_0 = input_0.position_0.xy / pushConstants_0.screenSize_0;
@@ -177,33 +177,31 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     if((albedoSample_0.w) < 0.00999999977648258f)
     {
 
-#line 215
+#line 204
         discard;
 
-#line 215
+#line 204
     }
     float3 albedo_2 = albedoSample_0.xyz;
-
+    float3 normal_0 = gNormal_0.Sample(gSampler_0, uv_0).xyz;
     float3 worldPosition_2 = gPosition_0.Sample(gSampler_0, uv_0).xyz;
     float4 material_2 = gMaterial_0.Sample(gSampler_0, uv_0);
 
-#line 229
-    MainVectors_0 mainVectors_1 = MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, normalize(pushConstants_0.viewPosition_0 - worldPosition_2), normalize(gNormal_0.Sample(gSampler_0, uv_0).xyz), lerp((float3)0.03999999910593033f, albedo_2, (float3)material_2.x));
+    float metallic_0 = material_2.x;
 
-
+#line 215
     fPointLight_0 light_0 = pointLightList_0.lights_0[pushConstants_0.lightIndex_0];
-
     float distance_0 = length(pointLightList_0.lights_0[pushConstants_0.lightIndex_0].lightPosition_0 - worldPosition_2);
     if(distance_0 > (pointLightList_0.lights_0[pushConstants_0.lightIndex_0].radius_0))
     {
 
-#line 235
+#line 217
         discard;
 
-#line 235
+#line 217
     }
 
-#line 254
-    return float4(PBR_0(mainVectors_1, light_0.lightPosition_0, light_0.lightColor_0, pushConstants_0.lightIndex_0) * (1.0f / (distance_0 * distance_0)), 1.0f);
+#line 241
+    return float4(PBR_0(MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, normalize(pushConstants_0.viewPosition_0 - worldPosition_2), normalize(normal_0), lerp((float3)0.03999999910593033f, albedo_2, (float3)metallic_0)), light_0.lightPosition_0, light_0.lightColor_0, pushConstants_0.lightIndex_0) * max(0.0f, 1.0f / (distance_0 * distance_0) - 1.0f / (light_0.radius_0 * light_0.radius_0)), 1.0f);
 }
 

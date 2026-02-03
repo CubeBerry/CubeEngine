@@ -67,17 +67,6 @@ Texture2D gPosition : register(t2, space1);
 Texture2D gMaterial : register(t3, space1);
 SamplerState gSampler : register(s0, space1);
 
-#if defined(__hlsl__)
-TextureCube irradianceMap : register(t0, space2);
-TextureCube prefilterMap : register(t1, space2);
-Texture2D brdfLUT : register(t2, space2);
-SamplerState iblSmp : register(s1, space2);
-#else
-[[vk::binding(5, 1)]] SamplerCube irradianceMap;
-[[vk::binding(6, 1)]] SamplerCube prefilterMap;
-[[vk::binding(7, 1)]] Sampler2D brdfLUT;
-#endif
-
 // float3 BlinnPhong(float3 lightPosition, float3 lightColor, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
 // {
 //     float3 light_direction = float3(0.0);

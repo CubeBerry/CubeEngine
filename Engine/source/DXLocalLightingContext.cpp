@@ -24,9 +24,6 @@ void DXLocalLightingContext::Initialize()
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
 	gBufferSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 1);
 	rootParameters[2].InitAsDescriptorTable(1, &gBufferSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	CD3DX12_DESCRIPTOR_RANGE1 iblRange;
-	iblRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2);
-	rootParameters[3].InitAsDescriptorTable(1, &iblRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Lighting-Pass Root Signature"));
@@ -102,11 +99,6 @@ void DXLocalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
 	gBufferGpuHandle.ptr += static_cast<UINT64>(m_gBufferSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
 	commandList->SetGraphicsRootDescriptorTable(2, gBufferGpuHandle);
-	if (m_renderManager->m_skyboxEnabled)
-	{
-		auto skyboxGpuHandle = m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv();
-		commandList->SetGraphicsRootDescriptorTable(3, skyboxGpuHandle);
-	}
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -137,17 +129,6 @@ void DXLocalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
 		commandList->DrawIndexedInstanced(m_sphereIndexCount, 1, 0, 0, 0);
-	}
-
-	// Skybox context will handle the transition back to COMMON state if skybox is enabled
-	if (!m_renderManager->m_skyboxEnabled)
-	{
-		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			m_renderManager->m_renderTarget->GetRenderTarget().Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_COMMON
-		);
-		commandList->ResourceBarrier(1, &barrier);
 	}
 }
 

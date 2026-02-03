@@ -32,6 +32,5 @@ private:
 		glm::vec3 viewPosition;
 		int meshletVisualization;
 		int activeDirectionalLight;
-		int activePointLight;
 	} pushConstants;
 };

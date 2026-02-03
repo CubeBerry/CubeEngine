@@ -18,16 +18,15 @@ void DXGlobalLightingContext::Initialize()
 	// Create root signature and pipeline
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(5);
+	rootParameters.resize(4);
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[2].InitAsConstants(sizeof(PushConstants) / 4, 2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
 	gBufferSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 1);
-	rootParameters[3].InitAsDescriptorTable(1, &gBufferSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[2].InitAsDescriptorTable(1, &gBufferSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 iblRange;
 	iblRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2);
-	rootParameters[4].InitAsDescriptorTable(1, &iblRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[3].InitAsDescriptorTable(1, &iblRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Lighting-Pass Root Signature"));
@@ -92,11 +91,6 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		m_renderManager->directionalLightUniformBuffer->UpdateConstant(m_renderManager->directionalLightUniforms.data(), sizeof(ThreeDimension::DirectionalLightUniform) * m_renderManager->directionalLightUniforms.size(), m_renderManager->m_frameIndex);
 		commandList->SetGraphicsRootConstantBufferView(0, m_renderManager->directionalLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 	}
-	if (m_renderManager->pointLightUniformBuffer && !m_renderManager->pointLightUniforms.empty())
-	{
-		m_renderManager->pointLightUniformBuffer->UpdateConstant(m_renderManager->pointLightUniforms.data(), sizeof(ThreeDimension::PointLightUniform) * m_renderManager->pointLightUniforms.size(), m_renderManager->m_frameIndex);
-		commandList->SetGraphicsRootConstantBufferView(1, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
-	}
 
 	glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
 	pushConstants = {
@@ -107,18 +101,17 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		),
 		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
-		.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
 	};
 
-	commandList->SetGraphicsRoot32BitConstants(2, sizeof(PushConstants) / 4, &pushConstants, 0);
+	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
 	gBufferGpuHandle.ptr += static_cast<UINT64>(m_gBufferSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
-	commandList->SetGraphicsRootDescriptorTable(3, gBufferGpuHandle);
+	commandList->SetGraphicsRootDescriptorTable(2, gBufferGpuHandle);
 	if (m_renderManager->m_skyboxEnabled)
 	{
 		auto skyboxGpuHandle = m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv();
-		commandList->SetGraphicsRootDescriptorTable(4, skyboxGpuHandle);
+		commandList->SetGraphicsRootDescriptorTable(3, skyboxGpuHandle);
 	}
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -410,7 +410,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			m_gBufferContext->Execute(&wrapper);
-			//m_globalLightingContext->Execute(&wrapper);
+			m_globalLightingContext->Execute(&wrapper);
 			m_localLightingContext->Execute(&wrapper);
 		}
 		m_skyboxRenderContext->Execute(&wrapper);

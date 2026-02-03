@@ -44,33 +44,14 @@ struct fDirectionalLightList
 }
 [[vk::binding(3, 1)]] ConstantBuffer<fDirectionalLightList> directionalLightList : register(b0, space0);
 
-struct fPointLight
-{
-    float3 lightPosition;
-    float ambientStrength;
-    float3 lightColor;
-    float specularStrength;
-
-    float constant;
-    float linear;
-    float quadratic;
-}
-
-struct fPointLightList
-{
-    fPointLight lights[MAX_LIGHTS];
-}
-[[vk::binding(4, 1)]] ConstantBuffer<fPointLightList> pointLightList : register(b1, space0);
-
 struct PushConstants
 {
     float3 viewPosition;
     int meshletVisualization;
     int activeDirectionalLights;
-    int activePointLights;
 }
 #if defined(__hlsl__)
-ConstantBuffer<PushConstants> pushConstants : register(b2, space0);
+ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
 #else
 [[vk::push_constant]] PushConstants pushConstants;
 #endif
@@ -188,26 +169,16 @@ struct MainVectors
 };
 
 // Rendering Equation for one light source
-float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, bool isPointLight, int lightIndex)
+float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, int lightIndex)
 {
     float metallic = mainVectors.material.r;
     float roughness = mainVectors.material.g;
     // float ao = mainVectors.material.b;
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - mainVectors.worldPosition) : 1.0;
+    float distance = 1.0;
 
-    float3 L = float3(0.0);
-    float attenuation = 0.0;
-    if (isPointLight)
-    {
-        L = normalize(lightPosition - mainVectors.worldPosition);
-        attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
-    }
-    else
-    {
-        L = normalize(-lightPosition);
-        attenuation = 1.0;
-    }
+    float3 L = normalize(-lightPosition);
+    float attenuation = 1.0;
 
     // Half Vector
     float3 H = normalize(mainVectors.V + L);
@@ -259,15 +230,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
-    }
-
-    // Calculate Point Lights
-    for (int l = 0; l < pushConstants.activePointLights; ++l)
-    {
-        fPointLight currentLight = pointLightList.lights[l];
-        // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, l);
     }
 
     // PBR IBL Ambient Lighting
