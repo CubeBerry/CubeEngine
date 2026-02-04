@@ -120,7 +120,7 @@ private:
 
 	float aspectRatio = 1.f; //(TBD)
 	float nearClip = 1.f;
-	float farClip = 45.0f;
+	float farClip = 1000.f;
 	float pitch = 0.0f;
 	float yaw = -90.0f;
 	float cameraSensitivity = 1.f;

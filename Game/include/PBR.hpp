@@ -17,6 +17,6 @@ public:
 	void Restart() override;
 	void End() override;
 private:
-	float cNear{ 0.05f }, cFar{ 45.f };
+	float cNear{ 0.05f }, cFar{ 1000.f };
 	float cFov{ 22.5f };
 };
