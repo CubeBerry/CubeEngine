@@ -30,7 +30,7 @@ void DXNaiveLightingContext::Initialize()
 	rootParameters[4].InitAsDescriptorTable(1, &iblRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
-	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Lighting-Pass Root Signature"));
+	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Naive Lighting-Pass Root Signature"));
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = 1;
