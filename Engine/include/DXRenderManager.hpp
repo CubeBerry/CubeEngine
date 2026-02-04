@@ -146,6 +146,7 @@ private:
 
 	// HDR, MSAA, Depth
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
+	// @TODO This should be inside DXRenderTarget
 	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> m_hdrSrvHandle;
 
 	// Compute Shader

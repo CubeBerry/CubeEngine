@@ -340,6 +340,7 @@ void DXRenderManager::OnResize()
 		m_deferredRenderingEnabled
 	);
 	// Allocate SRV handle for tone mapping
+	// @TODO This should be inside DXRenderTarget
 	m_renderTarget->CreateSRV(m_hdrSrvHandle.first);
 
 	m_skyboxRenderContext->OnResize();

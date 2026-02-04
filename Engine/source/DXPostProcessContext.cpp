@@ -162,6 +162,7 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 					m_renderManager->m_deferredRenderingEnabled
 				);
 				// Allocate SRV handle for tone mapping
+				// @TODO This should be inside DXRenderTarget
 				m_renderManager->m_renderTarget->CreateSRV(m_renderManager->m_hdrSrvHandle.first);
 
 				if (m_renderManager->m_deferredRenderingEnabled)
