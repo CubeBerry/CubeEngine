@@ -124,15 +124,20 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		commandList->DrawInstanced(3, 1, 0, 0);
 
-		// LDR Render Target : RENDER_TARGET -> COMMON
-		barrierLDR = CD3DX12_RESOURCE_BARRIER::Transition(ldrRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
+		// LDR Render Target : RENDER_TARGET -> NON_PIXEL_SHADER_RESOURCE
+		barrierLDR = CD3DX12_RESOURCE_BARRIER::Transition(ldrRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		commandList->ResourceBarrier(1, &barrierLDR);
 
 		m_fidelityFX->Execute(commandList, ldrRenderTarget.Get(), backBuffer);
+
+		// LDR Render Target : NON_PIXEL_SHADER_RESOURCE -> COMMON
+		barrierLDR = CD3DX12_RESOURCE_BARRIER::Transition(ldrRenderTarget.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COMMON);
+		commandList->ResourceBarrier(1, &barrierLDR);
 	}
 	// Tone Mapping
 	else
 	{
+		// PRESENT == COMMON
 		// Main Render Target: PRESENT -> RENDER_TARGET
 		D3D12_RESOURCE_BARRIER barriers[2];
 		barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
