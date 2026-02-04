@@ -16,6 +16,7 @@ void DXSkyboxRenderContext::Initialize()
 	rootParameters[1].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignatureSkybox, rootParameters);
+	DXHelper::ThrowIfFailed(m_rootSignatureSkybox->SetName(L"Skybox Root Signature"));
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
