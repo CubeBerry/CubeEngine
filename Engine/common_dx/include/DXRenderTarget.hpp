@@ -27,6 +27,11 @@ public:
 	DXRenderTarget(const DXRenderTarget&&) = delete;
 	DXRenderTarget& operator=(const DXRenderTarget&&) = delete;
 
+	// LDR Render Target Resources
+	// For FSR LDR Input
+	ComPtr<ID3D12Resource> GetLDRRenderTarget() const { return m_ldrRenderTarget; }
+	ComPtr<ID3D12DescriptorHeap> GetLDRRtvHeap() const { return m_ldrRtvHeap; }
+
 	// HDR Render Target Resources
 	// For Forward Rendering MSAA resolve & Deferred Lighting Pass
 	ComPtr<ID3D12Resource> GetHDRRenderTarget() const { return m_hdrRenderTarget; }
@@ -48,6 +53,12 @@ private:
 	// Common
 	ComPtr<ID3D12Device> m_device;
 	SDL_Window* m_window;
+
+	// LDR Render Target Resources
+	void CreateLDRRenderTarget(int width, int height);
+
+	ComPtr<ID3D12Resource> m_ldrRenderTarget;
+	ComPtr<ID3D12DescriptorHeap> m_ldrRtvHeap;
 
 	// HDR Render Target Resources
 	void CreateHDRRenderTarget(int width, int height);

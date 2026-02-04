@@ -75,6 +75,7 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
 	auto* backBuffer = m_renderManager->m_renderTargets[m_renderManager->m_frameIndex].Get();
+	ComPtr<ID3D12Resource> ldrRenderTarget = m_renderManager->m_renderTarget->GetLDRRenderTarget();
 	ComPtr<ID3D12Resource> hdrRenderTarget = m_renderManager->m_renderTarget->GetHDRRenderTarget();
 
 	// Forward Rendering (Resolve Only) HDR -> HDR Resolve
@@ -92,20 +93,48 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->ResolveSubresource(hdrRenderTarget.Get(), 0, msaaTarget, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
 		// HDR Render Target: RESOLVE_DEST -> COMMON
-		auto barrierIRT = CD3DX12_RESOURCE_BARRIER::Transition(hdrRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
-		commandList->ResourceBarrier(1, &barrierIRT);
+		auto barrierHDR = CD3DX12_RESOURCE_BARRIER::Transition(hdrRenderTarget.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_COMMON);
+		commandList->ResourceBarrier(1, &barrierHDR);
 	}
 
-	FidelityFX::UpscaleEffect currentEffect = m_fidelityFX->GetCurrentEffect();
-	if (currentEffect != FidelityFX::UpscaleEffect::NONE)
+	// Tone Mapping & FSR
+	if (m_fidelityFX->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
 	{
-		m_fidelityFX->Execute(commandList, hdrRenderTarget.Get(), backBuffer);
+		// LDR Render Target : COMMON -> RENDER_TARGET
+		auto barrierLDR = CD3DX12_RESOURCE_BARRIER::Transition(ldrRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		commandList->ResourceBarrier(1, &barrierLDR);
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetLDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+		D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<float>(m_fidelityFX->GetRenderWidth()), static_cast<float>(m_fidelityFX->GetRenderHeight()), 0.f, 1.f };
+		D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(m_fidelityFX->GetRenderWidth()), static_cast<LONG>(m_fidelityFX->GetRenderHeight()) };
+		commandList->RSSetViewports(1, &viewport);
+		commandList->RSSetScissorRects(1, &scissorRect);
+
+		commandList->SetPipelineState(m_pipeline->GetPipelineState().Get());
+		commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+		ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
+		commandList->SetDescriptorHeaps(1, ppHeaps);
+
+		D3D12_GPU_DESCRIPTOR_HANDLE srvHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+		srvHandle.ptr += static_cast<UINT64>(m_renderManager->m_hdrSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
+		commandList->SetGraphicsRootDescriptorTable(0, srvHandle);
+
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		commandList->DrawInstanced(3, 1, 0, 0);
+
+		// LDR Render Target : RENDER_TARGET -> COMMON
+		barrierLDR = CD3DX12_RESOURCE_BARRIER::Transition(ldrRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
+		commandList->ResourceBarrier(1, &barrierLDR);
+
+		m_fidelityFX->Execute(commandList, ldrRenderTarget.Get(), backBuffer);
 	}
+	// Tone Mapping
 	else
 	{
-		// --------------------Apply Tone-Mapping--------------------
-		D3D12_RESOURCE_BARRIER barriers[2];
 		// Main Render Target: PRESENT -> RENDER_TARGET
+		D3D12_RESOURCE_BARRIER barriers[2];
 		barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		// HDR Render Target: COMMON -> PIXEL_SHADER_RESOURCE (SRV)
 		barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(hdrRenderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -132,8 +161,8 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->DrawInstanced(3, 1, 0, 0);
 
 		// HDR Render Target: PIXEL_SHADER_RESOURCE (SRV) -> COMMON
-		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(hdrRenderTarget.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COMMON);
-		commandList->ResourceBarrier(1, &barrier);
+		auto barrierHDR = CD3DX12_RESOURCE_BARRIER::Transition(hdrRenderTarget.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COMMON);
+		commandList->ResourceBarrier(1, &barrierHDR);
 	}
 }
 

@@ -11,9 +11,60 @@ DXRenderTarget::DXRenderTarget(
 	bool deferred
 	) : m_device(device), m_window(window)
 {
+	CreateLDRRenderTarget(width, height);
 	CreateHDRRenderTarget(width, height);
 	CreateMSAARenderTarget(width, height);
 	CreateDepthBuffer(width, height, deferred);
+}
+
+void DXRenderTarget::CreateLDRRenderTarget(int width, int height)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = 1;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_ldrRtvHeap)));
+	m_ldrRtvHeap->SetName(L"LDR RTV Heap");
+
+	D3D12_RESOURCE_DESC textureDesc = {};
+	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.DepthOrArraySize = 1;
+	textureDesc.MipLevels = 1;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = textureDesc.Format;
+	clearValue.Color[0] = 0.f;
+	clearValue.Color[1] = 0.f;
+	clearValue.Color[2] = 0.f;
+	// @TODO Maybe alpha = 0
+	clearValue.Color[3] = 1.f;
+
+	// heapProps(D3D12_HEAP_TYPE_DEFAULT)
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		&clearValue,
+		IID_PPV_ARGS(&m_ldrRenderTarget)
+	));
+	m_ldrRenderTarget->SetName(L"LDR Render Target View");
+
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.Texture2D.PlaneSlice = 0;
+
+	m_device->CreateRenderTargetView(m_ldrRenderTarget.Get(), &rtvDesc, m_ldrRtvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void DXRenderTarget::CreateHDRRenderTarget(int width, int height)
