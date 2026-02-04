@@ -260,10 +260,6 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 ambient = (Kd * diffuse + specular) * 1.0;
     resultColor = ambient + resultColor;
 
-    // PBR Gamma Correction
-    resultColor = resultColor / (resultColor + float3(1.0));
-    resultColor = pow(resultColor, float3(1.0 / 2.2));
-
     // Blinn-Phong Result Color
     // if (f_matrix.isTex)
     // {

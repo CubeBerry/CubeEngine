@@ -27,12 +27,6 @@ float2 SampleSphericalMap_0(float3 v_0)
 }
 
 
-float3 ReinhardToneMapping_0(float3 color_0)
-{
-    return color_0 / (color_0 + (float3)1.0f);
-}
-
-
 #line 1
 struct VSOutput_0
 {
@@ -41,11 +35,11 @@ struct VSOutput_0
 };
 
 
-#line 42
+#line 26
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 56
-    return float4(ReinhardToneMapping_0(equirectangularMap_0.Sample(smp_0, SampleSphericalMap_0(normalize(input_0.uvw_0))).xyz), 1.0f);
+#line 34
+    return float4(equirectangularMap_0.Sample(smp_0, SampleSphericalMap_0(normalize(input_0.uvw_0))).xyz, 1.0f);
 }
 

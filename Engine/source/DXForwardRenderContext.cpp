@@ -63,7 +63,7 @@ void DXForwardRenderContext::Initialize()
 			true,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 	}
@@ -82,7 +82,7 @@ void DXForwardRenderContext::Initialize()
 			true,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 
@@ -100,7 +100,7 @@ void DXForwardRenderContext::Initialize()
 			true,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 	}
@@ -131,7 +131,7 @@ void DXForwardRenderContext::Initialize()
 		true,
 		true,
 		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
 	);
 #endif

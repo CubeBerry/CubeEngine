@@ -58,6 +58,9 @@ SLANG_SHADERS = [
 	# Skybox
 	{ "file": "Skybox.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Skybox.vert" },
 	{ "file": "Skybox.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Skybox.frag" },
+	# Tone Mapping (Post-Process)
+	{ "file": "ToneMapping.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "ToneMapping.vert" },
+	{ "file": "ToneMapping.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "ToneMapping.frag" },
 	# Compute
 	{ "file": "Compute.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "Compute.compute" }
 ]

@@ -48,9 +48,7 @@ void DXGlobalLightingContext::Initialize()
 		false,
 		false,
 		false,
-		// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
-		// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
-		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 }
@@ -79,7 +77,7 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	//);
 	//commandList->ResourceBarrier(1, &barrier);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -121,7 +119,7 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	if (!m_renderManager->m_skyboxEnabled)
 	{
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+			m_renderManager->m_renderTarget->GetHDRRenderTarget().Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_COMMON
 		);

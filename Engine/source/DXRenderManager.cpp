@@ -197,13 +197,17 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_postProcessContext = std::make_unique<DXPostProcessContext>(this);
 	m_postProcessContext->Initialize();
 
-	// Create Render Target (Intermediate, MSAA, Depth)
+	// Create Render Target (HDR, MSAA, Depth)
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, window,
 		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
 		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
 		m_deferredRenderingEnabled
 	);
+	// Allocate SRV handle for tone mapping
+	// @TODO Find a way to handle SRV inside DXRenderTarget class
+	m_hdrSrvHandle = AllocateSrvHandles();
+	m_renderTarget->CreateSRV(m_hdrSrvHandle.first);
 
 	// Create 2D Forward Render Context
 	m_2dRenderContext = std::make_unique<DX2DRenderContext>(this);
@@ -335,6 +339,8 @@ void DXRenderManager::OnResize()
 		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
 		m_deferredRenderingEnabled
 	);
+	// Allocate SRV handle for tone mapping
+	m_renderTarget->CreateSRV(m_hdrSrvHandle.first);
 
 	m_skyboxRenderContext->OnResize();
 
@@ -407,9 +413,9 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Deferred Rendering
 		else
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
-			// Intermediate: COMMON -> RENDER_TARGET
-			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+			// HDR Render Target: COMMON -> RENDER_TARGET
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetHDRRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			m_commandList->ResourceBarrier(1, &barrier);
 			clearColor[3] = 0.f; // Set alpha to 0 for discarding in lighting pass shader
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
@@ -532,7 +538,6 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 	}
 
 	D3D12_STATIC_SAMPLER_DESC samplers[2];
-
 	// @TODO Take texture samplers as parameters to be customizable
 	// Texture Sampler
 	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;

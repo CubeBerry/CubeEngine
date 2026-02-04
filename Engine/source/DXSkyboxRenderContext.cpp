@@ -36,9 +36,7 @@ void DXSkyboxRenderContext::Initialize()
 		true,
 		true,
 		false,
-		// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
-		// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
-		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 	);
 }
@@ -57,7 +55,7 @@ void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_deferredRenderingEnabled ?
-		m_renderManager->m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart() :
+		m_renderManager->m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart() :
 		m_renderManager->m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderManager->m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
@@ -81,7 +79,7 @@ void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	if (m_renderManager->m_deferredRenderingEnabled)
 	{
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			m_renderManager->m_renderTarget->GetRenderTarget().Get(),
+			m_renderManager->m_renderTarget->GetHDRRenderTarget().Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_COMMON
 		);

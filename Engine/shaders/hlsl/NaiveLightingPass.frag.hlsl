@@ -383,16 +383,10 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 278
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, roughness_2);
 
-
-    float3 _S7 = (float3)1.0f;
-
 #line 292
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), roughness_2)).xy;
 
-#line 301
-    float3 resultColor_3 = (1.0f - metallic_1) * (_S7 - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
-
-#line 316
-    return float4(pow(resultColor_3 / (resultColor_3 + _S7), (float3)0.45454543828964233f), 1.0f);
+#line 312
+    return float4((1.0f - metallic_1) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0, 1.0f);
 }
 

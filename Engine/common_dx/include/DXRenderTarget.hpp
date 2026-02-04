@@ -27,10 +27,10 @@ public:
 	DXRenderTarget(const DXRenderTarget&&) = delete;
 	DXRenderTarget& operator=(const DXRenderTarget&&) = delete;
 
-	// Intermediate Render Target Resources
+	// HDR Render Target Resources
 	// For Forward Rendering MSAA resolve & Deferred Lighting Pass
-	ComPtr<ID3D12Resource> GetRenderTarget() const { return m_renderTarget; }
-	ComPtr<ID3D12DescriptorHeap> GetRtvHeap() const { return m_rtvHeap; }
+	ComPtr<ID3D12Resource> GetHDRRenderTarget() const { return m_hdrRenderTarget; }
+	ComPtr<ID3D12DescriptorHeap> GetHDRRtvHeap() const { return m_hdrRtvHeap; }
 
 	// MSAA
 	// For Forward Rendering
@@ -42,16 +42,18 @@ public:
 	// Depth
 	ComPtr<ID3D12Resource> GetDepthStencil() const { return m_depthStencil; }
 	ComPtr<ID3D12DescriptorHeap> GetDsvHeap() const { return m_dsvHeap; }
+
+	void CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle) const;
 private:
 	// Common
 	ComPtr<ID3D12Device> m_device;
 	SDL_Window* m_window;
 
-	// Intermediate Render Target Resources
-	void CreateRenderTarget(int width, int height);
+	// HDR Render Target Resources
+	void CreateHDRRenderTarget(int width, int height);
 
-	ComPtr<ID3D12Resource> m_renderTarget;
-	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	ComPtr<ID3D12Resource> m_hdrRenderTarget;
+	ComPtr<ID3D12DescriptorHeap> m_hdrRtvHeap;
 
 	// MSAA
 	void CreateMSAARenderTarget(int width, int height);

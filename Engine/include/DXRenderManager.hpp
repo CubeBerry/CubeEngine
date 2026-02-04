@@ -144,9 +144,9 @@ private:
 	// Work Graphs Context
 	std::unique_ptr<DXWorkGraphsContext> m_workGraphsContext;
 
-	// Intermediate, MSAA, Depth
+	// HDR, MSAA, Depth
 	std::unique_ptr<DXRenderTarget> m_renderTarget;
-	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> m_intermediateSrvHandle;
+	std::pair<CD3DX12_CPU_DESCRIPTOR_HANDLE, UINT> m_hdrSrvHandle;
 
 	// Compute Shader
 	// @TODO Make Compute Shader Context Later

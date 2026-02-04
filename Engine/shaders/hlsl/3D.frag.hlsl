@@ -401,41 +401,34 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 451
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, f_material_0.roughness_0);
 
-
-    float3 _S9 = (float3)1.0f;
-
 #line 465
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), f_material_0.roughness_0)).xy;
 
 #line 474
-    float3 resultColor_3 = (1.0f - f_material_0.metallic_0) * (_S9 - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), f_material_0.roughness_0 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
+    float3 resultColor_3 = (1.0f - f_material_0.metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), f_material_0.roughness_0 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
 
+#line 474
+    float4 _S9;
 
-
-    float3 resultColor_4 = pow(resultColor_3 / (resultColor_3 + _S9), (float3)0.45454543828964233f);
-
-#line 478
-    float4 _S10;
-
-#line 492
+#line 488
     if(_S6.meshletVisualization_0)
     {
 
-#line 492
-        _S10 = float4(_S6.color_0.xyz, 1.0f);
+#line 488
+        _S9 = float4(_S6.color_0.xyz, 1.0f);
 
-#line 492
+#line 488
     }
     else
     {
 
-#line 492
-        _S10 = float4(resultColor_4, 1.0f);
+#line 488
+        _S9 = float4(resultColor_3, 1.0f);
 
-#line 492
+#line 488
     }
 
-#line 492
-    return _S10;
+#line 488
+    return _S9;
 }
 
