@@ -81,8 +81,7 @@ void DXLocalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->SetPipelineState(m_pipeline->GetPipelineState().Get());
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderManager->m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };

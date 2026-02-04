@@ -123,7 +123,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.PrimitiveTopologyType = primitiveTopology;
 	psoDesc.NumRenderTargets = 1;
 	psoDesc.RTVFormats[0] = rtvFormat;
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	psoDesc.DSVFormat = isDepth ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_UNKNOWN;
 	psoDesc.SampleDesc = sampleDesc;
 
 	// Create Pipeline State Object (PSO)
@@ -248,7 +248,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.PrimitiveTopologyType = primitiveTopology;
 	psoDesc.NumRenderTargets = static_cast<UINT>(rtvFormats.size());
 	for (size_t i = 0; i < rtvFormats.size(); ++i) psoDesc.RTVFormats[i] = rtvFormats[i];
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	psoDesc.DSVFormat = isDepth ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_UNKNOWN;
 	psoDesc.SampleDesc = sampleDesc;
 
 	// Create Pipeline State Object (PSO)
