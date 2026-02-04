@@ -394,6 +394,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	{
 	case RenderType::TwoDimension:
 	{
+		// @TODO Should ClearRenderTargetView be inside render context?
+		auto* backBuffer = m_renderTargets[m_frameIndex].Get();
+		// Main Render Target: PRESENT -> RENDER_TARGET
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_commandList->ResourceBarrier(1, &barrier);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+		m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
 		m_2dRenderContext->Execute(&wrapper);
 	}
 	break;
@@ -402,6 +410,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Forward Rendering
 		if (!m_deferredRenderingEnabled)
 		{
+			// @TODO Should ClearRenderTargetView be inside render context?
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
 			// MSAA Target: RESOLVE_SOURCE -> RENDER_TARGET
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -414,6 +423,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Deferred Rendering
 		else
 		{
+			// @TODO Should ClearRenderTargetView be inside render context?
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
 			// HDR Render Target: COMMON -> RENDER_TARGET
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetHDRRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -427,6 +437,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper);
 		}
 		m_skyboxRenderContext->Execute(&wrapper);
+		m_postProcessContext->Execute(&wrapper);
 	}
 	break;
 	}
@@ -446,9 +457,6 @@ void DXRenderManager::EndRender()
 	//	m_workGraphsContext->ExecuteWorkGraphs();
 	//	m_workGraphsContext->PrintWorkGraphsResults();
 	//}
-
-	DXCommandListWrapper wrapper(m_commandList.Get());
-	m_postProcessContext->Execute(&wrapper);
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);

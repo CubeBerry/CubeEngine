@@ -22,10 +22,7 @@ void DX2DRenderContext::Initialize()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderManager->m_renderTarget->GetMSAAQualityLevel();
-
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
 	m_pipeline2D = std::make_unique<DXPipeLine>(
 		m_renderManager->m_device,
 		m_rootSignature2D,
@@ -54,16 +51,19 @@ void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_renderManager->m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_renderManager->m_frameIndex), m_renderManager->m_rtvDescriptorSize);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderManager->m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
+	m_renderManager->m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
 	commandList->SetPipelineState(m_pipeline2D->GetPipelineState().Get());
-
-	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
-
 	commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	ID3D12DescriptorHeap* ppHeaps2D[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps2D), ppHeaps2D);
 	commandList->SetGraphicsRootDescriptorTable(2, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
+	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	for (const auto& sprite : sprites)
 	{
 		for (auto& subMesh : sprite->GetSubMeshes())
