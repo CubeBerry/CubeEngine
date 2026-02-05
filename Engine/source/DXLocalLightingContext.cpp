@@ -112,7 +112,7 @@ void DXLocalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		inverseView[3].y,
 		inverseView[3].z
 		),
-		.intensity = 1.f,
+		.padding = 1.f,
 		.screenSize = { m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth() ,m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight() }
 	};
 	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);

@@ -17,11 +17,10 @@ Texture2D<float4 > gAlbedo_0 : register(t0, space1);
 SamplerState gSampler_0 : register(s0, space1);
 
 
-#line 47
+#line 48
 struct PushConstants_0
 {
     float3 viewPosition_0;
-    float intensity_0;
     int meshletVisualization_0;
     int activeDirectionalLights_0;
 };
@@ -50,6 +49,7 @@ struct fDirectionalLight_0
     float ambientStrength_0;
     float3 lightColor_0;
     float specularStrength_0;
+    float intensity_0;
 };
 
 struct fDirectionalLightList_0
@@ -58,7 +58,7 @@ struct fDirectionalLightList_0
 };
 
 
-#line 45
+#line 46
 cbuffer directionalLightList_0 : register(b0)
 {
     fDirectionalLightList_0 directionalLightList_0;
@@ -246,7 +246,7 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
         }
 
 
-        float3 resultColor_1 = resultColor_0 + PBR_0(_S5, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0, l_0);
+        float3 resultColor_1 = resultColor_0 + PBR_0(_S5, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0);
 
 #line 230
         l_0 = l_0 + int(1);

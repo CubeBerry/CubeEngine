@@ -124,6 +124,15 @@ namespace ThreeDimension
 	};
 
 	//Lighting
+	struct alignas(16) DirectionalLightUniform
+	{
+		glm::vec3 lightDirection = { 0.f, 0.f, 0.f };
+		float ambientStrength{ 0.f };
+		glm::vec3 lightColor = { 1.f, 1.f, 1.f };
+		float specularStrength{ 0.f };
+		float intensity{ 1.f };
+	};
+
 	struct alignas(16) PointLightUniform
 	{
 		glm::vec3 lightPosition = { 0.f, 0.f, 0.f };
@@ -138,14 +147,5 @@ namespace ThreeDimension
 		// Local Light Pass -> Light Volume Radius
 		// CalculatePointLightRadius
 		float radius = 0.f;
-	};
-
-	struct alignas(16) DirectionalLightUniform
-	{
-		glm::vec3 lightDirection = { 0.f, 0.f, 0.f };
-		float ambientStrength{ 0.f };
-		glm::vec3 lightColor = { 1.f, 1.f, 1.f };
-		float specularStrength{ 0.f };
-		float intensity{ 1.f };
 	};
 }

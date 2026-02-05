@@ -35,7 +35,7 @@ private:
 	{
 		glm::mat4 viewProjection;
 		glm::vec3 viewPosition;
-		float intensity;
+		float padding;
 		glm::vec2 screenSize;
 	};
 

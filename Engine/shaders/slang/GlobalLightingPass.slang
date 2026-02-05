@@ -36,6 +36,7 @@ struct fDirectionalLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 }
 
 struct fDirectionalLightList
@@ -47,7 +48,6 @@ struct fDirectionalLightList
 struct PushConstants
 {
     float3 viewPosition;
-    float intensity;
     int meshletVisualization;
     int activeDirectionalLights;
 }
@@ -231,7 +231,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l);
     }
 
     // PBR IBL Ambient Lighting

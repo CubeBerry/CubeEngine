@@ -36,6 +36,7 @@ struct fDirectionalLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 }
 
 struct fDirectionalLightList
@@ -50,6 +51,7 @@ struct fPointLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 
     float constant;
     float linear;
@@ -262,7 +264,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, false, l);
     }
 
     // Calculate Point Lights
@@ -270,7 +272,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fPointLight currentLight = pointLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
+        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor * currentLight.intensity, true, l);
     }
 
     // PBR IBL Ambient Lighting
