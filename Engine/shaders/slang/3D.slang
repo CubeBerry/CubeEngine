@@ -380,26 +380,10 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, boo
     fMaterial material = f_material;
 
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - mainVectors.fragmentPosition) : 1.0;
-
-    float3 L = float3(0.0);
-    float attenuation = 0.0;
-    if (isPointLight)
-    {
-        L = normalize(lightPosition - mainVectors.fragmentPosition);
-        float radius = pointLightList.lights[lightIndex].radius;
-        // attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
-        attenuation = distance > radius ? 0 : max(0.0, (1.0 / (distance * distance)) - (1.0 / (radius * radius)));
-    }
-    else
-    {
-        L = normalize(-lightPosition);
-        attenuation = 1.0;
-    }
-
+    float3 L = isPointLight ? normalize(lightPosition - mainVectors.fragmentPosition) : normalize(-lightPosition);
     // Half Vector
     float3 H = normalize(mainVectors.V + L);
-    float3 radiance = lightColor * attenuation;
+    float3 radiance = lightColor;
 
     float3 Ks = F(mainVectors.F0, mainVectors.V, H);
     float3 Kd = (1.0 - material.metallic) * (float3(1.0) - Ks);
@@ -450,8 +434,12 @@ float4 fragmentMain(VSOutput input) : SV_Target
     for (int l = 0; l < pushConstants.activePointLights; ++l)
     {
         fPointLight currentLight = pointLightList.lights[l];
+        float distance = length(currentLight.lightPosition - input.fragmentPosition);
+        if (distance > currentLight.radius) continue;
+        // float attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
+        float attenuation = max(0.0, (1.0 / (distance * distance)) - (1.0 / (currentLight.radius * currentLight.radius)));
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor * currentLight.intensity, true, l);
+        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor * currentLight.intensity, true, l) * attenuation;
     }
 
     // PBR IBL Ambient Lighting
