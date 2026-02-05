@@ -9,7 +9,7 @@
 #endif
 
 
-#line 33 "slang/3D.slang"
+#line 35 "slang/3D.slang"
 struct vMatrix_0
 {
     float4x4 model_0;
@@ -34,6 +34,8 @@ struct VSOutput_0
     float2 uv_0 : TEXCOORD0;
     float4 color_1 : COLOR0;
     int tex_sub_index_0 : TEXCOORD1;
+    int4 boneIDs_0 : BLENDINDICES0;
+    float4 weights_0 : BLENDWEIGHTS0;
     float3 normal_0 : NORMAL0;
     float3 fragmentPosition_0 : TEXCOORD2;
     float3 viewPosition_1 : TEXCOORD3;
@@ -48,31 +50,35 @@ struct VSInput_0
     float3 normal_1 : NORMAL0;
     float2 uv_1 : TEXCOORD0;
     int tex_sub_index_1 : TEXCOORD1;
-    int4 boneIDs_0;
-    float4 weights_0;
+    int4 boneIDs_1 : BLENDINDICES0;
+    float4 weights_1 : BLENDWEIGHTS0;
 };
 
 
-#line 48
+#line 50
 VSOutput_0 vertexMain(VSInput_0 input_0)
 {
 
-#line 56
+#line 58
     float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float((input_0.position_1) & 2047U), float(((input_0.position_1) >> int(11)) & 2047U), float(((input_0.position_1) >> int(22)) & 1023U)), 1.0f)).xyz;
 
-#line 50
+#line 52
     VSOutput_0 output_0;
 
-#line 58
+#line 60
     output_0.uv_0 = input_0.uv_1;
     output_0.color_1 = matrix_0.color_0;
     output_0.tex_sub_index_0 = input_0.tex_sub_index_1;
+
+    output_0.boneIDs_0 = input_0.boneIDs_1;
+    output_0.weights_0 = input_0.weights_1;
+    output_0.meshletVisualization_0 = false;
 
 
     output_0.normal_0 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_1);
     float4 _S1 = float4(decoded_position_0, 1.0f);
 
-#line 64
+#line 70
     output_0.fragmentPosition_0 = mul(matrix_0.model_0, _S1).xyz;
     output_0.viewPosition_1 = matrix_0.viewPosition_0;
 

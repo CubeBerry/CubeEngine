@@ -13,8 +13,8 @@ struct VSInput
     float3 normal : NORMAL0;
     int tex_sub_index : TEXCOORD1;
     float2 uv : TEXCOORD0;
-    int4 boneIDs;
-    float4 weights;
+    int4 boneIDs : BLENDINDICES0;
+    float4 weights : BLENDWEIGHTS0;
 }
 
 struct VSOutput
@@ -23,6 +23,8 @@ struct VSOutput
     float2 uv : TEXCOORD0;
     float4 color : COLOR0;
     int tex_sub_index : TEXCOORD1;
+    int4 boneIDs : BLENDINDICES0;
+    float4 weights : BLENDWEIGHTS0;
     // G-Buffer
     float3 normal : NORMAL0; // Normal
     float3 fragmentPosition : TEXCOORD2; // World Position
@@ -58,6 +60,10 @@ VSOutput vertexMain(VSInput input)
     output.uv = input.uv;
     output.color = matrix.color;
     output.tex_sub_index = input.tex_sub_index;
+
+    output.boneIDs = input.boneIDs;
+    output.weights = input.weights;
+    output.meshletVisualization = false;
 
     // Lighting
     output.normal = mul((float3x3)matrix.transposeInverseModel, input.normal);

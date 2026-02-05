@@ -9,7 +9,7 @@
 #endif
 
 
-#line 202 "slang/GBuffer.slang"
+#line 208 "slang/GBuffer.slang"
 struct fMatrix_0
 {
     int isTex_0;
@@ -17,7 +17,7 @@ struct fMatrix_0
 };
 
 
-#line 207
+#line 213
 cbuffer f_matrix_0 : register(b1)
 {
     fMatrix_0 f_matrix_0;
@@ -25,11 +25,11 @@ cbuffer f_matrix_0 : register(b1)
 Texture2D<float4 >  tex_0[int(500)] : register(t0, space1);
 
 
-#line 210
+#line 216
 SamplerState smp_0 : register(s0, space1);
 
 
-#line 216
+#line 222
 struct fMaterial_0
 {
     float3 specularColor_0;
@@ -45,7 +45,7 @@ cbuffer f_material_0 : register(b2)
     fMaterial_0 f_material_0;
 }
 
-#line 194
+#line 200
 struct PSOutput_0
 {
     float4 Albedo_0 : SV_Target0;
@@ -62,6 +62,8 @@ struct VSOutput_0
     float2 uv_0 : TEXCOORD0;
     float4 color_0 : COLOR0;
     int tex_sub_index_0 : TEXCOORD1;
+    int4 boneIDs_0 : BLENDINDICES0;
+    float4 weights_0 : BLENDWEIGHTS0;
     float3 normal_0 : NORMAL0;
     float3 fragmentPosition_0 : TEXCOORD2;
     float3 viewPosition_0 : TEXCOORD3;
@@ -69,16 +71,16 @@ struct VSOutput_0
 };
 
 
-#line 229
+#line 235
 PSOutput_0 fragmentMain(VSOutput_0 input_0)
 {
 
-#line 229
+#line 235
     VSOutput_0 _S1 = input_0;
 
     PSOutput_0 output_0;
 
-#line 231
+#line 237
     float4 albedo_0;
 
 
@@ -88,39 +90,39 @@ PSOutput_0 fragmentMain(VSOutput_0 input_0)
         if((f_matrix_0.isTex_0) > int(0))
         {
 
-#line 237
+#line 243
             albedo_0 = tex_0[f_matrix_0.texIndex_0 + _S1.tex_sub_index_0].Sample(smp_0, _S1.uv_0);
 
-#line 237
+#line 243
         }
         else
         {
 
-#line 237
+#line 243
             albedo_0 = _S1.color_0;
 
-#line 237
+#line 243
         }
 
-#line 234
+#line 240
     }
     else
     {
 
-#line 234
+#line 240
         albedo_0 = float4(_S1.color_0.xyz, 1.0f);
 
-#line 234
+#line 240
     }
 
-#line 245
+#line 251
     if((albedo_0.w) < 0.10000000149011612f)
     {
 
-#line 245
+#line 251
         discard;
 
-#line 245
+#line 251
     }
 
     output_0.Albedo_0 = albedo_0;
