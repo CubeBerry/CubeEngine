@@ -24,7 +24,7 @@ public:
 	~Light() override;
 
 	void Init() override;
-	void AddLight(LightType lightType_, float intensity = 1.f, float constant_ = 1.f, float linear_ = 0.09f, float quadratic_ = 0.032f);
+	void AddLight(LightType lightType_, float intensity = 1.f, float constant_ = 1.f, float linear_ = 0.7f, float quadratic_ = 1.8f);
 	void Update(float dt) override;
 	void End() override;
 
@@ -70,8 +70,8 @@ private:
 	float specular = 0.5f;
 
 	float constant = 1.0f;
-	float linear = 0.09f;
-	float quadratic = 0.032f;
+	float linear = 0.7f;
+	float quadratic = 1.8f;
 
 	float intensity = 1.f;
 	float radius = 1.f;

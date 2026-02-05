@@ -30,7 +30,7 @@
 #include "DXPostProcessContext.hpp"
 
 #define MAX_OBJECT_SIZE 500
-#define MAX_LIGHT_SIZE 200
+#define MAX_LIGHT_SIZE 500
 
 using Microsoft::WRL::ComPtr;
 

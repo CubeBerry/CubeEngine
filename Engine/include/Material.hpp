@@ -141,9 +141,9 @@ namespace ThreeDimension
 		float specularStrength{ 0.f };
 		float intensity{ 1.f };
 		
-		float constant = 1.0f;
-		float linear = 0.7f;
-		float quadratic = 1.8f;
+		float constant;
+		float linear;
+		float quadratic;
 		// Local Light Pass -> Light Volume Radius
 		// CalculatePointLightRadius
 		float radius = 0.f;

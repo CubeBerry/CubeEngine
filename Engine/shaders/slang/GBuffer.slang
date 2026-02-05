@@ -3,7 +3,7 @@
 // #pragma pack_matrix(row_major)
 
 #define MAX_TEXTURES 500
-#define MAX_LIGHTS 200
+#define MAX_LIGHTS 500
 #define PI 3.14159265358979323846f
 
 // Vertex Shader
