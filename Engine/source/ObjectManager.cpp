@@ -617,6 +617,7 @@ void ObjectManager::LightControllerForImGui(Light* light)
 		glm::vec3 position = light->GetPosition();
 		glm::vec4 rotation = light->GetRotate();
 		glm::vec4 color = light->GetColor();
+		float intensity = light->GetIntensity();
 
 		float ambient = light->GetAmbientStrength();
 		float specular = light->GetSpecularStrength();
@@ -629,6 +630,10 @@ void ObjectManager::LightControllerForImGui(Light* light)
 				light->SetColor(color);
 			}
 			ImGui::Spacing();
+			if (ImGui::DragFloat("intensity", &intensity, 0.1f, 0.f, 100.f))
+			{
+				light->SetIntensity(intensity);
+			}
 
 			if (light->GetLightType() == LightType::DIRECTIONAL)
 			{

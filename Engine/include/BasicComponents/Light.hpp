@@ -24,7 +24,7 @@ public:
 	~Light() override;
 
 	void Init() override;
-	void AddLight(LightType lightType_, float ambient_ = 0.1f, float specular_ = 0.5f);
+	void AddLight(LightType lightType_, float intensity = 1.f, float constant_ = 1.f, float linear_ = 0.09f, float quadratic_ = 0.032f);
 	void Update(float dt) override;
 	void End() override;
 
@@ -39,6 +39,7 @@ public:
 	void SetRotate(glm::vec3 rotate_);
 
 	void SetColor(glm::vec4 color_);
+	void SetIntensity(float amount);
 	void SetAmbientStrength(float amount);
 	void SetSpecularStrength(float amount);
 
@@ -48,18 +49,19 @@ public:
 
 	void SetLightId(int index) { lightlId = index; }
 
-	glm::vec3 GetPosition() { return pos; }
-	glm::vec4 GetColor() { return color; }
-	glm::vec4 GetRotate() { return rotate; }
-	float GetAmbientStrength() { return ambient; }
-	float GetSpecularStrength() { return specular; }
+	glm::vec3 GetPosition() const { return pos; }
+	glm::vec4 GetColor() const { return color; }
+	float GetIntensity() const { return intensity; }
+	glm::vec4 GetRotate() const { return rotate; }
+	float GetAmbientStrength() const { return ambient; }
+	float GetSpecularStrength() const { return specular; }
 
-	float GetConstant() { return constant; }
-	float GetLinear() { return linear; }
-	float GetQuadratic() { return quadratic; }
+	float GetConstant() const { return constant; }
+	float GetLinear() const { return linear; }
+	float GetQuadratic() const { return quadratic; }
 
-	LightType GetLightType() { return lightType; }
-	int GetLightId() { return lightlId; }
+	LightType GetLightType() const { return lightType; }
+	int GetLightId() const { return lightlId; }
 private:
 	glm::vec3 pos = { 0.f,0.f,0.f };
 	glm::vec4 color = { 1.f, 1.f, 1.f, 1.f };
@@ -71,6 +73,9 @@ private:
 	float linear = 0.09f;
 	float quadratic = 0.032f;
 
+	float intensity = 1.f;
+	float radius = 1.f;
+
 	LightType lightType = LightType::NONE;
 	int lightlId = 0;
 
@@ -78,4 +83,6 @@ private:
 
 	ThreeDimension::PointLightUniform pLight;
 	ThreeDimension::DirectionalLightUniform dLight;
+
+	void CalculateRadius();
 };
