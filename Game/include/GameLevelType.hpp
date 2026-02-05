@@ -12,5 +12,6 @@ enum class GameLevel
 	PLATFORMDEMO,
 	BEATEMUPDEMO,
 	PBR,
+	MULTIPLELIGHTS,
 	NONE
 };

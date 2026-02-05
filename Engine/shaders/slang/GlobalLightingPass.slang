@@ -47,6 +47,7 @@ struct fDirectionalLightList
 struct PushConstants
 {
     float3 viewPosition;
+    float intensity;
     int meshletVisualization;
     int activeDirectionalLights;
 }

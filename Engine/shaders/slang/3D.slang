@@ -271,6 +271,7 @@ struct PushConstants
 {
     int activeDirectionalLights;
     int activePointLights;
+    float intensity;
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b5, space0);

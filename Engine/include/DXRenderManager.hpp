@@ -316,5 +316,6 @@ private:
 	{
 		int activeDirectionalLight;
 		int activePointLight;
+		float intensity;
 	} pushConstants;
 };

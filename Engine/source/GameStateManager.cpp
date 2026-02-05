@@ -262,7 +262,7 @@ void GameStateManager::StateChanger()
 		switch (currentLevel)
 		{
 		case GameLevel::PROCEDURALMESHES:
-			ImGui::Text("PROCEDURALMESHES DEMO                              ");
+			ImGui::Text("PROCEDURALMESHES DEMO");
 			ImGui::Separator();
 
 			ImGui::TextWrapped("Move : Arrow Keys\nMove Up/Down : Space Bar/Left Shift\nMove Camera view: Drag with Mouse Right Click\nYou can adjust the mesh's components via the control panel.");
@@ -280,7 +280,7 @@ void GameStateManager::StateChanger()
 			}
 			break;
 		case GameLevel::PHYSICSDEMO:
-			ImGui::Text("PHYSICS DEMO          ");
+			ImGui::Text("PHYSICS DEMO");
 			ImGui::Separator();
 
 			ImGui::TextWrapped("Move CUBE: Arrow Keys");
@@ -290,7 +290,7 @@ void GameStateManager::StateChanger()
 			}
 			break;
 		case GameLevel::POCKETBALL:
-			ImGui::Text("POCKETBALL DEMO          ");
+			ImGui::Text("POCKETBALL DEMO");
 			ImGui::Separator();
 
 			ImGui::TextWrapped("Move Cursor: Arrow Keys\nShot : SpaceBar\n");
@@ -300,7 +300,7 @@ void GameStateManager::StateChanger()
 			}
 			break;
 		case GameLevel::PLATFORMDEMO:
-			ImGui::Text("PLATFORM DEMO          ");
+			ImGui::Text("PLATFORM DEMO");
 			ImGui::Separator();
 
 			ImGui::TextWrapped("Move : Arrow Keys\nAttack : Z\nJump : X");
@@ -310,10 +310,20 @@ void GameStateManager::StateChanger()
 			}
 			break;
 		case GameLevel::BEATEMUPDEMO:
-			ImGui::Text("BEATEMUP DEMO          ");
+			ImGui::Text("BEATEMUP DEMO");
 			ImGui::Separator();
 
 			ImGui::TextWrapped("Move : Arrow Keys\nAttack : Z\nJump : X");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
+		case GameLevel::MULTIPLELIGHTS:
+			ImGui::Text("MULTIPLELIGHTS DEMO");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move : Arrow Keys\nMove Up/Down : Space Bar/Left Shift\nMove Camera view: Drag with Mouse Right Click\nYou can adjust the mesh's components via the control panel.");
 			if (ImGui::Button("Close"))
 			{
 				ImGui::CloseCurrentPopup();
@@ -348,6 +358,9 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 		break;
 	case GameLevel::PBR:
 		return "PBR";
+		break;
+	case GameLevel::MULTIPLELIGHTS:
+		return "MULTIPLELIGHTS";
 		break;
 	}
 	return "NONE";
