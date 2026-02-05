@@ -53,7 +53,7 @@ void ProceduralMeshes::Init()
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 
-	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/autumn_field_puresky_4k.hdr");
 }
 
 void ProceduralMeshes::Update(float dt)

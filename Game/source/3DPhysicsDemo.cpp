@@ -86,7 +86,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 0.1f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/studio_small_09_4k.hdr");
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/studio_small_09_4k.hdr");
 }
 
 void PhysicsDemo::Update(float dt)
