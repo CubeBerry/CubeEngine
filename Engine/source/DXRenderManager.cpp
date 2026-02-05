@@ -436,7 +436,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_globalLightingContext->Execute(&wrapper);
 			if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper);
 		}
-		m_skyboxRenderContext->Execute(&wrapper);
+		if (m_skyboxEnabled) m_skyboxRenderContext->Execute(&wrapper);
 		m_postProcessContext->Execute(&wrapper);
 	}
 	break;

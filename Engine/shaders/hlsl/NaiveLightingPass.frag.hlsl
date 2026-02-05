@@ -55,7 +55,7 @@ struct fDirectionalLight_0
 
 struct fDirectionalLightList_0
 {
-    fDirectionalLight_0  lights_0[int(10)];
+    fDirectionalLight_0  lights_0[int(200)];
 };
 
 
@@ -82,7 +82,7 @@ struct fPointLight_0
 
 struct fPointLightList_0
 {
-    fPointLight_0  lights_1[int(10)];
+    fPointLight_0  lights_1[int(200)];
 };
 
 

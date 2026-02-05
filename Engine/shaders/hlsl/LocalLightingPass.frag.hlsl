@@ -60,7 +60,7 @@ struct fPointLight_0
 
 struct fPointLightList_0
 {
-    fPointLight_0  lights_0[int(10)];
+    fPointLight_0  lights_0[int(200)];
 };
 
 

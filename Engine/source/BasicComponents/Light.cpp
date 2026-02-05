@@ -105,6 +105,7 @@ void Light::AddLight(LightType lightType_, float intensity_, float constant_, fl
 			//dLight.ambientStrength = ambient_;
 			//dLight.specularStrength = specular_;
 			dLight.intensity = intensity_;
+			intensity = intensity_;
 			Engine::GetRenderManager()->AddDirectionalLight(dLight);
 			lightlId = static_cast<int>(Engine::GetRenderManager()->GetDirectionalLightUniforms().size() - 1);
 		}
@@ -116,12 +117,13 @@ void Light::AddLight(LightType lightType_, float intensity_, float constant_, fl
 			pLight.linear = linear_;
 			pLight.quadratic = quadratic_;
 			pLight.intensity = intensity_;
+			intensity = intensity_;
 			pLight.radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.constant, pLight.linear, pLight.quadratic);
 			Engine::GetRenderManager()->AddPointLight(pLight);
 			lightlId = static_cast<int>(Engine::GetRenderManager()->GetPointLightUniforms().size() - 1);
 
-			pointLight = new DynamicSprite();
-			pointLight->AddMesh3D(MeshType::CUBE, "", 1, 1, color);
+			//pointLight = new DynamicSprite();
+			//pointLight->AddMesh3D(MeshType::CUBE, "", 1, 1, color);
 		}
 	}
 }
