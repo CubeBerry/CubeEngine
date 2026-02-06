@@ -23,10 +23,10 @@ void MultipleLights::Init()
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::PLANE, "", 2, 2, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.11f);
 
-	// Sphere
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,5.f,0.f }, glm::vec3{ 10.f,10.f,10.f }, "SPHERE", ObjectType::NONE);
+	// Teapot
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,5.f,0.f }, glm::vec3{ 15.f,15.f,15.f }, "SPHERE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.15f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 1, 1, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.15f);
 
 	// Light
 	// Total Light = 14 * 14 = 196
