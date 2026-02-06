@@ -10,21 +10,21 @@ void MultipleLights::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(0.001f);
+	Engine::GetCameraManager().SetNear(0.1f);
 	Engine::GetCameraManager().SetFar(1000.f);
 	Engine::GetCameraManager().SetBaseFov(22.5f);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
-	Engine::GetCameraManager().SetCameraPosition({ 20.f,15.f,20.f });
-	Engine::GetCameraManager().SetTarget(glm::vec3{ 0.f, 5.f,0.f });
+	Engine::GetCameraManager().SetCameraSensitivity(1.f);
+	Engine::GetCameraManager().SetCameraPosition({ 200.f,150.f,200.f });
+	Engine::GetCameraManager().SetTarget(glm::vec3{ 0.f, 50.f,0.f });
 
 	// Plane
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 200.f,200.f,1.f }, "PLANE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::PLANE, "", 2, 2, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.11f);
 
 	// Teapot
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,5.f,0.f }, glm::vec3{ 15.f,15.f,15.f }, "SPHERE", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,50.f,0.f }, glm::vec3{ 150.f,150.f,150.f }, "SPHERE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 1, 1, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.15f);
 
@@ -32,7 +32,7 @@ void MultipleLights::Init()
 	// Total Light = 22 * 22 = 484
 	int rowCount{ 22 };
 	int columnCount{ 22 };
-	float range{ 10.f };
+	float range{ 100.f };
 	float startX{ -range / 2.f };
 	float startZ{ -range / 2.f };
 	float stepX{ range / static_cast<float>(rowCount > 1 ? rowCount - 1 : 1) };
@@ -60,7 +60,7 @@ void MultipleLights::Init()
 
 void MultipleLights::Update(float dt)
 {
-	Engine::GetCameraManager().ControlCamera(dt);
+	Engine::GetCameraManager().ControlCamera(dt * 10.f);
 }
 
 void MultipleLights::ImGuiDraw(float /*dt*/)
