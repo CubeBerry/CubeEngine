@@ -1015,8 +1015,8 @@ float RenderManager::CalculatePointLightRadius(const glm::vec3& lightColor, floa
 	float maxChannel = std::max({ lightColor.r, lightColor.g, lightColor.b }) * intensity;
 	float lightThreshold = 4.f / 256.f;
 	float c = constant - (maxChannel / lightThreshold);
-	float discriminant = linear * linear - 4 * quadratic * c;
-	if (discriminant < 0) return 0.f;
+	float discriminant = linear * linear - 4.f * quadratic * c;
+	if (discriminant < 0.f) return 0.f;
 	return (-linear + std::sqrt(discriminant)) / (2.f * quadratic);
 }
 
