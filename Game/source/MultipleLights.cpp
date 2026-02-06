@@ -47,7 +47,7 @@ void MultipleLights::Init()
 
 			Engine::GetObjectManager().AddObject<Object>(glm::vec3(x, 0.5f, z), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight" + std::to_string(r + c), ObjectType::NONE);
 			Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 1.f);
+			Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 100.f, 10.f);
 			float r = 0.2f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 0.8f));
 			float g = 0.2f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 0.8f));
 			float b = 0.2f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 0.8f));
