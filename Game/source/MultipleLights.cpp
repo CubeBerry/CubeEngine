@@ -30,8 +30,8 @@ void MultipleLights::Init()
 
 	// Light
 	// Total Light = 14 * 14 = 196
-	int rowCount{ 14 };
-	int columnCount{ 14 };
+	int rowCount{ 22 };
+	int columnCount{ 22 };
 	float range{ 10.f };
 	float startX{ -range / 2.f };
 	float startZ{ -range / 2.f };

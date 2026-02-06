@@ -476,6 +476,7 @@ void DXRenderManager::EndRender()
 	//OutputDebugStringA("EndRender: Command list executed.\n");
 
 	//OutputDebugStringA("EndRender: Calling Present...\n");
+	// Present(1, 0) = VSync On, Present(0, 0) = VSync Off
 	DXHelper::ThrowIfFailed(m_swapChain->Present(1, 0));
 	//OutputDebugStringA("EndRender: Present successful.\n");
 
