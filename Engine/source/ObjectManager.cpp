@@ -633,12 +633,10 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			{
 				light->SetColor(color);
 			}
-			ImGui::Spacing();
 			if (ImGui::DragFloat("radius", &radius, 0.1f, 0.f, 100.f))
 			{
 				light->SetRadius(radius);
 			}
-			ImGui::Spacing();
 			if (ImGui::DragFloat("intensity", &intensity, 0.1f, 0.f, 100.f))
 			{
 				light->SetIntensity(intensity);
