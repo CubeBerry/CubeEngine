@@ -200,6 +200,9 @@ void ObjectManager::ObjectControllerForImGui()
 						obj->SetPosition(position);
 					}
 				}
+				obj->SetXSize(size.x);
+				obj->SetYSize(size.y);
+				obj->SetZSize(size.z);
 				obj->SetRotate(rotation);
 			}
 		}
