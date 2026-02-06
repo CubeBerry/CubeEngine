@@ -129,7 +129,7 @@ struct VSOutput_0
     output_0.Normal_0 = float4(normalize(_S1.normal_0), 1.0f);
     output_0.Position_0 = float4(_S1.fragmentPosition_0, 1.0f);
 
-    output_0.Material_0 = float4(f_material_0.metallic_0, f_material_0.roughness_0, 1.0f, 0.0f);
+    output_0.Material_0 = float4(f_material_0.metallic_0, f_material_0.roughness_0, 1.0f, 1.0f);
 
     return output_0;
 }
