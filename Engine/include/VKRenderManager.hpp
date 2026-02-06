@@ -20,7 +20,7 @@ constexpr auto IMAGE_AVAILABLE_INDEX{ 0 };
 constexpr auto RENDERING_DONE_INDEX{ 1 };
 
 #define MAX_OBJECT_SIZE 500
-#define MAX_LIGHT_SIZE 10
+#define MAX_LIGHT_SIZE 500
 
 class Window;
 class VKInit;
