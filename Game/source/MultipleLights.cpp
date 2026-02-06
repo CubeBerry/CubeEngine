@@ -10,7 +10,7 @@ void MultipleLights::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(0.001f);
+	Engine::GetCameraManager().SetNear(0.01f);
 	Engine::GetCameraManager().SetFar(1000.f);
 	Engine::GetCameraManager().SetBaseFov(22.5f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
@@ -24,7 +24,7 @@ void MultipleLights::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::PLANE, "", 2, 2, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.11f);
 
 	// Teapot
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,5.f,0.f }, glm::vec3{ 15.f,15.f,15.f }, "SPHERE", ObjectType::NONE);
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,5.f,0.f }, glm::vec3{ 15.f,15.f,15.f }, "TEAPOT", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 1, 1, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.15f);
 
@@ -47,7 +47,7 @@ void MultipleLights::Init()
 
 			Engine::GetObjectManager().AddObject<Object>(glm::vec3(x, 0.5f, z), glm::vec3{ 0.05f,0.05f,0.05f }, "PointLight" + std::to_string(r + c), ObjectType::NONE);
 			Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-			Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 100.f, 10.f);
+			Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 3.f, 10.f);
 			float r = 0.2f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 0.8f));
 			float g = 0.2f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 0.8f));
 			float b = 0.2f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 0.8f));
