@@ -104,8 +104,8 @@ void Light::AddLight(LightType lightType_, float intensity_, float constant_, fl
 			GetOwner()->SetPosition(glm::vec3(0.f));
 			//dLight.ambientStrength = ambient_;
 			//dLight.specularStrength = specular_;
-			dLight.intensity = intensity_;
 			intensity = intensity_;
+			dLight.intensity = intensity;
 			Engine::GetRenderManager()->AddDirectionalLight(dLight);
 			lightlId = static_cast<int>(Engine::GetRenderManager()->GetDirectionalLightUniforms().size() - 1);
 		}
@@ -118,7 +118,8 @@ void Light::AddLight(LightType lightType_, float intensity_, float constant_, fl
 			pLight.quadratic = quadratic_;
 			pLight.intensity = intensity_;
 			intensity = intensity_;
-			pLight.radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.constant, pLight.linear, pLight.quadratic);
+			pLight.intensity = intensity;
+			pLight.radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.intensity, pLight.constant, pLight.linear, pLight.quadratic);
 			Engine::GetRenderManager()->AddPointLight(pLight);
 			lightlId = static_cast<int>(Engine::GetRenderManager()->GetPointLightUniforms().size() - 1);
 
@@ -325,11 +326,13 @@ void Light::SetIntensity(float amount)
 	{
 		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].intensity = intensity;
 		dLight.intensity = intensity;
+		CalculateRadius();
 	}
 	else if (lightType == LightType::POINT)
 	{
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].intensity = intensity;
 		pLight.intensity = intensity;
+		CalculateRadius();
 	}
 }
 
@@ -398,7 +401,7 @@ void Light::SetQuadratic(float amount)
 
 void Light::CalculateRadius()
 {
-	radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.constant, pLight.linear, pLight.quadratic);
+	radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.intensity, pLight.constant, pLight.linear, pLight.quadratic);
 	pLight.radius = radius;
 	Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].radius = radius;
 }

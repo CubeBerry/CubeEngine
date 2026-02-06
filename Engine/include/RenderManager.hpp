@@ -119,7 +119,7 @@ public:
 	}
 	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; }
 	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; }
-	static float CalculatePointLightRadius(const glm::vec3& lightColor, float constant, float linear, float quadratic);
+	static float CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic);
 
 	void RenderingControllerForImGui();
 

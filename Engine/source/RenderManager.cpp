@@ -1010,9 +1010,9 @@ glm::mat4 RenderManager::Quantize(
 }
 
 // @TODO Maybe this function should be located in Light class
-float RenderManager::CalculatePointLightRadius(const glm::vec3& lightColor, float constant, float linear, float quadratic)
+float RenderManager::CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic)
 {
-	float maxChannel = std::max({ lightColor.r, lightColor.g, lightColor.b });
+	float maxChannel = std::max({ lightColor.r, lightColor.g, lightColor.b }) * intensity;
 	float lightThreshold = 4.f / 256.f;
 	float c = constant - (maxChannel / lightThreshold);
 	float discriminant = linear * linear - 4 * quadratic * c;
