@@ -107,6 +107,8 @@ void DXGBufferContext::Initialize()
 	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout boneIndexLayout{ "BLENDINDICES", 0, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, boneIDs), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout weightLayout{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, weights), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	// Turn off MSAA for G-Buffer pass
 	DXGI_SAMPLE_DESC sampleDesc = {};
@@ -144,10 +146,11 @@ void DXGBufferContext::Initialize()
 			m_rootSignature3D,
 			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
 			std::filesystem::path("../Engine/shaders/hlsl/GBuffer.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
 			D3D12_FILL_MODE_SOLID,
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
+			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
 			true,
 			true,
 			true,

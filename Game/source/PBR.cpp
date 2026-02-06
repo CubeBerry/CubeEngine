@@ -11,6 +11,7 @@ void PBR::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().SetNear(cNear);
 	Engine::GetCameraManager().SetFar(cFar);
 	Engine::GetCameraManager().SetBaseFov(cFov);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
@@ -49,8 +50,8 @@ void PBR::Init()
 	//Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 }, 0.f, 0.01f);
 
-	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/billiard_hall_4k.hdr");
-	//Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/autumn_field_puresky_4k.hdr");
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/billiard_hall_4k.hdr");
+	//Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/unfinished_office_night_4k.hdr");
 }
 
 void PBR::Update(float dt)

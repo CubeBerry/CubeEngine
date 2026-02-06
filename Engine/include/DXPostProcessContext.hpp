@@ -6,6 +6,7 @@
 #include "FidelityFX.hpp"
 
 class DXRenderManager;
+class DXPipeLine;
 
 class DXPostProcessContext : public IRenderContext
 {
@@ -24,4 +25,8 @@ public:
 private:
 	DXRenderManager* m_renderManager;
 	std::unique_ptr<FidelityFX> m_fidelityFX;
+
+	// Tone Mapping
+	ComPtr<ID3D12RootSignature> m_rootSignature;
+	std::unique_ptr<DXPipeLine> m_pipeline;
 };

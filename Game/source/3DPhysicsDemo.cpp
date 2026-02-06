@@ -12,8 +12,8 @@ void PhysicsDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(0.5f);
-	Engine::GetCameraManager().SetFar(45.f);
+	Engine::GetCameraManager().SetNear(0.001f);
+	Engine::GetCameraManager().SetFar(1000.f);
 	Engine::GetCameraManager().SetBaseFov(22.5f);
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
 	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,13.f });
@@ -86,7 +86,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 0.1f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/Equirectangular/studio_small_09_4k.hdr");
+	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/snowy_forest_path_02_4k.hdr");
 }
 
 void PhysicsDemo::Update(float dt)

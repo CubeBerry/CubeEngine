@@ -14,6 +14,7 @@ DXPipeLine::DXPipeLine(
 	D3D12_FILL_MODE fillMode,
 	D3D12_CULL_MODE cullMode,
 	const DXGI_SAMPLE_DESC& sampleDesc,
+	const D3D12_RENDER_TARGET_BLEND_DESC& blendDesc,
 	bool isCCW,
 	bool isDepth,
 	bool isDepthWrite,
@@ -96,6 +97,9 @@ DXPipeLine::DXPipeLine(
 	// Create Pipeline State Object (PSO) description
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
+	D3D12_BLEND_DESC finalBlendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	finalBlendDesc.RenderTarget[0] = blendDesc;
+
 	D3D12_RASTERIZER_DESC& desc = psoDesc.RasterizerState;
 	desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	desc.FillMode = fillMode;
@@ -108,7 +112,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get()};
 	//psoDesc.VS = CD3DX12_SHADER_BYTECODE{ vertexShader.data(), vertexShader.size() };
 	//psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.BlendState = finalBlendDesc;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.RasterizerState = desc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
@@ -119,7 +123,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.PrimitiveTopologyType = primitiveTopology;
 	psoDesc.NumRenderTargets = 1;
 	psoDesc.RTVFormats[0] = rtvFormat;
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	psoDesc.DSVFormat = isDepth ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_UNKNOWN;
 	psoDesc.SampleDesc = sampleDesc;
 
 	// Create Pipeline State Object (PSO)
@@ -135,6 +139,7 @@ DXPipeLine::DXPipeLine(
 	D3D12_FILL_MODE fillMode,
 	D3D12_CULL_MODE cullMode,
 	const DXGI_SAMPLE_DESC& sampleDesc,
+	const D3D12_RENDER_TARGET_BLEND_DESC& blendDesc,
 	bool isCCW,
 	bool isDepth,
 	bool isDepthWrite,
@@ -217,6 +222,9 @@ DXPipeLine::DXPipeLine(
 	// Create Pipeline State Object (PSO) description
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
+	D3D12_BLEND_DESC finalBlendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	finalBlendDesc.RenderTarget[0] = blendDesc;
+
 	D3D12_RASTERIZER_DESC& desc = psoDesc.RasterizerState;
 	desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	desc.FillMode = fillMode;
@@ -229,7 +237,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get() };
 	//psoDesc.VS = CD3DX12_SHADER_BYTECODE{ vertexShader.data(), vertexShader.size() };
 	//psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.BlendState = finalBlendDesc;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.RasterizerState = desc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
@@ -240,7 +248,7 @@ DXPipeLine::DXPipeLine(
 	psoDesc.PrimitiveTopologyType = primitiveTopology;
 	psoDesc.NumRenderTargets = static_cast<UINT>(rtvFormats.size());
 	for (size_t i = 0; i < rtvFormats.size(); ++i) psoDesc.RTVFormats[i] = rtvFormats[i];
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	psoDesc.DSVFormat = isDepth ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_UNKNOWN;
 	psoDesc.SampleDesc = sampleDesc;
 
 	// Create Pipeline State Object (PSO)

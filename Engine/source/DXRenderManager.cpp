@@ -197,13 +197,17 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_postProcessContext = std::make_unique<DXPostProcessContext>(this);
 	m_postProcessContext->Initialize();
 
-	// Create Render Target (Intermediate, MSAA, Depth)
+	// Create Render Target (HDR, MSAA, Depth)
 	m_renderTarget = std::make_unique<DXRenderTarget>(
 		m_device, window,
 		m_postProcessContext->GetFidelityFX()->GetRenderWidth(),
 		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
 		m_deferredRenderingEnabled
 	);
+	// Allocate SRV handle for tone mapping
+	// @TODO Find a way to handle SRV inside DXRenderTarget class
+	m_hdrSrvHandle = AllocateSrvHandles();
+	m_renderTarget->CreateSRV(m_hdrSrvHandle.first);
 
 	// Create 2D Forward Render Context
 	m_2dRenderContext = std::make_unique<DX2DRenderContext>(this);
@@ -217,9 +221,17 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
 	m_gBufferContext->Initialize();
 
-	// Create Lighting Context
-	m_lightingContext = std::make_unique<DXLightingContext>(this);
-	m_lightingContext->Initialize();
+	// Create Naive Render Context
+	m_naiveLightingContext = std::make_unique<DXNaiveLightingContext>(this);
+	m_naiveLightingContext->Initialize();
+
+	// Create Global Lighting Context
+	m_globalLightingContext = std::make_unique<DXGlobalLightingContext>(this);
+	m_globalLightingContext->Initialize();
+
+	// Create Local Lighting Context
+	m_localLightingContext = std::make_unique<DXLocalLightingContext>(this);
+	m_localLightingContext->Initialize();
 
 	// Create Skybox Render Context
 	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
@@ -327,13 +339,18 @@ void DXRenderManager::OnResize()
 		m_postProcessContext->GetFidelityFX()->GetRenderHeight(),
 		m_deferredRenderingEnabled
 	);
+	// Allocate SRV handle for tone mapping
+	// @TODO This should be inside DXRenderTarget
+	m_renderTarget->CreateSRV(m_hdrSrvHandle.first);
 
 	m_skyboxRenderContext->OnResize();
 
 	if (m_deferredRenderingEnabled)
 	{
 		m_gBufferContext->OnResize();
-		m_lightingContext->OnResize();
+		m_globalLightingContext->OnResize();
+		m_localLightingContext->OnResize();
+		m_naiveLightingContext->OnResize();
 	}
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -377,6 +394,14 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	{
 	case RenderType::TwoDimension:
 	{
+		// @TODO Should ClearRenderTargetView be inside render context?
+		auto* backBuffer = m_renderTargets[m_frameIndex].Get();
+		// Main Render Target: PRESENT -> RENDER_TARGET
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_commandList->ResourceBarrier(1, &barrier);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+		m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
 		m_2dRenderContext->Execute(&wrapper);
 	}
 	break;
@@ -385,6 +410,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Forward Rendering
 		if (!m_deferredRenderingEnabled)
 		{
+			// @TODO Should ClearRenderTargetView be inside render context?
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
 			// MSAA Target: RESOLVE_SOURCE -> RENDER_TARGET
 			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetMSAARenderTarget().Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -397,17 +423,21 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 		// Deferred Rendering
 		else
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart();
-			// Intermediate: COMMON -> RENDER_TARGET
-			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			// @TODO Should ClearRenderTargetView be inside render context?
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+			// HDR Render Target: COMMON -> RENDER_TARGET
+			auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTarget->GetHDRRenderTarget().Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			m_commandList->ResourceBarrier(1, &barrier);
 			clearColor[3] = 0.f; // Set alpha to 0 for discarding in lighting pass shader
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			m_gBufferContext->Execute(&wrapper);
-			m_lightingContext->Execute(&wrapper);
+			//m_naiveLightingContext->Execute(&wrapper);
+			m_globalLightingContext->Execute(&wrapper);
+			if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper);
 		}
 		m_skyboxRenderContext->Execute(&wrapper);
+		m_postProcessContext->Execute(&wrapper);
 	}
 	break;
 	}
@@ -427,9 +457,6 @@ void DXRenderManager::EndRender()
 	//	m_workGraphsContext->ExecuteWorkGraphs();
 	//	m_workGraphsContext->PrintWorkGraphsResults();
 	//}
-
-	DXCommandListWrapper wrapper(m_commandList.Get());
-	m_postProcessContext->Execute(&wrapper);
 
 	// ImGui Render
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
@@ -520,7 +547,6 @@ void DXRenderManager::CreateRootSignature(ComPtr<ID3D12RootSignature>& rootSigna
 	}
 
 	D3D12_STATIC_SAMPLER_DESC samplers[2];
-
 	// @TODO Take texture samplers as parameters to be customizable
 	// Texture Sampler
 	samplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;

@@ -11,19 +11,20 @@ DXRenderTarget::DXRenderTarget(
 	bool deferred
 	) : m_device(device), m_window(window)
 {
-	CreateRenderTarget(width, height);
+	CreateLDRRenderTarget(width, height);
+	CreateHDRRenderTarget(width, height);
 	CreateMSAARenderTarget(width, height);
 	CreateDepthBuffer(width, height, deferred);
 }
 
-void DXRenderTarget::CreateRenderTarget(int width, int height)
+void DXRenderTarget::CreateLDRRenderTarget(int width, int height)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = 1;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
-	m_rtvHeap->SetName(L"Intermediate RTV Heap");
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_ldrRtvHeap)));
+	m_ldrRtvHeap->SetName(L"LDR RTV Heap");
 
 	D3D12_RESOURCE_DESC textureDesc = {};
 	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -31,10 +32,57 @@ void DXRenderTarget::CreateRenderTarget(int width, int height)
 	textureDesc.Height = height;
 	textureDesc.DepthOrArraySize = 1;
 	textureDesc.MipLevels = 1;
-	// @TODO Do I need to set format to DXGI_FORMAT_R16G16B16A16_FLOAT for HDR rendering?
-	// For now, keep it simple with DXGI_FORMAT_R8G8B8A8_UNORM
-	// DXGI_FORMAT_R16G16B16A16_FLOAT should be applied after tone mapping is implemented in the post-process shader
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = textureDesc.Format;
+	clearValue.Color[0] = 0.f;
+	clearValue.Color[1] = 0.f;
+	clearValue.Color[2] = 0.f;
+	// @TODO Maybe alpha = 0
+	clearValue.Color[3] = 1.f;
+
+	// heapProps(D3D12_HEAP_TYPE_DEFAULT)
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		&clearValue,
+		IID_PPV_ARGS(&m_ldrRenderTarget)
+	));
+	m_ldrRenderTarget->SetName(L"LDR Render Target View");
+
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.Texture2D.PlaneSlice = 0;
+
+	m_device->CreateRenderTargetView(m_ldrRenderTarget.Get(), &rtvDesc, m_ldrRtvHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void DXRenderTarget::CreateHDRRenderTarget(int width, int height)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = 1;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_hdrRtvHeap)));
+	m_hdrRtvHeap->SetName(L"HDR RTV Heap");
+
+	D3D12_RESOURCE_DESC textureDesc = {};
+	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.DepthOrArraySize = 1;
+	textureDesc.MipLevels = 1;
+	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -55,9 +103,9 @@ void DXRenderTarget::CreateRenderTarget(int width, int height)
 		&textureDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&clearValue,
-		IID_PPV_ARGS(&m_renderTarget)
+		IID_PPV_ARGS(&m_hdrRenderTarget)
 	));
-	m_renderTarget->SetName(L"Intermediate Render Target View");
+	m_hdrRenderTarget->SetName(L"HDR Render Target View");
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 	rtvDesc.Format = textureDesc.Format;
@@ -65,14 +113,14 @@ void DXRenderTarget::CreateRenderTarget(int width, int height)
 	rtvDesc.Texture2D.MipSlice = 0;
 	rtvDesc.Texture2D.PlaneSlice = 0;
 
-	m_device->CreateRenderTargetView(m_renderTarget.Get(), &rtvDesc, m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+	m_device->CreateRenderTargetView(m_hdrRenderTarget.Get(), &rtvDesc, m_hdrRtvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void DXRenderTarget::CreateMSAARenderTarget(int width, int height)
 {
 	// Check MSAA Support
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels = {};
-	msQualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	msQualityLevels.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	msQualityLevels.SampleCount = m_msaaSampleCount;
 	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 
@@ -102,13 +150,13 @@ void DXRenderTarget::CreateMSAARenderTarget(int width, int height)
 	msaaRenderTargetDesc.Height = height;
 	msaaRenderTargetDesc.DepthOrArraySize = 1;
 	msaaRenderTargetDesc.MipLevels = 1;
-	msaaRenderTargetDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	msaaRenderTargetDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	msaaRenderTargetDesc.SampleDesc.Count = m_msaaSampleCount;
 	msaaRenderTargetDesc.SampleDesc.Quality = m_msaaQualityLevel;
 	msaaRenderTargetDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
 	D3D12_CLEAR_VALUE msaaClearValue = {};
-	msaaClearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	msaaClearValue.Format = msaaRenderTargetDesc.Format;
 	msaaClearValue.Color[0] = 0.f;
 	msaaClearValue.Color[1] = 0.f;
 	msaaClearValue.Color[2] = 0.f;
@@ -176,4 +224,19 @@ void DXRenderTarget::CreateDepthBuffer(int width, int height, bool deferred)
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
 	m_device->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void DXRenderTarget::CreateSRV(D3D12_CPU_DESCRIPTOR_HANDLE srvCpuHandle) const
+{
+	// Create SRV for HDR Render Target
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	srvDesc.Texture2D.PlaneSlice = 0;
+
+	m_device->CreateShaderResourceView(m_hdrRenderTarget.Get(), &srvDesc, srvCpuHandle);
 }

@@ -1009,6 +1009,17 @@ glm::mat4 RenderManager::Quantize(
 	return decodeMat;
 }
 
+// @TODO Maybe this function should be located in Light class
+float RenderManager::CalculatePointLightRadius(const glm::vec3& lightColor, float constant, float linear, float quadratic)
+{
+	float maxChannel = std::max({ lightColor.r, lightColor.g, lightColor.b });
+	float lightThreshold = 4.f / 256.f;
+	float c = constant - (maxChannel / lightThreshold);
+	float discriminant = linear * linear - 4 * quadratic * c;
+	if (discriminant < 0) return 0.f;
+	return (-linear + std::sqrt(discriminant)) / (2.f * quadratic);
+}
+
 void RenderManager::RenderingControllerForImGui()
 {
 	// @TODO Might need to make ImGui UI remember state (FSR1/CAS) of FFX effect even if FFX is turned off
@@ -1099,10 +1110,13 @@ void RenderManager::RenderingControllerForImGui()
 		// Meshlet Visualization
 		// Currently only works with DX graphics mode
 		ImGui::Spacing();
-		bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
-		if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
+		if (m_meshShaderEnabled)
 		{
-			m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
+			bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
+			if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
+			{
+				m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
+			}
 		}
 	}
 	ImGui::Spacing();

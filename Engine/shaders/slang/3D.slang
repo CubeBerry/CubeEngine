@@ -13,8 +13,8 @@ struct VSInput
     float3 normal : NORMAL0;
     float2 uv : TEXCOORD0;
     int tex_sub_index : TEXCOORD1;
-    int4 boneIDs;
-    float4 weights;
+    int4 boneIDs : BLENDINDICES0;
+    float4 weights : BLENDWEIGHTS0;
 }
 
 struct VSOutput
@@ -23,6 +23,8 @@ struct VSOutput
     float2 uv : TEXCOORD0;
     float4 color : COLOR0;
     int tex_sub_index : TEXCOORD1;
+    int4 boneIDs : BLENDINDICES0;
+    float4 weights : BLENDWEIGHTS0;
     // Lighting
     float3 normal : NORMAL0;
     float3 fragmentPosition : TEXCOORD2;
@@ -58,6 +60,10 @@ VSOutput vertexMain(VSInput input)
     output.uv = input.uv;
     output.color = matrix.color;
     output.tex_sub_index = input.tex_sub_index;
+
+    output.boneIDs = input.boneIDs;
+    output.weights = input.weights;
+    output.meshletVisualization = false;
 
     // Lighting
     output.normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
@@ -241,6 +247,7 @@ struct fPointLight
     float constant;
     float linear;
     float quadratic;
+    float radius;
 }
 
 struct fPointLightList
@@ -378,7 +385,9 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, boo
     if (isPointLight)
     {
         L = normalize(lightPosition - mainVectors.fragmentPosition);
-        attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
+        float radius = pointLightList.lights[lightIndex].radius;
+        // attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
+        attenuation = distance > radius ? 0 : max(0.0, (1.0 / (distance * distance)) - (1.0 / (radius * radius)));
     }
     else
     {
@@ -469,10 +478,6 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // 1.0 == ao
     float3 ambient = (Kd * diffuse + specular) * 1.0;
     resultColor = ambient + resultColor;
-
-    // PBR Gamma Correction
-    resultColor = resultColor / (resultColor + float3(1.0));
-    resultColor = pow(resultColor, float3(1.0 / 2.2));
 
     // Blinn-Phong Result Color
     // if (f_matrix.isTex)

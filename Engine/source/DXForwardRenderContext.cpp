@@ -45,6 +45,8 @@ void DXForwardRenderContext::Initialize()
 	DXAttributeLayout normalLayout{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, normal), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout uvLayout{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 	DXAttributeLayout texSubIndexLayout{ "TEXCOORD", 1, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, texSubIndex), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout boneIndexLayout{ "BLENDINDICES", 0, DXGI_FORMAT_R32_SINT, 0, offsetof(ThreeDimension::QuantizedVertex, boneIDs), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout weightLayout{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, weights), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
@@ -63,7 +65,7 @@ void DXForwardRenderContext::Initialize()
 			true,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 	}
@@ -74,14 +76,15 @@ void DXForwardRenderContext::Initialize()
 			m_rootSignature3D,
 			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
 			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
 			D3D12_FILL_MODE_SOLID,
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
+			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
 			true,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 
@@ -91,14 +94,15 @@ void DXForwardRenderContext::Initialize()
 			m_rootSignature3D,
 			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
 			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout },
+			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
 			D3D12_FILL_MODE_WIREFRAME,
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
+			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
 			true,
 			true,
 			true,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
 		);
 	}
@@ -125,10 +129,11 @@ void DXForwardRenderContext::Initialize()
 		D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_BACK,
 		sampleDesc,
+		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
 		true,
 		true,
 		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
 	);
 #endif
