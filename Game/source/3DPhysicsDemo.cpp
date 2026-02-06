@@ -83,7 +83,7 @@ void PhysicsDemo::Init()
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.5f, 0.f), glm::vec3{ 0.1f,0.1f,0.1f }, "LIGHT", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 100.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 25.f, 100.f);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
 	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/snowy_forest_path_02_4k.hdr");
