@@ -29,7 +29,7 @@ void MultipleLights::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/teapot.obj", 1, 1, { 1.f, 1.f, 1.f, 1.f }, 1.f, 0.15f);
 
 	// Light
-	// Total Light = 14 * 14 = 196
+	// Total Light = 22 * 22 = 484
 	int rowCount{ 22 };
 	int columnCount{ 22 };
 	float range{ 10.f };
