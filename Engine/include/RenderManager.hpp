@@ -119,7 +119,9 @@ public:
 	}
 	std::vector<ThreeDimension::DirectionalLightUniform>& GetDirectionalLightUniforms() { return directionalLightUniforms; }
 	std::vector<ThreeDimension::PointLightUniform>& GetPointLightUniforms() { return pointLightUniforms; }
-	static float CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic);
+	// @TODO Maybe this function should be located in Light class
+	// @TODO This does not match with attenuation method in shader
+	//static float CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic);
 
 	void RenderingControllerForImGui();
 

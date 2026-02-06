@@ -617,6 +617,7 @@ void ObjectManager::LightControllerForImGui(Light* light)
 		glm::vec3 position = light->GetPosition();
 		glm::vec4 rotation = light->GetRotate();
 		glm::vec4 color = light->GetColor();
+		float radius = light->GetRadius();
 		float intensity = light->GetIntensity();
 
 		float ambient = light->GetAmbientStrength();
@@ -628,6 +629,11 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			if (ImGui::ColorEdit4("Light Color", &color.r))
 			{
 				light->SetColor(color);
+			}
+			ImGui::Spacing();
+			if (ImGui::DragFloat("radius", &radius, 0.1f, 0.f, 100.f))
+			{
+				light->SetRadius(radius);
 			}
 			ImGui::Spacing();
 			if (ImGui::DragFloat("intensity", &intensity, 0.1f, 0.f, 100.f))
@@ -706,13 +712,13 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			if (ImGui::Button("Directional"))
 			{
 				isShowPopup = false;
-				light->AddLight(LightType::DIRECTIONAL);
+				light->AddLight(LightType::DIRECTIONAL, 1.f);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Button("Point"))
 			{
 				isShowPopup = false;
-				light->AddLight(LightType::POINT);
+				light->AddLight(LightType::POINT, 1.f);
 				ImGui::CloseCurrentPopup();
 			}
 

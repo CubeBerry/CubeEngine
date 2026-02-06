@@ -1010,15 +1010,16 @@ glm::mat4 RenderManager::Quantize(
 }
 
 // @TODO Maybe this function should be located in Light class
-float RenderManager::CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic)
-{
-	float maxChannel = std::max({ lightColor.r, lightColor.g, lightColor.b }) * intensity;
-	float lightThreshold = 4.f / 256.f;
-	float c = constant - (maxChannel / lightThreshold);
-	float discriminant = linear * linear - 4.f * quadratic * c;
-	if (discriminant < 0.f) return 0.f;
-	return (-linear + std::sqrt(discriminant)) / (2.f * quadratic);
-}
+// @TODO This does not match with attenuation method in shader
+//float RenderManager::CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic)
+//{
+//	float maxChannel = std::max({ lightColor.r, lightColor.g, lightColor.b }) * intensity;
+//	float lightThreshold = 4.f / 256.f;
+//	float c = constant - (maxChannel / lightThreshold);
+//	float discriminant = linear * linear - 4.f * quadratic * c;
+//	if (discriminant < 0.f) return 0.f;
+//	return (-linear + std::sqrt(discriminant)) / (2.f * quadratic);
+//}
 
 void RenderManager::RenderingControllerForImGui()
 {

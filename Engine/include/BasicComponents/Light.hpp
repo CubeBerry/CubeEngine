@@ -24,7 +24,7 @@ public:
 	~Light() override;
 
 	void Init() override;
-	void AddLight(LightType lightType_, float intensity = 1.f, float constant_ = 1.f, float linear_ = 0.7f, float quadratic_ = 1.8f);
+	void AddLight(LightType lightType_, float radius, float intensity = 1.f, float constant_ = 1.f, float linear_ = 0.7f, float quadratic_ = 1.8f);
 	void Update(float dt) override;
 	void End() override;
 
@@ -39,6 +39,7 @@ public:
 	void SetRotate(glm::vec3 rotate_);
 
 	void SetColor(glm::vec4 color_);
+	void SetRadius(float amount);
 	void SetIntensity(float amount);
 	void SetAmbientStrength(float amount);
 	void SetSpecularStrength(float amount);
@@ -51,6 +52,7 @@ public:
 
 	glm::vec3 GetPosition() const { return pos; }
 	glm::vec4 GetColor() const { return color; }
+	float GetRadius() const { return radius; }
 	float GetIntensity() const { return intensity; }
 	glm::vec4 GetRotate() const { return rotate; }
 	float GetAmbientStrength() const { return ambient; }
@@ -84,5 +86,5 @@ private:
 	ThreeDimension::PointLightUniform pLight;
 	ThreeDimension::DirectionalLightUniform dLight;
 
-	void CalculateRadius();
+	//void CalculateRadius();
 };

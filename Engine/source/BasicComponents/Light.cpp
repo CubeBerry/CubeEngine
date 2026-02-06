@@ -93,7 +93,7 @@ void Light::Init()
 	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Light");
 }
 
-void Light::AddLight(LightType lightType_, float intensity_, float constant_, float linear_, float quadratic_)
+void Light::AddLight(LightType lightType_, float radius_, float intensity_, float constant_, float linear_, float quadratic_)
 {
 	if (lightType == LightType::NONE) 
 	{
@@ -119,7 +119,8 @@ void Light::AddLight(LightType lightType_, float intensity_, float constant_, fl
 			pLight.intensity = intensity_;
 			intensity = intensity_;
 			pLight.intensity = intensity;
-			pLight.radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.intensity, pLight.constant, pLight.linear, pLight.quadratic);
+			radius = radius_;
+			pLight.radius = radius;
 			Engine::GetRenderManager()->AddPointLight(pLight);
 			lightlId = static_cast<int>(Engine::GetRenderManager()->GetPointLightUniforms().size() - 1);
 
@@ -319,6 +320,16 @@ void Light::SetColor(glm::vec4 color_)
 	}
 }
 
+void Light::SetRadius(float amount)
+{
+	radius = amount;
+	if (lightType == LightType::POINT)
+	{
+		pLight.radius = radius;
+		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].radius = radius;
+	}
+}
+
 void Light::SetIntensity(float amount)
 {
 	intensity = amount;
@@ -326,13 +337,13 @@ void Light::SetIntensity(float amount)
 	{
 		Engine::GetRenderManager()->GetDirectionalLightUniforms()[lightlId].intensity = intensity;
 		dLight.intensity = intensity;
-		CalculateRadius();
+		//CalculateRadius();
 	}
 	else if (lightType == LightType::POINT)
 	{
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].intensity = intensity;
 		pLight.intensity = intensity;
-		CalculateRadius();
+		//CalculateRadius();
 	}
 }
 
@@ -373,7 +384,7 @@ void Light::SetConstant(float amount)
 	{
 		pLight.constant = constant;
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].constant = constant;
-		CalculateRadius();
+		//CalculateRadius();
 	}
 }
 
@@ -384,7 +395,7 @@ void Light::SetLinear(float amount)
 	{
 		pLight.linear = linear;
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].linear = linear;
-		CalculateRadius();
+		//CalculateRadius();
 	}
 }
 
@@ -395,13 +406,13 @@ void Light::SetQuadratic(float amount)
 	{
 		pLight.quadratic = quadratic;
 		Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].quadratic = quadratic;
-		CalculateRadius();
+		//CalculateRadius();
 	}
 }
 
-void Light::CalculateRadius()
-{
-	radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.intensity, pLight.constant, pLight.linear, pLight.quadratic);
-	pLight.radius = radius;
-	Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].radius = radius;
-}
+//void Light::CalculateRadius()
+//{
+//	radius = Engine::GetRenderManager()->CalculatePointLightRadius(pLight.lightColor, pLight.intensity, pLight.constant, pLight.linear, pLight.quadratic);
+//	pLight.radius = radius;
+//	Engine::GetRenderManager()->GetPointLightUniforms()[lightlId].radius = radius;
+//}

@@ -146,6 +146,6 @@ namespace ThreeDimension
 		float quadratic;
 		// Local Light Pass -> Light Volume Radius
 		// CalculatePointLightRadius
-		float radius = 0.f;
+		float radius = 1.f;
 	};
 }
