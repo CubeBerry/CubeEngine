@@ -150,6 +150,8 @@ dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 | [AMD FidelityFX™ Super Resolution 1](https://gpuopen.com/fidelityfx-superresolution/) | ➖ | ❌ | ❌ | ✅ |
 
 ## Screenshots
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/1b31227f-5470-480f-a855-da9927f53dab" />
+
 ![image](https://github.com/user-attachments/assets/4b74e0cf-c652-4af2-81ed-981027c0b5b2)
 
 ![image](https://github.com/user-attachments/assets/36c003b4-65c5-413f-9faf-e71366a791f3)

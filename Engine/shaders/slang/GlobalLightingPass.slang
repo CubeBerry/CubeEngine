@@ -3,7 +3,7 @@
 // #pragma pack_matrix(row_major)
 
 #define MAX_TEXTURES 500
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 500
 #define PI 3.14159265358979323846f
 
 // Vertex Shader
@@ -36,6 +36,7 @@ struct fDirectionalLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 }
 
 struct fDirectionalLightList
@@ -230,7 +231,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l);
     }
 
     // PBR IBL Ambient Lighting

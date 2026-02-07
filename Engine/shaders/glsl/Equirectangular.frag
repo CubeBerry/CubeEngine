@@ -12,21 +12,15 @@ layout(set = 0, binding = 0) uniform sampler2D equirectangularMap;
 uniform sampler2D equirectangularMap;
 #endif
 
-vec2 SampleSphericalMap(vec3 v)
-{
-    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
-    uv *= invAtan;
-    uv += 0.5;
-    return uv;
-}
-
-//Reinhard Tone Mapping
+// @TODO Remove this function after post-process tone mapping is implemented in OpenGL
+// Reinhard Tone Mapping
 vec3 ReinhardToneMapping(vec3 color)
 {
     return color / (color + vec3(1.0));
 }
 
-//Filimic/ACES TOne Mapping
+// @TODO Remove this function after post-process tone mapping is implemented in OpenGL
+// Filimic/ACES Tone Mapping
 vec3 FilmicToneMapping(vec3 color) {
     const float a = 2.51;
     const float b = 0.03;
@@ -36,14 +30,23 @@ vec3 FilmicToneMapping(vec3 color) {
     return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
 }
 
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
+
 void main()
 {
     vec2 uv = SampleSphericalMap(normalize(i_pos));
     vec3 color = texture(equirectangularMap, uv).rgb;
 
-    color = ReinhardToneMapping(color);
-
-    //Gamma Correction
+    // @TODO Remove tone mapping after post-process tone mapping is implemented in Vulkan
+    // Convert HDR to LDR
+    color = FilmicToneMapping(color);
+    // 2.2 Gamma Correction
     // color = pow(color, vec3(1.0 / 2.2));
 
     fragmentColor = vec4(color, 1.0);

@@ -3,7 +3,7 @@
 // #pragma pack_matrix(row_major)
 
 #define MAX_TEXTURES 500
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 500
 #define PI 3.14159265358979323846f
 
 // Vertex Shader
@@ -254,7 +254,7 @@ PSOutput fragmentMain(VSOutput input)
     output.Normal = float4(normalize(input.normal), 1.0);
     output.Position = float4(input.fragmentPosition, 1.0);
     // R == Metallic, G == Roughness, B == AO, A == (Unused)
-    output.Material = float4(f_material.metallic, f_material.roughness, 1.0, 0.0);
+    output.Material = float4(f_material.metallic, f_material.roughness, 1.0, 1.0);
 
     return output;
 }

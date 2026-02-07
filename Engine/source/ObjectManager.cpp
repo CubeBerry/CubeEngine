@@ -200,6 +200,9 @@ void ObjectManager::ObjectControllerForImGui()
 						obj->SetPosition(position);
 					}
 				}
+				obj->SetXSize(size.x);
+				obj->SetYSize(size.y);
+				obj->SetZSize(size.z);
 				obj->SetRotate(rotation);
 			}
 		}
@@ -617,6 +620,8 @@ void ObjectManager::LightControllerForImGui(Light* light)
 		glm::vec3 position = light->GetPosition();
 		glm::vec4 rotation = light->GetRotate();
 		glm::vec4 color = light->GetColor();
+		float radius = light->GetRadius();
+		float intensity = light->GetIntensity();
 
 		float ambient = light->GetAmbientStrength();
 		float specular = light->GetSpecularStrength();
@@ -628,7 +633,14 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			{
 				light->SetColor(color);
 			}
-			ImGui::Spacing();
+			if (ImGui::DragFloat("radius", &radius, 0.1f, 0.f, 100.f))
+			{
+				light->SetRadius(radius);
+			}
+			if (ImGui::DragFloat("intensity", &intensity, 0.1f, 0.f, 100.f))
+			{
+				light->SetIntensity(intensity);
+			}
 
 			if (light->GetLightType() == LightType::DIRECTIONAL)
 			{
@@ -701,13 +713,13 @@ void ObjectManager::LightControllerForImGui(Light* light)
 			if (ImGui::Button("Directional"))
 			{
 				isShowPopup = false;
-				light->AddLight(LightType::DIRECTIONAL);
+				light->AddLight(LightType::DIRECTIONAL, 1.f);
 				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Button("Point"))
 			{
 				isShowPopup = false;
-				light->AddLight(LightType::POINT);
+				light->AddLight(LightType::POINT, 1.f);
 				ImGui::CloseCurrentPopup();
 			}
 

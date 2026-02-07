@@ -193,8 +193,10 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 					commandList->SetGraphicsRootConstantBufferView(4, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 				}
 
-				m_renderManager->pushConstants.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size());
-				m_renderManager->pushConstants.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size());
+				m_renderManager->pushConstants = {
+					.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
+					.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+				};
 				commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -235,8 +237,10 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 					commandList->SetGraphicsRootConstantBufferView(4, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 				}
 
-				m_renderManager->pushConstants.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size());
-				m_renderManager->pushConstants.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size());
+				m_renderManager->pushConstants = {
+					.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
+					.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+				};
 				commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());

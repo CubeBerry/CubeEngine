@@ -3,7 +3,7 @@
 // #pragma pack_matrix(row_major)
 
 #define MAX_TEXTURES 500
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 500
 #define PI 3.14159265358979323846f
 
 // Vertex Shader
@@ -229,6 +229,7 @@ struct fDirectionalLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 }
 
 struct fDirectionalLightList
@@ -243,6 +244,7 @@ struct fPointLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 
     float constant;
     float linear;
@@ -322,6 +324,24 @@ ConstantBuffer<PushConstants> pushConstants : register(b5, space0);
 //     return ambient + diffuse + specular;
 // }
 
+// @TODO Remove this function after post-process tone mapping is implemented in Vulkan
+// Reinhard Tone Mapping
+float3 ReinhardToneMapping(float3 color)
+{
+    return color / (color + float3(1.0));
+}
+
+// @TODO Remove this function after post-process tone mapping is implemented in Vulkan
+// Filimic/ACES Tone Mapping
+float3 FilmicToneMapping(float3 color) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
 // GGX/Trowbridge-Reitz Normal Distribution Function
 float D(float alpha, float3 N, float3 H)
 {
@@ -378,26 +398,10 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, boo
     fMaterial material = f_material;
 
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - mainVectors.fragmentPosition) : 1.0;
-
-    float3 L = float3(0.0);
-    float attenuation = 0.0;
-    if (isPointLight)
-    {
-        L = normalize(lightPosition - mainVectors.fragmentPosition);
-        float radius = pointLightList.lights[lightIndex].radius;
-        // attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
-        attenuation = distance > radius ? 0 : max(0.0, (1.0 / (distance * distance)) - (1.0 / (radius * radius)));
-    }
-    else
-    {
-        L = normalize(-lightPosition);
-        attenuation = 1.0;
-    }
-
+    float3 L = isPointLight ? normalize(lightPosition - mainVectors.fragmentPosition) : normalize(-lightPosition);
     // Half Vector
     float3 H = normalize(mainVectors.V + L);
-    float3 radiance = lightColor * attenuation;
+    float3 radiance = lightColor;
 
     float3 Ks = F(mainVectors.F0, mainVectors.V, H);
     float3 Kd = (1.0 - material.metallic) * (float3(1.0) - Ks);
@@ -441,15 +445,19 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, false, l);
     }
 
     // Calculate Point Lights
     for (int l = 0; l < pushConstants.activePointLights; ++l)
     {
         fPointLight currentLight = pointLightList.lights[l];
+        float distance = length(currentLight.lightPosition - input.fragmentPosition);
+        if (distance > currentLight.radius) continue;
+        // float attenuation = 1.0 / (pointLightList.lights[lightIndex].constant + pointLightList.lights[lightIndex].linear * distance + pointLightList.lights[lightIndex].quadratic * (distance * distance));
+        float attenuation = max(0.0, (1.0 / (distance * distance)) - (1.0 / (currentLight.radius * currentLight.radius)));
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
+        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor * currentLight.intensity, true, l) * attenuation;
     }
 
     // PBR IBL Ambient Lighting
@@ -490,6 +498,15 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // PBR Result Color
     // return float4(resultColor, 1.0);
 
+#if defined(__hlsl__)
     // Mesh Shader Debug Color
     return input.meshletVisualization ? float4(input.color.rgb, 1.0) : float4(resultColor, 1.0);
+#else
+    // @TODO Remove tone mapping after post-process tone mapping is implemented in Vulkan
+    // Convert HDR to LDR
+    resultColor = FilmicToneMapping(resultColor);
+    // 2.2 Gamma Correction
+    resultColor = pow(resultColor, 1.0 / 2.2);
+    return float4(resultColor, 1.0);
+#endif
 }

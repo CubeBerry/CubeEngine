@@ -3,7 +3,7 @@
 // #pragma pack_matrix(row_major)
 
 #define MAX_TEXTURES 500
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 500
 #define PI 3.14159265358979323846f
 
 // Vertex Shader
@@ -24,6 +24,7 @@ struct fPointLight
     float ambientStrength;
     float3 lightColor;
     float specularStrength;
+    float intensity;
 
     float constant;
     float linear;
@@ -41,7 +42,7 @@ struct PushConstants
 {
     float4x4 viewProjection;
     float3 viewPosition;
-    float intensity;
+    float padding;
     float2 screenSize;
 }
 #if defined(__hlsl__)
@@ -227,7 +228,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
     // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-    float3 resultColor = PBR(mainVectors, light.lightPosition, light.lightColor, input.lightIndex) * attenuation;
+    float3 resultColor = PBR(mainVectors, light.lightPosition, light.lightColor * light.intensity, input.lightIndex) * attenuation;
 
     // Blinn-Phong Result Color
     // if (f_matrix.isTex)
