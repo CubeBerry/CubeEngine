@@ -17,7 +17,7 @@ Texture2D<float4 > equirectangularMap_0 : register(t0, space1);
 SamplerState smp_0 : register(s0, space1);
 
 
-#line 17
+#line 35
 float2 SampleSphericalMap_0(float3 v_0)
 {
 
@@ -35,11 +35,11 @@ struct VSOutput_0
 };
 
 
-#line 26
+#line 44
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 34
+#line 54
     return float4(equirectangularMap_0.Sample(smp_0, SampleSphericalMap_0(normalize(input_0.uvw_0))).xyz, 1.0f);
 }
 
