@@ -502,6 +502,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // Mesh Shader Debug Color
     return input.meshletVisualization ? float4(input.color.rgb, 1.0) : float4(resultColor, 1.0);
 #else
+    // @TODO Remove tone mapping after post-process tone mapping is implemented in Vulkan
     // Convert HDR to LDR
     resultColor = FilmicToneMapping(resultColor);
     // 2.2 Gamma Correction
