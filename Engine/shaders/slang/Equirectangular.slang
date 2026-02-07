@@ -57,7 +57,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // Convert HDR to LDR
     color = FilmicToneMapping(color);
     // 2.2 Gamma Correction
-    color = pow(color, 1.0 / 2.2);
+    // color = pow(color, 1.0 / 2.2);
     return float4(color, 1.0);
 #endif
 }

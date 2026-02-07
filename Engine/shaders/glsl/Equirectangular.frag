@@ -47,7 +47,7 @@ void main()
     // Convert HDR to LDR
     color = FilmicToneMapping(color);
     // 2.2 Gamma Correction
-    color = pow(color, vec3(1.0 / 2.2));
+    // color = pow(color, vec3(1.0 / 2.2));
 
     fragmentColor = vec4(color, 1.0);
 }
