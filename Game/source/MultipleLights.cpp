@@ -81,4 +81,5 @@ void MultipleLights::End()
 	Engine::GetObjectManager().End();
 	Engine::GetRenderManager()->DeletePointLights();
 	Engine::GetRenderManager()->DeleteDirectionalLights();
+	Engine::GetRenderManager()->DeleteSkybox();
 }

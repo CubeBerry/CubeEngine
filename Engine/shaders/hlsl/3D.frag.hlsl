@@ -118,7 +118,7 @@ TextureCube<float4 > prefilterMap_0 : register(t1, space2);
 Texture2D<float4 > brdfLUT_0 : register(t2, space2);
 
 
-#line 368
+#line 386
 struct MainVectors_0
 {
     float3 fragmentPosition_0;
@@ -129,11 +129,11 @@ struct MainVectors_0
 };
 
 
-#line 368
+#line 386
 MainVectors_0 MainVectors_x24init_0(float3 fragmentPosition_1, float3 albedo_1, float3 V_1, float3 N_1, float3 F0_1)
 {
 
-#line 368
+#line 386
     MainVectors_0 _S1;
 
     _S1.fragmentPosition_0 = fragmentPosition_1;
@@ -142,24 +142,24 @@ MainVectors_0 MainVectors_x24init_0(float3 fragmentPosition_1, float3 albedo_1, 
     _S1.N_0 = N_1;
     _S1.F0_0 = F0_1;
 
-#line 368
+#line 386
     return _S1;
 }
 
 
-#line 358
+#line 376
 float3 F_0(float3 F0_2, float3 V_2, float3 H_0)
 {
     return F0_2 + ((float3)1.0f - F0_2) * pow(1.0f - max(dot(V_2, H_0), 0.0f), 5.0f);
 }
 
 
-#line 328
+#line 346
 float D_0(float alpha_0, float3 N_2, float3 H_1)
 {
     float numerator_0 = pow(alpha_0, 2.0f);
 
-#line 336
+#line 354
     return numerator_0 / max(3.14159274101257324f * pow(pow(max(dot(N_2, H_1), 0.0f), 2.0f) * (numerator_0 - 1.0f) + 1.0f, 2.0f), 9.99999997475242708e-07f);
 }
 
@@ -182,35 +182,35 @@ float G_0(float alpha_2, float3 N_4, float3 V_3, float3 L_0)
 }
 
 
-#line 378
+#line 396
 float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightColor_2, bool isPointLight_0, int lightIndex_0)
 {
 
-#line 378
+#line 396
     float _S2 = f_material_0.metallic_0;
 
-#line 378
+#line 396
     float _S3 = f_material_0.roughness_0;
 
-#line 378
+#line 396
     float3 L_1;
 
-#line 383
+#line 401
     if(isPointLight_0)
     {
 
-#line 383
+#line 401
         L_1 = normalize(lightPosition_1 - mainVectors_0.fragmentPosition_0);
 
-#line 383
+#line 401
     }
     else
     {
 
-#line 383
+#line 401
         L_1 = normalize(- lightPosition_1);
 
-#line 383
+#line 401
     }
 
     float3 H_2 = normalize(mainVectors_0.V_0 + L_1);
@@ -218,17 +218,17 @@ float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_1, float3 lightCo
 
     float3 Ks_0 = F_0(mainVectors_0.F0_0, mainVectors_0.V_0, H_2);
 
-#line 394
+#line 412
     float alpha_3 = _S3 * _S3;
 
     float _S4 = max(dot(L_1, mainVectors_0.N_0), 0.0f);
 
-#line 403
+#line 421
     return ((1.0f - _S2) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_0(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * _S4, 0.10000000149011612f)) * lightColor_2 * _S4;
 }
 
 
-#line 363
+#line 381
 float3 Froughness_0(float3 F0_3, float3 V_4, float3 H_3, float roughness_1)
 {
     return F0_3 + (max((float3)(1.0f - roughness_1), F0_3) - F0_3) * pow(clamp(1.0f - max(dot(H_3, V_4), 0.0f), 0.0f, 1.0f), 5.0f);
@@ -251,16 +251,16 @@ struct VSOutput_0
 };
 
 
-#line 407
+#line 425
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 407
+#line 425
     VSOutput_0 _S5 = input_0;
 
     float3 _S6 = (float3)0.0f;
 
-#line 409
+#line 427
     float3 albedo_2;
 
 
@@ -268,74 +268,74 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     if((f_matrix_0.isTex_0) > int(0))
     {
 
-#line 413
+#line 431
         albedo_2 = tex_0[f_matrix_0.texIndex_0 + _S5.tex_sub_index_0].Sample(smp_0, _S5.uv_0).xyz;
 
-#line 413
+#line 431
     }
     else
     {
 
-#line 413
+#line 431
         albedo_2 = _S5.color_0.xyz;
 
-#line 413
+#line 431
     }
 
-#line 420
+#line 438
     float3 F0_4 = lerp((float3)0.03999999910593033f, albedo_2, (float3)f_material_0.metallic_0);
     float3 V_5 = normalize(_S5.viewPosition_0 - _S5.fragmentPosition_2);
     float3 N_5 = normalize(_S5.normal_0);
     MainVectors_0 _S7 = MainVectors_x24init_0(_S5.fragmentPosition_2, albedo_2, V_5, N_5, F0_4);
 
-#line 423
+#line 441
     int l_0 = int(0);
 
-#line 423
+#line 441
     float3 resultColor_0 = _S6;
 
 
     for(;;)
     {
 
-#line 426
+#line 444
         if(l_0 < (pushConstants_0.activeDirectionalLights_0))
         {
         }
         else
         {
 
-#line 426
+#line 444
             break;
         }
 
 
         float3 resultColor_1 = resultColor_0 + PBR_0(_S7, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, false, l_0);
 
-#line 426
+#line 444
         l_0 = l_0 + int(1);
 
-#line 426
+#line 444
         resultColor_0 = resultColor_1;
 
-#line 426
+#line 444
     }
 
-#line 426
+#line 444
     l_0 = int(0);
 
-#line 434
+#line 452
     for(;;)
     {
 
-#line 434
+#line 452
         if(l_0 < (pushConstants_0.activePointLights_0))
         {
         }
         else
         {
 
-#line 434
+#line 452
             break;
         }
         fPointLight_0 currentLight_0 = pointLightList_0.lights_1[l_0];
@@ -343,53 +343,53 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
         if(distance_0 > (pointLightList_0.lights_1[l_0].radius_0))
         {
 
-#line 438
+#line 456
             l_0 = l_0 + int(1);
 
-#line 434
+#line 452
             continue;
         }
 
-#line 434
+#line 452
         resultColor_0 = resultColor_0 + PBR_0(_S7, currentLight_0.lightPosition_0, currentLight_0.lightColor_1 * currentLight_0.intensity_1, true, l_0) * max(0.0f, 1.0f / (distance_0 * distance_0) - 1.0f / (currentLight_0.radius_0 * currentLight_0.radius_0));
 
-#line 434
+#line 452
         l_0 = l_0 + int(1);
 
-#line 434
+#line 452
     }
 
-#line 447
+#line 465
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, f_material_0.roughness_0);
 
-#line 461
+#line 479
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), f_material_0.roughness_0)).xy;
 
-#line 470
+#line 488
     float3 resultColor_2 = (1.0f - f_material_0.metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), f_material_0.roughness_0 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0;
 
-#line 470
+#line 488
     float4 _S8;
 
-#line 484
+#line 503
     if(_S5.meshletVisualization_0)
     {
 
-#line 484
+#line 503
         _S8 = float4(_S5.color_0.xyz, 1.0f);
 
-#line 484
+#line 503
     }
     else
     {
 
-#line 484
+#line 503
         _S8 = float4(resultColor_2, 1.0f);
 
-#line 484
+#line 503
     }
 
-#line 484
+#line 503
     return _S8;
 }
 

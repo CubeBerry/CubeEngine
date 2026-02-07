@@ -324,6 +324,24 @@ ConstantBuffer<PushConstants> pushConstants : register(b5, space0);
 //     return ambient + diffuse + specular;
 // }
 
+// @TODO Remove this function after post-process tone mapping is implemented in Vulkan
+// Reinhard Tone Mapping
+float3 ReinhardToneMapping(float3 color)
+{
+    return color / (color + float3(1.0));
+}
+
+// @TODO Remove this function after post-process tone mapping is implemented in Vulkan
+// Filimic/ACES Tone Mapping
+float3 FilmicToneMapping(float3 color) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
 // GGX/Trowbridge-Reitz Normal Distribution Function
 float D(float alpha, float3 N, float3 H)
 {
@@ -480,6 +498,14 @@ float4 fragmentMain(VSOutput input) : SV_Target
     // PBR Result Color
     // return float4(resultColor, 1.0);
 
+#if defined(__hlsl__)
     // Mesh Shader Debug Color
     return input.meshletVisualization ? float4(input.color.rgb, 1.0) : float4(resultColor, 1.0);
+#else
+    // Convert HDR to LDR
+    resultColor = FilmicToneMapping(resultColor);
+    // 2.2 Gamma Correction
+    resultColor = pow(resultColor, 1.0 / 2.2);
+    return float4(resultColor, 1.0);
+#endif
 }
