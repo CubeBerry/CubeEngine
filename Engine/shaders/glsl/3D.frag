@@ -1,14 +1,7 @@
 #version 460 core
-#if VULKAN
-#extension GL_EXT_nonuniform_qualifier : enable
-#endif
 
-#if VULKAN
-#define MAX_TEXTURES 500
-#else
 #define MAX_TEXTURES 29
-#endif
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 500
 const float PI = 3.14159265359;
 
 layout(location = 0) in vec2 i_uv;
@@ -44,6 +37,7 @@ struct fDirectionalLight
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
+    float intensity;
 };
 
 struct fPointLight
@@ -52,10 +46,12 @@ struct fPointLight
     float ambientStrength;
     vec3 lightColor;
     float specularStrength;
+    float intensity;
 
     float constant;
     float linear;
     float quadratic;
+    float radius;
 };
 
 #if VULKAN
@@ -169,6 +165,24 @@ vec3 BlinnPhong(vec3 lightPosition, vec3 lightColor, float ambientStrength, floa
     return ambient + diffuse + specular;
 }
 
+// @TODO Remove this function after post-process tone mapping is implemented in OpenGL
+// Reinhard Tone Mapping
+vec3 ReinhardToneMapping(vec3 color)
+{
+    return color / (color + vec3(1.0));
+}
+
+// @TODO Remove this function after post-process tone mapping is implemented in OpenGL
+// Filimic/ACES Tone Mapping
+vec3 FilmicToneMapping(vec3 color) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
 // GGX/Trowbridge-Reitz Normal Distribution Function
 float D(float alpha, vec3 N, vec3 H)
 {
@@ -224,24 +238,10 @@ vec3 PBR(MainVectors mainVectors, vec3 lightPosition, vec3 lightColor, bool isPo
     fMaterial material = f_material;
 
     float ao = 1.0;
-    float distance = isPointLight ? length(lightPosition - i_fragment_position) : 1.0;
-    
-    vec3 L = vec3(0.0);
-    float attenuation = 0.0;
-    if (isPointLight)
-    {
-        L = normalize(lightPosition - i_fragment_position);
-        attenuation = 1.0 / (pointLightList[lightIndex].constant + pointLightList[lightIndex].linear * distance + pointLightList[lightIndex].quadratic * (distance * distance));
-    }
-    else
-    {
-        L = normalize(-lightPosition);
-        attenuation = 1.0;
-    }
-
+    vec3 L = isPointLight ? normalize(lightPosition - i_fragment_position) : normalize(-lightPosition);
     // Half Vector
     vec3 H = normalize(mainVectors.V + L);
-    vec3 radiance = lightColor * attenuation;
+    vec3 radiance = lightColor;
 
     vec3 Ks = F(mainVectors.F0, mainVectors.V, H);
     vec3 Kd = (1.0 - material.metallic) * (vec3(1.0) - Ks);
@@ -283,7 +283,7 @@ void main()
     {
         fDirectionalLight currentLight = directionalLightList[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor, false, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, false, l);
     }
 
     //Calculate Point Lights
@@ -294,8 +294,11 @@ void main()
 #endif
     {
         fPointLight currentLight = pointLightList[l];
+        float distance = length(currentLight.lightPosition - i_fragment_position);
+        if (distance > currentLight.radius) continue;
+        float attenuation = max(0.0, (1.0 / (distance * distance)) - (1.0 / (currentLight.radius * currentLight.radius)));
         // resultColor += clamp(BlinnPhong(currentLight.lightPosition, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, true, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor, true, l);
+        resultColor += PBR(mainVectors, currentLight.lightPosition, currentLight.lightColor * currentLight.intensity, true, l) * attenuation;
     }
 
     //PBR IBL Ambient Lighting
@@ -316,10 +319,6 @@ void main()
     vec3 ambient = (Kd * diffuse + specular) * 1.0;
     resultColor = ambient + resultColor;
 
-    // PBR Gamma Correction
-    resultColor = resultColor / (resultColor + vec3(1.0));
-    resultColor = pow(resultColor, vec3(1.0 / 2.2));  
-
     // Blinn-Phong Result Color
     // if (f_matrix.isTex)
     // {
@@ -329,5 +328,11 @@ void main()
     // else fragmentColor = vec4(resultColor, 1.0) * (i_col + 0.5);
 
     // PBR Result Color
+    // fragmentColor = vec4(resultColor, 1.0);
+    // @TODO Remove tone mapping after post-process tone mapping is implemented in Vulkan
+    // Convert HDR to LDR
+    resultColor = FilmicToneMapping(resultColor);
+    // 2.2 Gamma Correction
+    resultColor = pow(resultColor, vec3(1.0 / 2.2));
     fragmentColor = vec4(resultColor, 1.0);
 }
