@@ -101,5 +101,8 @@ private:
     glm::mat4 rootMotionStartTransform = glm::mat4(1.0f);
     glm::mat4 previousRootMotionStartTransform = glm::mat4(1.0f);
 
+    // Global inverse transform from the MODEL FBX (not from animation FBX)
+    glm::mat4 modelGlobalInverseTransform{ 1.0f };
+
     const int maxBones = 128;
 };

@@ -194,9 +194,9 @@ public:
 //			std::unique_ptr<DXConstantBuffer<ThreeDimension::FragmentUniform>>
 //		> fragmentUniformBuffer;
 //		std::variant<
-//			std::monostate,
-//			std::unique_ptr<GLUniformBuffer<ThreeDimension::Material>>,
-//			std::unique_ptr<DXConstantBuffer<ThreeDimension::Material>>
+//		 std::monostate,
+//		 std::unique_ptr<GLUniformBuffer<ThreeDimension::Material>>,
+//		 std::unique_ptr<DXConstantBuffer<ThreeDimension::Material>>
 //		> materialUniformBuffer;
 //
 //		void Initialize()
@@ -278,6 +278,9 @@ public:
 		// Stores the mapping from bone name to BoneInfo (ID and Offset Matrix)
 		std::map<std::string, ThreeDimension::BoneInfo> boneInfoMap;
 		int boneCount = 0;
+
+		// Global inverse transform from the MODEL's root node (not animation file)
+		glm::mat4 modelGlobalInverseTransform{ 1.0f };
 
 		// GPU Buffers
 		//std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;

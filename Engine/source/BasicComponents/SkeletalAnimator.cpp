@@ -65,18 +65,6 @@ void SkeletalAnimator::End()
 
 void SkeletalAnimator::Update(float dt)
 {
-    //Debug
-    static int updateCount = 0;
-    if (updateCount < 5) 
-    {
-        std::cout << "[SkeletalAnimator] Update called #" << updateCount 
-                  << ", dt=" << dt 
-                  << ", currentAnimation=" << (currentAnimation ? "EXISTS" : "NULL")
-                  << ", playbackState=" << static_cast<int>(playbackState) << std::endl;
-        updateCount++;
-    }
-    //Debug
-
     if (!currentAnimation) return;
 
     // 1. Handle Blending
@@ -94,7 +82,6 @@ void SkeletalAnimator::Update(float dt)
     // 2. Update Animation Time
     if (playbackState == PlaybackState::Playing)
     {
-        // Update Previous Animation Time
         if (previousAnimation && blendFactor < 1.0f)
         {
             previousTime += dt * animationSpeed * previousAnimation->GetTicksPerSecond();
@@ -105,20 +92,17 @@ void SkeletalAnimator::Update(float dt)
                 previousTime = prevDuration;
         }
 
-        // Update Current Animation Time
         if (!isScrubbing)
         {
             float ticks = dt * animationSpeed * currentAnimation->GetTicksPerSecond();
             currentTime += ticks;
 
-            // Handle Root Motion
             if (enableRootMotion)
             {
                 glm::mat4 rootMotionDelta = CalculateAbsoluteRootMotion(currentAnimation, currentTime, glm::mat4(1.0f));
             }
         }
 
-        // Handle Looping
         float duration = currentAnimation->GetDuration();
         if (currentTime >= duration)
         {
@@ -130,54 +114,36 @@ void SkeletalAnimator::Update(float dt)
             else
             {
                 currentTime = duration;
-                // Stop or Pause could be called here
             }
         }
     }
 
-    // 3. Calculate Bone Transforms
-    // Object transform 
-    Object* owner = GetOwner();
-    glm::mat4 rootTransform = glm::mat4(1.0f);
-    if (owner)
+    // 3. Fetch the model's globalInverseTransform from meshData (once)
+    if (modelGlobalInverseTransform == glm::mat4(1.0f))
     {
-        glm::vec3 scale = owner->GetSize();
-        rootTransform = glm::scale(glm::mat4(1.0f), scale);
-    }
-    
-    CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f));
-    
-    //Debug
-    static int debugCount = 0;
-    if (debugCount < 3)
-    {
-        debugCount++;
-        std::cout << "\n[SkeletalAnimator] finalBoneMatrices[0]:" << std::endl;
-        for (int row = 0; row < 4; ++row)
+        Object* owner = GetOwner();
+        if (owner)
         {
-            std::cout << "  [" 
-                      << finalBoneMatrices[0][row][0] << ", "
-                      << finalBoneMatrices[0][row][1] << ", "
-                      << finalBoneMatrices[0][row][2] << ", "
-                      << finalBoneMatrices[0][row][3] << "]" << std::endl;
-        }
-        
-        // bone's identity
-        bool allIdentity = true;
-        for (int i = 0; i < 5; ++i) 
-        {
-            glm::mat4 identity(1.0f);
-            if (finalBoneMatrices[i] != identity)
+            DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
+            if (sprite && !sprite->GetSubMeshes().empty())
             {
-                allIdentity = false;
-                break;
+                auto* meshData = sprite->GetSubMeshes()[0]->GetData<BufferWrapper::DynamicSprite3DMesh>();
+                if (meshData)
+                {
+                    modelGlobalInverseTransform = meshData->modelGlobalInverseTransform;
+                }
             }
         }
-        std::cout << "All bones are identity: " << (allIdentity ? "YES" : "NO") << std::endl;
-    } 
-    //Debug
+    }
 
-    // 4. Upload Matrices to DynamicSprite (GPU)
+    // 4. Calculate Bone Transforms
+    if (currentAnimation)
+    {
+        CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f));
+    }
+
+    // 5. Upload Matrices to DynamicSprite (GPU)
+    Object* owner = GetOwner();
     if (owner)
     {
         DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
@@ -186,26 +152,20 @@ void SkeletalAnimator::Update(float dt)
             auto& subMeshes = sprite->GetSubMeshes();
             for (auto& subMesh : subMeshes)
             {
-                // Access mesh data in BufferWrapper
                 auto* meshData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
                 if (meshData)
                 {
-                    // Copy matrices to Uniform Buffer struct
-                    // Use (std::min) to prevent macro expansion error from windows.h
                     int count = (std::min)((int)finalBoneMatrices.size(), ThreeDimension::MAX_BONES);
                     for (int i = 0; i < count; ++i)
                     {
                         meshData->vertexUniform.finalBones[i] = finalBoneMatrices[i];
                     }
 
-                    // 현재 활성화된 그래픽스 모드가 GL인지 확인 후 업데이트
                     if (std::holds_alternative<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer))
                     {
                         auto& glBuffer = std::get<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer);
-                        // 전체 VertexUniform 구조체를 업데이트하여 finalBones 배열도 GPU로 전송
                         glBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &meshData->vertexUniform);
                     }
-                    // 추후 DX, VK 지원시 else if 추가
                 }
             }
         }
@@ -254,26 +214,67 @@ void SkeletalAnimator::Stop()
 void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform)
 {
     std::string nodeName = node->name;
-    glm::mat4 nodeTransform = node->transformation;
+    glm::mat4 nodeTransform = node->transformation; // Default Local Transform (Bind Pose)
 
-    // 1. Get Current Animation Transform
+    // 1. Identify Root Bone
+    // Root bones handle translation (Root Motion), while others usually only rotate.
+    bool isRootBone = (nodeName.find("Hips") != std::string::npos ||
+        nodeName.find("Pelvis") != std::string::npos ||
+        nodeName.find("Root") != std::string::npos ||
+        nodeName == rootBoneName);
+
+    // 2. Get Current Animation Transform
     SkeletalBone* bone = currentAnimation->FindBone(nodeName);
     if (bone)
     {
         bone->Update(currentTime);
-        nodeTransform = bone->GetLocalTransform();
+
+        if (isRootBone)
+        {
+            // Apply full animation transform (Translation, Rotation, Scale) for Root
+            nodeTransform = bone->GetLocalTransform();
+        }
+        else
+        {
+            // For other bones: Keep original Bind Pose translation (bone length)
+            // and apply only animation Rotation and Scale.
+            glm::vec3 origTranslation = glm::vec3(node->transformation[3]);
+            glm::quat animRot = bone->GetInterpolatedRotation(currentTime);
+            glm::vec3 animScale = bone->GetInterpolatedScale(currentTime);
+
+            // Rebuild the Local Transform matrix
+            nodeTransform = glm::translate(glm::mat4(1.0f), origTranslation) *
+                glm::mat4_cast(animRot) *
+                glm::scale(glm::mat4(1.0f), animScale);
+        }
     }
 
-    // 2. Handle Blending
+    // 3. Handle Animation Blending
     if (blendFactor < 1.0f && previousAnimation)
     {
         SkeletalBone* prevBone = previousAnimation->FindBone(nodeName);
         if (prevBone)
         {
             prevBone->Update(previousTime);
-            glm::mat4 prevTransform = prevBone->GetLocalTransform();
+            glm::mat4 prevTransform;
 
-            // Decompose matrices for interpolation
+            // Apply the same translation logic to the previous animation
+            if (isRootBone)
+            {
+                prevTransform = prevBone->GetLocalTransform();
+            }
+            else
+            {
+                glm::vec3 origTranslation = glm::vec3(node->transformation[3]);
+                glm::quat animRot = prevBone->GetInterpolatedRotation(previousTime);
+                glm::vec3 animScale = prevBone->GetInterpolatedScale(previousTime);
+
+                prevTransform = glm::translate(glm::mat4(1.0f), origTranslation) *
+                    glm::mat4_cast(animRot) *
+                    glm::scale(glm::mat4(1.0f), animScale);
+            }
+
+            // Interpolate between previous and current animation
             glm::vec3 p1, p2, p;
             glm::quat r1, r2, r;
             glm::vec3 s1, s2, s;
@@ -287,18 +288,18 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
             r = glm::slerp(r2, r1, blendFactor);
             s = glm::mix(s2, s1, blendFactor);
 
-            // Recompose
+            // Recompose the final blended matrix
             nodeTransform = glm::translate(glm::mat4(1.0f), p) *
                 glm::mat4_cast(r) *
                 glm::scale(glm::mat4(1.0f), s);
         }
     }
 
-    // 3. Calculate Global Transform
+    // 4. Calculate Global Transform
     glm::mat4 globalTransformation = parentTransform * nodeTransform;
     globalBoneTransforms[nodeName] = globalTransformation;
 
-    // 4. Update Final Bone Matrix
+    // 5. Update Final Bone Matrix for GPU Skinning
     const auto& boneInfoMap = currentAnimation->GetBoneIDMap();
     if (boneInfoMap.find(nodeName) != boneInfoMap.end())
     {
@@ -306,14 +307,12 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
         glm::mat4 offset = boneInfoMap.at(nodeName).offset;
         if (index < finalBoneMatrices.size())
         {
-            // FBX unit transform (cm → m)
-            float unitScale = 0.01f;
-            glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(unitScale));
-            finalBoneMatrices[index] = scaleMatrix * globalTransformation * offset;
+            // Final Matrix = Global Pose * Inverse Bind Pose (Offset)
+            finalBoneMatrices[index] = globalTransformation * offset;
         }
     }
 
-    // 5. Recursively Process Children
+    // 6. Recursively process children nodes
     for (const auto& child : node->children)
     {
         CalculateBoneTransform(&child, globalTransformation);

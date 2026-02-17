@@ -76,8 +76,8 @@ namespace ThreeDimension
 		int texSubIndex{ 0 };
 
 		// Bone IDs and Weights (For simplicity in this guide, we use raw types not packed)
-		glm::ivec4 boneIDs;
-		glm::vec4 weights;
+		int boneIDs[MAX_BONE_INFLUENCE];
+		float weights[MAX_BONE_INFLUENCE];
 	};
 
 	// For StaticSprite, Check Material.hpp ThreeDimension::DynamicQuantizedVertex for StaticQuantizedVertex

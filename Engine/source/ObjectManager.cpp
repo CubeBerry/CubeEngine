@@ -1,4 +1,4 @@
-//Author: DOYEONG LEE
+﻿//Author: DOYEONG LEE
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: ObjectManager.cpp
@@ -764,22 +764,23 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 		Object* currentObj = FindObjectWithId(currentIndex);
 		if (isShowBone && currentObj->HasComponent<SkeletalAnimator>())
 		{
-			SkeletalAnimator* animator = currentObj->GetComponent<SkeletalAnimator>();
-			SkeletalAnimation* currentAnim = animator->GetCurrentAnimation();
+			SkeletalAnimator* animatorComp = currentObj->GetComponent<SkeletalAnimator>();
+			SkeletalAnimation* currentAnim = animatorComp->GetCurrentAnimation();
 			if (currentAnim)
 			{
-				const auto& transforms = animator->GetGlobalBoneTransforms();
+				const auto& transforms = animatorComp->GetGlobalBoneTransforms();
 
-				// Get Model Matrix from object
+				// Build model matrix identical to DynamicSprite::UpdateModel (GL mode)
 				glm::vec3 pos = currentObj->GetPosition();
 				glm::vec3 rot = currentObj->GetRotate3D();
 				glm::vec3 scale = currentObj->GetSize();
-				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-				model = glm::rotate(model, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-				model = glm::rotate(model, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-				model = glm::rotate(model, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-				model = glm::scale(model, scale);
 
+				glm::mat4 rotationMatrix = glm::toMat4(glm::quat(glm::radians(-rot)));
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos)
+					* rotationMatrix
+					* glm::scale(glm::mat4(1.0f), scale);
+
+				// No globalInverseTransform needed — bones and vertices share the same coordinate space
 				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
 			}
 		}
@@ -826,10 +827,10 @@ void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationSta
 
 void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 objectTransform)
 {
-	// 1. ���� ����� �� ��� ��������
+	// 1. 현재 노드의 뼈 행렬 가져오기
 	if (animatedTransforms.find(node->name) == animatedTransforms.end())
 	{
-		// �ʿ� ���� ���(���� ��)�� �׳� �ڽ����� �����ŵ�ϴ�.
+		// 맵에 없는 노드(더미 등)는 그냥 자식으로 통과시킵니다.
 		for (const auto& child : node->children)
 		{
 			RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
@@ -849,7 +850,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::vec3 currentPos = glm::vec3(globalTransform[3]); // Extract translation
 	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
 
-	// [�����] �� ��ġ ���� ���
+	// [디버깅] 뼈 위치 정보 출력
 	static bool debugPrint = true;
 	if (debugPrint && node->name.find("Armature") == std::string::npos)
 	{
@@ -862,7 +863,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		Engine::GetLogger().LogDebug(LogCategory::Engine, debugBuffer);
 	}
 
-	// 4. ����Ʈ(��) �׸���
+	// 4. 조인트(점) 그리기
 	if (screenPos.x != -1 && screenPos.y != -1)
 	{
 		ImU32 color = IM_COL32(0, 255, 0, 255);
@@ -871,10 +872,10 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		drawList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 5.0f, color);
 	}
 
-	// 5. �ڽ� ��� ó��
+	// 5. 자식 노드 처리
 	for (const auto& child : node->children)
 	{
-		// �ڽ� ���� �ʿ� ������ ���� ���� �׸��ϴ�.
+		// 자식 뼈가 맵에 존재할 때만 선을 그립니다.
 		if (animatedTransforms.find(child.name) != animatedTransforms.end())
 		{
 			glm::mat4 childGlobalMatrix = animatedTransforms.at(child.name);
@@ -883,7 +884,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
 			glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
 
-			// �� ���� ��� ��ȿ�� ��츸 �� �׸���
+			// 두 점이 모두 유효한 경우만 선 그리기
 			if (screenPos.x >= 0 && screenPos.y >= 0 &&
 				childScreenPos.x >= 0 && childScreenPos.y >= 0)
 			{
@@ -895,27 +896,8 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			}
 		}
 
-		// Recurse
-		RenderBoneHierarchy(&child, animatedTransforms, parentTransform);
-
-		// Draw Line
-		glm::mat4 childFinalMatrix = parentTransform; // Base
-		if (animatedTransforms.count(child.name))
-		{
-			childFinalMatrix = parentTransform * animatedTransforms.at(child.name);
-		}
-		else
-		{
-			childFinalMatrix = globalTransform * child.transformation;
-		}
-
-		glm::vec3 childPos = glm::vec3(childFinalMatrix[3]);
-		glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj);
-
-		if (screenPos.x > 0 && childScreenPos.x > 0)
-		{
-			drawList->AddLine(ImVec2(screenPos.x, screenPos.y), ImVec2(childScreenPos.x, childScreenPos.y), IM_COL32(255, 255, 0, 255), 2.0f);
-		}
+		// 재귀 호출
+		RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
 	}
 }
 
