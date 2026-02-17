@@ -1,4 +1,4 @@
-//Author: DOYEONG LEE
+ï»¿//Author: DOYEONG LEE
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: ObjectManager.cpp
@@ -16,6 +16,10 @@
 #include "SkeletalAnimation/SkeletalAnimation.hpp"
 
 #include "imgui.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 // Helper function to world-to-screen transform for ImGui drawing
 glm::vec2 WorldToScreen(glm::vec3 worldPos, glm::mat4 view, glm::mat4 proj)
@@ -788,22 +792,23 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 		Object* currentObj = FindObjectWithId(currentIndex);
 		if (isShowBone && currentObj->HasComponent<SkeletalAnimator>())
 		{
-			SkeletalAnimator* animator = currentObj->GetComponent<SkeletalAnimator>();
-			SkeletalAnimation* currentAnim = animator->GetCurrentAnimation();
+			SkeletalAnimator* animatorComp = currentObj->GetComponent<SkeletalAnimator>();
+			SkeletalAnimation* currentAnim = animatorComp->GetCurrentAnimation();
 			if (currentAnim)
 			{
-				const auto& transforms = animator->GetGlobalBoneTransforms();
+				const auto& transforms = animatorComp->GetGlobalBoneTransforms();
 
-				// Get Model Matrix from object
+				// Build model matrix identical to DynamicSprite::UpdateModel (GL mode)
 				glm::vec3 pos = currentObj->GetPosition();
 				glm::vec3 rot = currentObj->GetRotate3D();
 				glm::vec3 scale = currentObj->GetSize();
-				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-				model = glm::rotate(model, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-				model = glm::rotate(model, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-				model = glm::rotate(model, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-				model = glm::scale(model, scale);
 
+				glm::mat4 rotationMatrix = glm::toMat4(glm::quat(glm::radians(-rot)));
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos)
+					* rotationMatrix
+					* glm::scale(glm::mat4(1.0f), scale);
+
+				// No globalInverseTransform needed â€” bones and vertices share the same coordinate space
 				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
 			}
 		}
@@ -850,10 +855,10 @@ void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationSta
 
 void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 objectTransform)
 {
-	// 1. ÇöÀç ³ëµåÀÇ »À Çà·Ä °¡Á®¿À±â
+	// 1. í˜„ìž¬ ë…¸ë“œì˜ ë¼ˆ í–‰ë ¬ ê°€ì ¸ì˜¤ê¸°
 	if (animatedTransforms.find(node->name) == animatedTransforms.end())
 	{
-		// ¸Ê¿¡ ¾ø´Â ³ëµå(´õ¹Ì µî)´Â ±×³É ÀÚ½ÄÀ¸·Î Åë°ú½ÃÅµ´Ï´Ù.
+		// ë§µì— ì—†ëŠ” ë…¸ë“œ(ë”ë¯¸ ë“±)ëŠ” ê·¸ëƒ¥ ìžì‹ìœ¼ë¡œ í†µê³¼ì‹œí‚µë‹ˆë‹¤.
 		for (const auto& child : node->children)
 		{
 			RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
@@ -861,11 +866,11 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		return;
 	}
 
-	// 2. ÃÖÁ¾ ¿ùµå ÁÂÇ¥ °è»ê
+	// 2. ìµœì¢… ì›”ë“œ ì¢Œí‘œ ê³„ì‚°
 	glm::mat4 nodeGlobalMatrix = animatedTransforms.at(node->name);
 	glm::mat4 nodeWorldMatrix = objectTransform * nodeGlobalMatrix;
 
-	// 3. È­¸é ÁÂÇ¥ º¯È¯
+	// 3. í™”ë©´ ì¢Œí‘œ ë³€í™˜
 	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
 	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
@@ -873,7 +878,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]);
 	glm::vec2 screenPos = WorldToScreen(currentPos, view, proj);
 
-	// [µð¹ö±ë] »À À§Ä¡ Á¤º¸ Ãâ·Â
+	// [ë””ë²„ê¹…] ë¼ˆ ìœ„ì¹˜ ì •ë³´ ì¶œë ¥
 	static bool debugPrint = true;
 	if (debugPrint && node->name.find("Armature") == std::string::npos)
 	{
@@ -886,7 +891,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		Engine::GetLogger().LogDebug(LogCategory::Engine, debugBuffer);
 	}
 
-	// 4. Á¶ÀÎÆ®(Á¡) ±×¸®±â
+	// 4. ì¡°ì¸íŠ¸(ì ) ê·¸ë¦¬ê¸°
 	if (screenPos.x != -1 && screenPos.y != -1)
 	{
 		ImU32 color = IM_COL32(0, 255, 0, 255);
@@ -895,10 +900,10 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		drawList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 5.0f, color);
 	}
 
-	// 5. ÀÚ½Ä ³ëµå Ã³¸®
+	// 5. ìžì‹ ë…¸ë“œ ì²˜ë¦¬
 	for (const auto& child : node->children)
 	{
-		// ÀÚ½Ä »À°¡ ¸Ê¿¡ Á¸ÀçÇÒ ¶§¸¸ ¼±À» ±×¸³´Ï´Ù.
+		// ìžì‹ ë¼ˆê°€ ë§µì— ì¡´ìž¬í•  ë•Œë§Œ ì„ ì„ ê·¸ë¦½ë‹ˆë‹¤.
 		if (animatedTransforms.find(child.name) != animatedTransforms.end())
 		{
 			glm::mat4 childGlobalMatrix = animatedTransforms.at(child.name);
@@ -907,7 +912,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
 			glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
 
-			// µÎ Á¡ÀÌ ¸ðµÎ À¯È¿ÇÑ °æ¿ì¸¸ ¼± ±×¸®±â
+			// ë‘ ì ì´ ëª¨ë‘ ìœ íš¨í•œ ê²½ìš°ë§Œ ì„  ê·¸ë¦¬ê¸°
 			if (screenPos.x >= 0 && screenPos.y >= 0 &&
 				childScreenPos.x >= 0 && childScreenPos.y >= 0)
 			{
@@ -919,7 +924,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			}
 		}
 
-		// Àç±Í È£Ãâ
+		// ìž¬ê·€ í˜¸ì¶œ
 		RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
 	}
 }

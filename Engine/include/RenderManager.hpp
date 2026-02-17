@@ -187,12 +187,19 @@ private:
 		std::vector<SubMesh>& subMeshes,
 		const aiNode* node, const aiScene* scene, int childCount,
 		glm::vec3 size, glm::vec3 center, float unitScale,
-		glm::vec4 color, float metallic, float roughness);
+		glm::vec4 color, float metallic, float roughness,
+		std::map<std::string, ThreeDimension::BoneInfo>& globalBoneInfoMap,
+		int& globalBoneCount
+	);
+
 	void ProcessMesh(
 		std::vector<SubMesh>& subMeshes,
 		const aiMesh* mesh, const aiScene* scene, int childCount,
 		glm::vec3 size, glm::vec3 center, float unitScale,
-		glm::vec4 color, float metallic, float roughness);
+		glm::vec4 color, float metallic, float roughness,
+		std::map<std::string, ThreeDimension::BoneInfo>& globalBoneInfoMap,
+		int& globalBoneCount
+	);
 	void LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 	glm::mat4 Quantize(

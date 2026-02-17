@@ -72,6 +72,7 @@ void main()
         // Skinned mesh: apply bone transformations
         totalPosition = vec4(0.0f);
         totalNormal = vec3(0.0f);
+        float weightNormalizationScale = 1.0 / totalWeight;
         
         for(int i = 0 ; i < 4 ; i++)
         {
@@ -80,11 +81,13 @@ void main()
             if(i_weights[i] <= 0.0f)
                 continue;
 
-            vec4 localPosition = matrix.finalBones[i_boneIds[i]] * vec4(decoded_position, 1.0f);
-            totalPosition += localPosition * i_weights[i];
+        float normalizedWeight = i_weights[i] * weightNormalizationScale;
 
-            vec3 localNormal = mat3(matrix.finalBones[i_boneIds[i]]) * i_normal;
-            totalNormal += localNormal * i_weights[i];
+        vec4 localPosition = matrix.finalBones[i_boneIds[i]] * vec4(decoded_position, 1.0f);
+        totalPosition += localPosition * normalizedWeight; // i_weights[i] 대신 normalizedWeight 사용
+
+        vec3 localNormal = mat3(matrix.finalBones[i_boneIds[i]]) * i_normal;
+        totalNormal += localNormal * normalizedWeight; 
         }
     }
     else

@@ -6,6 +6,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h> // aiProcess_Triangulate
 #include <cassert>
+#include <iostream>
 
 // Constructor that loads animation data from a file using Assimp
 SkeletalAnimation::SkeletalAnimation(const std::string& animationPath, BufferWrapper::DynamicSprite3DMesh* meshData)
@@ -17,6 +18,15 @@ SkeletalAnimation::SkeletalAnimation(const std::string& animationPath, BufferWra
     if (!scene || !scene->mRootNode) {
         return;
     }
+
+    // Check if scene has animations
+    if (scene->mNumAnimations == 0) {
+        std::cerr << "[SkeletalAnimation] No animations found in: " << animationPath << std::endl;
+        return;
+    }
+
+    globalInverseTransform = ConvertMatrixToGLMFormat(scene->mRootNode->mTransformation);
+    globalInverseTransform = glm::inverse(globalInverseTransform);
 
     // Get the first animation sequence and its timing info
     auto animation = scene->mAnimations[0];
@@ -30,7 +40,7 @@ SkeletalAnimation::SkeletalAnimation(const std::string& animationPath, BufferWra
     ReadHierarchyData(rootNode, scene->mRootNode);
 
     // Map animation channels to the mesh's bone structure
-    ReadMissingBones(animation, *meshData);
+    ReadMissingBones(animation, *meshData, scene);
 }
 
 // Locate a specific bone object within the animation's bone list
@@ -44,14 +54,14 @@ SkeletalBone* SkeletalAnimation::FindBone(const std::string& name)
 }
 
 // Link animation channels to bone information and handle missing bones
-void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWrapper::DynamicSprite3DMesh& meshData)
+void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWrapper::DynamicSprite3DMesh& meshData, const aiScene* scene)
 {
     int size = animation->mNumChannels;
 
     auto& modelBoneInfoMap = meshData.boneInfoMap;
     int& boneCount = meshData.boneCount;
 
-    // Synchronize the bone map from the mesh to this animation instance
+    // 1. Copy existing bone info map
     this->boneInfoMap = modelBoneInfoMap;
 
     for (int i = 0; i < size; i++)
@@ -59,17 +69,33 @@ void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWra
         auto channel = animation->mChannels[i];
         std::string boneName = channel->mNodeName.data;
 
-        // If a bone exists in the animation but not in the mesh, add it to the map
+        // 2. If bone is not in the map, register it
         if (boneInfoMap.find(boneName) == boneInfoMap.end())
         {
             ThreeDimension::BoneInfo info;
             info.id = boneCount;
             info.offset = glm::mat4(1.0f);
+
+            // Try to find the offset matrix from the scene's meshes
+            if (scene && scene->HasMeshes())
+            {
+                for (unsigned int m = 0; m < scene->mNumMeshes; m++)
+                {
+                    const aiMesh* mesh = scene->mMeshes[m];
+                    for (unsigned int b = 0; b < mesh->mNumBones; b++)
+                    {
+                        std::string meshBoneName = mesh->mBones[b]->mName.data;
+                        if (meshBoneName == boneName)
+                        {
+                            info.offset = ConvertMatrixToGLMFormat(mesh->mBones[b]->mOffsetMatrix);
+                            break;
+                        }
+                    }
+                }
+            }
             boneInfoMap[boneName] = info;
             boneCount++;
         }
-
-        // Create a new bone object using the channel data
         bones.emplace_back(SkeletalBone(boneName, boneInfoMap[boneName].id, channel));
     }
 }

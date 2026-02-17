@@ -49,18 +49,9 @@ void DynamicSprite::Update(float dt)
 	UpdateProjection();
 	UpdateView();
 	
-	// Check Skinned mesh 
-	bool hasSkeleton = GetOwner()->HasComponent<SkeletalAnimator>();
-	if (hasSkeleton)
-	{
-		// model -> identity (Maybe need to change apply Obj's TRS)
-		UpdateModel(glm::vec3(0), glm::vec3(1), glm::vec3(0));
-	}
-	else
-	{
-		// object transform 
-		UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate3D());
-	}
+	
+	// object transform 
+	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate3D());
 
 	UpdateAnimation(dt);
 }

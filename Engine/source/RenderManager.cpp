@@ -145,7 +145,26 @@ void RenderManager::CreateMesh(
 		float extent = glm::max(size.x, glm::max(size.y, size.z));
 		float unitScale = 1.f / extent;
 
-		ProcessNode(subMeshes, scene->mRootNode, scene, 0, globalMaxPos - globalMinPos, center, unitScale, color, metallic, roughness);
+		std::map<std::string, ThreeDimension::BoneInfo> globalBoneInfoMap;
+		int globalBoneCount = 0;
+
+		// Store the model's root inverse transform for skeletal animation
+		glm::mat4 modelGlobalInverse = glm::inverse(AssimpToGLMMatrix(scene->mRootNode->mTransformation));
+
+		ProcessNode(subMeshes, scene->mRootNode, scene, 0,
+			globalMaxPos - globalMinPos, center, unitScale,
+			color, metallic, roughness,
+			globalBoneInfoMap, globalBoneCount);
+
+		// Store modelGlobalInverse in all sub-meshes that have bones
+		for (auto& subMesh : subMeshes)
+		{
+			auto* meshData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+			if (meshData && !meshData->boneInfoMap.empty())
+			{
+				meshData->modelGlobalInverseTransform = modelGlobalInverse;
+			}
+		}
 		return;
 	}
 
@@ -679,17 +698,21 @@ void RenderManager::ProcessNode(
 	std::vector<SubMesh>& subMeshes,
 	const aiNode* node, const aiScene* scene, int childCount,
 	glm::vec3 size, glm::vec3 center, float unitScale,
-	glm::vec4 color, float metallic, float roughness)
+	glm::vec4 color, float metallic, float roughness,
+	std::map<std::string, ThreeDimension::BoneInfo>& globalBoneInfoMap,
+	int& globalBoneCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(subMeshes, mesh, scene, childCount, size, center, unitScale, color, metallic, roughness);
+		ProcessMesh(subMeshes, mesh, scene, childCount, size, center, unitScale,
+			color, metallic, roughness, globalBoneInfoMap, globalBoneCount);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(subMeshes, node->mChildren[i], scene, i, size, center, unitScale, color, metallic, roughness);
+		ProcessNode(subMeshes, node->mChildren[i], scene, i, size, center, unitScale,
+			color, metallic, roughness, globalBoneInfoMap, globalBoneCount);
 	}
 }
 
@@ -697,12 +720,20 @@ void RenderManager::ProcessMesh(
 	std::vector<SubMesh>& subMeshes,
 	const aiMesh* mesh, const aiScene* scene, int childCount,
 	glm::vec3 size, glm::vec3 center, float unitScale,
-	glm::vec4 color, float metallic, float roughness)
+	glm::vec4 color, float metallic, float roughness,
+	std::map<std::string, ThreeDimension::BoneInfo>& globalBoneInfoMap,
+	int& globalBoneCount)
 {
 	SubMesh subMesh;
 	subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true) : std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, false);
 	
 	auto* sprite = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+	
+	if (mesh->mNumBones > 0)
+	{
+		unitScale = 1.0f;
+		center = glm::vec3(0.0f);
+	}
 
 	auto& quantizedVertices = sprite->vertices;
 #ifdef _DEBUG
@@ -733,41 +764,102 @@ void RenderManager::ProcessMesh(
 	meshNormalizationTransform = glm::translate(meshNormalizationTransform, -center);
 
 	// Process Bones (Skeletal Animation Data)
+	//for (unsigned int i = 0; i < mesh->mNumBones; i++)
+	//{
+	//	int boneID = -1;
+	//	std::string boneName = mesh->mBones[i]->mName.C_Str();
+
+	//	if (sprite->boneInfoMap.find(boneName) == sprite->boneInfoMap.end())
+	//	{
+	//		ThreeDimension::BoneInfo newBoneInfo;
+	//		newBoneInfo.id = sprite->boneCount;
+
+	//		//// ===== Normalize Bone Offset Matrix =====
+	//		//glm::mat4 originalOffset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+
+	//		///* * Logical Flow:
+	//		// * 1. Offset Matrix maps [Mesh Space] -> [Bone Space].
+	//		// * 2. Vertices are now transformed by 'M' (meshNormalizationTransform).
+	//		// * 3. To compensate, we must reverse 'M' before applying the original offset.
+	//		// * Formula: NewOffset = OriginalOffset * Inverse(M)
+	//		// */
+	//		//newBoneInfo.offset = originalOffset * glm::inverse(meshNormalizationTransform);
+
+	//		newBoneInfo.offset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+	//		sprite->boneInfoMap[boneName] = newBoneInfo;
+	//		boneID = sprite->boneCount;
+	//		sprite->boneCount++;
+	//	}
+	//	else
+	//	{
+	//		// Bone already exists
+	//		boneID = sprite->boneInfoMap[boneName].id;
+	//	}
+
+	//	// Assign weights to vertices affected by this bone
+	//	/*auto weights = mesh->mBones[i]->mWeights;
+	//	int numWeights = mesh->mBones[i]->mNumWeights;
+
+	//	for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+	//	{
+	//		int vertexId = weights[weightIndex].mVertexId;
+	//		float weight = weights[weightIndex].mWeight;
+	//		SetVertexBoneData(vertices[vertexId], boneID, weight);
+	//	}*/
+	//	aiVertexWeight* weights = mesh->mBones[i]->mWeights;
+	//	int numWeights = mesh->mBones[i]->mNumWeights;
+
+	//	for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+	//	{
+	//		int vertexId = weights[weightIndex].mVertexId;
+	//		float weight = weights[weightIndex].mWeight;
+
+	//		// 정점에 BoneID와 Weight를 심어주는 헬퍼 함수 호출
+	//		// vertices 배열(quantizedVertices 혹은 일반 vertices)에 접근해야 함
+
+	//		// 주의: RenderManager가 QuantizedVertex를 쓴다면 구조에 맞게 접근 필요
+	//		// 여기서는 vertices(원본)에 먼저 데이터를 넣고 나중에 Quantize한다고 가정하거나
+	//		// 이미 Quantize된 배열을 수정해야 한다면 아래 로직을 조정해야 함.
+
+	//		// 만약 vertices 벡터가 존재한다면:
+	//		if (vertexId < vertices.size())
+	//		{
+	//			SetVertexBoneData(vertices[vertexId], boneID, weight);
+	//		}
+	//	}
+	//}
 	for (unsigned int i = 0; i < mesh->mNumBones; i++)
 	{
 		int boneID = -1;
 		std::string boneName = mesh->mBones[i]->mName.C_Str();
 
-		if (sprite->boneInfoMap.find(boneName) == sprite->boneInfoMap.end())
+		// Check if the bone is already registered in the global map
+		if (globalBoneInfoMap.find(boneName) == globalBoneInfoMap.end())
 		{
 			ThreeDimension::BoneInfo newBoneInfo;
-			newBoneInfo.id = sprite->boneCount;
+			newBoneInfo.id = globalBoneCount;
 
-			// ===== Normalize Bone Offset Matrix =====
+			// Convert Assimp matrix and adjust the offset based on model normalization
 			glm::mat4 originalOffset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
-
-			/* * Logical Flow:
-			 * 1. Offset Matrix maps [Mesh Space] -> [Bone Space].
-			 * 2. Vertices are now transformed by 'M' (meshNormalizationTransform).
-			 * 3. To compensate, we must reverse 'M' before applying the original offset.
-			 * Formula: NewOffset = OriginalOffset * Inverse(M)
-			 */
 			newBoneInfo.offset = originalOffset * glm::inverse(meshNormalizationTransform);
 
-			sprite->boneInfoMap[boneName] = newBoneInfo;
-			boneID = sprite->boneCount;
-			sprite->boneCount++;
+			// Store the new bone info and increment the global bone counter
+			globalBoneInfoMap[boneName] = newBoneInfo;
+			boneID = globalBoneCount;
+			globalBoneCount++;
 		}
 		else
 		{
-			// Bone already exists
-			boneID = sprite->boneInfoMap[boneName].id;
+			// Reuse the ID if the bone was already registered by another mesh
+			boneID = globalBoneInfoMap[boneName].id;
 		}
 
-		// Assign weights to vertices affected by this bone
+		// Sync the local map with the global bone information
+		sprite->boneInfoMap[boneName] = globalBoneInfoMap[boneName];
+
+		// Assign bone weights and IDs to each affected vertex
 		auto weights = mesh->mBones[i]->mWeights;
 		int numWeights = mesh->mBones[i]->mNumWeights;
-
 		for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
 		{
 			int vertexId = weights[weightIndex].mVertexId;
@@ -775,6 +867,9 @@ void RenderManager::ProcessMesh(
 			SetVertexBoneData(vertices[vertexId], boneID, weight);
 		}
 	}
+
+	// Update the final bone count for this sprite after processing all bones
+	sprite->boneCount = globalBoneCount;
 
 	// Indices
 	for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
@@ -788,7 +883,7 @@ void RenderManager::ProcessMesh(
 
 	// Material
 	//aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-	//LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+	//LoadMaterialTextures(material, aiTextureType_DIFFUSE);
 
 	for (auto it = vertices.begin(); it != vertices.end(); ++it)
 	{
@@ -1025,15 +1120,15 @@ glm::mat4 RenderManager::Quantize(
 
 		minQuantizedPos = glm::min(minQuantizedPos, qp);
 
-		// Copy skeletal data directly
-		quantizedVertices[i].boneIDs = glm::ivec4(
-			vertices[i].boneIDs[0], vertices[i].boneIDs[1],
-			vertices[i].boneIDs[2], vertices[i].boneIDs[3]
-		);
-		quantizedVertices[i].weights = glm::vec4(
-			vertices[i].weights[0], vertices[i].weights[1],
-			vertices[i].weights[2], vertices[i].weights[3]
-		);
+		//// Copy skeletal data directly
+		//quantizedVertices[i].boneIDs = glm::ivec4(
+		//	vertices[i].boneIDs[0], vertices[i].boneIDs[1],
+		//	vertices[i].boneIDs[2], vertices[i].boneIDs[3]
+		//);
+		//quantizedVertices[i].weights = glm::vec4(
+		//	vertices[i].weights[0], vertices[i].weights[1],
+		//	vertices[i].weights[2], vertices[i].weights[3]
+		//);
 	}
 
 	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
@@ -1048,6 +1143,12 @@ glm::mat4 RenderManager::Quantize(
 		quantizedVertices[i].normal = vertices[i].normal;
 		quantizedVertices[i].uv = vertices[i].uv;
 		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
+
+		for (int j = 0; j < 4; ++j)
+		{
+			quantizedVertices[i].boneIDs[j] = vertices[i].boneIDs[j];
+			quantizedVertices[i].weights[j] = vertices[i].weights[j];
+		}
 	}
 
 	// Decode
@@ -1141,7 +1242,7 @@ void RenderManager::RenderingControllerForImGui()
 					{
 						FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
 						lastActiveEffect = newEffect;
-						UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
+						UpdateScalePreset(newEffect, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasScalePreset));
 					}
 					if (casUpscalingEnabled)
 					{
