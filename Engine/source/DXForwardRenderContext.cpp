@@ -51,8 +51,8 @@ void DXForwardRenderContext::Initialize()
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
 	sampleDesc.Quality = m_renderManager->m_renderTarget->GetMSAAQualityLevel();
-	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16B16A16_FLOAT };
 	if (m_renderManager->m_meshShaderEnabled)
 	{
 		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
@@ -72,42 +72,28 @@ void DXForwardRenderContext::Initialize()
 	}
 	else
 	{
-		m_pipeline3D = std::make_unique<DXPipeLine>(
-			m_renderManager->m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-			rasterizerDesc,
-			true,
-			true,
-			true,
-			DXGI_FORMAT_R16G16B16A16_FLOAT,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
+		m_pipeline3D = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3D)
+			.SetShaders("../Engine/shaders/hlsl/3D.vert.hlsl", "../Engine/shaders/hlsl/3D.frag.hlsl")
+			.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout })
+			.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
+			.SetDepthStencil(true, true)
+			.SetRenderTargets(rtvFormats)
+			.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+			.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+			.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+			.Build();
 
 		// @TODO Separate to Wireframe Render Context (Debug Context)
-		m_pipeline3DLine = std::make_unique<DXPipeLine>(
-			m_renderManager->m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
-			D3D12_FILL_MODE_WIREFRAME,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-			rasterizerDesc,
-			true,
-			true,
-			true,
-			DXGI_FORMAT_R16G16B16A16_FLOAT,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
+		m_pipeline3DLine = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3D)
+			.SetShaders("../Engine/shaders/hlsl/3D.vert.hlsl", "../Engine/shaders/hlsl/3D.frag.hlsl")
+			.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout })
+			.SetRasterizer(D3D12_FILL_MODE_WIREFRAME, D3D12_CULL_MODE_BACK, true)
+			.SetDepthStencil(true, true)
+			.SetRenderTargets(rtvFormats)
+			.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+			.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+			.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+			.Build();
 	}
 
 	// @TODO Separate to Normal Vector Visualization Render Context (Debug Context)
@@ -123,23 +109,16 @@ void DXForwardRenderContext::Initialize()
 	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
-	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature3DNormal,
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		rasterizerDesc,
-		true,
-		true,
-		true,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
-	);
+	m_pipeline3DNormal = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3DNormal)
+		.SetShaders("../Engine/shaders/hlsl/Normal3D.vert.hlsl", "../Engine/shaders/hlsl/Normal3D.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
+		.SetDepthStencil(true, true)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+		.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+		.Build();
 #endif
 }
 

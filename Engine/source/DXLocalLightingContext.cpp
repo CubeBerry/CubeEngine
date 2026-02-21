@@ -41,27 +41,16 @@ void DXLocalLightingContext::Initialize()
 	blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-
-	m_pipeline = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature,
-		std::filesystem::path("../Engine/shaders/hlsl/LocalLightingPass.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/LocalLightingPass.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_FRONT,
-		sampleDesc,
-		blendDesc,
-		rasterizerDesc,
-		// Need to turn on CCW
-		true,
-		false,
-		false,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16B16A16_FLOAT };
+	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
+		.SetShaders("../Engine/shaders/hlsl/LocalLightingPass.vert.hlsl", "../Engine/shaders/hlsl/LocalLightingPass.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_FRONT, true)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.SetBlendMode(blendDesc)
+		.Build();
 
 	// Create Unit Sphere
 	CreateUnitSphere();

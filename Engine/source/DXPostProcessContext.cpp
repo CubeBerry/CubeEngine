@@ -44,26 +44,17 @@ void DXPostProcessContext::Initialize()
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Tone Mapping Root Signature"));
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	m_pipeline = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature,
-		"../Engine/shaders/hlsl/ToneMapping.vert.hlsl",
-		"../Engine/shaders/hlsl/ToneMapping.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{},
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		rasterizerDesc,
-		false,
-		false,
-		false,
-		// RTV Format should be DXGI_FORMAT_R8G8B8A8_UNORM to render tone-mapped LDR output
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	// RTV Format should be DXGI_FORMAT_R8G8B8A8_UNORM to render tone-mapped LDR output
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R8G8B8A8_UNORM };
+	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
+		.SetShaders("../Engine/shaders/hlsl/ToneMapping.vert.hlsl", "../Engine/shaders/hlsl/ToneMapping.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{})
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+		.Build();
 }
 
 void DXPostProcessContext::OnResize()

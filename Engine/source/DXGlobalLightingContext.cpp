@@ -2,6 +2,9 @@
 //Project: CubeEngine
 //File: DXGlobalLightingContext.cpp
 #include "DXGlobalLightingContext.hpp"
+
+#include <stdbool.h>
+
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
 #include "DXSkyboxRenderContext.hpp"
@@ -31,26 +34,14 @@ void DXGlobalLightingContext::Initialize()
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Global Lighting-Pass Root Signature"));
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-
-	m_pipeline = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature,
-		std::filesystem::path("../Engine/shaders/hlsl/GlobalLightingPass.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/GlobalLightingPass.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{},
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		rasterizerDesc,
-		false,
-		false,
-		false,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16B16A16_FLOAT };
+	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
+		.SetShaders("../Engine/shaders/hlsl/GlobalLightingPass.vert.hlsl", "../Engine/shaders/hlsl/GlobalLightingPass.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{})
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 }
 
 void DXGlobalLightingContext::OnResize()

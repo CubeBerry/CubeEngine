@@ -22,25 +22,15 @@ void DX2DRenderContext::Initialize()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	m_pipeline2D = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature2D,
-		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		rasterizerDesc,
-		true,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R8G8B8A8_UNORM };
+	m_pipeline2D = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature2D)
+		.SetShaders("../Engine/shaders/hlsl/2D.vert.hlsl", "../Engine/shaders/hlsl/2D.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, true)
+		.SetDepthStencil(true, true)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.Build();
 }
 
 void DX2DRenderContext::OnResize()
