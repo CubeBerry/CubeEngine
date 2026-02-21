@@ -32,9 +32,8 @@ void DXNaiveLightingContext::Initialize()
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Naive Lighting-Pass Root Signature"));
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipeline = std::make_unique<DXPipeLine>(
 		m_renderManager->m_device,
@@ -46,6 +45,7 @@ void DXNaiveLightingContext::Initialize()
 		D3D12_CULL_MODE_BACK,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		false,
 		false,
 		false,

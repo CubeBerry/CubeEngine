@@ -15,6 +15,7 @@ DXPipeLine::DXPipeLine(
 	D3D12_CULL_MODE cullMode,
 	const DXGI_SAMPLE_DESC& sampleDesc,
 	const D3D12_RENDER_TARGET_BLEND_DESC& blendDesc,
+	D3D12_RASTERIZER_DESC& rasterizerDesc,
 	bool isCCW,
 	bool isDepth,
 	bool isDepthWrite,
@@ -100,12 +101,10 @@ DXPipeLine::DXPipeLine(
 	D3D12_BLEND_DESC finalBlendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	finalBlendDesc.RenderTarget[0] = blendDesc;
 
-	D3D12_RASTERIZER_DESC& desc = psoDesc.RasterizerState;
-	desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	desc.FillMode = fillMode;
-	desc.CullMode = cullMode;
+	rasterizerDesc.FillMode = fillMode;
+	rasterizerDesc.CullMode = cullMode;
 	// DirectX basically uses Left-Handed Coordinate System but this makes DirectX use Right-Handed Coordinate System
-	desc.FrontCounterClockwise = isCCW ? TRUE : FALSE;
+	rasterizerDesc.FrontCounterClockwise = isCCW ? TRUE : FALSE;
 
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE{ m_vertexShader.Get()};
@@ -114,7 +113,7 @@ DXPipeLine::DXPipeLine(
 	//psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
 	psoDesc.BlendState = finalBlendDesc;
 	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.RasterizerState = desc;
+	psoDesc.RasterizerState = rasterizerDesc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
 	psoDesc.DepthStencilState.DepthWriteMask = isDepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
@@ -140,6 +139,7 @@ DXPipeLine::DXPipeLine(
 	D3D12_CULL_MODE cullMode,
 	const DXGI_SAMPLE_DESC& sampleDesc,
 	const D3D12_RENDER_TARGET_BLEND_DESC& blendDesc,
+	D3D12_RASTERIZER_DESC& rasterizerDesc,
 	bool isCCW,
 	bool isDepth,
 	bool isDepthWrite,
@@ -225,12 +225,10 @@ DXPipeLine::DXPipeLine(
 	D3D12_BLEND_DESC finalBlendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	finalBlendDesc.RenderTarget[0] = blendDesc;
 
-	D3D12_RASTERIZER_DESC& desc = psoDesc.RasterizerState;
-	desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	desc.FillMode = fillMode;
-	desc.CullMode = cullMode;
+	rasterizerDesc.FillMode = fillMode;
+	rasterizerDesc.CullMode = cullMode;
 	// DirectX basically uses Left-Handed Coordinate System but this makes DirectX use Right-Handed Coordinate System
-	desc.FrontCounterClockwise = isCCW ? TRUE : FALSE;
+	rasterizerDesc.FrontCounterClockwise = isCCW ? TRUE : FALSE;
 
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE{ m_vertexShader.Get() };
@@ -239,7 +237,7 @@ DXPipeLine::DXPipeLine(
 	//psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
 	psoDesc.BlendState = finalBlendDesc;
 	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.RasterizerState = desc;
+	psoDesc.RasterizerState = rasterizerDesc;
 	psoDesc.DepthStencilState.DepthEnable = isDepth ? TRUE : FALSE;
 	psoDesc.DepthStencilState.DepthWriteMask = isDepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;

@@ -23,6 +23,7 @@ void DXSkyboxRenderContext::Initialize()
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = m_renderManager->m_deferredRenderingEnabled ? 1 : m_renderManager->m_renderTarget->GetMSAASampleCount();
 	sampleDesc.Quality = m_renderManager->m_deferredRenderingEnabled ? 0 : m_renderManager->m_renderTarget->GetMSAAQualityLevel();
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipelineSkybox = std::make_unique<DXPipeLine>(
 		m_renderManager->m_device,
@@ -34,6 +35,7 @@ void DXSkyboxRenderContext::Initialize()
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		true,
 		true,
 		false,

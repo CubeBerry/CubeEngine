@@ -42,6 +42,7 @@ void DXLocalLightingContext::Initialize()
 	blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipeline = std::make_unique<DXPipeLine>(
 		m_renderManager->m_device,
@@ -53,6 +54,7 @@ void DXLocalLightingContext::Initialize()
 		D3D12_CULL_MODE_FRONT,
 		sampleDesc,
 		blendDesc,
+		rasterizerDesc,
 		// Need to turn on CCW
 		true,
 		false,

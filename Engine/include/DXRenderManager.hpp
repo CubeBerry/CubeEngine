@@ -22,10 +22,11 @@
 #include "DXConstantBuffer.hpp"
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
+#include "DXGBufferContext.hpp"
 #include "DXNaiveLightingContext.hpp"
 #include "DXGlobalLightingContext.hpp"
 #include "DXLocalLightingContext.hpp"
-#include "DXGBufferContext.hpp"
+#include "DXShadowMapContext.hpp"
 #include "DXSkyboxRenderContext.hpp"
 #include "DXPostProcessContext.hpp"
 
@@ -42,6 +43,7 @@ class DXRenderManager : public RenderManager
 	friend class DXNaiveLightingContext;
 	friend class DXGlobalLightingContext;
 	friend class DXLocalLightingContext;
+	friend class DXShadowMapContext;
 	friend class DXSkyboxRenderContext;
 	friend class DXPostProcessContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
@@ -135,6 +137,8 @@ private:
 	std::unique_ptr<DXGlobalLightingContext> m_globalLightingContext;
 	// Local (Point) Lighting Context
 	std::unique_ptr<DXLocalLightingContext> m_localLightingContext;
+	// Shadow Map Context
+	std::unique_ptr<DXShadowMapContext> m_shadowMapContext;
 	// Skybox Render Context
 	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
 	void LoadSkybox(const std::filesystem::path& path) override;

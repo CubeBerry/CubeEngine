@@ -51,6 +51,7 @@ void DXForwardRenderContext::Initialize()
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
 	sampleDesc.Quality = m_renderManager->m_renderTarget->GetMSAAQualityLevel();
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	if (m_renderManager->m_meshShaderEnabled)
 	{
@@ -81,6 +82,7 @@ void DXForwardRenderContext::Initialize()
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
 			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+			rasterizerDesc,
 			true,
 			true,
 			true,
@@ -99,6 +101,7 @@ void DXForwardRenderContext::Initialize()
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
 			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+			rasterizerDesc,
 			true,
 			true,
 			true,
@@ -130,6 +133,7 @@ void DXForwardRenderContext::Initialize()
 		D3D12_CULL_MODE_BACK,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		true,
 		true,
 		true,

@@ -159,9 +159,8 @@ void DXSkybox::EquirectangularToCube()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipelines[0] = std::make_unique<DXPipeLine>(
 		m_device,
@@ -173,6 +172,7 @@ void DXSkybox::EquirectangularToCube()
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		false,
 		false,
 		false,
@@ -312,9 +312,8 @@ void DXSkybox::CalculateIrradiance()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipelines[1] = std::make_unique<DXPipeLine>(
 		m_device,
@@ -326,6 +325,7 @@ void DXSkybox::CalculateIrradiance()
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		false,
 		false,
 		false,
@@ -453,9 +453,8 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipelines[2] = std::make_unique<DXPipeLine>(
 		m_device,
@@ -467,6 +466,7 @@ void DXSkybox::PrefilteredEnvironmentMap()
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		false,
 		false,
 		false,
@@ -596,9 +596,8 @@ void DXSkybox::BRDFLUT()
 	DXHelper::ThrowIfFailed(m_rootSignatures[3]->SetName(L"Skybox BRDF LUT Root Signature"));
 
 	// Create Pipeline State Object (PSO)
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	m_pipelines[3] = std::make_unique<DXPipeLine>(
 		m_device,
@@ -610,6 +609,7 @@ void DXSkybox::BRDFLUT()
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		false,
 		false,
 		false,

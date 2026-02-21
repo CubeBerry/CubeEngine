@@ -111,9 +111,8 @@ void DXGBufferContext::Initialize()
 	DXAttributeLayout weightLayout{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, weights), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	// Turn off MSAA for G-Buffer pass
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	std::vector<DXGI_FORMAT> rtvFormats = {
 		m_gBuffers[static_cast<size_t>(GBufferType::Albedo)].format,
@@ -151,6 +150,7 @@ void DXGBufferContext::Initialize()
 			D3D12_CULL_MODE_BACK,
 			sampleDesc,
 			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+			rasterizerDesc,
 			true,
 			true,
 			true,

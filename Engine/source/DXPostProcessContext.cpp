@@ -45,6 +45,7 @@ void DXPostProcessContext::Initialize()
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Tone Mapping Root Signature"));
 
 	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	m_pipeline = std::make_unique<DXPipeLine>(
 		m_renderManager->m_device,
 		m_rootSignature,
@@ -55,6 +56,7 @@ void DXPostProcessContext::Initialize()
 		D3D12_CULL_MODE_NONE,
 		sampleDesc,
 		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
+		rasterizerDesc,
 		false,
 		false,
 		false,
