@@ -239,139 +239,66 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     shadowUV_0[int(1)] = - projectionCoords_0.y * 0.5f + 0.5f;
 
 #line 239
-    bool _S6;
+    float _S6;
 
-#line 245
-    if((shadowUV_0.x) >= 0.0f)
+#line 247
+    if((projectionCoords_0.z) > (shadowMap_0.Sample(gSampler_0, shadowUV_0).x))
     {
 
-#line 245
-        _S6 = (shadowUV_0.x) <= 1.0f;
+#line 247
+        _S6 = 1.0f;
 
-#line 245
+#line 247
     }
     else
     {
 
-#line 245
-        _S6 = false;
+#line 247
+        _S6 = 0.0f;
 
-#line 245
+#line 247
     }
 
-#line 245
-    if(_S6)
-    {
-
-#line 245
-        _S6 = (shadowUV_0.y) >= 0.0f;
-
-#line 245
-    }
-    else
-    {
-
-#line 245
-        _S6 = false;
-
-#line 245
-    }
-
-#line 245
-    if(_S6)
-    {
-
-#line 245
-        _S6 = (shadowUV_0.y) <= 1.0f;
-
-#line 245
-    }
-    else
-    {
-
-#line 245
-        _S6 = false;
-
-#line 245
-    }
-
-#line 245
-    float shadow_0;
-
-#line 245
-    if(_S6)
-    {
-
-
-
-        if((projectionCoords_0.z - 0.00499999988824129f) > (shadowMap_0.Sample(gSampler_0, shadowUV_0).x))
-        {
-
-#line 250
-            shadow_0 = 1.0f;
-
-#line 250
-        }
-        else
-        {
-
-#line 250
-            shadow_0 = 0.0f;
-
-#line 250
-        }
-
-#line 245
-    }
-    else
-    {
-
-#line 245
-        shadow_0 = 0.0f;
-
-#line 245
-    }
-
-#line 245
+#line 247
     int l_0 = int(0);
 
-#line 245
+#line 247
     float3 resultColor_0 = _S4;
 
-#line 254
+
     for(;;)
     {
 
-#line 254
+#line 250
         if(l_0 < (pushConstants_0.activeDirectionalLights_0))
         {
         }
         else
         {
 
-#line 254
+#line 250
             break;
         }
 
 
-        float3 resultColor_1 = resultColor_0 + PBR_0(_S5, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0) * (1.0f - shadow_0);
+        float3 resultColor_1 = resultColor_0 + PBR_0(_S5, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0) * (1.0f - _S6);
 
-#line 254
+#line 250
         l_0 = l_0 + int(1);
 
-#line 254
+#line 250
         resultColor_0 = resultColor_1;
 
-#line 254
+#line 250
     }
 
-#line 263
+#line 259
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, roughness_2);
 
-#line 277
+#line 273
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), roughness_2)).xy;
 
-#line 299
+#line 295
     return float4((1.0f - metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0, 1.0f);
 }
 

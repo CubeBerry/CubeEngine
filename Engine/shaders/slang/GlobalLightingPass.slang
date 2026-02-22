@@ -242,13 +242,9 @@ float4 fragmentMain(VSOutput input) : SV_Target
 #endif
 
     float shadow = 0.0;
-    if (shadowUV.x >= 0.0 && shadowUV.x <= 1.0 && shadowUV.y >= 0.0 && shadowUV.y <= 1.0)
-    {
-        float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
-        float currentDepth = projectionCoords.z;
-        float bias = 0.005;
-        shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
-    }
+    float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
+    float currentDepth = projectionCoords.z;
+    shadow = currentDepth > closestDepth ? 1.0 : 0.0;
 
     // Calculate Directional Lights
     for (int l = 0; l < pushConstants.activeDirectionalLights; ++l)
