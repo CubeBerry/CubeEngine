@@ -47,6 +47,7 @@ struct fDirectionalLightList
 
 struct PushConstants
 {
+    float4x4 lightViewProjection;
     float3 viewPosition;
     int meshletVisualization;
     int activeDirectionalLights;
@@ -56,6 +57,8 @@ ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
 #else
 [[vk::push_constant]] PushConstants pushConstants;
 #endif
+
+Texture2D shadowMap : register(t4, space1);
 
 Texture2D gAlbedo : register(t0, space1);
 Texture2D gNormal : register(t1, space1);
@@ -226,12 +229,33 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 N = normalize(normal);
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
+    // Shadow Mapping
+    float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(worldPosition, 1.0));
+    float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
+
+    float2 shadowUV;
+    shadowUV.x = projectionCoords.x * 0.5 + 0.5;
+#if defined(__hlsl__)
+    shadowUV.y = -projectionCoords.y * 0.5 + 0.5;
+#else
+    shadowUV.y = projectionCoords.y * 0.5 + 0.5;
+#endif
+
+    float shadow = 0.0;
+    if (shadowUV.x >= 0.0 && shadowUV.x <= 1.0 && shadowUV.y >= 0.0 && shadowUV.y <= 1.0)
+    {
+        float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
+        float currentDepth = projectionCoords.z;
+        float bias = 0.005;
+        shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    }
+
     // Calculate Directional Lights
     for (int l = 0; l < pushConstants.activeDirectionalLights; ++l)
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l) * (1.0 - shadow);
     }
 
     // PBR IBL Ambient Lighting

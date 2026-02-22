@@ -12,6 +12,7 @@
 #line 11 "slang/ShadowMapPass.slang"
 struct PushConstants_0
 {
+    float4x4 decode_0;
     float4x4 localToNDC_0;
 };
 
@@ -23,13 +24,15 @@ cbuffer pushConstants_0 : register(b0)
 #line 6
 struct VSInput_0
 {
-    float3 position_0 : POSITION0;
+    uint position_0 : POSITION0;
 };
 
 
-#line 22
+#line 23
 float4 vertexMain(VSInput_0 input_0) : SV_POSITION
 {
-    return mul(pushConstants_0.localToNDC_0, float4(input_0.position_0, 1.0f));
+
+#line 30
+    return mul(pushConstants_0.localToNDC_0, float4(mul(pushConstants_0.decode_0, float4(float3(float((input_0.position_0) & 2047U), float(((input_0.position_0) >> int(11)) & 2047U), float(((input_0.position_0) >> int(22)) & 1023U)), 1.0f)).xyz, 1.0f));
 }
 

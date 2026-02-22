@@ -11,7 +11,7 @@
 void DXGlobalLightingContext::Initialize()
 {
 	// Copy G-Buffer SRV handles to Main SRV Heap
-	m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(4);
+	m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(5);
 	D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
 	D3D12_CPU_DESCRIPTOR_HANDLE srcHandle = m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart();
 	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -19,7 +19,7 @@ void DXGlobalLightingContext::Initialize()
 	// Create root signature and pipeline
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(4);
+	rootParameters.resize(5);
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
@@ -28,6 +28,9 @@ void DXGlobalLightingContext::Initialize()
 	CD3DX12_DESCRIPTOR_RANGE1 iblRange;
 	iblRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2);
 	rootParameters[3].InitAsDescriptorTable(1, &iblRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 shadowMapRange;
+	shadowMapRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 1);
+	rootParameters[4].InitAsDescriptorTable(1, &shadowMapRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Global Lighting-Pass Root Signature"));
@@ -81,6 +84,7 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
 	pushConstants = {
+		.lightViewProjection = m_renderManager->m_shadowMapContext->GetLightViewProjection(),
 		.viewPosition = pushConstants.viewPosition = glm::vec3(
 		inverseView[3].x,
 		inverseView[3].y,
@@ -100,6 +104,10 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		auto skyboxGpuHandle = m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv();
 		commandList->SetGraphicsRootDescriptorTable(3, skyboxGpuHandle);
 	}
+	UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
+	D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+	shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
+	commandList->SetGraphicsRootDescriptorTable(4, shadowGpuHandle);
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3, 1, 0, 0);

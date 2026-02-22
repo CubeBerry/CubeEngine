@@ -22,17 +22,20 @@ public:
 	void OnResize() override;
 	void Execute(ICommandListWrapper* commandListWrapper) override;
 	void CleanUp() override;
+
+	UINT GetSrvIndex() const { return m_srvHandle.second; }
+	glm::mat4 GetLightViewProjection() const { return m_lightViewProjection; }
 private:
 	void CreateDepthTexture();
-	glm::mat4 CreateLightViewProjection(const glm::mat4& model) const;
+	glm::mat4 CreateLightViewProjection();
 
 	DXRenderManager* m_renderManager;
 	std::unique_ptr<DXPipeLine> m_pipeline;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 
 	ComPtr<ID3D12Resource> m_texture;
-	UINT64 m_width{ 1024 };
-	UINT m_height{ 1024 };
+	UINT64 m_width{ 2048 };
+	UINT m_height{ 2048 };
 
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
@@ -43,6 +46,8 @@ private:
 	// Push Constants for Shadow Map Pass
 	struct alignas(16) PushConstants
 	{
+		glm::mat4 decode;
 		glm::mat4 localToNDC;
 	} pushConstants;
+	glm::mat4 m_lightViewProjection;
 };

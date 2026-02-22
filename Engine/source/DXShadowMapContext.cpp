@@ -19,7 +19,7 @@ void DXShadowMapContext::Initialize()
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Shadow Map Pass Root Signature"));
 
-	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	std::vector<DXGI_FORMAT> rtvFormats = {};
 	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
@@ -58,6 +58,7 @@ void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->OMSetRenderTargets(0, nullptr, FALSE, &m_dsvHandle);
 	commandList->ClearDepthStencilView(m_dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+	m_lightViewProjection = CreateLightViewProjection();
 	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
 	for (const auto& sprite : sprites)
 	{
@@ -70,7 +71,8 @@ void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 
 			// Update Constant Buffer
 			pushConstants = {
-				.localToNDC = CreateLightViewProjection(spriteData->vertexUniform.model)
+				.decode = spriteData->vertexUniform.decode,
+				.localToNDC = m_lightViewProjection * spriteData->vertexUniform.model
 			};
 			commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
 
@@ -149,7 +151,7 @@ void DXShadowMapContext::CreateDepthTexture()
 	m_renderManager->m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHandle.first);
 }
 
-glm::mat4 DXShadowMapContext::CreateLightViewProjection(const glm::mat4& model) const
+glm::mat4 DXShadowMapContext::CreateLightViewProjection()
 {
 	const ThreeDimension::DirectionalLightUniform light = m_renderManager->directionalLightUniforms[0];
 	glm::vec3 lightTarget{ 0.f, 0.f, 0.f };
@@ -162,8 +164,11 @@ glm::mat4 DXShadowMapContext::CreateLightViewProjection(const glm::mat4& model) 
 
 	glm::mat4 lightView = glm::lookAt(lightPosition, lightTarget, up);
 
-	float orthoSize = 40.0f;
+	float orthoSize = 10.f;
+	// @TODO glm::orth or glm::orthoZO?
 	glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, distance * 2.0f);
 
-	return lightProjection * lightView * model;
+	m_lightViewProjection = lightProjection * lightView;
+
+	return lightProjection * lightView;
 }

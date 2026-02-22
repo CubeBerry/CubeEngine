@@ -5,11 +5,12 @@
 // Vertex Shader
 struct VSInput
 {
-    float3 position : POSITION0;
+    uint position : POSITION0;
 }
 
 struct PushConstants
 {
+    float4x4 decode;
     float4x4 localToNDC;
 }
 #if defined(__hlsl__)
@@ -21,5 +22,10 @@ ConstantBuffer<PushConstants> pushConstants : register(b0, space0);
 [shader("vertex")]
 float4 vertexMain(VSInput input) : SV_POSITION
 {
-    return mul(pushConstants.localToNDC, float4(input.position, 1.0));
+    // 11, 11, 10
+    float x = float(input.position & 0x7FFu);
+    float y = float((input.position >> 11) & 0x7FFu);
+    float z = float((input.position >> 22) & 0x3FFu);
+    float3 decoded_position = mul(pushConstants.decode, float4(float3(x, y, z), 1.0)).xyz;
+    return mul(pushConstants.localToNDC, float4(decoded_position, 1.0));
 }

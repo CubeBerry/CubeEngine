@@ -51,6 +51,16 @@ void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	// Set the viewport and scissor rect
+	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
 	ID3D12DescriptorHeap* ppHeaps2D[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps2D), ppHeaps2D);
 	commandList->SetGraphicsRootDescriptorTable(2, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
