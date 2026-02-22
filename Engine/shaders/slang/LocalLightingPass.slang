@@ -10,13 +10,13 @@
 struct VSInput
 {
     float3 position : POSITION0;
-};
+}
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
     nointerpolation int lightIndex : TEXCOORD1;
-};
+}
 
 struct fPointLight
 {
@@ -164,7 +164,7 @@ struct MainVectors
     float3 V;
     float3 N;
     float3 F0;
-};
+}
 
 // Rendering Equation for one light source
 float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, int lightIndex)

@@ -2,64 +2,33 @@
 //Project: CubeEngine
 //File: DXShadowMapContext.cpp
 #include "DXShadowMapContext.hpp"
-//#include "DXCommandListWrapper.hpp"
+#include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
-//#include "DXSkyboxRenderContext.hpp"
-//#include "Engine.hpp"
+#include "Engine.hpp"
 
 void DXShadowMapContext::Initialize()
 {
-	//// Copy G-Buffer SRV handles to Main SRV Heap
-	//m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(4);
-	//D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
-	//D3D12_CPU_DESCRIPTOR_HANDLE srcHandle = m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart();
-	//m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CreateDepthTexture();
 
-	//// Create root signature and pipeline
-	//// The slot of a root signature version 1.1
-	//std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	//rootParameters.resize(3);
-	//rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-	//rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 1, 0, D3D12_SHADER_VISIBILITY_ALL);
-	//CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
-	//gBufferSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 1);
-	//rootParameters[2].InitAsDescriptorTable(1, &gBufferSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	// Create root signature and pipeline
+	// The slot of a root signature version 1.1
+	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
+	rootParameters.resize(1);
+	rootParameters[0].InitAsConstants(sizeof(PushConstants) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
-	//m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
-	//DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Local Lighting-Pass Root Signature"));
+	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
+	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Shadow Map Pass Root Signature"));
 
-	//DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	//D3D12_RENDER_TARGET_BLEND_DESC blendDesc = {};
-	//blendDesc.BlendEnable = TRUE;
-	//blendDesc.LogicOpEnable = FALSE;
-	//blendDesc.SrcBlend = D3D12_BLEND_ONE;
-	//blendDesc.DestBlend = D3D12_BLEND_ONE;
-	//blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-	//blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	//blendDesc.DestBlendAlpha = D3D12_BLEND_ONE;
-	//blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	//blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	//DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-
-	//m_pipeline = std::make_unique<DXPipeLine>(
-	//	m_renderManager->m_device,
-	//	m_rootSignature,
-	//	std::filesystem::path("../Engine/shaders/hlsl/LocalLightingPass.vert.hlsl"),
-	//	std::filesystem::path("../Engine/shaders/hlsl/LocalLightingPass.frag.hlsl"),
-	//	std::initializer_list<DXAttributeLayout>{ positionLayout },
-	//	D3D12_FILL_MODE_SOLID,
-	//	D3D12_CULL_MODE_FRONT,
-	//	sampleDesc,
-	//	blendDesc,
-	//	// Need to turn on CCW
-	//	true,
-	//	false,
-	//	false,
-	//	DXGI_FORMAT_R16G16B16A16_FLOAT,
-	//	D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	//);
+	std::vector<DXGI_FORMAT> rtvFormats = {};
+	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
+		.SetShaders("../Engine/shaders/hlsl/ShadowMapPass.vert.hlsl", "")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_FRONT, true)
+		.SetDepthStencil(true, true)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 }
 
 void DXShadowMapContext::OnResize()
@@ -68,8 +37,133 @@ void DXShadowMapContext::OnResize()
 
 void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 {
+	if (m_renderManager->directionalLightUniforms.empty()) return;
+
+	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
+	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
+
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	commandList->ResourceBarrier(1, &barrier);
+
+	ID3D12PipelineState* initialState = m_pipeline->GetPipelineState().Get();
+	commandList->SetPipelineState(initialState);
+
+	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<float>(m_width), static_cast<float>(m_height), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height) };
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
+	commandList->OMSetRenderTargets(0, nullptr, FALSE, &m_dsvHandle);
+	commandList->ClearDepthStencilView(m_dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
+	for (const auto& sprite : sprites)
+	{
+		for (auto& subMesh : sprite->GetSubMeshes())
+		{
+			auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+			auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			// Update Constant Buffer
+			pushConstants = {
+				.localToNDC = CreateLightViewProjection(spriteData->vertexUniform.model)
+			};
+			commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
+
+			// Bind Vertex Buffer & Index Buffer
+			D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
+			D3D12_INDEX_BUFFER_VIEW ibv = buffer->indexBuffer->GetView();
+			commandList->IASetVertexBuffers(0, 1, &vbv);
+			commandList->IASetIndexBuffer(&ibv);
+			commandList->DrawIndexedInstanced(static_cast<UINT>(spriteData->indices.size()), 1, 0, 0, 0);
+		}
+	}
+
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(1, &barrier);
 }
 
 void DXShadowMapContext::CleanUp()
 {
+}
+
+void DXShadowMapContext::CreateDepthTexture()
+{
+	// Create depth texture for shadow mapping
+	m_texture.Reset();
+	// Use typeless format to be able to create both DSV and SRV with the same resource
+	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R32_TYPELESS,
+		m_width,
+		m_height,
+		1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+	);
+
+	D3D12_CLEAR_VALUE clearValue;
+	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	clearValue.DepthStencil.Depth = 1.f;
+	clearValue.DepthStencil.Stencil = 0;
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		&clearValue,
+		IID_PPV_ARGS(&m_texture)
+	));
+	m_texture->SetName(L"Shadow Depth Texture");
+
+	// Create DSV descriptor for the depth texture
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+	m_dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+	dsvDesc.Texture2D.MipSlice = 0;
+	m_renderManager->m_device->CreateDepthStencilView(m_texture.Get(), &dsvDesc, m_dsvHandle);
+
+	// Create SRV descriptor for the depth texture
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.PlaneSlice = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	m_srvHandle = m_renderManager->AllocateSrvHandles(1);
+	m_renderManager->m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHandle.first);
+}
+
+glm::mat4 DXShadowMapContext::CreateLightViewProjection(const glm::mat4& model) const
+{
+	const ThreeDimension::DirectionalLightUniform light = m_renderManager->directionalLightUniforms[0];
+	glm::vec3 lightTarget{ 0.f, 0.f, 0.f };
+	float distance{ 50.f };
+	glm::vec3 lightDirectionNormalized = glm::normalize(light.lightDirection);
+	glm::vec3 lightPosition = lightTarget - (lightDirectionNormalized * distance);
+
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	if (std::abs(lightDirectionNormalized.y) > 0.999f) up = glm::vec3(0.0f, 0.0f, 1.0f);
+
+	glm::mat4 lightView = glm::lookAt(lightPosition, lightTarget, up);
+
+	float orthoSize = 40.0f;
+	glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, distance * 2.0f);
+
+	return lightProjection * lightView * model;
 }

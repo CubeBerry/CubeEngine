@@ -3,8 +3,6 @@
 //File: DXGlobalLightingContext.cpp
 #include "DXGlobalLightingContext.hpp"
 
-#include <stdbool.h>
-
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
 #include "DXSkyboxRenderContext.hpp"

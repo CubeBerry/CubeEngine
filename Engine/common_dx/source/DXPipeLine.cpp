@@ -44,26 +44,29 @@ DXPipeLine::DXPipeLine(
 	}
 
 	// Compile pixel shader
-	hr = D3DCompileFromFile(
-		desc.pixelPath.c_str(),
-		nullptr,
-		nullptr,
-		"fragmentMain",
-		"ps_5_1",
-		compileFlags,
-		0,
-		&m_pixelShader,
-		&errorMessages
-	);
-	if (FAILED(hr))
+	if (!desc.pixelPath.empty())
 	{
-		if (errorMessages)
+		hr = D3DCompileFromFile(
+			desc.pixelPath.c_str(),
+			nullptr,
+			nullptr,
+			"fragmentMain",
+			"ps_5_1",
+			compileFlags,
+			0,
+			&m_pixelShader,
+			&errorMessages
+		);
+		if (FAILED(hr))
 		{
-			const char* string = static_cast<const char*>(errorMessages->GetBufferPointer());
-			OutputDebugStringA("Pixel Shader Compilation Error:\n");
-			OutputDebugStringA(string);
+			if (errorMessages)
+			{
+				const char* string = static_cast<const char*>(errorMessages->GetBufferPointer());
+				OutputDebugStringA("Pixel Shader Compilation Error:\n");
+				OutputDebugStringA(string);
+			}
+			throw std::runtime_error("Failed to compile pixel shader.");
 		}
-		throw std::runtime_error("Failed to compile pixel shader.");
 	}
 
 	//auto vertexShader = DXHelper::ReadShaderFile(vertexPath);
@@ -89,7 +92,7 @@ DXPipeLine::DXPipeLine(
 
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE{ m_vertexShader.Get() };
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get() };
+	if (!desc.pixelPath.empty()) psoDesc.PS = CD3DX12_SHADER_BYTECODE{ m_pixelShader.Get() };
 	//psoDesc.VS = CD3DX12_SHADER_BYTECODE{ vertexShader.data(), vertexShader.size() };
 	//psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pixelShader.data(), pixelShader.size() };
 
