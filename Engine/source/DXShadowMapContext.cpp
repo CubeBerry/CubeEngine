@@ -184,12 +184,17 @@ void DXShadowMapContext::DrawImGui()
 		glm::mat4 cameraView = Engine::GetCameraManager().GetViewMatrix();
 		glm::mat4 cameraProj = Engine::GetCameraManager().GetProjectionMatrix();
 
-		// Draw light position on the screen for debugging
+		// Draw light position and target on the screen for debugging
 		glm::vec2 lightScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightPosition, cameraView, cameraProj);
-		if (lightScreenPos.x > 0)
+		glm::vec2 targetScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightTarget, cameraView, cameraProj);
+		if (lightScreenPos.x != -1.0f && targetScreenPos.x != -1.0f)
 		{
+			// Draw light position
 			drawList->AddCircleFilled(ImVec2(lightScreenPos.x, lightScreenPos.y), 8.0f, IM_COL32(255, 255, 0, 255));
 			drawList->AddText(ImVec2(lightScreenPos.x + 10, lightScreenPos.y - 10), IM_COL32(255, 255, 0, 255), "Sun");
+			// Draw light target
+			drawList->AddCircleFilled(ImVec2(targetScreenPos.x, targetScreenPos.y), 4.0f, IM_COL32(255, 0, 0, 255));
+			drawList->AddText(ImVec2(targetScreenPos.x + 10, targetScreenPos.y - 10), IM_COL32(255, 0, 0, 255), "Target");
 		}
 
 		// @TODO Study how this code works
