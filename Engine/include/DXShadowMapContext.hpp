@@ -30,6 +30,7 @@ public:
 	bool IsEnabled() const { return m_enabled; }
 	UINT GetSrvIndex() const { return m_srvHandle.second; }
 	glm::mat4 GetLightViewProjection() const { return m_lightViewProjection; }
+	float GetShadowBias() const { return m_shadowBias; }
 
 	void DrawImGui();
 private:
@@ -50,6 +51,7 @@ private:
 	float m_orthoSize{ 10.f };
 	glm::vec3 m_lightPosition{ -3.f, 2.f, 0.f };
 	glm::vec3 m_lightTarget{ 0.f, 0.f, 0.f };
+	float m_shadowBias = 0.0025f;
 
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;

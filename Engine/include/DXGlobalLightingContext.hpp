@@ -34,5 +34,6 @@ private:
 		int meshletVisualization;
 		int activeDirectionalLight;
 		int useShadow;
+		float shadowBias;
 	} pushConstants;
 };

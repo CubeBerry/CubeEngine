@@ -176,6 +176,7 @@ void DXShadowMapContext::DrawImGui()
 		ImGui::Spacing();
 		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f);
 		ImGui::DragFloat3("Light Target", &m_lightTarget.x, 0.1f);
+		ImGui::DragFloat("Shadow Bias", &m_shadowBias, 0.0001f, 0.0f, 0.1f, "%.4f");
 	}
 
 	if (showDebugFrustum)

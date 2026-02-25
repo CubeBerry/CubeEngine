@@ -52,6 +52,7 @@ struct PushConstants
     int meshletVisualization;
     int activeDirectionalLights;
     int useShadow;
+    float shadowBias;
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
@@ -250,7 +251,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
         float bias = 0.0025;
         // shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
-        float isShadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+        float isShadow = currentDepth - pushConstants.shadowBias > closestDepth ? 1.0 : 0.0;
         float bounds = step(0.0, shadowUV.x) * step(shadowUV.x, 1.0) *
                        step(0.0, shadowUV.y) * step(shadowUV.y, 1.0) *
                        step(0.0, currentDepth) * step(currentDepth, 1.0);
