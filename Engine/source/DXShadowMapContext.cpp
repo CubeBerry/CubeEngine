@@ -151,14 +151,78 @@ void DXShadowMapContext::CreateDepthTexture()
 	m_renderManager->m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHandle.first);
 }
 
-glm::mat4 DXShadowMapContext::CreateLightViewProjection()
+glm::mat4 DXShadowMapContext::CreateLightViewProjection() const
 {
-	float near_plane = 1.0f, far_plane = 40.f;
-	glm::mat4 lightProjection = glm::orthoZO(-10.f, 10.f, -10.f, 10.f, near_plane, far_plane);
-	glm::mat4 lightView = glm::lookAt(glm::vec3(-3.f, 10.f, 0.f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 0.f, -1.f));
-
-	m_lightViewProjection = lightProjection * lightView;
+	// DX12 should use orthZO
+	glm::mat4 lightProjection = glm::orthoZO(-m_orthoSize, m_orthoSize, -m_orthoSize, m_orthoSize, m_nearPlane, m_farPlane);
+	glm::vec3 lightDirection = glm::normalize(m_lightTarget - m_lightPosition);
+	glm::vec3 up{ 0.f, 1.f, 0.f };
+	if (std::abs(lightDirection.y) > 0.999f) up = glm::vec3{ 0.f, 0.f, -1.f };
+	glm::mat4 lightView = glm::lookAt(m_lightPosition, m_lightTarget, up);
 	return lightProjection * lightView;
+}
+
+void DXShadowMapContext::DrawImGui()
+{
+	static bool showDebugFrustum{ true };
+	if (ImGui::CollapsingHeader("Shadow Map Settings", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::Checkbox("Show Light Frustum", &showDebugFrustum);
+
+		ImGui::DragFloat("Ortho Size", &m_orthoSize, 0.1f, 1.0f, 100.0f);
+		ImGui::DragFloat("Near Plane", &m_nearPlane, 0.1f, 0.01f, 100.0f);
+		ImGui::DragFloat("Far Plane", &m_farPlane, 0.1f, 1.0f, 1000.0f);
+
+		ImGui::Spacing();
+		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f);
+		ImGui::DragFloat3("Light Target", &m_lightTarget.x, 0.1f);
+	}
+
+	if (showDebugFrustum)
+	{
+		ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+		glm::mat4 cameraView = Engine::GetCameraManager().GetViewMatrix();
+		glm::mat4 cameraProj = Engine::GetCameraManager().GetProjectionMatrix();
+
+		// Draw light position on the screen for debugging
+		glm::vec2 lightScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightPosition, cameraView, cameraProj);
+		if (lightScreenPos.x > 0)
+		{
+			drawList->AddCircleFilled(ImVec2(lightScreenPos.x, lightScreenPos.y), 8.0f, IM_COL32(255, 255, 0, 255));
+			drawList->AddText(ImVec2(lightScreenPos.x + 10, lightScreenPos.y - 10), IM_COL32(255, 255, 0, 255), "Sun");
+		}
+
+		// @TODO Study how this code works
+		// Draw the light's view frustum by transforming the corners of the NDC cube back to world space and then to screen space
+		glm::mat4 invLightVP = glm::inverse(m_lightViewProjection);
+		glm::vec3 ndcCorners[8] = {
+			// Near Plane (Z = 0)
+			{-1.0f, -1.0f, 0.0f}, { 1.0f, -1.0f, 0.0f}, { 1.0f,  1.0f, 0.0f}, {-1.0f,  1.0f, 0.0f},
+			// Far Plane (Z = 1)
+			{-1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f, 1.0f}
+		};
+		ImVec2 screenCorners[8];
+		bool valid[8];
+		for (int i = 0; i < 8; ++i)
+		{
+			glm::vec4 worldPos = invLightVP * glm::vec4(ndcCorners[i], 1.0f);
+			glm::vec3 worldPos3D = glm::vec3(worldPos) / worldPos.w;
+
+			glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos3D, cameraView, cameraProj);
+			screenCorners[i] = ImVec2(screenPos.x, screenPos.y);
+			valid[i] = screenPos.x != -1.0f && screenPos.y != -1.0f;
+		}
+
+		auto DrawLine = [&](int index1, int index2)
+			{
+				if (valid[index1] && valid[index2]) drawList->AddLine(screenCorners[index1], screenCorners[index2], IM_COL32(0, 255, 255, 255), 2.0f);
+			};
+
+		// Near
+		DrawLine(0, 1); DrawLine(1, 2); DrawLine(2, 3); DrawLine(3, 0);
+		// Far
+		DrawLine(4, 5); DrawLine(5, 6); DrawLine(6, 7); DrawLine(7, 4);
+		// Connect Near and Far
+		DrawLine(0, 4); DrawLine(1, 5); DrawLine(2, 6); DrawLine(3, 7);
+	}
 }

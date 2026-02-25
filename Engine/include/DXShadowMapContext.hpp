@@ -7,6 +7,8 @@
 #include <d3dx12/d3dx12.h>
 #include <glm/mat4x4.hpp>
 
+#include "imgui.h"
+
 using Microsoft::WRL::ComPtr;
 
 class DXRenderManager;
@@ -28,9 +30,11 @@ public:
 	bool IsEnabled() const { return m_enabled; }
 	UINT GetSrvIndex() const { return m_srvHandle.second; }
 	glm::mat4 GetLightViewProjection() const { return m_lightViewProjection; }
+
+	void DrawImGui();
 private:
 	void CreateDepthTexture();
-	glm::mat4 CreateLightViewProjection();
+	glm::mat4 CreateLightViewProjection() const;
 
 	DXRenderManager* m_renderManager;
 	std::unique_ptr<DXPipeLine> m_pipeline;
@@ -40,6 +44,12 @@ private:
 	ComPtr<ID3D12Resource> m_texture;
 	UINT64 m_width{ 2048 };
 	UINT m_height{ 2048 };
+
+	// Shadow Parameters
+	float m_nearPlane{ 1.f }, m_farPlane{ 40.f };
+	float m_orthoSize{ 10.f };
+	glm::vec3 m_lightPosition{ -3.f, 2.f, 0.f };
+	glm::vec3 m_lightTarget{ 0.f, 0.f, 0.f };
 
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;

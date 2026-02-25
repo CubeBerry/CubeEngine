@@ -248,7 +248,13 @@ float4 fragmentMain(VSOutput input) : SV_Target
         float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
         float currentDepth = projectionCoords.z;
         float bias = 0.0025;
-        shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+        // shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+        float isShadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+        float bounds = step(0.0, shadowUV.x) * step(shadowUV.x, 1.0) *
+                       step(0.0, shadowUV.y) * step(shadowUV.y, 1.0) *
+                       step(0.0, currentDepth) * step(currentDepth, 1.0);
+        shadow = isShadow * bounds;
     }
     else shadow = 0.0;
 
@@ -257,9 +263,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l) * (1.0 - shadow);
     }
-    resultColor *= (1.0 - shadow);
 
     // PBR IBL Ambient Lighting
     float3 R = reflect(-V, N);

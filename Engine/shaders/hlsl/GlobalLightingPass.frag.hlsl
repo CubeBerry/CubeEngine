@@ -245,23 +245,30 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 
         shadowUV_0[int(1)] = - projectionCoords_0.y * 0.5f + 0.5f;
 
-#line 251
-        if((projectionCoords_0.z - 0.00249999994412065f) > (shadowMap_0.Sample(gSampler_0, shadowUV_0).x))
+#line 249
+        float currentDepth_0 = projectionCoords_0.z;
+
+
+
+        if((currentDepth_0 - 0.00249999994412065f) > (shadowMap_0.Sample(gSampler_0, shadowUV_0).x))
         {
 
-#line 251
+#line 253
             shadow_0 = 1.0f;
 
-#line 251
+#line 253
         }
         else
         {
 
-#line 251
+#line 253
             shadow_0 = 0.0f;
 
-#line 251
+#line 253
         }
+
+#line 253
+        shadow_0 = shadow_0 * (step(0.0f, shadowUV_0.x) * step(shadowUV_0.x, 1.0f) * step(0.0f, shadowUV_0.y) * step(shadowUV_0.y, 1.0f) * step(0.0f, currentDepth_0) * step(currentDepth_0, 1.0f));
 
 #line 235
     }
@@ -280,40 +287,40 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 235
     float3 resultColor_0 = _S4;
 
-#line 256
+#line 262
     for(;;)
     {
 
-#line 256
+#line 262
         if(l_0 < (pushConstants_0.activeDirectionalLights_0))
         {
         }
         else
         {
 
-#line 256
+#line 262
             break;
         }
 
 
-        float3 resultColor_1 = resultColor_0 + PBR_0(_S5, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0);
+        float3 resultColor_1 = resultColor_0 + PBR_0(_S5, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0) * (1.0f - shadow_0);
 
-#line 256
+#line 262
         l_0 = l_0 + int(1);
 
-#line 256
+#line 262
         resultColor_0 = resultColor_1;
 
-#line 256
+#line 262
     }
 
-#line 266
+#line 271
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, roughness_2);
 
-#line 280
+#line 285
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), roughness_2)).xy;
 
-#line 302
-    return float4((1.0f - metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0 * (1.0f - shadow_0), 1.0f);
+#line 307
+    return float4((1.0f - metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0, 1.0f);
 }
 
