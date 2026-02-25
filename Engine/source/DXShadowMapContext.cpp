@@ -37,7 +37,7 @@ void DXShadowMapContext::OnResize()
 
 void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 {
-	if (m_renderManager->directionalLightUniforms.empty()) return;
+	if (!m_enabled) return;
 
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -153,22 +153,12 @@ void DXShadowMapContext::CreateDepthTexture()
 
 glm::mat4 DXShadowMapContext::CreateLightViewProjection()
 {
-	const ThreeDimension::DirectionalLightUniform light = m_renderManager->directionalLightUniforms[0];
-	glm::vec3 lightTarget{ 0.f, 0.f, 0.f };
-	float distance{ 50.f };
-	glm::vec3 lightDirectionNormalized = glm::normalize(light.lightDirection);
-	glm::vec3 lightPosition = lightTarget - (lightDirectionNormalized * distance);
-
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-	if (std::abs(lightDirectionNormalized.y) > 0.999f) up = glm::vec3(0.0f, 0.0f, 1.0f);
-
-	glm::mat4 lightView = glm::lookAt(lightPosition, lightTarget, up);
-
-	float orthoSize = 10.f;
-	// @TODO glm::orth or glm::orthoZO?
-	glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 1.0f, distance * 2.0f);
+	float near_plane = 1.0f, far_plane = 40.f;
+	glm::mat4 lightProjection = glm::orthoZO(-10.f, 10.f, -10.f, 10.f, near_plane, far_plane);
+	glm::mat4 lightView = glm::lookAt(glm::vec3(-3.f, 10.f, 0.f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.f, -1.f));
 
 	m_lightViewProjection = lightProjection * lightView;
-
 	return lightProjection * lightView;
 }

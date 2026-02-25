@@ -1027,9 +1027,9 @@ void RenderManager::RenderingControllerForImGui()
 	RenderManager* renderManager = Engine::GetRenderManager();
 	ImGui::Begin("RenderingController");
 
+	auto* dxRenderManager = dynamic_cast<DXRenderManager*>(renderManager);
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
-		auto* dxRenderManager = dynamic_cast<DXRenderManager*>(renderManager);
 		auto* postProcessContext = dxRenderManager->GetPostProcessContext();
 		auto* fidelityFX = postProcessContext->GetFidelityFX();
 
@@ -1113,7 +1113,7 @@ void RenderManager::RenderingControllerForImGui()
 		ImGui::Spacing();
 		if (m_meshShaderEnabled)
 		{
-			bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
+			bool meshletVisualizationEnabled = m_meshletVisualization > 0;
 			if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
 			{
 				m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
@@ -1134,6 +1134,10 @@ void RenderManager::RenderingControllerForImGui()
 	ImGui::Spacing();
 	ImGui::Checkbox("Normal Vector Visualization", &m_normalVectorVisualization);
 #endif
+	// Shadow Mapping
+	ImGui::Spacing();
+	bool shadowEnabled = dxRenderManager->GetShadowMapContext()->IsEnabled();
+	if (ImGui::Checkbox("Shadow Map", &shadowEnabled)) dxRenderManager->GetShadowMapContext()->SetEnabled(shadowEnabled);
 
 	ImGui::End();
 }

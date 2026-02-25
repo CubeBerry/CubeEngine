@@ -23,6 +23,9 @@ public:
 	void Execute(ICommandListWrapper* commandListWrapper) override;
 	void CleanUp() override;
 
+	void SetEnabled(const bool enabled) { m_enabled = enabled; }
+
+	bool IsEnabled() const { return m_enabled; }
 	UINT GetSrvIndex() const { return m_srvHandle.second; }
 	glm::mat4 GetLightViewProjection() const { return m_lightViewProjection; }
 private:
@@ -32,6 +35,7 @@ private:
 	DXRenderManager* m_renderManager;
 	std::unique_ptr<DXPipeLine> m_pipeline;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
+	bool m_enabled{ true };
 
 	ComPtr<ID3D12Resource> m_texture;
 	UINT64 m_width{ 2048 };

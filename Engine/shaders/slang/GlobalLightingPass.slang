@@ -51,6 +51,7 @@ struct PushConstants
     float3 viewPosition;
     int meshletVisualization;
     int activeDirectionalLights;
+    int useShadow;
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
@@ -230,29 +231,35 @@ float4 fragmentMain(VSOutput input) : SV_Target
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
     // Shadow Mapping
-    float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(worldPosition, 1.0));
-    float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
+    float shadow = 0.0;
+    if (pushConstants.useShadow > 0)
+    {
+        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(worldPosition, 1.0));
+        float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 
-    float2 shadowUV;
-    shadowUV.x = projectionCoords.x * 0.5 + 0.5;
+        float2 shadowUV;
+        shadowUV.x = projectionCoords.x * 0.5 + 0.5;
 #if defined(__hlsl__)
-    shadowUV.y = -projectionCoords.y * 0.5 + 0.5;
+        shadowUV.y = -projectionCoords.y * 0.5 + 0.5;
 #else
-    shadowUV.y = projectionCoords.y * 0.5 + 0.5;
+        shadowUV.y = projectionCoords.y * 0.5 + 0.5;
 #endif
 
-    float shadow = 0.0;
-    float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
-    float currentDepth = projectionCoords.z;
-    shadow = currentDepth > closestDepth ? 1.0 : 0.0;
+        float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
+        float currentDepth = projectionCoords.z;
+        float bias = 0.0025;
+        shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    }
+    else shadow = 0.0;
 
     // Calculate Directional Lights
     for (int l = 0; l < pushConstants.activeDirectionalLights; ++l)
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l) * (1.0 - shadow);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l);
     }
+    resultColor *= (1.0 - shadow);
 
     // PBR IBL Ambient Lighting
     float3 R = reflect(-V, N);
