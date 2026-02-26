@@ -250,7 +250,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
         float3 L = normalize(-pushConstants.shadowDirection);
         float NdotL = saturate(dot(N, L));
 
-        // Apply Normal Offset: The multiplier (2.0) can be tuned based on scene scale
+        // Apply Normal Offset: The multiplier pushConstants.orthoSize can be tuned based on orthoSize
         float normalOffsetScale = pushConstants.shadowBias * (1.0 - NdotL) * pushConstants.orthoSize;
         float3 biasedWorldPosition = worldPosition + N * normalOffsetScale;
 
