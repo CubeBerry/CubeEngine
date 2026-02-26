@@ -9,7 +9,7 @@
 #endif
 
 
-#line 11 "slang/ShadowMapPass.slang"
+#line 17 "slang/ShadowMapPass.slang"
 struct PushConstants_0
 {
     float4x4 decode_0;
@@ -21,18 +21,32 @@ cbuffer pushConstants_0 : register(b0)
     PushConstants_0 pushConstants_0;
 }
 
-#line 6
-struct VSInput_0
+#line 11
+struct VSOutput_0
 {
-    uint position_0 : POSITION0;
+    float4 position_0 : SV_POSITION;
+    float depth_0 : TEXCOORD0;
 };
 
 
-#line 23
-float4 vertexMain(VSInput_0 input_0) : SV_POSITION
+#line 6
+struct VSInput_0
 {
+    uint position_1 : POSITION0;
+};
 
-#line 30
-    return mul(pushConstants_0.localToNDC_0, float4(mul(pushConstants_0.decode_0, float4(float3(float((input_0.position_0) & 2047U), float(((input_0.position_0) >> int(11)) & 2047U), float(((input_0.position_0) >> int(22)) & 1023U)), 1.0f)).xyz, 1.0f));
+
+#line 29
+VSOutput_0 vertexMain(VSInput_0 input_0)
+{
+    VSOutput_0 output_0;
+
+#line 38
+    float4 _S1 = mul(pushConstants_0.localToNDC_0, float4(mul(pushConstants_0.decode_0, float4(float3(float((input_0.position_1) & 2047U), float(((input_0.position_1) >> int(11)) & 2047U), float(((input_0.position_1) >> int(22)) & 1023U)), 1.0f)).xyz, 1.0f));
+
+#line 38
+    output_0.position_0 = _S1;
+    output_0.depth_0 = _S1.z / _S1.w;
+    return output_0;
 }
 

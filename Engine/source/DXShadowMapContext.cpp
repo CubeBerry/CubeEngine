@@ -21,9 +21,9 @@ void DXShadowMapContext::Initialize()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	std::vector<DXGI_FORMAT> rtvFormats = {};
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R32G32B32A32_FLOAT };
 	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
-		.SetShaders("../Engine/shaders/hlsl/ShadowMapPass.vert.hlsl", "")
+		.SetShaders("../Engine/shaders/hlsl/ShadowMapPass.vert.hlsl", "../Engine/shaders/hlsl/ShadowMapPass.frag.hlsl")
 		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
 		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_FRONT, true)
 		.SetDepthStencil(true, true)
@@ -42,7 +42,7 @@ void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_momentTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	commandList->ResourceBarrier(1, &barrier);
 
 	ID3D12PipelineState* initialState = m_pipeline->GetPipelineState().Get();
@@ -55,7 +55,9 @@ void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
 
-	commandList->OMSetRenderTargets(0, nullptr, FALSE, &m_dsvHandle);
+	commandList->OMSetRenderTargets(1, &m_rtvHandle, FALSE, &m_dsvHandle);
+	constexpr float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	commandList->ClearRenderTargetView(m_rtvHandle, clearColor, 0, nullptr);
 	commandList->ClearDepthStencilView(m_dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	m_lightViewProjection = CreateLightViewProjection();
@@ -85,7 +87,7 @@ void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 		}
 	}
 
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_momentTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	commandList->ResourceBarrier(1, &barrier);
 }
 
@@ -95,10 +97,59 @@ void DXShadowMapContext::CleanUp()
 
 void DXShadowMapContext::CreateDepthTexture()
 {
-	// Create depth texture for shadow mapping
-	m_texture.Reset();
+	m_momentTexture.Reset();
+	m_depthTexture.Reset();
+
+	// Create moment texture (RTV, SRV)
 	// Use typeless format to be able to create both DSV and SRV with the same resource
-	auto textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+	auto momentTextureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
+		m_width,
+		m_height,
+		1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+	);
+
+	D3D12_CLEAR_VALUE momentClearValue;
+	momentClearValue.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	momentClearValue.Color[0] = 1.0f; // z
+	momentClearValue.Color[1] = 1.0f; // z^2
+	momentClearValue.Color[2] = 1.0f; // z^3
+	momentClearValue.Color[3] = 1.0f; // z^4
+
+	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&momentTextureDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		&momentClearValue,
+		IID_PPV_ARGS(&m_momentTexture)
+	));
+	m_momentTexture->SetName(L"Shadow Moment Texture");
+
+	// Create RTV descriptor for the moment texture
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = 1;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+	m_rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+	m_renderManager->m_device->CreateRenderTargetView(m_momentTexture.Get(), nullptr, m_rtvHandle);
+
+	// Create SRV descriptor for the depth texture
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	m_srvHandle = m_renderManager->AllocateSrvHandles(1);
+	m_renderManager->m_device->CreateShaderResourceView(m_momentTexture.Get(), &srvDesc, m_srvHandle.first);
+
+	// Create depth texture for shadow mapping (DSV, SRV)
+	// Use typeless format to be able to create both DSV and SRV with the same resource
+	auto depthTextureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R32_TYPELESS,
 		m_width,
 		m_height,
@@ -106,21 +157,20 @@ void DXShadowMapContext::CreateDepthTexture()
 		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 	);
 
-	D3D12_CLEAR_VALUE clearValue;
-	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-	clearValue.DepthStencil.Depth = 1.f;
-	clearValue.DepthStencil.Stencil = 0;
+	D3D12_CLEAR_VALUE depthClearValue;
+	depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	depthClearValue.DepthStencil.Depth = 1.f;
+	depthClearValue.DepthStencil.Stencil = 0;
 
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
-		&textureDesc,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		&clearValue,
-		IID_PPV_ARGS(&m_texture)
+		&depthTextureDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthClearValue,
+		IID_PPV_ARGS(&m_depthTexture)
 	));
-	m_texture->SetName(L"Shadow Depth Texture");
+	m_depthTexture->SetName(L"Shadow Depth Texture");
 
 	// Create DSV descriptor for the depth texture
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
@@ -135,20 +185,20 @@ void DXShadowMapContext::CreateDepthTexture()
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	dsvDesc.Texture2D.MipSlice = 0;
-	m_renderManager->m_device->CreateDepthStencilView(m_texture.Get(), &dsvDesc, m_dsvHandle);
+	m_renderManager->m_device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsvHandle);
 
 	// Create SRV descriptor for the depth texture
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.PlaneSlice = 0;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	//srvDesc = {};
+	//srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	//srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	//srvDesc.Texture2D.MostDetailedMip = 0;
+	//srvDesc.Texture2D.MipLevels = 1;
+	//srvDesc.Texture2D.PlaneSlice = 0;
+	//srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	m_srvHandle = m_renderManager->AllocateSrvHandles(1);
-	m_renderManager->m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHandle.first);
+	//m_srvHandle = m_renderManager->AllocateSrvHandles(1);
+	//m_renderManager->m_device->CreateShaderResourceView(m_depthTexture.Get(), &srvDesc, m_srvHandle.first);
 }
 
 glm::mat4 DXShadowMapContext::CreateLightViewProjection()

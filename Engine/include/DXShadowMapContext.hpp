@@ -42,7 +42,8 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	bool m_enabled{ true };
 
-	ComPtr<ID3D12Resource> m_texture;
+	ComPtr<ID3D12Resource> m_momentTexture; // Color (RTV, SRV)
+	ComPtr<ID3D12Resource> m_depthTexture; // Depth (DSV)
 	UINT64 m_width{ 2048 };
 	UINT m_height{ 2048 };
 
@@ -53,9 +54,10 @@ private:
 	glm::vec3 m_lightTarget{ 0.f, 0.f, 0.f };
 	float m_shadowBias{ 0.005f };
 
+	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-	//ComPtr<ID3D12Resource> m_depthStencil;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE m_rtvHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
 	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, UINT> m_srvHandle;
 
