@@ -37,7 +37,7 @@ void DXShadowMapContext::OnResize()
 
 void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 {
-	if (!m_enabled) return;
+	if (!m_enabled || m_renderManager->directionalLightUniforms.empty()) return;
 
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -151,11 +151,14 @@ void DXShadowMapContext::CreateDepthTexture()
 	m_renderManager->m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHandle.first);
 }
 
-glm::mat4 DXShadowMapContext::CreateLightViewProjection() const
+glm::mat4 DXShadowMapContext::CreateLightViewProjection()
 {
 	// DX12 should use orthZO
 	glm::mat4 lightProjection = glm::orthoZO(-m_orthoSize, m_orthoSize, -m_orthoSize, m_orthoSize, m_nearPlane, m_farPlane);
-	glm::vec3 lightDirection = glm::normalize(m_lightTarget - m_lightPosition);
+	glm::vec3 lightDirection = glm::normalize(m_renderManager->directionalLightUniforms[0].lightDirection);
+	float distance = m_farPlane * 0.5f;
+	m_lightPosition = m_lightTarget - lightDirection * distance;
+
 	glm::vec3 up{ 0.f, 1.f, 0.f };
 	if (std::abs(lightDirection.y) > 0.999f) up = glm::vec3{ 0.f, 0.f, -1.f };
 	glm::mat4 lightView = glm::lookAt(m_lightPosition, m_lightTarget, up);
@@ -170,11 +173,12 @@ void DXShadowMapContext::DrawImGui()
 		ImGui::Checkbox("Show Light Frustum", &showDebugFrustum);
 
 		ImGui::DragFloat("Ortho Size", &m_orthoSize, 0.1f, 1.0f, 100.0f);
-		ImGui::DragFloat("Near Plane", &m_nearPlane, 0.1f, 0.01f, 100.0f);
-		ImGui::DragFloat("Far Plane", &m_farPlane, 0.1f, 1.0f, 1000.0f);
+		ImGui::DragFloat("Near Plane", &m_nearPlane, 0.1f, 0.01f, m_farPlane - 0.01f);
+		ImGui::DragFloat("Far Plane", &m_farPlane, 0.1f, m_nearPlane + 0.01f, 1000.0f);
+		if (m_nearPlane >= m_farPlane) m_nearPlane = m_farPlane - 0.01f;
 
 		ImGui::Spacing();
-		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f);
+		//ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f);
 		ImGui::DragFloat3("Light Target", &m_lightTarget.x, 0.1f);
 		ImGui::DragFloat("Shadow Bias", &m_shadowBias, 0.0001f, 0.0f, 0.1f, "%.4f");
 	}

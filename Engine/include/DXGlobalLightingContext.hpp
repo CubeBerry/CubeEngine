@@ -32,8 +32,10 @@ private:
 		glm::mat4 lightViewProjection;
 		glm::vec3 viewPosition;
 		int meshletVisualization;
+		glm::vec3 shadowDirection;
 		int activeDirectionalLight;
 		int useShadow;
 		float shadowBias;
+		float orthoSize;
 	} pushConstants;
 };

@@ -50,9 +50,11 @@ struct PushConstants
     float4x4 lightViewProjection;
     float3 viewPosition;
     int meshletVisualization;
+    float3 shadowDirection;
     int activeDirectionalLights;
     int useShadow;
     float shadowBias;
+    float orthoSize;
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
@@ -231,13 +233,32 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 N = normalize(normal);
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
-    // Shadow Mapping
+    // Shadow Mapping: Slope-Scaled Normal Offset Bias
+    // =========================================================================
+    // This technique is a modern standard for hard shadow mapping, designed to
+    // simultaneously mitigate both Shadow Acne (surface noise) and Peter Panning.
+    //
+    // 1. Calculate the angle (NdotL) between the light direction (L) and surface normal (N).
+    // 2. Surfaces receiving light at grazing angles are offset more strongly along their normal.
+    // 3. Surfaces facing the light directly (e.g., floors) receive minimal offset,
+    //    preventing the shadow from artificially shrinking or detaching.
+    // =========================================================================
     float shadow = 0.0;
     if (pushConstants.useShadow > 0)
     {
-        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(worldPosition, 1.0));
+        // Derive light direction based on the frustum's forward direction
+        float3 L = normalize(-pushConstants.shadowDirection);
+        float NdotL = saturate(dot(N, L));
+
+        // Apply Normal Offset: The multiplier (2.0) can be tuned based on scene scale
+        float normalOffsetScale = pushConstants.shadowBias * (1.0 - NdotL) * pushConstants.orthoSize;
+        float3 biasedWorldPosition = worldPosition + N * normalOffsetScale;
+
+        // Transform to light space
+        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(biasedWorldPosition, 1.0));
         float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 
+        // Convert to UV coordinates (Handles both DirectX and Vulkan coordinate systems)
         float2 shadowUV;
         shadowUV.x = projectionCoords.x * 0.5 + 0.5;
 #if defined(__hlsl__)
@@ -246,12 +267,17 @@ float4 fragmentMain(VSOutput input) : SV_Target
         shadowUV.y = projectionCoords.y * 0.5 + 0.5;
 #endif
 
+        // Depth Comparison
         float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
         float currentDepth = projectionCoords.z;
-        float bias = 0.0025;
         // shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
-        float isShadow = currentDepth - pushConstants.shadowBias > closestDepth ? 1.0 : 0.0;
+        // Apply a very small constant bias as a baseline defense against micro-acne
+        float constantBias = 0.0001;
+        float isShadow = currentDepth - constantBias > closestDepth ? 1.0 : 0.0;
+
+        // Frustum bounds check (Prevents clamping smearing)
+        // Branchless optimization using step() instead of if-statements
         float bounds = step(0.0, shadowUV.x) * step(shadowUV.x, 1.0) *
                        step(0.0, shadowUV.y) * step(shadowUV.y, 1.0) *
                        step(0.0, currentDepth) * step(currentDepth, 1.0);

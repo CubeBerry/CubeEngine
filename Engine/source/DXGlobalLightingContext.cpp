@@ -91,9 +91,11 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		inverseView[3].z
 		),
 		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
+		.shadowDirection = m_renderManager->m_shadowMapContext->GetShadowDirection(),
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
-		.shadowBias = m_renderManager->m_shadowMapContext->GetShadowBias()
+		.shadowBias = m_renderManager->m_shadowMapContext->GetShadowBias(),
+		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()
 	};
 
 	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
