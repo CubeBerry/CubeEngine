@@ -53,7 +53,6 @@ struct PushConstants
     float3 shadowDirection;
     int activeDirectionalLights;
     int useShadow;
-    float shadowBias;
     float orthoSize;
 }
 #if defined(__hlsl__)
