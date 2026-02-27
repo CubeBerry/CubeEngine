@@ -1158,10 +1158,13 @@ void RenderManager::RenderingControllerForImGui()
 	ImGui::Checkbox("Normal Vector Visualization", &m_normalVectorVisualization);
 #endif
 	// Shadow Mapping
-	ImGui::Spacing();
-	bool shadowEnabled = dxRenderManager->GetShadowMapContext()->IsEnabled();
-	if (ImGui::Checkbox("Shadow Map", &shadowEnabled)) dxRenderManager->GetShadowMapContext()->SetEnabled(shadowEnabled);
-	if (shadowEnabled) dxRenderManager->GetShadowMapContext()->DrawImGui();
+	if (renderManager->gMode == GraphicsMode::DX)
+	{
+		ImGui::Spacing();
+		bool shadowEnabled = dxRenderManager->GetShadowMapContext()->IsEnabled();
+		if (ImGui::Checkbox("Shadow Map", &shadowEnabled)) dxRenderManager->GetShadowMapContext()->SetEnabled(shadowEnabled);
+		if (shadowEnabled) dxRenderManager->GetShadowMapContext()->DrawImGui();
+	}
 
 	ImGui::End();
 }
