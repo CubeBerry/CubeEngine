@@ -109,7 +109,6 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->SetGraphicsRootDescriptorTable(3, skyboxGpuHandle);
 	}
 	UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
-	shadowSrvIndex += 2;
 	D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
 	shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
 	commandList->SetGraphicsRootDescriptorTable(4, shadowGpuHandle);
