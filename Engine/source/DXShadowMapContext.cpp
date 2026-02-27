@@ -312,26 +312,13 @@ void DXShadowMapContext::CreateDepthTexture()
 	auto cbvDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(BlurParams));
 	CD3DX12_HEAP_PROPERTIES uploadHeap(D3D12_HEAP_TYPE_UPLOAD);
 
-	int w = 5;
-	float s = static_cast<float>(w) / 2.0f;
-
 	for (int i = 0; i < 2; ++i)
 	{
 		DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
 			&uploadHeap, D3D12_HEAP_FLAG_NONE, &cbvDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_blurParamsBuffer[i])));
 		m_blurParamsBuffer[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_blurParamsMapped[i]));
-
-		float sum = 0.f;
-		for (int j = -w; j <= w; ++j)
-		{
-			float weight = std::exp(-0.5f * (static_cast<float>(j) / s) * (static_cast<float>(j) / s));
-			m_blurParamsMapped[i]->weights[j + w] = glm::vec4{ weight, 0.f, 0.f, 0.f };
-			sum += weight;
-		}
-		for (int k = 0; k <= 2 * w; ++k) m_blurParamsMapped[i]->weights[k].x /= sum;
-		m_blurParamsMapped[i]->blurWidth = w;
-		m_blurParamsMapped[i]->isVertical = i;
 	}
+	UpdateBlurWeights();
 }
 
 glm::mat4 DXShadowMapContext::CreateLightViewProjection()
@@ -349,6 +336,28 @@ glm::mat4 DXShadowMapContext::CreateLightViewProjection()
 	return lightProjection * lightView;
 }
 
+void DXShadowMapContext::UpdateBlurWeights() const
+{
+	const float s = static_cast<float>(m_blurWidth) / 2.0f;
+	for (int i = 0; i < 2; ++i)
+	{
+		if (!m_blurParamsMapped[i]) continue;
+
+		//for (int j = 0; j < 101; ++j) m_blurParamsMapped[i]->weights[j] = glm::vec4(0.0f);
+
+		float sum = 0.f;
+		for (int j = -m_blurWidth; j <= m_blurWidth; ++j)
+		{
+			float weight = std::exp(-0.5f * (static_cast<float>(j) / s) * (static_cast<float>(j) / s));
+			m_blurParamsMapped[i]->weights[j + m_blurWidth] = glm::vec4{ weight, 0.f, 0.f, 0.f };
+			sum += weight;
+		}
+		for (int k = 0; k <= 2 * m_blurWidth; ++k) m_blurParamsMapped[i]->weights[k].x /= sum;
+		m_blurParamsMapped[i]->blurWidth = m_blurWidth;
+		m_blurParamsMapped[i]->isVertical = i;
+	}
+}
+
 void DXShadowMapContext::DrawImGui()
 {
 	static bool showDebugFrustum{ true };
@@ -364,7 +373,10 @@ void DXShadowMapContext::DrawImGui()
 		ImGui::Spacing();
 		//ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f);
 		ImGui::DragFloat3("Light Target", &m_lightTarget.x, 0.1f);
-		ImGui::DragFloat("Shadow Bias", &m_shadowBias, 0.0001f, 0.0f, 0.1f, "%.4f");
+		//ImGui::DragFloat("Shadow Bias", &m_shadowBias, 0.0001f, 0.0f, 0.1f, "%.4f");
+
+		ImGui::Spacing();
+		if (ImGui::SliderInt("Blur Radius", &m_blurWidth, 1, 50)) UpdateBlurWeights();
 	}
 
 	if (showDebugFrustum)

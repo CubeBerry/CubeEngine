@@ -29,13 +29,14 @@ public:
 	UINT GetSrvIndex() const { return m_srvHandle.second; }
 	glm::mat4 GetLightViewProjection() const { return m_lightViewProjection; }
 	glm::vec3 GetShadowDirection() const { return glm::normalize(m_lightTarget - m_lightPosition); }
-	float GetShadowBias() const { return m_shadowBias; }
+	//float GetShadowBias() const { return m_shadowBias; }
 	float GetOrthoSize() const { return m_orthoSize; }
 
 	void DrawImGui();
 private:
 	void CreateDepthTexture();
 	glm::mat4 CreateLightViewProjection();
+	void UpdateBlurWeights() const;
 
 	DXRenderManager* m_renderManager;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
@@ -52,7 +53,7 @@ private:
 	float m_orthoSize{ 15.f };
 	glm::vec3 m_lightPosition{ -3.f, 2.f, 0.f };
 	glm::vec3 m_lightTarget{ 0.f, 0.f, 0.f };
-	float m_shadowBias{ 0.005f };
+	//float m_shadowBias{ 0.005f };
 
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
@@ -70,6 +71,7 @@ private:
 	glm::mat4 m_lightViewProjection;
 
 	// Convolution Blur
+	int m_blurWidth{ 5 };
 	struct alignas(16) BlurParams
 	{
 		glm::vec4 weights[101];

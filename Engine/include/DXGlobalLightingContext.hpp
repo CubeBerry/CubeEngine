@@ -35,7 +35,6 @@ private:
 		glm::vec3 shadowDirection;
 		int activeDirectionalLight;
 		int useShadow;
-		float shadowBias;
 		float orthoSize;
 	} pushConstants;
 };

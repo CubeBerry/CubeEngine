@@ -94,7 +94,6 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		.shadowDirection = m_renderManager->m_shadowMapContext->GetShadowDirection(),
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
-		.shadowBias = m_renderManager->m_shadowMapContext->GetShadowBias(),
 		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()
 	};
 
