@@ -28,7 +28,7 @@ void DXShadowMapContext::Initialize()
 	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
 		.SetShaders("../Engine/shaders/hlsl/ShadowMapPass.vert.hlsl", "../Engine/shaders/hlsl/ShadowMapPass.frag.hlsl")
 		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
-		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_FRONT, true)
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
 		.SetDepthStencil(true, true)
 		.SetRenderTargets(rtvFormats)
 		.Build();

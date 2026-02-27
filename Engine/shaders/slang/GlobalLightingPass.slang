@@ -62,8 +62,6 @@ ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
 [[vk::push_constant]] PushConstants pushConstants;
 #endif
 
-Texture2D shadowMap : register(t4, space1);
-
 Texture2D gAlbedo : register(t0, space1);
 Texture2D gNormal : register(t1, space1);
 Texture2D gPosition : register(t2, space1);
@@ -74,12 +72,13 @@ SamplerState gSampler : register(s0, space1);
 TextureCube irradianceMap : register(t0, space2);
 TextureCube prefilterMap : register(t1, space2);
 Texture2D brdfLUT : register(t2, space2);
-SamplerState iblSmp : register(s1, space2);
 #else
 [[vk::binding(5, 1)]] SamplerCube irradianceMap;
 [[vk::binding(6, 1)]] SamplerCube prefilterMap;
 [[vk::binding(7, 1)]] Sampler2D brdfLUT;
 #endif
+Texture2D shadowMap : register(t3, space2);
+SamplerState iblSmp : register(s1, space2);
 
 // float3 BlinnPhong(float3 lightPosition, float3 lightColor, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
 // {
@@ -293,7 +292,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
         shadowUV.y = projectionCoords.y * 0.5 + 0.5;
 #endif
 
-        float4 b = shadowMap.Sample(gSampler, shadowUV);
+        float4 b = shadowMap.Sample(iblSmp, shadowUV);
         float z_f = projectionCoords.z;
         float G = Hamburger4MSM(b, z_f);
 

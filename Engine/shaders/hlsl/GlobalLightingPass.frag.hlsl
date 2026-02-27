@@ -9,7 +9,7 @@
 #endif
 
 
-#line 67 "slang/GlobalLightingPass.slang"
+#line 65 "slang/GlobalLightingPass.slang"
 Texture2D<float4 > gAlbedo_0 : register(t0, space1);
 
 
@@ -35,20 +35,24 @@ cbuffer pushConstants_0 : register(b1)
     PushConstants_0 pushConstants_0;
 }
 
-#line 68
+
 Texture2D<float4 > gNormal_0 : register(t1, space1);
 
 
-#line 69
+#line 67
 Texture2D<float4 > gPosition_0 : register(t2, space1);
 
 
-#line 70
+#line 68
 Texture2D<float4 > gMaterial_0 : register(t3, space1);
 
 
-#line 65
-Texture2D<float4 > shadowMap_0 : register(t4, space1);
+#line 80
+Texture2D<float4 > shadowMap_0 : register(t3, space2);
+
+
+#line 81
+SamplerState iblSmp_0 : register(s1, space2);
 
 
 #line 33
@@ -73,22 +77,19 @@ cbuffer directionalLightList_0 : register(b0)
     fDirectionalLightList_0 directionalLightList_0;
 }
 
-#line 74
+#line 72
 TextureCube<float4 > irradianceMap_0 : register(t0, space2);
 
 
-SamplerState iblSmp_0 : register(s1, space2);
-
-
-#line 75
+#line 73
 TextureCube<float4 > prefilterMap_0 : register(t1, space2);
 
 
-#line 76
+#line 74
 Texture2D<float4 > brdfLUT_0 : register(t2, space2);
 
 
-#line 169
+#line 168
 struct MainVectors_0
 {
     float3 worldPosition_0;
@@ -100,11 +101,11 @@ struct MainVectors_0
 };
 
 
-#line 169
+#line 168
 MainVectors_0 MainVectors_x24init_0(float3 worldPosition_1, float3 albedo_1, float4 material_1, float3 V_1, float3 N_1, float3 F0_1)
 {
 
-#line 169
+#line 168
     MainVectors_0 _S1;
 
     _S1.worldPosition_0 = worldPosition_1;
@@ -114,12 +115,12 @@ MainVectors_0 MainVectors_x24init_0(float3 worldPosition_1, float3 albedo_1, flo
     _S1.N_0 = N_1;
     _S1.F0_0 = F0_1;
 
-#line 169
+#line 168
     return _S1;
 }
 
 
-#line 213
+#line 212
 float Hamburger4MSM_0(float4 b_0, float z_f_0)
 {
 
@@ -127,10 +128,10 @@ float Hamburger4MSM_0(float4 b_0, float z_f_0)
 
     float _S2 = b_prime_0.y;
 
-#line 218
+#line 217
     float _S3 = b_prime_0.x;
 
-#line 218
+#line 217
     float L22_0 = sqrt(max(_S2 - _S3 * _S3, 0.00000999999974738f));
     float L32_0 = (b_prime_0.z - _S2 * _S3) / L22_0;
     float L33_0 = sqrt(max(b_prime_0.w - _S2 * _S2 - L32_0 * L32_0, 0.00000999999974738f));
@@ -148,50 +149,50 @@ float Hamburger4MSM_0(float4 b_0, float z_f_0)
 
     float _S4 = - c2_0;
 
-#line 233
+#line 232
     float _S5 = 2.0f * c3_0;
 
-#line 233
+#line 232
     float rootA_0 = (_S4 - sqrtDisc_0) / _S5;
     float rootB_0 = (_S4 + sqrtDisc_0) / _S5;
 
     float z2_0 = min(rootA_0, rootB_0);
     float z3_0 = max(rootA_0, rootB_0);
 
-#line 237
+#line 236
     float G_0;
 
 
     if(z_f_0 <= z2_0)
     {
 
-#line 240
+#line 239
         G_0 = 0.0f;
 
-#line 240
+#line 239
     }
     else
     {
 
-#line 241
+#line 240
         if(z_f_0 <= z3_0)
         {
 
-#line 241
+#line 240
             G_0 = (z_f_0 * z3_0 - _S3 * (z_f_0 + z3_0) + _S2) / ((z3_0 - z2_0) * (z_f_0 - z2_0));
 
-#line 241
+#line 240
         }
         else
         {
 
-#line 241
+#line 240
             G_0 = 1.0f - (z2_0 * z3_0 - _S3 * (z2_0 + z3_0) + _S2) / ((z_f_0 - z2_0) * (z_f_0 - z3_0));
 
-#line 241
+#line 240
         }
 
-#line 240
+#line 239
     }
 
 
@@ -200,19 +201,19 @@ float Hamburger4MSM_0(float4 b_0, float z_f_0)
 }
 
 
-#line 159
+#line 158
 float3 F_0(float3 F0_2, float3 V_2, float3 H_0)
 {
     return F0_2 + ((float3)1.0f - F0_2) * pow(1.0f - max(dot(V_2, H_0), 0.0f), 5.0f);
 }
 
 
-#line 129
+#line 128
 float D_0(float alpha_0, float3 N_2, float3 H_1)
 {
     float numerator_0 = pow(alpha_0, 2.0f);
 
-#line 137
+#line 136
     return numerator_0 / max(3.14159274101257324f * pow(pow(max(dot(N_2, H_1), 0.0f), 2.0f) * (numerator_0 - 1.0f) + 1.0f, 2.0f), 9.99999997475242708e-07f);
 }
 
@@ -235,13 +236,13 @@ float G_1(float alpha_2, float3 N_4, float3 V_3, float3 L_0)
 }
 
 
-#line 180
+#line 179
 float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_0, float3 lightColor_1, int lightIndex_0)
 {
 
     float roughness_0 = mainVectors_0.material_0.y;
 
-#line 188
+#line 187
     float3 L_1 = normalize(- lightPosition_0);
 
 
@@ -251,17 +252,17 @@ float3 PBR_0(MainVectors_0 mainVectors_0, float3 lightPosition_0, float3 lightCo
 
     float3 Ks_0 = F_0(mainVectors_0.F0_0, mainVectors_0.V_0, H_2);
 
-#line 201
+#line 200
     float alpha_3 = roughness_0 * roughness_0;
 
     float _S6 = max(dot(L_1, mainVectors_0.N_0), 0.0f);
 
-#line 210
+#line 209
     return ((1.0f - mainVectors_0.material_0.x) * ((float3)1.0f - Ks_0) * (mainVectors_0.albedo_0 / 3.14159274101257324f) + D_0(alpha_3, mainVectors_0.N_0, H_2) * G_1(alpha_3, mainVectors_0.N_0, mainVectors_0.V_0, L_1) * Ks_0 / max(4.0f * max(dot(mainVectors_0.V_0, mainVectors_0.N_0), 0.0f) * _S6, 0.10000000149011612f)) * lightColor_1 * _S6;
 }
 
 
-#line 164
+#line 163
 float3 Froughness_0(float3 F0_3, float3 V_4, float3 H_3, float roughness_1)
 {
     return F0_3 + (max((float3)(1.0f - roughness_1), F0_3) - F0_3) * pow(clamp(1.0f - max(dot(H_3, V_4), 0.0f), 0.0f, 1.0f), 5.0f);
@@ -276,11 +277,11 @@ struct VSOutput_0
 };
 
 
-#line 248
+#line 247
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 248
+#line 247
     VSOutput_0 _S7 = input_0;
 
     float3 _S8 = (float3)0.0f;
@@ -289,16 +290,16 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     if((albedoSample_0.w) < 0.00999999977648258f)
     {
 
-#line 253
+#line 252
         discard;
 
-#line 253
+#line 252
     }
     float3 albedo_2 = albedoSample_0.xyz;
     if((pushConstants_0.meshletVisualization_0) > int(0))
     {
 
-#line 255
+#line 254
         return float4(albedo_2, 1.0f);
     }
     float3 worldPosition_2 = gPosition_0.Sample(gSampler_0, _S7.uv_0).xyz;
@@ -314,10 +315,10 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     float3 N_5 = normalize(gNormal_0.Sample(gSampler_0, _S7.uv_0).xyz);
     MainVectors_0 _S9 = MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, V_5, N_5, F0_4);
 
-#line 268
+#line 267
     float shadow_0;
 
-#line 281
+#line 280
     if((pushConstants_0.useShadow_0) > int(0))
     {
 
@@ -330,63 +331,63 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 
         shadowUV_0[int(1)] = - projectionCoords_0.y * 0.5f + 0.5f;
 
-#line 297
+#line 296
         float z_f_1 = projectionCoords_0.z;
 
-#line 297
-        shadow_0 = Hamburger4MSM_0(shadowMap_0.Sample(gSampler_0, shadowUV_0), z_f_1) * (step(0.0f, shadowUV_0.x) * step(shadowUV_0.x, 1.0f) * step(0.0f, shadowUV_0.y) * step(shadowUV_0.y, 1.0f) * step(0.0f, z_f_1) * step(z_f_1, 1.0f));
+#line 296
+        shadow_0 = Hamburger4MSM_0(shadowMap_0.Sample(iblSmp_0, shadowUV_0), z_f_1) * (step(0.0f, shadowUV_0.x) * step(shadowUV_0.x, 1.0f) * step(0.0f, shadowUV_0.y) * step(shadowUV_0.y, 1.0f) * step(0.0f, z_f_1) * step(z_f_1, 1.0f));
 
-#line 281
+#line 280
     }
     else
     {
 
-#line 281
+#line 280
         shadow_0 = 0.0f;
 
-#line 281
+#line 280
     }
 
-#line 281
+#line 280
     int l_0 = int(0);
 
-#line 281
+#line 280
     float3 resultColor_0 = _S8;
 
-#line 319
+#line 318
     for(;;)
     {
 
-#line 319
+#line 318
         if(l_0 < (pushConstants_0.activeDirectionalLights_0))
         {
         }
         else
         {
 
-#line 319
+#line 318
             break;
         }
 
 
         float3 resultColor_1 = resultColor_0 + PBR_0(_S9, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0) * (1.0f - shadow_0);
 
-#line 319
+#line 318
         l_0 = l_0 + int(1);
 
-#line 319
+#line 318
         resultColor_0 = resultColor_1;
 
-#line 319
+#line 318
     }
 
-#line 328
+#line 327
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, roughness_2);
 
-#line 342
+#line 341
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), roughness_2)).xy;
 
-#line 364
+#line 363
     return float4((1.0f - metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0, 1.0f);
 }
 
