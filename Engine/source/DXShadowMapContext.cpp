@@ -2,6 +2,9 @@
 //Project: CubeEngine
 //File: DXShadowMapContext.cpp
 #include "DXShadowMapContext.hpp"
+
+#include <d3dcompiler.h>
+
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
 #include "Engine.hpp"
@@ -29,6 +32,33 @@ void DXShadowMapContext::Initialize()
 		.SetDepthStencil(true, true)
 		.SetRenderTargets(rtvFormats)
 		.Build();
+
+	// Initialize Compute Pipeline for Convolution Blur
+	CD3DX12_DESCRIPTOR_RANGE1 srvRange, uavRange;
+	srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
+	uavRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
+
+	rootParameters.resize(3);
+	rootParameters[0].InitAsConstantBufferView(0, 0);
+	rootParameters[1].InitAsDescriptorTable(1, &srvRange);
+	rootParameters[2].InitAsDescriptorTable(1, &uavRange);
+
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC computeRootSigDesc;
+	computeRootSigDesc.Init_1_1(static_cast<UINT>(rootParameters.size()), rootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
+
+	ComPtr<ID3DBlob> signature, error;
+	DXHelper::ThrowIfFailed(D3D12SerializeVersionedRootSignature(&computeRootSigDesc, &signature, &error));
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_computeRootSignature)));
+	m_computeRootSignature->SetName(L"Shadow Blur Compute Root Signature");
+
+	ComPtr<ID3DBlob> computeShader, errorMessages;
+	HRESULT hr = D3DCompileFromFile(L"../Engine/shaders/hlsl/ConvolutionBlur.compute.hlsl", nullptr, nullptr, "computeMain", "cs_5_1", 0, 0, &computeShader, &errorMessages);
+	if (FAILED(hr) && errorMessages) OutputDebugStringA(static_cast<const char*>(errorMessages->GetBufferPointer()));
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC computePsoDesc = {};
+	computePsoDesc.pRootSignature = m_computeRootSignature.Get();
+	computePsoDesc.CS = CD3DX12_SHADER_BYTECODE(computeShader.Get());
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateComputePipelineState(&computePsoDesc, IID_PPV_ARGS(&m_computePipelineState)));
 }
 
 void DXShadowMapContext::OnResize()
@@ -87,8 +117,54 @@ void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
 		}
 	}
 
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_momentTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	commandList->ResourceBarrier(1, &barrier);
+	// Convolution Blur Pass
+	UINT descSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE baseGpuHandle(
+		m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart(),
+		static_cast<INT>(m_computeSrvBaseIndex),
+		descSize
+	);
+
+	CD3DX12_RESOURCE_BARRIER barriers[2];
+	barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_momentTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_blurredMomentTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	commandList->ResourceBarrier(2, barriers);
+
+	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	commandList->SetPipelineState(m_computePipelineState.Get());
+	commandList->SetComputeRootSignature(m_computeRootSignature.Get());
+
+	// Horizontal Blur Pass
+	commandList->SetComputeRootConstantBufferView(0, m_blurParamsBuffer[0]->GetGPUVirtualAddress());
+
+	CD3DX12_GPU_DESCRIPTOR_HANDLE uavHandle = baseGpuHandle;
+	uavHandle.Offset(3, descSize);
+
+	commandList->SetComputeRootDescriptorTable(1, baseGpuHandle);
+	commandList->SetComputeRootDescriptorTable(2, uavHandle);
+	commandList->Dispatch((m_width + 127) / 128, m_height, 1);
+
+	barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_blurredMomentTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_momentTexture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	commandList->ResourceBarrier(2, barriers);
+
+	// Vertical Blur Pass
+	commandList->SetComputeRootConstantBufferView(0, m_blurParamsBuffer[1]->GetGPUVirtualAddress());
+
+	CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle = baseGpuHandle;
+	srvHandle.Offset(2, descSize);
+	uavHandle = baseGpuHandle;
+	uavHandle.Offset(1, descSize);
+
+	commandList->SetComputeRootDescriptorTable(1, srvHandle);
+	commandList->SetComputeRootDescriptorTable(2, uavHandle);
+	commandList->Dispatch(m_width, (m_height + 127) / 128, 1);
+
+	barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_momentTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_blurredMomentTexture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(2, barriers);
 }
 
 void DXShadowMapContext::CleanUp()
@@ -107,7 +183,7 @@ void DXShadowMapContext::CreateDepthTexture()
 		m_width,
 		m_height,
 		1, 1, 1, 0,
-		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 	);
 
 	D3D12_CLEAR_VALUE momentClearValue;
@@ -187,24 +263,82 @@ void DXShadowMapContext::CreateDepthTexture()
 	dsvDesc.Texture2D.MipSlice = 0;
 	m_renderManager->m_device->CreateDepthStencilView(m_depthTexture.Get(), &dsvDesc, m_dsvHandle);
 
-	// Create SRV descriptor for the depth texture
-	//srvDesc = {};
-	//srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	//srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	//srvDesc.Texture2D.MostDetailedMip = 0;
-	//srvDesc.Texture2D.MipLevels = 1;
-	//srvDesc.Texture2D.PlaneSlice = 0;
-	//srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	// Create blurred moment texture for convolution blur pass (UAV, SRV)
+	auto blurTextureDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
+		m_width, m_height,
+		1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+	);
 
-	//m_srvHandle = m_renderManager->AllocateSrvHandles(1);
-	//m_renderManager->m_device->CreateShaderResourceView(m_depthTexture.Get(), &srvDesc, m_srvHandle.first);
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &blurTextureDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, nullptr, IID_PPV_ARGS(&m_blurredMomentTexture)));
+	m_blurredMomentTexture->SetName(L"Blurred Moment Texture");
+
+	// Create SRV, UAV descriptor for the blurred moment texture
+	UINT descSize = m_renderManager->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	auto allocatedHandles = m_renderManager->AllocateSrvHandles(4);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle = allocatedHandles.first;
+	m_computeSrvBaseIndex = allocatedHandles.second;
+
+	m_srvHandle = { cpuHandle, m_computeSrvBaseIndex };
+
+	srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+	// Create SRV and UAV for both moment texture and blurred moment texture
+	// moment texture SRV
+	m_renderManager->m_device->CreateShaderResourceView(m_momentTexture.Get(), &srvDesc, cpuHandle);
+	// moment texture UAV
+	cpuHandle.Offset(1, descSize);
+	m_renderManager->m_device->CreateUnorderedAccessView(m_momentTexture.Get(), nullptr, &uavDesc, cpuHandle);
+	// blurred moment texture SRV
+	cpuHandle.Offset(1, descSize);
+	m_renderManager->m_device->CreateShaderResourceView(m_blurredMomentTexture.Get(), &srvDesc, cpuHandle);
+	// blurred moment texture UAV
+	cpuHandle.Offset(1, descSize);
+	m_renderManager->m_device->CreateUnorderedAccessView(m_blurredMomentTexture.Get(), nullptr, &uavDesc, cpuHandle);
+
+	// Create CBV and calculate Gaussian weights for convolution blur pass
+	UINT cbvSize = (sizeof(BlurParams) + 255) & ~255;
+	auto cbvDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(BlurParams));
+	CD3DX12_HEAP_PROPERTIES uploadHeap(D3D12_HEAP_TYPE_UPLOAD);
+
+	int w = 5;
+	float s = static_cast<float>(w) / 2.0f;
+
+	for (int i = 0; i < 2; ++i)
+	{
+		DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+			&uploadHeap, D3D12_HEAP_FLAG_NONE, &cbvDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_blurParamsBuffer[i])));
+		m_blurParamsBuffer[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_blurParamsMapped[i]));
+
+		float sum = 0.f;
+		for (int j = -w; j <= w; ++j)
+		{
+			float weight = std::exp(-0.5f * (static_cast<float>(j) / s) * (static_cast<float>(j) / s));
+			m_blurParamsMapped[i]->weights[j + w] = glm::vec4{ weight, 0.f, 0.f, 0.f };
+			sum += weight;
+		}
+		for (int k = 0; k <= 2 * w; ++k) m_blurParamsMapped[i]->weights[k].x /= sum;
+		m_blurParamsMapped[i]->blurWidth = w;
+		m_blurParamsMapped[i]->isVertical = i;
+	}
 }
 
 glm::mat4 DXShadowMapContext::CreateLightViewProjection()
 {
 	// DX12 should use orthZO
 	glm::mat4 lightProjection = glm::orthoZO(-m_orthoSize, m_orthoSize, -m_orthoSize, m_orthoSize, m_nearPlane, m_farPlane);
+	//glm::mat4 lightProjection = glm::perspectiveZO(glm::radians(90.0f), 1.0f, m_nearPlane, m_farPlane);
 	glm::vec3 lightDirection = glm::normalize(m_renderManager->directionalLightUniforms[0].lightDirection);
 	float distance = m_farPlane * 0.5f;
 	m_lightPosition = m_lightTarget - lightDirection * distance;

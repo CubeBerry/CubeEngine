@@ -38,8 +38,8 @@ private:
 	glm::mat4 CreateLightViewProjection();
 
 	DXRenderManager* m_renderManager;
-	std::unique_ptr<DXPipeLine> m_pipeline;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
+	std::unique_ptr<DXPipeLine> m_pipeline;
 	bool m_enabled{ true };
 
 	ComPtr<ID3D12Resource> m_momentTexture; // Color (RTV, SRV)
@@ -68,4 +68,20 @@ private:
 		glm::mat4 localToNDC;
 	} pushConstants;
 	glm::mat4 m_lightViewProjection;
+
+	// Convolution Blur
+	struct alignas(16) BlurParams
+	{
+		glm::vec4 weights[101];
+		int blurWidth;
+		int isVertical;
+	};
+
+	ComPtr<ID3D12RootSignature> m_computeRootSignature;
+	ComPtr<ID3D12PipelineState> m_computePipelineState;
+	ComPtr<ID3D12Resource> m_blurredMomentTexture;
+	ComPtr<ID3D12Resource> m_blurParamsBuffer[2];
+	BlurParams* m_blurParamsMapped[2]{ nullptr, nullptr };
+
+	UINT m_computeSrvBaseIndex{ 0 };
 };

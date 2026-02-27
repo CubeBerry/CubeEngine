@@ -210,6 +210,40 @@ float3 PBR(MainVectors mainVectors, float3 lightPosition, float3 lightColor, int
     return outgoingLight;
 }
 
+float Hamburger4MSM(float4 b, float z_f)
+{
+    float alpha = 1.0e-3;
+    float4 b_prime = (1.0 - alpha) * b + alpha * float4(0.5, 0.5, 0.5, 0.5);
+
+    float L22 = sqrt(max(b_prime.y - b_prime.x * b_prime.x, 0.00001));
+    float L32 = (b_prime.z - b_prime.y * b_prime.x) / L22;
+    float L33 = sqrt(max(b_prime.w - b_prime.y * b_prime.y - L32 * L32, 0.00001));
+
+    float y1 = 1.0;
+    float y2 = (z_f - b_prime.x) / L22;
+    float y3 = (z_f * z_f - b_prime.y - L32 * y2) / L33;
+
+    float c3 = y3 / L33;
+    float c2 = (y2 - L32 * c3) / L22;
+    float c1 = 1.0 - b_prime.x * c2 - b_prime.y * c3;
+
+    float discriminant = max(0.0, c2 * c2 - 4.0 * c3 * c1);
+    float sqrtDisc = sqrt(discriminant);
+
+    float rootA = (-c2 - sqrtDisc) / (2.0 * c3);
+    float rootB = (-c2 + sqrtDisc) / (2.0 * c3);
+
+    float z2 = min(rootA, rootB);
+    float z3 = max(rootA, rootB);
+
+    float G = 0.0;
+    if (z_f <= z2) G = 0.0;
+    else if (z_f <= z3) G = (z_f * z3 - b_prime.x * (z_f + z3) + b_prime.y) / ((z3 - z2) * (z_f - z2));
+    else G = 1.0 - (z2 * z3 - b_prime.x * (z2 + z3) + b_prime.y) / ((z_f - z2) * (z_f - z3));
+
+    return G;
+}
+
 [shader("fragment")]
 float4 fragmentMain(VSOutput input) : SV_Target
 {
@@ -246,16 +280,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float shadow = 0.0;
     if (pushConstants.useShadow > 0)
     {
-        // Derive light direction based on the frustum's forward direction
-        float3 L = normalize(-pushConstants.shadowDirection);
-        float NdotL = saturate(dot(N, L));
-
-        // Apply Normal Offset: The multiplier pushConstants.orthoSize can be tuned based on orthoSize
-        float normalOffsetScale = pushConstants.shadowBias * (1.0 - NdotL) * pushConstants.orthoSize;
-        float3 biasedWorldPosition = worldPosition + N * normalOffsetScale;
-
         // Transform to light space
-        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(biasedWorldPosition, 1.0));
+        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(worldPosition, 1.0));
         float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 
         // Convert to UV coordinates (Handles both DirectX and Vulkan coordinate systems)
@@ -267,21 +293,25 @@ float4 fragmentMain(VSOutput input) : SV_Target
         shadowUV.y = projectionCoords.y * 0.5 + 0.5;
 #endif
 
-        // Depth Comparison
-        float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
-        float currentDepth = projectionCoords.z;
-        // shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+        float4 b = shadowMap.Sample(gSampler, shadowUV);
+        float z_f = projectionCoords.z;
+        float G = Hamburger4MSM(b, z_f);
 
-        // Apply a very small constant bias as a baseline defense against micro-acne
-        float constantBias = 0.0001;
-        float isShadow = currentDepth - constantBias > closestDepth ? 1.0 : 0.0;
+        // // Depth Comparison
+        // float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
+        // float currentDepth = projectionCoords.z;
+        // // shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+        // // Apply a very small constant bias as a baseline defense against micro-acne
+        // float constantBias = 0.0001;
+        // float isShadow = currentDepth - constantBias > closestDepth ? 1.0 : 0.0;
 
         // Frustum bounds check (Prevents clamping smearing)
         // Branchless optimization using step() instead of if-statements
         float bounds = step(0.0, shadowUV.x) * step(shadowUV.x, 1.0) *
                        step(0.0, shadowUV.y) * step(shadowUV.y, 1.0) *
-                       step(0.0, currentDepth) * step(currentDepth, 1.0);
-        shadow = isShadow * bounds;
+                       step(0.0, z_f) * step(z_f, 1.0);
+        shadow = G * bounds;
     }
     else shadow = 0.0;
 
