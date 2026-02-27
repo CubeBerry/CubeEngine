@@ -38,7 +38,7 @@ struct VSOutput_0
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 44
-    return float4(pow(FilmicToneMapping_0(gTexture_0.Sample(gSampler_0, input_0.uv_0).xyz), (float3)0.45454543828964233f), 1.0f);
+#line 49
+    return float4(pow(FilmicToneMapping_0(gTexture_0.Sample(gSampler_0, input_0.uv_0).xyz * 0.10000000149011612f), (float3)0.45454543828964233f), 1.0f);
 }
 

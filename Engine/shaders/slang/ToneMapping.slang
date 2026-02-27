@@ -37,6 +37,11 @@ float4 fragmentMain(VSOutput input) : SV_Target
 {
     float4 hdrColor = gTexture.Sample(gSampler, input.uv);
     float3 color = hdrColor.rgb;
+
+    // Apply exposure
+    float exposure = 0.1;
+    color *= exposure;
+
     // Convert HDR to LDR
     color = FilmicToneMapping(color);
     // 2.2 Gamma Correction
