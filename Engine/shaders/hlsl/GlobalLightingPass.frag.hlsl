@@ -301,6 +301,9 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 253
         return float4(albedo_2, 1.0f);
     }
+
+#line 254
+    float3 normal_0 = gNormal_0.Sample(gSampler_0, _S7.uv_0).xyz;
     float3 worldPosition_2 = gPosition_0.Sample(gSampler_0, _S7.uv_0).xyz;
     float4 material_2 = gMaterial_0.Sample(gSampler_0, _S7.uv_0);
 
@@ -311,7 +314,7 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 
     float3 F0_4 = lerp((float3)0.03999999910593033f, albedo_2, (float3)metallic_0);
     float3 V_5 = normalize(pushConstants_0.viewPosition_0 - worldPosition_2);
-    float3 N_5 = normalize(gNormal_0.Sample(gSampler_0, _S7.uv_0).xyz);
+    float3 N_5 = normalize(normal_0);
     MainVectors_0 _S9 = MainVectors_x24init_0(worldPosition_2, albedo_2, material_2, V_5, N_5, F0_4);
 
 #line 266
@@ -321,7 +324,9 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     if((pushConstants_0.useShadow_0) > int(0))
     {
 
-        float4 lightSpacePosition_0 = mul(pushConstants_0.lightViewProjection_0, float4(worldPosition_2, 1.0f));
+
+
+        float4 lightSpacePosition_0 = mul(pushConstants_0.lightViewProjection_0, float4(worldPosition_2 + normal_0 * 0.05000000074505806f, 1.0f));
         float3 projectionCoords_0 = lightSpacePosition_0.xyz / lightSpacePosition_0.w;
 
 
@@ -330,10 +335,10 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 
         shadowUV_0[int(1)] = - projectionCoords_0.y * 0.5f + 0.5f;
 
-#line 295
+#line 297
         float z_f_1 = projectionCoords_0.z;
 
-#line 295
+#line 297
         shadow_0 = Hamburger4MSM_0(shadowMap_0.Sample(iblSmp_0, shadowUV_0), z_f_1) * (step(0.0f, shadowUV_0.x) * step(shadowUV_0.x, 1.0f) * step(0.0f, shadowUV_0.y) * step(shadowUV_0.y, 1.0f) * step(0.0f, z_f_1) * step(z_f_1, 1.0f));
 
 #line 279
@@ -353,40 +358,40 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 279
     float3 resultColor_0 = _S8;
 
-#line 317
+#line 319
     for(;;)
     {
 
-#line 317
+#line 319
         if(l_0 < (pushConstants_0.activeDirectionalLights_0))
         {
         }
         else
         {
 
-#line 317
+#line 319
             break;
         }
 
 
         float3 resultColor_1 = resultColor_0 + PBR_0(_S9, directionalLightList_0.lights_0[l_0].lightDirection_0, directionalLightList_0.lights_0[l_0].lightColor_0 * directionalLightList_0.lights_0[l_0].intensity_0, l_0) * (1.0f - shadow_0);
 
-#line 317
+#line 319
         l_0 = l_0 + int(1);
 
-#line 317
+#line 319
         resultColor_0 = resultColor_1;
 
-#line 317
+#line 319
     }
 
-#line 326
+#line 328
     float3 F_1 = Froughness_0(F0_4, V_5, N_5, roughness_2);
 
-#line 340
+#line 342
     float2 brdf_0 = brdfLUT_0.Sample(iblSmp_0, float2(max(dot(N_5, V_5), 0.0f), roughness_2)).xy;
 
-#line 362
+#line 364
     return float4((1.0f - metallic_0) * ((float3)1.0f - F_1) * (irradianceMap_0.Sample(iblSmp_0, N_5).xyz * albedo_2) + prefilterMap_0.SampleLevel(iblSmp_0, reflect(- V_5, N_5), roughness_2 * 4.0f).xyz * (F_1 * brdf_0.x + brdf_0.y) + resultColor_0, 1.0f);
 }
 

@@ -279,7 +279,9 @@ float4 fragmentMain(VSOutput input) : SV_Target
     if (pushConstants.useShadow > 0)
     {
         // Transform to light space
-        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(worldPosition, 1.0));
+        // Normal Offset Bias
+        float3 offsetPos = worldPosition + normal * 0.05;
+        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(offsetPos, 1.0));
         float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 
         // Convert to UV coordinates (Handles both DirectX and Vulkan coordinate systems)
