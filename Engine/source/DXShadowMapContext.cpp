@@ -308,7 +308,6 @@ void DXShadowMapContext::CreateDepthTexture()
 	m_renderManager->m_device->CreateUnorderedAccessView(m_blurredMomentTexture.Get(), nullptr, &uavDesc, cpuHandle);
 
 	// Create CBV and calculate Gaussian weights for convolution blur pass
-	UINT cbvSize = (sizeof(BlurParams) + 255) & ~255;
 	auto cbvDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(BlurParams));
 	CD3DX12_HEAP_PROPERTIES uploadHeap(D3D12_HEAP_TYPE_UPLOAD);
 
