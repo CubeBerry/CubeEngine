@@ -96,7 +96,6 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
 		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()
 	};
-
 	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();

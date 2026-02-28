@@ -49,8 +49,8 @@ private:
 	UINT m_height{ 2048 };
 
 	// Shadow Parameters
-	float m_nearPlane{ 1.f }, m_farPlane{ 40.f };
-	float m_orthoSize{ 15.f };
+	float m_nearPlane{ 1.f }, m_farPlane{ 10.f };
+	float m_orthoSize{ 5.f };
 	glm::vec3 m_lightPosition{ -3.f, 2.f, 0.f };
 	glm::vec3 m_lightTarget{ 0.f, 0.f, 0.f };
 	//float m_shadowBias{ 0.005f };
