@@ -58,7 +58,7 @@ void ProceduralMeshes::Init()
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/AnimationModels/character.fbx", 1, 1);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(
 		MeshType::OBJ,
-		"../Game/assets/Models/AnimationModels/character.fbx",
+		"../Game/assets/Models/AnimationModels/Idle_1.fbx",
 		1, 1,
 		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
 	);
@@ -66,7 +66,11 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->AddComponent<SkeletalAnimationStateMachine>();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->Init();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Idle", "../Game/assets/Models/AnimationModels/Idle.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Run", "../Game/assets/Models/AnimationModels/Quad Punch.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Idle1", "../Game/assets/Models/AnimationModels/Idle_1.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Walking", "../Game/assets/Models/AnimationModels/Walking.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Punch", "../Game/assets/Models/AnimationModels/Quad Punch.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Swing Dancing", "../Game/assets/Models/AnimationModels/Swing Dancing.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Hip Hop Dancing", "../Game/assets/Models/AnimationModels/Hip Hop Dancing.fbx");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->ChangeState("Idle");
 
 	//if (!Engine::GetObjectManager().FindObjectWithName("Player")->HasComponent<SkeletalAnimationStateMachine>())

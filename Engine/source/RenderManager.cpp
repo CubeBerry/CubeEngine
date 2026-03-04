@@ -117,7 +117,8 @@ void RenderManager::CreateMesh(
 			aiProcess_CalcTangentSpace |
 			aiProcess_FlipUVs |
 			aiProcess_JoinIdenticalVertices |
-			aiProcess_TransformUVCoords 
+			aiProcess_TransformUVCoords |
+			aiProcess_LimitBoneWeights
 			//| aiProcess_PreTransformVertices
 		);
 
@@ -151,6 +152,11 @@ void RenderManager::CreateMesh(
 		// Store the model's root inverse transform for skeletal animation
 		glm::mat4 modelGlobalInverse = glm::inverse(AssimpToGLMMatrix(scene->mRootNode->mTransformation));
 
+		// Generate the same transformation matrix (M) used for vertex manipulation
+		glm::mat4 meshNorm = glm::mat4(1.0f);
+		meshNorm = glm::scale(meshNorm, glm::vec3(unitScale));
+		meshNorm = glm::translate(meshNorm, -center);
+
 		ProcessNode(subMeshes, scene->mRootNode, scene, 0,
 			globalMaxPos - globalMinPos, center, unitScale,
 			color, metallic, roughness,
@@ -163,6 +169,7 @@ void RenderManager::CreateMesh(
 			if (meshData && !meshData->boneInfoMap.empty())
 			{
 				meshData->modelGlobalInverseTransform = modelGlobalInverse;
+				//meshData->meshNormalizationTransform = meshNorm;
 			}
 		}
 		return;
@@ -763,6 +770,8 @@ void RenderManager::ProcessMesh(
 	meshNormalizationTransform = glm::scale(meshNormalizationTransform, glm::vec3(unitScale));
 	meshNormalizationTransform = glm::translate(meshNormalizationTransform, -center);
 
+	sprite->meshNormalizationTransform = meshNormalizationTransform;
+
 	// Process Bones (Skeletal Animation Data)
 	//for (unsigned int i = 0; i < mesh->mNumBones; i++)
 	//{
@@ -841,7 +850,9 @@ void RenderManager::ProcessMesh(
 
 			// Convert Assimp matrix and adjust the offset based on model normalization
 			glm::mat4 originalOffset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
-			newBoneInfo.offset = originalOffset * glm::inverse(meshNormalizationTransform);
+			//newBoneInfo.offset = originalOffset * glm::inverse(meshNormalizationTransform);
+			newBoneInfo.offset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+			sprite->meshNormalizationTransform = meshNormalizationTransform;
 
 			// Store the new bone info and increment the global bone counter
 			globalBoneInfoMap[boneName] = newBoneInfo;

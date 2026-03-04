@@ -1,67 +1,55 @@
-//Author: DOYEONG LEE
+﻿//Author: DOYEONG LEE
 //Project: CubeEngine
 //File: SkeletalAnimation.cpp
 
 #include "SkeletalAnimation/SkeletalAnimation.hpp"
 #include <assimp/Importer.hpp>
-#include <assimp/postprocess.h> // aiProcess_Triangulate
+#include <assimp/postprocess.h>
 #include <cassert>
 #include <iostream>
+#include <glm/gtx/matrix_decompose.hpp>
 
-// Constructor that loads animation data from a file using Assimp
 SkeletalAnimation::SkeletalAnimation(const std::string& animationPath, BufferWrapper::DynamicSprite3DMesh* meshData)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
 
-    // Check if the scene was loaded successfully
-    if (!scene || !scene->mRootNode) {
-        return;
-    }
+    if (!scene || !scene->mRootNode) return;
 
-    // Check if scene has animations
     if (scene->mNumAnimations == 0) {
         std::cerr << "[SkeletalAnimation] No animations found in: " << animationPath << std::endl;
         return;
     }
 
+    auto anim = scene->mAnimations[0];
+    // Setup global inverse transform
     globalInverseTransform = ConvertMatrixToGLMFormat(scene->mRootNode->mTransformation);
     globalInverseTransform = glm::inverse(globalInverseTransform);
 
-    // Get the first animation sequence and its timing info
-    auto animation = scene->mAnimations[0];
-    duration = static_cast<float>(animation->mDuration);
-    ticksPerSecond = static_cast<float>(animation->mTicksPerSecond);
-
-    // Provide a default fallback for ticks per second if not specified
+    // Load animation timing
+    duration = static_cast<float>(anim->mDuration);
+    ticksPerSecond = static_cast<float>(anim->mTicksPerSecond);
     if (ticksPerSecond == 0.0f) ticksPerSecond = 25.0f;
 
-    // Recursively build the node hierarchy from the scene root
+    // Load hierarchy and bone data
     ReadHierarchyData(rootNode, scene->mRootNode);
-
-    // Map animation channels to the mesh's bone structure
-    ReadMissingBones(animation, *meshData, scene);
+    ReadMissingBones(anim, *meshData, scene);
+    CollectPreRotations(scene->mRootNode, scene);
 }
 
-// Locate a specific bone object within the animation's bone list
 SkeletalBone* SkeletalAnimation::FindBone(const std::string& name)
 {
     auto iter = std::find_if(bones.begin(), bones.end(),
         [&](const SkeletalBone& bone) { return bone.GetBoneName() == name; }
     );
-    if (iter == bones.end()) return nullptr;
-    else return &(*iter);
+    return (iter == bones.end()) ? nullptr : &(*iter);
 }
 
-// Link animation channels to bone information and handle missing bones
 void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWrapper::DynamicSprite3DMesh& meshData, const aiScene* scene)
 {
     int size = animation->mNumChannels;
-
     auto& modelBoneInfoMap = meshData.boneInfoMap;
     int& boneCount = meshData.boneCount;
-
-    // 1. Copy existing bone info map
     this->boneInfoMap = modelBoneInfoMap;
 
     for (int i = 0; i < size; i++)
@@ -69,45 +57,37 @@ void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWra
         auto channel = animation->mChannels[i];
         std::string boneName = channel->mNodeName.data;
 
-        // 2. If bone is not in the map, register it
+        // Register new bone if not in existing map
         if (boneInfoMap.find(boneName) == boneInfoMap.end())
         {
             ThreeDimension::BoneInfo info;
             info.id = boneCount;
             info.offset = glm::mat4(1.0f);
-
-            // Try to find the offset matrix from the scene's meshes
-            if (scene && scene->HasMeshes())
-            {
-                for (unsigned int m = 0; m < scene->mNumMeshes; m++)
-                {
-                    const aiMesh* mesh = scene->mMeshes[m];
-                    for (unsigned int b = 0; b < mesh->mNumBones; b++)
-                    {
-                        std::string meshBoneName = mesh->mBones[b]->mName.data;
-                        if (meshBoneName == boneName)
-                        {
-                            info.offset = ConvertMatrixToGLMFormat(mesh->mBones[b]->mOffsetMatrix);
-                            break;
-                        }
-                    }
-                }
-            }
             boneInfoMap[boneName] = info;
             boneCount++;
         }
+
+        // Cache bind pose local rotation from offset matrix
+        if (modelBoneInfoMap.find(boneName) != modelBoneInfoMap.end())
+        {
+            glm::mat4 offset = modelBoneInfoMap.at(boneName).offset;
+            glm::mat4 bindPoseGlobal = glm::inverse(offset);
+
+            glm::vec3 s, t, skew; glm::vec4 persp; glm::quat bindRot;
+            glm::decompose(bindPoseGlobal, s, bindRot, t, skew, persp);
+            bindPoseLocalRotations[boneName] = glm::normalize(bindRot);
+        }
+
         bones.emplace_back(SkeletalBone(boneName, boneInfoMap[boneName].id, channel));
     }
 }
 
-// Recursively copy Assimp's node structure into our internal hierarchy format
 void SkeletalAnimation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src)
 {
     assert(src);
     dest.name = src->mName.data;
     dest.transformation = ConvertMatrixToGLMFormat(src->mTransformation);
 
-    // Process all children of the current node
     for (unsigned int i = 0; i < src->mNumChildren; i++)
     {
         AssimpNodeData newData;
@@ -116,7 +96,25 @@ void SkeletalAnimation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* sr
     }
 }
 
-// Convert Assimp's row-major matrix to GLM's column-major matrix format
+void SkeletalAnimation::CollectPreRotations(const aiNode* node, const aiScene* scene)
+{
+    std::string nodeName = node->mName.data;
+
+    // Extract rotation from FBX PreRotation dummy nodes
+    if (nodeName.find("_$AssimpFbx$_PreRotation") != std::string::npos)
+    {
+        std::string boneName = nodeName.substr(0, nodeName.find("_$AssimpFbx$_"));
+
+        glm::mat4 transform = ConvertMatrixToGLMFormat(node->mTransformation);
+        glm::vec3 s, t, skew; glm::vec4 persp; glm::quat rot;
+        glm::decompose(transform, s, rot, t, skew, persp);
+        preRotations[boneName] = glm::normalize(rot);
+    }
+
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+        CollectPreRotations(node->mChildren[i], scene);
+}
+
 glm::mat4 SkeletalAnimation::ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
 {
     glm::mat4 to;

@@ -281,6 +281,7 @@ public:
 
 		// Global inverse transform from the MODEL's root node (not animation file)
 		glm::mat4 modelGlobalInverseTransform{ 1.0f };
+		glm::mat4 meshNormalizationTransform{ 1.0f };
 
 		// GPU Buffers
 		//std::variant<std::monostate, GLBuffer, VKBuffer, DXBuffer> buffer;
