@@ -748,67 +748,137 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 		ImGui::Text("Animation Controls");
 
 		// Playback Controls
-		if (ImGui::Button("Play")) 
-		{
-			animator->Play();
-		}
+		if (ImGui::Button("Play")) animator->Play();
 		ImGui::SameLine();
-
-		if (ImGui::Button("Pause")) 
-		{
-			animator->Pause();
-		}
+		if (ImGui::Button("Pause")) animator->Pause();
 		ImGui::SameLine();
+		if (ImGui::Button("Stop")) animator->Stop();
 
-		if (ImGui::Button("Stop")) 
-		{
-			animator->Stop();
-		}
-
-		// Parameters
+		// Speed settings
 		float speed = animator->GetSpeed();
-		if (ImGui::DragFloat("Speed", &speed, 0.1f, 0.0f, 5.0f))
+		if (ImGui::DragFloat("Speed", &speed, 0.05f, 0.0f, 100.0f))
 		{
 			animator->SetSpeed(speed);
 		}
 
-		// Debug Toggle
-		ImGui::Checkbox("Show Bones", &isShowBone);
+		// Loop settings
+		bool isLooping = animator->IsLooping();
+		if (ImGui::Checkbox("Loop Animation", &isLooping))
+		{
+			animator->SetLooping(isLooping);
+		}
 
-		// Information
+		// Timeline Scrubber
 		SkeletalAnimation* anim = animator->GetCurrentAnimation();
 		if (anim)
 		{
 			float currentTime = animator->GetCurrentAnimationTime();
 			float duration = anim->GetDuration();
-			ImGui::SliderFloat("Time", &currentTime, 0.0f, duration, "%.2f");
-			animator->SetCurrentAnimationTime(currentTime);
+			if (duration <= 0.0f) duration = 1.0f;
+
+			float safeDuration = std::max(0.0f, duration - 0.001f);
+			float sliderTime = fmod(currentTime, duration);
+			if (sliderTime > safeDuration) sliderTime = safeDuration;
+
+			// Check scrubbing state before drawing slider
+			bool wasScrubbing = animator->IsScrubbing();
+
+			if (ImGui::SliderFloat("Timeline", &sliderTime, 0.0f, safeDuration, "%.2f"))
+			{
+				// Update time and root motion immediately when sliding
+				animator->SetCurrentAnimationTime(sliderTime);
+				if (animator->IsRootMotionEnabled())
+				{
+					animator->UpdateRootMotionTransformToTime(sliderTime);
+				}
+			}
+
+			// Determine if the user is currently dragging the slider
+			bool isScrubbing = ImGui::IsItemActive();
+			animator->SetIsScrubbing(isScrubbing);
+
+			// Sync root motion on the frame the user releases the slider
+			if (wasScrubbing && !isScrubbing && animator->IsRootMotionEnabled())
+			{
+				animator->UpdateRootMotionTransformToTime(sliderTime);
+			}
 		}
 		else
 		{
 			ImGui::Text("No Animation Playing");
 		}
 
-		Object* currentObj = FindObjectWithId(currentIndex);
-		if (isShowBone && currentObj->HasComponent<SkeletalAnimator>())
+		// Root Motion
+		ImGui::Separator();
+		ImGui::Text("Root Motion");
+
+		bool enableRootMotion = animator->IsRootMotionEnabled();
+		if (ImGui::Checkbox("Apply Root Motion", &enableRootMotion))
 		{
-			SkeletalAnimator* animatorComp = currentObj->GetComponent<SkeletalAnimator>();
-			SkeletalAnimation* currentAnim = animatorComp->GetCurrentAnimation();
+			animator->SetEnableRootMotion(enableRootMotion);
+		}
+
+		ImGui::BeginDisabled(!animator->IsRootMotionEnabled());
+		{
+			// Root Bone Selector
+			std::string currentRootBone = animator->GetRootBoneName();
+			if (currentRootBone.empty()) currentRootBone = "None";
+
+			if (anim)
+			{
+				if (ImGui::BeginCombo("Root Bone", currentRootBone.c_str()))
+				{
+					std::function<void(const AssimpNodeData*)> traverseNodes;
+					traverseNodes = [&](const AssimpNodeData* node)
+					{
+						if (ImGui::Selectable(node->name.c_str(), selectedBoneName == node->name))
+						{
+							selectedBoneName = node->name;
+							animator->SetRootBoneName(node->name);
+						}
+						for (const auto& child : node->children)
+							traverseNodes(&child);
+					};
+					traverseNodes(&anim->GetRootNode());
+					ImGui::EndCombo();
+				}
+			}
+
+			// Baking Options (Locking axes)
+			ImGui::Text("Bake Into Pose:");
+			RootMotionBakeOptions bakeOptions = animator->GetBakeOptions();
+
+			ImGui::Checkbox("X##bake", &bakeOptions.bakePositionX); ImGui::SameLine();
+			ImGui::Checkbox("Y##bake", &bakeOptions.bakePositionY); ImGui::SameLine();
+			ImGui::Checkbox("Z##bake", &bakeOptions.bakePositionZ);
+			ImGui::Checkbox("Rotation##bake", &bakeOptions.bakeRotation);
+
+			animator->SetBakeOptions(bakeOptions);
+		}
+		ImGui::EndDisabled();
+
+		// Bone Hierarchy Debug Visualization
+		ImGui::Separator();
+		ImGui::Checkbox("Show Bones", &isShowBone);
+
+		Object* currentObj = FindObjectWithId(currentIndex);
+		if (isShowBone && currentObj && currentObj->HasComponent<SkeletalAnimator>())
+		{
+			SkeletalAnimation* currentAnim = animator->GetCurrentAnimation();
 			if (currentAnim)
 			{
-				const auto& transforms = animatorComp->GetGlobalBoneTransforms();
+				const auto& transforms = animator->GetGlobalBoneTransforms();
 
-				// Build model matrix identical to DynamicSprite::UpdateModel (GL mode)
 				glm::vec3 pos = currentObj->GetPosition();
 				glm::vec3 rot = currentObj->GetRotate3D();
 				glm::vec3 scale = currentObj->GetSize();
 
+				// Create model matrix for debug rendering
 				glm::mat4 rotationMatrix = glm::toMat4(glm::quat(glm::radians(-rot)));
 				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos)
 					* rotationMatrix
 					* glm::scale(glm::mat4(1.0f), scale);
 
-				// No globalInverseTransform needed — bones and vertices share the same coordinate space
 				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
 			}
 		}
@@ -855,10 +925,9 @@ void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationSta
 
 void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 objectTransform)
 {
-	// 1. 현재 노드의 뼈 행렬 가져오기
+	// Skip nodes not in the animation map (like dummy nodes) but process children
 	if (animatedTransforms.find(node->name) == animatedTransforms.end())
 	{
-		// 맵에 없는 노드(더미 등)는 그냥 자식으로 통과시킵니다.
 		for (const auto& child : node->children)
 		{
 			RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
@@ -866,11 +935,11 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		return;
 	}
 
-	// 2. 최종 월드 좌표 계산
+	// Calculate final world position
 	glm::mat4 nodeGlobalMatrix = animatedTransforms.at(node->name);
 	glm::mat4 nodeWorldMatrix = objectTransform * nodeGlobalMatrix;
 
-	// 3. 화면 좌표 변환
+	// Convert world position to screen coordinates
 	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
 	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
@@ -878,7 +947,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]);
 	glm::vec2 screenPos = WorldToScreen(currentPos, view, proj);
 
-	// [디버깅] 뼈 위치 정보 출력
+	// Debug: Log bone positions
 	static bool debugPrint = true;
 	if (debugPrint && node->name.find("Armature") == std::string::npos)
 	{
@@ -891,7 +960,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		Engine::GetLogger().LogDebug(LogCategory::Engine, debugBuffer);
 	}
 
-	// 4. 조인트(점) 그리기
+	// Draw joint point
 	if (screenPos.x != -1 && screenPos.y != -1)
 	{
 		ImU32 color = IM_COL32(0, 255, 0, 255);
@@ -900,10 +969,9 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		drawList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 5.0f, color);
 	}
 
-	// 5. 자식 노드 처리
+	// Process children and draw connection lines
 	for (const auto& child : node->children)
 	{
-		// 자식 뼈가 맵에 존재할 때만 선을 그립니다.
 		if (animatedTransforms.find(child.name) != animatedTransforms.end())
 		{
 			glm::mat4 childGlobalMatrix = animatedTransforms.at(child.name);
@@ -912,7 +980,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
 			glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
 
-			// 두 점이 모두 유효한 경우만 선 그리기
+			// Draw line if both positions are valid
 			if (screenPos.x >= 0 && screenPos.y >= 0 &&
 				childScreenPos.x >= 0 && childScreenPos.y >= 0)
 			{
@@ -923,8 +991,6 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 					2.0f);
 			}
 		}
-
-		// 재귀 호출
 		RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
 	}
 }

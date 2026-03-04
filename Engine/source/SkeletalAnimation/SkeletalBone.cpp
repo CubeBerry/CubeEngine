@@ -99,6 +99,7 @@ glm::vec3 SkeletalBone::GetInterpolatedPosition(float animationTime)
     int p0Index = GetPositionIndex(animationTime);
     int p1Index = p0Index + 1;
     float scaleFactor = GetScaleFactor(positions[p0Index].timeStamp, positions[p1Index].timeStamp, animationTime);
+
     return glm::mix(positions[p0Index].position, positions[p1Index].position, scaleFactor);
 }
 
@@ -111,8 +112,9 @@ glm::quat SkeletalBone::GetInterpolatedRotation(float animationTime)
     int p0Index = GetRotationIndex(animationTime);
     int p1Index = p0Index + 1;
     float scaleFactor = GetScaleFactor(rotations[p0Index].timeStamp, rotations[p1Index].timeStamp, animationTime);
-    glm::quat finalRotation = glm::slerp(rotations[p0Index].orientation, rotations[p1Index].orientation, scaleFactor);
-    return glm::normalize(finalRotation);
+
+    glm::quat finalRot = glm::slerp(rotations[p0Index].orientation, rotations[p1Index].orientation, scaleFactor);
+    return glm::normalize(finalRot);
 }
 
 // Get the raw interpolated scale vector
@@ -124,6 +126,7 @@ glm::vec3 SkeletalBone::GetInterpolatedScale(float animationTime)
     int p0Index = GetScaleIndex(animationTime);
     int p1Index = p0Index + 1;
     float scaleFactor = GetScaleFactor(scales[p0Index].timeStamp, scales[p1Index].timeStamp, animationTime);
+
     return glm::mix(scales[p0Index].scale, scales[p1Index].scale, scaleFactor);
 }
 
@@ -134,7 +137,7 @@ int SkeletalBone::GetPositionIndex(float animationTime)
         if (animationTime < positions[index + 1].timeStamp)
             return index;
     }
-    return 0;
+    return numPositions > 1 ? numPositions - 2 : 0;
 }
 
 // Find the current keyframe index for rotations based on animation time
@@ -144,7 +147,7 @@ int SkeletalBone::GetRotationIndex(float animationTime)
         if (animationTime < rotations[index + 1].timeStamp)
             return index;
     }
-    return 0;
+    return numRotations > 1 ? numRotations - 2 : 0;
 }
 
 // Find the current keyframe index for scaling based on animation time
@@ -154,7 +157,7 @@ int SkeletalBone::GetScaleIndex(float animationTime)
         if (animationTime < scales[index + 1].timeStamp)
             return index;
     }
-    return 0;
+    return numScales > 1 ? numScales - 2 : 0;
 }
 
 // Calculate the normalized distance (0.0 to 1.0) between two keyframes
