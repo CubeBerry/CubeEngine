@@ -71,6 +71,10 @@ void ProceduralMeshes::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Punch", "../Game/assets/Models/AnimationModels/Quad Punch.fbx");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Swing Dancing", "../Game/assets/Models/AnimationModels/Swing Dancing.fbx");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Hip Hop Dancing", "../Game/assets/Models/AnimationModels/Hip Hop Dancing.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_1.fbx", "../Game/assets/Models/AnimationModels/Thriller_1.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_2.fbx", "../Game/assets/Models/AnimationModels/Thriller_2.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_3.fbx", "../Game/assets/Models/AnimationModels/Thriller_3.fbx");
+	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_4.fbx", "../Game/assets/Models/AnimationModels/Thriller_4.fbx");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->ChangeState("Idle");
 
 	//if (!Engine::GetObjectManager().FindObjectWithName("Player")->HasComponent<SkeletalAnimationStateMachine>())

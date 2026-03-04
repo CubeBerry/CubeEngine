@@ -73,8 +73,8 @@ public:
     void UpdateRootMotionTransformToTime(float time);
 
 private:
-    // Calculate target transform relative to time 0
-    glm::mat4 CalculateRootMotionTarget(SkeletalAnimation* anim, float time, glm::mat4 startTransform);
+    glm::mat4 GetRootTransformAtTime(SkeletalAnimation* anim, float time);
+    glm::mat4 ExtractRootMotionDelta(SkeletalAnimation* anim, float timeStart, float timeEnd);
 
     void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform);
     bool HasDummyNodeParent(const AssimpNodeData* node, const std::string& boneName) const;
@@ -97,14 +97,13 @@ private:
     float previousTime = 0.0f;
     float blendFactor = 1.0f;
     float currentBlendDuration = 0.0f;
+    float lastRootMotionTime = 0.0f;
 
     // Root Motion Data
     bool        enableRootMotion = false;
     bool        isScrubbing = false;
     std::string rootBoneName = "";
     RootMotionBakeOptions bakeOptions;
-    glm::mat4 rootMotionStartTransform = glm::mat4(1.0f);
-    glm::mat4 previousRootMotionStartTransform = glm::mat4(1.0f);
 
     // Hierarchy & Bind Pose
     glm::mat4 modelGlobalInverseTransform{ 1.0f };

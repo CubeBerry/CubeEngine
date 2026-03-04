@@ -201,7 +201,7 @@ void ObjectManager::ObjectControllerForImGui()
 				SkeletalAnimatorControllerForImGui(reinterpret_cast<SkeletalAnimator*>(comp));
 				break;
 			case ComponentTypes::SKETANIMASTATE:
-				AnimationStateMachineControllerForImGui(reinterpret_cast<SkeletalAnimationStateMachine*>(comp));
+				// State Machine is now integrated and drawn inside SkeletalAnimator UI
 				break;
 			}
 		}
@@ -719,6 +719,25 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 	{
 		ImGui::Text("Animation Controls");
 
+		Object* currentObj = FindObjectWithId(currentIndex);
+		// Connect to State Machine if exists
+		if (currentObj && currentObj->HasComponent<SkeletalAnimationStateMachine>())
+		{
+			ImGui::Separator();
+			AnimationStateMachineControllerForImGui(currentObj->GetComponent<SkeletalAnimationStateMachine>());
+		}
+
+		// Bone Hierarchy Debug Visualization
+		ImGui::Separator();
+		ImGui::Checkbox("Show Bones", &isShowBone);
+
+		// Loop settings
+		bool isLooping = animator->IsLooping();
+		if (ImGui::Checkbox("Loop Animation", &isLooping))
+		{
+			animator->SetLooping(isLooping);
+		}
+
 		// Playback Controls
 		if (ImGui::Button("Play")) animator->Play();
 		ImGui::SameLine();
@@ -731,13 +750,6 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 		if (ImGui::DragFloat("Speed", &speed, 0.05f, 0.0f, 100.0f))
 		{
 			animator->SetSpeed(speed);
-		}
-
-		// Loop settings
-		bool isLooping = animator->IsLooping();
-		if (ImGui::Checkbox("Loop Animation", &isLooping))
-		{
-			animator->SetLooping(isLooping);
 		}
 
 		// Timeline Scrubber
@@ -829,11 +841,7 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 		}
 		ImGui::EndDisabled();
 
-		// Bone Hierarchy Debug Visualization
-		ImGui::Separator();
-		ImGui::Checkbox("Show Bones", &isShowBone);
 
-		Object* currentObj = FindObjectWithId(currentIndex);
 		if (isShowBone && currentObj && currentObj->HasComponent<SkeletalAnimator>())
 		{
 			SkeletalAnimation* currentAnim = animator->GetCurrentAnimation();
@@ -854,6 +862,7 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
 			}
 		}
+
 	}
 }
 
@@ -861,8 +870,8 @@ void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationSta
 {
 	if (!fsm) return;
 
-	if (ImGui::CollapsingHeader("Animation State Machine"))
-	{
+	ImGui::Text("Animation State Machine");
+	ImGui::Spacing();
 		ImGui::Text("Current State: %s", fsm->GetCurrentStateName().c_str());
 
 		std::vector<std::string> states = fsm->GetStateNames();
@@ -892,7 +901,6 @@ void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationSta
 		{
 			fsm->ChangeState(states[selectedStateIndex]);
 		}
-	}
 }
 
 void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::map<std::string, glm::mat4>& animatedTransforms, glm::mat4 objectTransform)
