@@ -252,8 +252,12 @@ void SkeletalAnimator::PlayAnimation(SkeletalAnimation* newAnimation, bool isLoo
     if (enableRootMotion && rootBoneName.empty() && newAnimation)
     {
         const std::vector<std::string> commonRootNames = { "Hips", "hips", "Root", "root" };
+        bool rootBoneFound = false;
+        
         for (const auto& bone : newAnimation->GetBones())
         {
+            if (rootBoneFound) break;
+            
             for (const auto& commonName : commonRootNames)
             {
                 if (bone.GetBoneName().find(commonName) != std::string::npos)
@@ -262,11 +266,11 @@ void SkeletalAnimator::PlayAnimation(SkeletalAnimation* newAnimation, bool isLoo
                     size_t pos = baseName.find("_$");
                     if (pos != std::string::npos) baseName = baseName.substr(0, pos);
                     rootBoneName = baseName;
-                    goto rootBoneFound;
+                    rootBoneFound = true;
+                    break;
                 }
             }
         }
-    rootBoneFound:;
     }
 
 }
