@@ -39,10 +39,11 @@ SkeletalAnimation::SkeletalAnimation(const std::string& animationPath, BufferWra
 
 SkeletalBone* SkeletalAnimation::FindBone(const std::string& name)
 {
-    auto iter = std::find_if(bones.begin(), bones.end(),
-        [&](const SkeletalBone& bone) { return bone.GetBoneName() == name; }
-    );
-    return (iter == bones.end()) ? nullptr : &(*iter);
+    auto iter = boneNameToIndexMap.find(name);
+    if (iter != boneNameToIndexMap.end()) {
+        return &bones[iter->second];
+    }
+    return nullptr;
 }
 
 void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWrapper::DynamicSprite3DMesh& meshData, const aiScene* scene)
@@ -76,9 +77,14 @@ void SkeletalAnimation::ReadMissingBones(const aiAnimation* animation, BufferWra
             glm::vec3 s, t, skew; glm::vec4 persp; glm::quat bindRot;
             glm::decompose(bindPoseGlobal, s, bindRot, t, skew, persp);
             bindPoseLocalRotations[boneName] = glm::normalize(bindRot);
-        }
 
-        bones.emplace_back(SkeletalBone(boneName, boneInfoMap[boneName].id, channel));
+            bones.emplace_back(SkeletalBone(boneName, boneInfoMap[boneName].id, channel, offset));
+        }
+        else
+        {
+            bones.emplace_back(SkeletalBone(boneName, boneInfoMap[boneName].id, channel, glm::mat4(1.0f)));
+        }
+        boneNameToIndexMap[boneName] = static_cast<int>(bones.size()) - 1;
     }
 }
 
@@ -87,6 +93,19 @@ void SkeletalAnimation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* sr
     assert(src);
     dest.name = src->mName.data;
     dest.transformation = ConvertMatrixToGLMFormat(src->mTransformation);
+
+    // Cache dummy checks
+    dest.isDummyNode = (dest.name.find("_$AssimpFbx$_") != std::string::npos);
+    if (dest.isDummyNode) {
+        dest.isTranslationDummy = (dest.name.find("_$AssimpFbx$_Translation") != std::string::npos);
+        dest.isPreRotationDummy = (dest.name.find("_$AssimpFbx$_PreRotation") != std::string::npos);
+        size_t pos = dest.name.find("_$AssimpFbx$_");
+        if (pos != std::string::npos) {
+            dest.originalBoneName = dest.name.substr(0, pos);
+        }
+    } else {
+        dest.originalBoneName = dest.name;
+    }
 
     for (unsigned int i = 0; i < src->mNumChildren; i++)
     {
