@@ -76,9 +76,9 @@ private:
     glm::mat4 GetRootTransformAtTime(SkeletalAnimation* anim, float time);
     glm::mat4 ExtractRootMotionDelta(SkeletalAnimation* anim, float timeStart, float timeEnd);
 
-    void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform);
+    void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform, const glm::mat4& encodeMatrix);
     bool HasDummyNodeParent(const AssimpNodeData* node, const std::string& boneName) const;
-    void CalculateBindPose(const AssimpNodeData* node, glm::mat4 parentTransform);
+
 
     // Skinning Data
     std::vector<glm::mat4> finalBoneMatrices;
@@ -105,10 +105,7 @@ private:
     std::string rootBoneName = "";
     RootMotionBakeOptions bakeOptions;
 
-    // Hierarchy & Bind Pose
-    glm::mat4 modelGlobalInverseTransform{ 1.0f };
-    std::map<std::string, glm::mat4> bindPoseGlobalTransforms;
-    bool bindPoseCalculated = false;
+    // Hierarchy
 
     const int maxBones = 128;
 };

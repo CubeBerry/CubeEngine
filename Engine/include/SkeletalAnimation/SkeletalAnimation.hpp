@@ -6,14 +6,20 @@
 #include "BufferWrapper.hpp" // Need access to DynamicSprite3DMesh
 #include "SkeletalBone.hpp"
 #include <assimp/scene.h>
-#include <map>
 #include <vector>
+#include <unordered_map>
 
 struct AssimpNodeData
 {
     glm::mat4 transformation = glm::mat4(1.0f);
     std::string name = "";
     std::vector<AssimpNodeData> children;
+
+    // Cached fields to prevent string search every frame
+    bool isDummyNode = false;
+    bool isTranslationDummy = false;
+    bool isPreRotationDummy = false;
+    std::string originalBoneName = "";
 };
 
 class SkeletalAnimation
@@ -31,8 +37,8 @@ public:
     const std::map<std::string, ThreeDimension::BoneInfo>& GetBoneIDMap() const { return boneInfoMap; }
     const std::vector<SkeletalBone>& GetBones() const { return bones; }
     const glm::mat4& GetGlobalInverseTransform() const { return globalInverseTransform; }
-    const std::map<std::string, glm::quat>& GetBindPoseLocalRotations() const { return bindPoseLocalRotations; }
-    const std::map<std::string, glm::quat>& GetPreRotations() const { return preRotations; }
+    const std::unordered_map<std::string, glm::quat>& GetBindPoseLocalRotations() const { return bindPoseLocalRotations; }
+    const std::unordered_map<std::string, glm::quat>& GetPreRotations() const { return preRotations; }
 private:
     // Helper function signature update
     void ReadMissingBones(const aiAnimation* animation, BufferWrapper::DynamicSprite3DMesh& meshData, const aiScene* scene);
@@ -47,6 +53,7 @@ private:
     glm::mat4 globalInverseTransform;
     // Local copy of bone info map for this animation
     std::map<std::string, ThreeDimension::BoneInfo> boneInfoMap;
-    std::map<std::string, glm::quat> bindPoseLocalRotations;
-    std::map<std::string, glm::quat> preRotations;
+    std::unordered_map<std::string, glm::quat> bindPoseLocalRotations;
+    std::unordered_map<std::string, glm::quat> preRotations;
+    std::unordered_map<std::string, int> boneNameToIndexMap;
 };
