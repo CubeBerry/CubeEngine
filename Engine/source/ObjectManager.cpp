@@ -1,4 +1,4 @@
-﻿//Author: DOYEONG LEE
+//Author: DOYEONG LEE
 //Second Author: JEYOON YU
 //Project: CubeEngine
 //File: ObjectManager.cpp
@@ -306,6 +306,14 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		//bool isGhostCollisionOn = physics->GetIsGhostCollision();
 		//ImGui::Checkbox("Use GhostCollision", &isGhostCollisionOn);
 		//physics->SetIsGhostCollision(isGhostCollisionOn);
+
+		ImGui::SeparatorText("Debug");
+		ImGui::Checkbox("Show Physics Debug", &isShowPhysics);
+
+		if (isShowPhysics)
+		{
+			RenderPhysics3DDebug(physics);
+		}
 	}
 	physics = nullptr;
 }
@@ -1277,4 +1285,98 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::Begin("Background Overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::End();
+}
+
+void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
+{
+	if (!phy) return;
+	
+	Object* obj = phy->GetOwner();
+	if (!obj) return;
+
+	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
+	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	ImU32 color;
+	switch (phy->GetBodyType())
+	{
+	case BodyType3D::RIGID: color = IM_COL32(0, 255, 0, 255); break; // Green
+	case BodyType3D::BLOCK: color = IM_COL32(255, 0, 0, 255); break; // Red
+	default: color = IM_COL32(255, 255, 0, 255); break; // Yellow
+	}
+
+	if (phy->GetColliderType() == ColliderType3D::SPHERE)
+	{
+		glm::vec3 center = obj->GetPosition();
+		float radius = phy->GetSphereRadius() / 2.f;
+		
+		int segments = 16;
+		auto drawCircle = [&](const glm::vec3& right, const glm::vec3& up) {
+			glm::vec2 prevScreenPos;
+			bool first = true;
+			glm::vec2 firstScreenPos;
+			for (int i = 0; i <= segments; ++i)
+			{
+				float theta = (2.0f * 3.14159265359f * i) / segments;
+				glm::vec3 worldPos = center + (right * cos(theta) + up * sin(theta)) * radius;
+				glm::vec2 screenPos = WorldToScreen(worldPos, view, proj);
+				
+				if (screenPos.x >= 0 && screenPos.y >= 0)
+				{
+					if (!first && prevScreenPos.x >= 0 && prevScreenPos.y >= 0)
+					{
+						drawList->AddLine(ImVec2(prevScreenPos.x, prevScreenPos.y), ImVec2(screenPos.x, screenPos.y), color, 2.0f);
+					}
+					else if (first)
+					{
+						firstScreenPos = screenPos;
+					}
+					prevScreenPos = screenPos;
+					first = false;
+				}
+				else
+				{
+					first = true;
+				}
+			}
+		};
+		drawCircle(glm::vec3(1,0,0), glm::vec3(0,1,0));
+		drawCircle(glm::vec3(1,0,0), glm::vec3(0,0,1));
+		drawCircle(glm::vec3(0,1,0), glm::vec3(0,0,1));
+	}
+	else if (phy->GetColliderType() == ColliderType3D::BOX)
+	{
+		const auto& poly = phy->GetCollidePolyhedron();
+		if (poly.empty()) return;
+
+		std::vector<glm::vec3> worldPoints;
+		glm::mat4 transform = glm::translate(glm::mat4(1.0f), obj->GetPosition()) * glm::mat4_cast(glm::quat(glm::radians(-obj->GetRotate3D())));
+		for (const auto& point : poly)
+		{
+			worldPoints.push_back(glm::vec3(transform * glm::vec4(point, 1.0f)));
+		}
+
+		if (worldPoints.size() == 8)
+		{
+			int edges[12][2] = {
+				{0,1}, {1,2}, {2,3}, {3,0},
+				{4,5}, {5,6}, {6,7}, {7,4},
+				{0,4}, {1,5}, {2,6}, {3,7}
+			};
+
+			std::vector<glm::vec2> screenPoints;
+			for(auto& wp : worldPoints) screenPoints.push_back(WorldToScreen(wp, view, proj));
+
+			for (int i = 0; i < 12; ++i)
+			{
+				glm::vec2 p1 = screenPoints[edges[i][0]];
+				glm::vec2 p2 = screenPoints[edges[i][1]];
+				if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
+				{
+					drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
+				}
+			}
+		}
+	}
 }

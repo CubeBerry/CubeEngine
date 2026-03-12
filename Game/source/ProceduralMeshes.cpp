@@ -53,41 +53,7 @@ void ProceduralMeshes::Init()
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->InitializeBuffers();
 
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0, 0, 0), glm::vec3(0.01f, 0.01f, 0.01f), "Player");
-	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
-	//Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->CreateMesh3D(MeshType::OBJ, "../Game/assets/Models/AnimationModels/character.fbx", 1, 1);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(
-		MeshType::OBJ,
-		"../Game/assets/Models/AnimationModels/Idle_1.fbx",
-		1, 1,
-		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
-	);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<SkeletalAnimator>();
-	Engine::GetObjectManager().GetLastObject()->AddComponent<SkeletalAnimationStateMachine>();
-	//Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->Init();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Idle", "../Game/assets/Models/AnimationModels/Idle.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Idle1", "../Game/assets/Models/AnimationModels/Idle_1.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Walking", "../Game/assets/Models/AnimationModels/Walking.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Punch", "../Game/assets/Models/AnimationModels/Quad Punch.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Swing Dancing", "../Game/assets/Models/AnimationModels/Swing Dancing.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Hip Hop Dancing", "../Game/assets/Models/AnimationModels/Hip Hop Dancing.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_1.fbx", "../Game/assets/Models/AnimationModels/Thriller_1.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_2.fbx", "../Game/assets/Models/AnimationModels/Thriller_2.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_3.fbx", "../Game/assets/Models/AnimationModels/Thriller_3.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_4.fbx", "../Game/assets/Models/AnimationModels/Thriller_4.fbx");
-	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->ChangeState("Idle");
-
-	//if (!Engine::GetObjectManager().FindObjectWithName("Player")->HasComponent<SkeletalAnimationStateMachine>())
-	//{
-	//	Engine::GetObjectManager().FindObjectWithName("Player")->AddComponent<SkeletalAnimator>();
-	//	Engine::GetObjectManager().FindObjectWithName("Player")->AddComponent<SkeletalAnimationStateMachine>();
-	//	Engine::GetObjectManager().FindObjectWithName("Player")->GetComponent<SkeletalAnimationStateMachine>()->AddState("Idle", "../Game/assets/Models/AnimationModels/Idle.fbx");
-	//	Engine::GetObjectManager().FindObjectWithName("Player")->GetComponent<SkeletalAnimationStateMachine>()->AddState("Run", "../Game/assets/Models/AnimationModels/Quad Punch.fbx");
-	//	Engine::GetObjectManager().FindObjectWithName("Player")->GetComponent<SkeletalAnimationStateMachine>()->ChangeState("Idle");
-	//}
-
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
-
 	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/kloppenheim_06_puresky_4k.hdr");
 }
 
