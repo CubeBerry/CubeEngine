@@ -95,6 +95,7 @@ public:
     void ProcessFunctionQueue();
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
+    void RenderPhysics3DDebug(Physics3D* phy);
     void SpriteControllerForImGui(DynamicSprite* sprite);
     void LightControllerForImGui(Light* light);
 
@@ -130,5 +131,6 @@ private:
     
     // Debug Options
     bool isShowBone{ false };
+    bool isShowPhysics{ false };
     std::string selectedBoneName = "";
 };
