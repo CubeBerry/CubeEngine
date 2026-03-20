@@ -91,7 +91,6 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		inverseView[3].z
 		),
 		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
-		.shadowDirection = m_renderManager->m_shadowMapContext->GetShadowDirection(),
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
 		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()

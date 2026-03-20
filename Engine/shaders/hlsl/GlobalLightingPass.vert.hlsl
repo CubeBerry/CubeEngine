@@ -9,7 +9,7 @@
 #endif
 
 
-#line 10 "slang/GlobalLightingPass.slang"
+#line 12 "slang/GlobalLightingPass.slang"
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
@@ -23,7 +23,7 @@ VSOutput_0 vertexMain(uint vertexID_0 : SV_VertexID)
 
     float2 texcoord_0 = float2(float((vertexID_0 << int(1)) & 2U), float(vertexID_0 & 2U));
 
-#line 19
+#line 21
     VSOutput_0 output_0;
 
 
