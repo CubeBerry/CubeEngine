@@ -412,7 +412,11 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
-			else m_forwardRenderContext->Execute(&wrapper);
+			else
+			{
+				m_shadowMapContext->Execute(&wrapper);
+				m_forwardRenderContext->Execute(&wrapper);
+			}
 		}
 		// Deferred Rendering
 		else

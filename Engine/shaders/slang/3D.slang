@@ -462,7 +462,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
         // Transform to light space
         // Normal Offset Bias
         // fragmentPosition == worldPosition
-        float3 offsetPos = input.fragmentPosition + input.normal * 0.05;
+        float3 offsetPos = input.fragmentPosition + N * 0.05;
         float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(offsetPos, 1.0));
         float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 
