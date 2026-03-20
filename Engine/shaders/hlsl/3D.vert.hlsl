@@ -9,7 +9,7 @@
 #endif
 
 
-#line 35 "slang/3D.slang"
+#line 37 "slang/3D.slang"
 struct vMatrix_0
 {
     float4x4 model_0;
@@ -27,7 +27,7 @@ cbuffer matrix_0 : register(b0)
     vMatrix_0 matrix_0;
 }
 
-#line 20
+#line 22
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
@@ -43,7 +43,7 @@ struct VSOutput_0
 };
 
 
-#line 10
+#line 12
 struct VSInput_0
 {
     uint position_1 : POSITION0;
@@ -55,17 +55,17 @@ struct VSInput_0
 };
 
 
-#line 50
+#line 52
 VSOutput_0 vertexMain(VSInput_0 input_0)
 {
 
-#line 58
+#line 60
     float3 decoded_position_0 = mul(matrix_0.decode_0, float4(float3(float((input_0.position_1) & 2047U), float(((input_0.position_1) >> int(11)) & 2047U), float(((input_0.position_1) >> int(22)) & 1023U)), 1.0f)).xyz;
 
-#line 52
+#line 54
     VSOutput_0 output_0;
 
-#line 60
+#line 62
     output_0.uv_0 = input_0.uv_1;
     output_0.color_1 = matrix_0.color_0;
     output_0.tex_sub_index_0 = input_0.tex_sub_index_1;
@@ -78,7 +78,7 @@ VSOutput_0 vertexMain(VSInput_0 input_0)
     output_0.normal_0 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), input_0.normal_1);
     float4 _S1 = float4(decoded_position_0, 1.0f);
 
-#line 70
+#line 72
     output_0.fragmentPosition_0 = mul(matrix_0.model_0, _S1).xyz;
     output_0.viewPosition_1 = matrix_0.viewPosition_0;
 

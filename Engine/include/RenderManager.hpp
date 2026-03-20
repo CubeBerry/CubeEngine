@@ -181,7 +181,7 @@ protected:
 	bool m_meshNodesEnabled{ false };
 
 	// Deferred Rendering
-	bool m_deferredRenderingEnabled{ true };
+	bool m_deferredRenderingEnabled{ false };
 private:
 	static void BuildIndices(const std::vector<ThreeDimension::Vertex>& tempVertices, std::vector<uint32_t>& tempIndices, const int stacks, const int slices);
 	//Assimp

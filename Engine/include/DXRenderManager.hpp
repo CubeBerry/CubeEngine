@@ -321,6 +321,8 @@ private:
 	{
 		int activeDirectionalLight;
 		int activePointLight;
-		float intensity;
+		int useShadow;
+		float orthoSize;
+		glm::mat4 lightViewProjection;
 	} pushConstants;
 };

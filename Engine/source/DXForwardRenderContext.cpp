@@ -12,30 +12,33 @@ void DXForwardRenderContext::Initialize()
 	// Create root signature and pipeline for 3D
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 13 : 8, CD3DX12_ROOT_PARAMETER1{});
+	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 14 : 9, CD3DX12_ROOT_PARAMETER1{});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[3].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[4].InitAsConstantBufferView(4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[5].InitAsConstants(2, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[5].InitAsConstants(sizeof(m_renderManager->pushConstants) / 4, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
 	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_OBJECT_SIZE, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[6].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 iblSrvRange;
 	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 shadowMapRange;
+	shadowMapRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 2);
+	rootParameters[8].InitAsDescriptorTable(1, &shadowMapRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	if (m_renderManager->m_meshShaderEnabled)
 	{
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
 		// ThreeDimension::QuantizedVertex data is transfer via SRV
-		rootParameters[8].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[9].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[10].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[11].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[12].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[9].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[10].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[11].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[12].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[13].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
 	}
 
 	m_renderManager->CreateRootSignature(m_rootSignature3D, rootParameters);
@@ -190,8 +193,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				m_renderManager->pushConstants = {
 					.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 					.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+					.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
+					.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize(),
+					.lightViewProjection = m_renderManager->m_shadowMapContext->GetLightViewProjection()
 				};
-				commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
+				commandList->SetGraphicsRoot32BitConstants(5, sizeof(m_renderManager->pushConstants) / 4, &m_renderManager->pushConstants, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
@@ -200,12 +206,17 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv());
 				}
 
+				UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
+				D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+				shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
+				commandList->SetGraphicsRootDescriptorTable(8, shadowGpuHandle);
+
 				// Bind structured buffers to root signature
-				commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(9, buffer->meshletBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(10, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(11, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRoot32BitConstants(12, 1, &m_renderManager->m_meshletVisualization, 0);
+				commandList->SetGraphicsRootShaderResourceView(9, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(10, buffer->meshletBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(11, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(12, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRoot32BitConstants(13, 1, &m_renderManager->m_meshletVisualization, 0);
 
 				const auto& meshlets = spriteData->meshlets;
 				UINT numMeshlets = static_cast<UINT>(meshlets.size());
@@ -234,8 +245,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				m_renderManager->pushConstants = {
 					.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 					.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+					.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
+					.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize(),
+					.lightViewProjection = m_renderManager->m_shadowMapContext->GetLightViewProjection()
 				};
-				commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
+				commandList->SetGraphicsRoot32BitConstants(5, sizeof(m_renderManager->pushConstants) / 4, &m_renderManager->pushConstants, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
@@ -243,6 +257,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				{
 					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv());
 				}
+
+				UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
+				D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+				shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
+				commandList->SetGraphicsRootDescriptorTable(8, shadowGpuHandle);
 
 				// Bind Vertex Buffer & Index Buffer
 				D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();
