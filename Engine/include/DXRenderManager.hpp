@@ -22,10 +22,11 @@
 #include "DXConstantBuffer.hpp"
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
+#include "DXGBufferContext.hpp"
 #include "DXNaiveLightingContext.hpp"
 #include "DXGlobalLightingContext.hpp"
 #include "DXLocalLightingContext.hpp"
-#include "DXGBufferContext.hpp"
+#include "DXShadowMapContext.hpp"
 #include "DXSkyboxRenderContext.hpp"
 #include "DXPostProcessContext.hpp"
 
@@ -42,6 +43,7 @@ class DXRenderManager : public RenderManager
 	friend class DXNaiveLightingContext;
 	friend class DXGlobalLightingContext;
 	friend class DXLocalLightingContext;
+	friend class DXShadowMapContext;
 	friend class DXSkyboxRenderContext;
 	friend class DXPostProcessContext;
 	// @TODO Maybe would need to remove friend class later and modify IWorkGraphsContext functions to use parameters
@@ -61,6 +63,7 @@ public:
 	bool BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;
 
+	DXShadowMapContext* GetShadowMapContext() const { return m_shadowMapContext.get(); }
 	DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
 private:
 	int m_width, m_height;
@@ -135,6 +138,8 @@ private:
 	std::unique_ptr<DXGlobalLightingContext> m_globalLightingContext;
 	// Local (Point) Lighting Context
 	std::unique_ptr<DXLocalLightingContext> m_localLightingContext;
+	// Shadow Map Context
+	std::unique_ptr<DXShadowMapContext> m_shadowMapContext;
 	// Skybox Render Context
 	std::unique_ptr<DXSkyboxRenderContext> m_skyboxRenderContext;
 	void LoadSkybox(const std::filesystem::path& path) override;
@@ -316,6 +321,8 @@ private:
 	{
 		int activeDirectionalLight;
 		int activePointLight;
-		float intensity;
+		int useShadow;
+		float orthoSize;
+		glm::mat4 lightViewProjection;
 	} pushConstants;
 };

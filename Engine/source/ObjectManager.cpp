@@ -17,30 +17,6 @@
 
 #include "imgui.h"
 
-// Helper function to world-to-screen transform for ImGui drawing
-glm::vec2 WorldToScreen(glm::vec3 worldPos, glm::mat4 view, glm::mat4 proj)
-{
-	// Transform world space to clip space
-	glm::vec4 clipSpace = proj * view * glm::vec4(worldPos, 1.0f);
-
-	// Discard points behind the camera
-	if (clipSpace.w <= 0.0f) return glm::vec2(-1, -1);
-
-	// Perspective divide to get Normalized Device Coordinates (NDC)
-	glm::vec3 ndc = glm::vec3(clipSpace) / clipSpace.w;
-
-	// Map NDC to screen coordinates using ImGui viewport data
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	glm::vec2 windowPos = { viewport->Pos.x, viewport->Pos.y };
-	glm::vec2 windowSize = { viewport->Size.x, viewport->Size.y };
-
-	// Convert NDC to screen space and flip Y-axis for ImGui coordinate system
-	float screenX = (ndc.x + 1.0f) * 0.5f * windowSize.x + windowPos.x;
-	float screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
-
-	return glm::vec2(screenX, screenY);
-}
-
 ObjectManager::ObjectManager()
 {
 	//Engine::GetLogger().LogDebug(LogCategory::Engine, "Object Manager Initialized");
@@ -868,7 +844,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
 	glm::vec3 currentPos = glm::vec3(globalTransform[3]); // Extract translation
-	glm::vec2 screenPos = WorldToScreen(currentPos, view, proj);
+	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
 
 	// Draw Joint (Circle)
 	if (screenPos.x != -1) // Check if the point is visible on the screen
@@ -914,7 +890,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 		}
 
 		glm::vec3 childPos = glm::vec3(childFinalMatrix[3]);
-		glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
+		glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj);
 
 		if (screenPos.x > 0 && childScreenPos.x > 0)
 		{

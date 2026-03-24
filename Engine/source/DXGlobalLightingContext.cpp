@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: DXGlobalLightingContext.cpp
 #include "DXGlobalLightingContext.hpp"
+
 #include "DXCommandListWrapper.hpp"
 #include "DXRenderManager.hpp"
 #include "DXSkyboxRenderContext.hpp"
@@ -10,7 +11,7 @@
 void DXGlobalLightingContext::Initialize()
 {
 	// Copy G-Buffer SRV handles to Main SRV Heap
-	m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(4);
+	m_gBufferSrvHandle = m_renderManager->AllocateSrvHandles(5);
 	D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
 	D3D12_CPU_DESCRIPTOR_HANDLE srcHandle = m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart();
 	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -18,7 +19,7 @@ void DXGlobalLightingContext::Initialize()
 	// Create root signature and pipeline
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(4);
+	rootParameters.resize(5);
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
@@ -27,30 +28,21 @@ void DXGlobalLightingContext::Initialize()
 	CD3DX12_DESCRIPTOR_RANGE1 iblRange;
 	iblRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2);
 	rootParameters[3].InitAsDescriptorTable(1, &iblRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 shadowMapRange;
+	shadowMapRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 2);
+	rootParameters[4].InitAsDescriptorTable(1, &shadowMapRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Global Lighting-Pass Root Signature"));
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
-
-	m_pipeline = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature,
-		std::filesystem::path("../Engine/shaders/hlsl/GlobalLightingPass.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/GlobalLightingPass.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{},
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		false,
-		false,
-		false,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16B16A16_FLOAT };
+	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
+		.SetShaders("../Engine/shaders/hlsl/GlobalLightingPass.vert.hlsl", "../Engine/shaders/hlsl/GlobalLightingPass.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{})
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 }
 
 void DXGlobalLightingContext::OnResize()
@@ -92,6 +84,7 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
 	pushConstants = {
+		.lightViewProjection = m_renderManager->m_shadowMapContext->GetLightViewProjection(),
 		.viewPosition = pushConstants.viewPosition = glm::vec3(
 		inverseView[3].x,
 		inverseView[3].y,
@@ -99,8 +92,9 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		),
 		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
+		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
+		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()
 	};
-
 	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
@@ -111,6 +105,10 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		auto skyboxGpuHandle = m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv();
 		commandList->SetGraphicsRootDescriptorTable(3, skyboxGpuHandle);
 	}
+	UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
+	D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+	shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
+	commandList->SetGraphicsRootDescriptorTable(4, shadowGpuHandle);
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3, 1, 0, 0);

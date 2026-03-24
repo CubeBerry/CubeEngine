@@ -17,6 +17,18 @@ Texture2D<float4 > gTexture_0 : register(t0);
 SamplerState gSampler_0 : register(s0, space1);
 
 
+struct PushConstants_0
+{
+    float exposure_0;
+};
+
+
+#line 39
+cbuffer pushConstants_0 : register(b0)
+{
+    PushConstants_0 pushConstants_0;
+}
+
 #line 23
 float3 FilmicToneMapping_0(float3 color_0)
 {
@@ -34,11 +46,11 @@ struct VSOutput_0
 };
 
 
-#line 36
+#line 42
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
 
-#line 44
-    return float4(pow(FilmicToneMapping_0(gTexture_0.Sample(gSampler_0, input_0.uv_0).xyz), (float3)0.45454543828964233f), 1.0f);
+#line 54
+    return float4(pow(FilmicToneMapping_0(gTexture_0.Sample(gSampler_0, input_0.uv_0).xyz * pushConstants_0.exposure_0), (float3)0.45454543828964233f), 1.0f);
 }
 

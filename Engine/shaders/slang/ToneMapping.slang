@@ -32,11 +32,21 @@ float3 FilmicToneMapping(float3 color) {
 SamplerState gSampler : register(s0, space1);
 Texture2D gTexture : register(t0, space0);
 
+struct PushConstants
+{
+    float exposure;
+};
+ConstantBuffer<PushConstants> pushConstants : register(b0, space0);
+
 [shader("fragment")]
 float4 fragmentMain(VSOutput input) : SV_Target
 {
     float4 hdrColor = gTexture.Sample(gSampler, input.uv);
     float3 color = hdrColor.rgb;
+
+    // Apply exposure
+    color *= pushConstants.exposure;
+
     // Convert HDR to LDR
     color = FilmicToneMapping(color);
     // 2.2 Gamma Correction

@@ -111,9 +111,8 @@ void DXGBufferContext::Initialize()
 	DXAttributeLayout weightLayout{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32_FLOAT, 0, offsetof(ThreeDimension::QuantizedVertex, weights), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
 	// Turn off MSAA for G-Buffer pass
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
+	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
+	D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
 	std::vector<DXGI_FORMAT> rtvFormats = {
 		m_gBuffers[static_cast<size_t>(GBufferType::Albedo)].format,
@@ -141,22 +140,17 @@ void DXGBufferContext::Initialize()
 	}
 	else
 	{
-		m_pipeline3D = std::make_unique<DXPipeLine>(
-			m_renderManager->m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/GBuffer.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-			true,
-			true,
-			true,
-			rtvFormats,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
+		m_pipeline3D = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3D)
+			.SetShaders("../Engine/shaders/hlsl/3D.vert.hlsl", "../Engine/shaders/hlsl/GBuffer.frag.hlsl")
+			.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout })
+			.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
+			.SetDepthStencil(true, true)
+			.SetRenderTargets(rtvFormats)
+			.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+			.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+			// Deferred shading typically doesn't use MSAA for G-Buffer, so we set sample count to 1
+			.SetSampleDesc(1, 0)
+			.Build();
 	}
 }
 
@@ -225,6 +219,17 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->SetPipelineState(initialState);
 
 	commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
+
+	// Set the viewport and scissor rect
+	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
 	ID3D12DescriptorHeap* ppHeaps3D[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps3D), ppHeaps3D);
 

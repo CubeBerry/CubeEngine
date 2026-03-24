@@ -5,7 +5,7 @@
 #include "Interface/IRenderContext.hpp"
 
 #include "DXPipeLine.hpp"
-#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 class DXRenderManager;
 
@@ -29,8 +29,11 @@ private:
 	// Push Constants for Global Lighting Pass
 	struct alignas(16) PushConstants
 	{
+		glm::mat4 lightViewProjection;
 		glm::vec3 viewPosition;
 		int meshletVisualization;
 		int activeDirectionalLight;
+		int useShadow;
+		float orthoSize;
 	} pushConstants;
 };

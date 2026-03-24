@@ -22,23 +22,15 @@ void DX2DRenderContext::Initialize()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32_UINT, 0, offsetof(TwoDimension::Vertex, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-	m_pipeline2D = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature2D,
-		std::filesystem::path("../Engine/shaders/hlsl/2D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/2D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		true,
-		true,
-		true,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R8G8B8A8_UNORM };
+	m_pipeline2D = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature2D)
+		.SetShaders("../Engine/shaders/hlsl/2D.vert.hlsl", "../Engine/shaders/hlsl/2D.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, true)
+		.SetDepthStencil(true, true)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.Build();
 }
 
 void DX2DRenderContext::OnResize()
@@ -58,6 +50,16 @@ void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->SetPipelineState(m_pipeline2D->GetPipelineState().Get());
 	commandList->SetGraphicsRootSignature(m_rootSignature2D.Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set the viewport and scissor rect
+	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
 
 	ID3D12DescriptorHeap* ppHeaps2D[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps2D), ppHeaps2D);

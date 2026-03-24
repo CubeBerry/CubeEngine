@@ -1,5 +1,7 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
+#include "Shadow.slang"
+
 // #pragma pack_matrix(row_major)
 
 #define MAX_TEXTURES 500
@@ -47,9 +49,12 @@ struct fDirectionalLightList
 
 struct PushConstants
 {
+    float4x4 lightViewProjection;
     float3 viewPosition;
     int meshletVisualization;
     int activeDirectionalLights;
+    int useShadow;
+    float orthoSize;
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
@@ -67,12 +72,13 @@ SamplerState gSampler : register(s0, space1);
 TextureCube irradianceMap : register(t0, space2);
 TextureCube prefilterMap : register(t1, space2);
 Texture2D brdfLUT : register(t2, space2);
-SamplerState iblSmp : register(s1, space2);
 #else
 [[vk::binding(5, 1)]] SamplerCube irradianceMap;
 [[vk::binding(6, 1)]] SamplerCube prefilterMap;
 [[vk::binding(7, 1)]] Sampler2D brdfLUT;
 #endif
+Texture2D shadowMap : register(t3, space2);
+SamplerState iblSmp : register(s1, space2);
 
 // float3 BlinnPhong(float3 lightPosition, float3 lightColor, float ambientStrength, float specularStrength, bool isPointLight, int lightIndex)
 // {
@@ -226,12 +232,62 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 N = normalize(normal);
     MainVectors mainVectors = { worldPosition, albedo, material, V, N, F0 };
 
+    // Shadow Mapping: Slope-Scaled Normal Offset Bias
+    // =========================================================================
+    // This technique is a modern standard for hard shadow mapping, designed to
+    // simultaneously mitigate both Shadow Acne (surface noise) and Peter Panning.
+    //
+    // 1. Calculate the angle (NdotL) between the light direction (L) and surface normal (N).
+    // 2. Surfaces receiving light at grazing angles are offset more strongly along their normal.
+    // 3. Surfaces facing the light directly (e.g., floors) receive minimal offset,
+    //    preventing the shadow from artificially shrinking or detaching.
+    // =========================================================================
+    float shadow = 0.0;
+    if (pushConstants.useShadow > 0)
+    {
+        // Transform to light space
+        // Normal Offset Bias
+        float3 offsetPos = worldPosition + normal * 0.05;
+        float4 lightSpacePosition = mul(pushConstants.lightViewProjection, float4(offsetPos, 1.0));
+        float3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
+
+        // Convert to UV coordinates (Handles both DirectX and Vulkan coordinate systems)
+        float2 shadowUV;
+        shadowUV.x = projectionCoords.x * 0.5 + 0.5;
+#if defined(__hlsl__)
+        shadowUV.y = -projectionCoords.y * 0.5 + 0.5;
+#else
+        shadowUV.y = projectionCoords.y * 0.5 + 0.5;
+#endif
+
+        float4 b = shadowMap.Sample(iblSmp, shadowUV);
+        float z_f = projectionCoords.z;
+        float G = Hamburger4MSM(b, z_f);
+
+        // // Depth Comparison
+        // float closestDepth = shadowMap.Sample(gSampler, shadowUV).r;
+        // float currentDepth = projectionCoords.z;
+        // // shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+        // // Apply a very small constant bias as a baseline defense against micro-acne
+        // float constantBias = 0.0001;
+        // float isShadow = currentDepth - constantBias > closestDepth ? 1.0 : 0.0;
+
+        // Frustum bounds check (Prevents clamping smearing)
+        // Branchless optimization using step() instead of if-statements
+        float bounds = step(0.0, shadowUV.x) * step(shadowUV.x, 1.0) *
+                       step(0.0, shadowUV.y) * step(shadowUV.y, 1.0) *
+                       step(0.0, z_f) * step(z_f, 1.0);
+        shadow = G * bounds;
+    }
+    else shadow = 0.0;
+
     // Calculate Directional Lights
     for (int l = 0; l < pushConstants.activeDirectionalLights; ++l)
     {
         fDirectionalLight currentLight = directionalLightList.lights[l];
         // resultColor += clamp(BlinnPhong(currentLight.lightDirection, currentLight.lightColor, currentLight.ambientStrength, currentLight.specularStrength, false, l), 0.0, 1.0);
-        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l);
+        resultColor += PBR(mainVectors, currentLight.lightDirection, currentLight.lightColor * currentLight.intensity, l) * (1.0 - shadow);
     }
 
     // PBR IBL Ambient Lighting

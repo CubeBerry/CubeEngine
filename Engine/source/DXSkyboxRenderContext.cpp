@@ -20,26 +20,18 @@ void DXSkyboxRenderContext::Initialize()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = m_renderManager->m_deferredRenderingEnabled ? 1 : m_renderManager->m_renderTarget->GetMSAASampleCount();
-	sampleDesc.Quality = m_renderManager->m_deferredRenderingEnabled ? 0 : m_renderManager->m_renderTarget->GetMSAAQualityLevel();
+	UINT sampleCount = m_renderManager->m_deferredRenderingEnabled ? 1 : m_renderManager->m_renderTarget->GetMSAASampleCount();
+	UINT sampleQuality = m_renderManager->m_deferredRenderingEnabled ? 0 : m_renderManager->m_renderTarget->GetMSAAQualityLevel();
 
-	m_pipelineSkybox = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignatureSkybox,
-		"../Engine/shaders/hlsl/Skybox.vert.hlsl",
-		"../Engine/shaders/hlsl/Skybox.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		true,
-		true,
-		false,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16B16A16_FLOAT };
+	m_pipelineSkybox = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignatureSkybox)
+		.SetShaders("../Engine/shaders/hlsl/Skybox.vert.hlsl", "../Engine/shaders/hlsl/Skybox.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, true)
+		.SetDepthStencil(true, false)
+		.SetRenderTargets(rtvFormats)
+		.SetSampleDesc(sampleCount, sampleQuality)
+		.Build();
 }
 
 void DXSkyboxRenderContext::OnResize()

@@ -22,6 +22,9 @@ public:
 	void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) const;
 
 	FidelityFX* GetFidelityFX() const { return m_fidelityFX.get(); }
+	float GetExposure() const { return m_exposure; }
+
+	void DrawImGui();
 private:
 	DXRenderManager* m_renderManager;
 	std::unique_ptr<FidelityFX> m_fidelityFX;
@@ -29,4 +32,12 @@ private:
 	// Tone Mapping
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	std::unique_ptr<DXPipeLine> m_pipeline;
+
+	float m_exposure{ 0.1f };
+
+	// Push Constants for Post-Processing Pass
+	struct alignas(16) PushConstants
+	{
+		float exposure;
+	} pushConstants;
 };

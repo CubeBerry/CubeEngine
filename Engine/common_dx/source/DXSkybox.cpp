@@ -159,25 +159,14 @@ void DXSkybox::EquirectangularToCube()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
-
-	m_pipelines[0] = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignatures[0],
-		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
-		"../Engine/shaders/hlsl/Equirectangular.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		false,
-		false,
-		false,
-		texDesc.Format
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { texDesc.Format };
+	m_pipelines[0] = DXPipeLineBuilder(m_device, m_rootSignatures[0])
+		.SetShaders("../Engine/shaders/hlsl/Cubemap.vert.hlsl", "../Engine/shaders/hlsl/Equirectangular.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
@@ -312,25 +301,14 @@ void DXSkybox::CalculateIrradiance()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
-
-	m_pipelines[1] = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignatures[1],
-		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
-		"../Engine/shaders/hlsl/Irradiance.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		false,
-		false,
-		false,
-		texDesc.Format
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { texDesc.Format };
+	m_pipelines[1] = DXPipeLineBuilder(m_device, m_rootSignatures[1])
+		.SetShaders("../Engine/shaders/hlsl/Cubemap.vert.hlsl", "../Engine/shaders/hlsl/Irradiance.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
@@ -453,25 +431,14 @@ void DXSkybox::PrefilteredEnvironmentMap()
 
 	DXAttributeLayout positionLayout{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VA, position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
 
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
-
-	m_pipelines[2] = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignatures[2],
-		"../Engine/shaders/hlsl/Cubemap.vert.hlsl",
-		"../Engine/shaders/hlsl/Prefilter.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		false,
-		false,
-		false,
-		texDesc.Format
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { texDesc.Format };
+	m_pipelines[2] = DXPipeLineBuilder(m_device, m_rootSignatures[2])
+		.SetShaders("../Engine/shaders/hlsl/Cubemap.vert.hlsl", "../Engine/shaders/hlsl/Prefilter.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());
@@ -596,25 +563,14 @@ void DXSkybox::BRDFLUT()
 	DXHelper::ThrowIfFailed(m_rootSignatures[3]->SetName(L"Skybox BRDF LUT Root Signature"));
 
 	// Create Pipeline State Object (PSO)
-	DXGI_SAMPLE_DESC sampleDesc = {};
-	sampleDesc.Count = 1;
-	sampleDesc.Quality = 0;
-
-	m_pipelines[3] = std::make_unique<DXPipeLine>(
-		m_device,
-		m_rootSignatures[3],
-		"../Engine/shaders/hlsl/BRDF.vert.hlsl",
-		"../Engine/shaders/hlsl/BRDF.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{},
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		false,
-		false,
-		false,
-		texDesc.Format
-	);
+	std::vector<DXGI_FORMAT> rtvFormats = { texDesc.Format };
+	m_pipelines[3] = DXPipeLineBuilder(m_device, m_rootSignatures[3])
+		.SetShaders("../Engine/shaders/hlsl/BRDF.vert.hlsl", "../Engine/shaders/hlsl/BRDF.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{})
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.Build();
 
 	// Record Command List
 	DXHelper::ThrowIfFailed(m_commandAllocator->Reset());

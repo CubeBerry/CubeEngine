@@ -233,6 +233,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_localLightingContext = std::make_unique<DXLocalLightingContext>(this);
 	m_localLightingContext->Initialize();
 
+	// Create Shadow Map Context
+	m_shadowMapContext = std::make_unique<DXShadowMapContext>(this);
+	m_shadowMapContext->Initialize();
+
 	// Create Skybox Render Context
 	m_skyboxRenderContext = std::make_unique<DXSkyboxRenderContext>(this);
 	m_skyboxRenderContext->Initialize();
@@ -375,16 +379,6 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 	DXHelper::ThrowIfFailed(m_commandAllocators[m_frameIndex]->Reset());
 	DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
 
-	// Set the viewport and scissor rect
-	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
-	uint32_t renderWidth = m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-	uint32_t renderHeight = m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
-
-	m_commandList->RSSetViewports(1, &viewport);
-	m_commandList->RSSetScissorRects(1, &scissorRect);
-
 	float clearColor[4] = { bgColor.r, bgColor.g, bgColor.b, 1.f };
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_renderTarget->GetDsvHeap()->GetCPUDescriptorHandleForHeapStart();
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -418,7 +412,11 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 			if (m_workGraphsEnabled && m_meshNodesEnabled) m_workGraphsContext->ExecuteWorkGraphs();
-			else m_forwardRenderContext->Execute(&wrapper);
+			else
+			{
+				m_shadowMapContext->Execute(&wrapper);
+				m_forwardRenderContext->Execute(&wrapper);
+			}
 		}
 		// Deferred Rendering
 		else
@@ -431,6 +429,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			clearColor[3] = 0.f; // Set alpha to 0 for discarding in lighting pass shader
 			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+			m_shadowMapContext->Execute(&wrapper);
 			m_gBufferContext->Execute(&wrapper);
 			//m_naiveLightingContext->Execute(&wrapper);
 			m_globalLightingContext->Execute(&wrapper);

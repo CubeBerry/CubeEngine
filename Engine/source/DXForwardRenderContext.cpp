@@ -12,30 +12,33 @@ void DXForwardRenderContext::Initialize()
 	// Create root signature and pipeline for 3D
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 13 : 8, CD3DX12_ROOT_PARAMETER1{});
+	rootParameters.resize(m_renderManager->m_meshShaderEnabled ? 14 : 9, CD3DX12_ROOT_PARAMETER1{});
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[3].InitAsConstantBufferView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[4].InitAsConstantBufferView(4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[5].InitAsConstants(2, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[5].InitAsConstants(sizeof(m_renderManager->pushConstants) / 4, 5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 texSrvRange;
 	texSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_OBJECT_SIZE, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[6].InitAsDescriptorTable(1, &texSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 iblSrvRange;
 	iblSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 	rootParameters[7].InitAsDescriptorTable(1, &iblSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 shadowMapRange;
+	shadowMapRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 2);
+	rootParameters[8].InitAsDescriptorTable(1, &shadowMapRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	if (m_renderManager->m_meshShaderEnabled)
 	{
 		rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
 		// @TODO CD3DX12_DESCRIPTOR_RANGE1 srvTableRange; can be used here
 		// ThreeDimension::QuantizedVertex data is transfer via SRV
-		rootParameters[8].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[9].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[10].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[11].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
-		rootParameters[12].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[9].InitAsShaderResourceView(8, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[10].InitAsShaderResourceView(9, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[11].InitAsShaderResourceView(10, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[12].InitAsShaderResourceView(11, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_MESH);
+		rootParameters[13].InitAsConstants(1, 6, 0, D3D12_SHADER_VISIBILITY_MESH);
 	}
 
 	m_renderManager->CreateRootSignature(m_rootSignature3D, rootParameters);
@@ -52,6 +55,7 @@ void DXForwardRenderContext::Initialize()
 	sampleDesc.Count = m_renderManager->m_renderTarget->GetMSAASampleCount();
 	sampleDesc.Quality = m_renderManager->m_renderTarget->GetMSAAQualityLevel();
 
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R16G16B16A16_FLOAT };
 	if (m_renderManager->m_meshShaderEnabled)
 	{
 		m_meshPipeline3D = std::make_unique<DXMeshPipeLine>(
@@ -71,40 +75,28 @@ void DXForwardRenderContext::Initialize()
 	}
 	else
 	{
-		m_pipeline3D = std::make_unique<DXPipeLine>(
-			m_renderManager->m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
-			D3D12_FILL_MODE_SOLID,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-			true,
-			true,
-			true,
-			DXGI_FORMAT_R16G16B16A16_FLOAT,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
+		m_pipeline3D = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3D)
+			.SetShaders("../Engine/shaders/hlsl/3D.vert.hlsl", "../Engine/shaders/hlsl/3D.frag.hlsl")
+			.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout })
+			.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
+			.SetDepthStencil(true, true)
+			.SetRenderTargets(rtvFormats)
+			.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+			.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+			.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+			.Build();
 
 		// @TODO Separate to Wireframe Render Context (Debug Context)
-		m_pipeline3DLine = std::make_unique<DXPipeLine>(
-			m_renderManager->m_device,
-			m_rootSignature3D,
-			std::filesystem::path("../Engine/shaders/hlsl/3D.vert.hlsl"),
-			std::filesystem::path("../Engine/shaders/hlsl/3D.frag.hlsl"),
-			std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout },
-			D3D12_FILL_MODE_WIREFRAME,
-			D3D12_CULL_MODE_BACK,
-			sampleDesc,
-			CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-			true,
-			true,
-			true,
-			DXGI_FORMAT_R16G16B16A16_FLOAT,
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-		);
+		m_pipeline3DLine = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3D)
+			.SetShaders("../Engine/shaders/hlsl/3D.vert.hlsl", "../Engine/shaders/hlsl/3D.frag.hlsl")
+			.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, normalLayout, uvLayout, texSubIndexLayout, boneIndexLayout, weightLayout })
+			.SetRasterizer(D3D12_FILL_MODE_WIREFRAME, D3D12_CULL_MODE_BACK, true)
+			.SetDepthStencil(true, true)
+			.SetRenderTargets(rtvFormats)
+			.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+			.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+			.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+			.Build();
 	}
 
 	// @TODO Separate to Normal Vector Visualization Render Context (Debug Context)
@@ -120,22 +112,16 @@ void DXForwardRenderContext::Initialize()
 	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
-	m_pipeline3DNormal = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature3DNormal,
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.vert.hlsl"),
-		std::filesystem::path("../Engine/shaders/hlsl/Normal3D.frag.hlsl"),
-		std::initializer_list<DXAttributeLayout>{ positionLayout },
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_BACK,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		true,
-		true,
-		true,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE
-	);
+	m_pipeline3DNormal = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3DNormal)
+		.SetShaders("../Engine/shaders/hlsl/Normal3D.vert.hlsl", "../Engine/shaders/hlsl/Normal3D.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
+		.SetDepthStencil(true, true)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+		.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+		.Build();
 #endif
 }
 
@@ -159,6 +145,17 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->SetPipelineState(initialState);
 
 	commandList->SetGraphicsRootSignature(m_rootSignature3D.Get());
+
+	// Set the viewport and scissor rect
+	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
+	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
+	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
 	ID3D12DescriptorHeap* ppHeaps3D[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps3D), ppHeaps3D);
 
@@ -196,8 +193,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				m_renderManager->pushConstants = {
 					.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 					.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+					.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
+					.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize(),
+					.lightViewProjection = m_renderManager->m_shadowMapContext->GetLightViewProjection()
 				};
-				commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
+				commandList->SetGraphicsRoot32BitConstants(5, sizeof(m_renderManager->pushConstants) / 4, &m_renderManager->pushConstants, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
@@ -206,12 +206,17 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv());
 				}
 
+				UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
+				D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+				shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
+				commandList->SetGraphicsRootDescriptorTable(8, shadowGpuHandle);
+
 				// Bind structured buffers to root signature
-				commandList->SetGraphicsRootShaderResourceView(8, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(9, buffer->meshletBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(10, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootShaderResourceView(11, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
-				commandList->SetGraphicsRoot32BitConstants(12, 1, &m_renderManager->m_meshletVisualization, 0);
+				commandList->SetGraphicsRootShaderResourceView(9, buffer->uniqueVertexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(10, buffer->meshletBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(11, buffer->uniqueVertexIndexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootShaderResourceView(12, buffer->primitiveIndexBuffer->GetGPUVirtualAddress());
+				commandList->SetGraphicsRoot32BitConstants(13, 1, &m_renderManager->m_meshletVisualization, 0);
 
 				const auto& meshlets = spriteData->meshlets;
 				UINT numMeshlets = static_cast<UINT>(meshlets.size());
@@ -240,8 +245,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				m_renderManager->pushConstants = {
 					.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 					.activePointLight = static_cast<int>(m_renderManager->pointLightUniforms.size()),
+					.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
+					.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize(),
+					.lightViewProjection = m_renderManager->m_shadowMapContext->GetLightViewProjection()
 				};
-				commandList->SetGraphicsRoot32BitConstants(5, 2, &m_renderManager->pushConstants, 0);
+				commandList->SetGraphicsRoot32BitConstants(5, sizeof(m_renderManager->pushConstants) / 4, &m_renderManager->pushConstants, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(6, m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
@@ -249,6 +257,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				{
 					commandList->SetGraphicsRootDescriptorTable(7, m_renderManager->m_skyboxRenderContext->GetSkybox()->GetIrradianceMapSrv());
 				}
+
+				UINT shadowSrvIndex = m_renderManager->m_shadowMapContext->GetSrvIndex();
+				D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+				shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
+				commandList->SetGraphicsRootDescriptorTable(8, shadowGpuHandle);
 
 				// Bind Vertex Buffer & Index Buffer
 				D3D12_VERTEX_BUFFER_VIEW vbv = buffer->vertexBuffer->GetView();

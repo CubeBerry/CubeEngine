@@ -17,8 +17,9 @@ void DXPostProcessContext::Initialize()
 
 	// Tone Mapping Pipeline
 	CD3DX12_DESCRIPTOR_RANGE1 srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
-	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+	CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 	rootParameters[0].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	// @TODO Use DXRenderManager's CreateRootSignature later
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
@@ -31,7 +32,7 @@ void DXPostProcessContext::Initialize()
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init_1_1(1, rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	rootSignatureDesc.Init_1_1(2, rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> signature, error;
 	HRESULT hr = D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
@@ -44,24 +45,17 @@ void DXPostProcessContext::Initialize()
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Tone Mapping Root Signature"));
 
-	DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
-	m_pipeline = std::make_unique<DXPipeLine>(
-		m_renderManager->m_device,
-		m_rootSignature,
-		"../Engine/shaders/hlsl/ToneMapping.vert.hlsl",
-		"../Engine/shaders/hlsl/ToneMapping.frag.hlsl",
-		std::initializer_list<DXAttributeLayout>{},
-		D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE,
-		sampleDesc,
-		CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0],
-		false,
-		false,
-		false,
-		// RTV Format should be DXGI_FORMAT_R8G8B8A8_UNORM to render tone-mapped LDR output
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE
-	);
+	// RTV Format should be DXGI_FORMAT_R8G8B8A8_UNORM to render tone-mapped LDR output
+	std::vector<DXGI_FORMAT> rtvFormats = { DXGI_FORMAT_R8G8B8A8_UNORM };
+	m_pipeline = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature)
+		.SetShaders("../Engine/shaders/hlsl/ToneMapping.vert.hlsl", "../Engine/shaders/hlsl/ToneMapping.frag.hlsl")
+		.SetLayout(std::initializer_list<DXAttributeLayout>{})
+		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
+		.SetDepthStencil(false, false)
+		.SetRenderTargets(rtvFormats)
+		.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
+		.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
+		.Build();
 }
 
 void DXPostProcessContext::OnResize()
@@ -121,6 +115,11 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 		srvHandle.ptr += static_cast<UINT64>(m_renderManager->m_hdrSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
 		commandList->SetGraphicsRootDescriptorTable(0, srvHandle);
 
+		pushConstants = {
+			.exposure = m_exposure
+		};
+		commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
+
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		commandList->DrawInstanced(3, 1, 0, 0);
 
@@ -161,6 +160,11 @@ void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
 		D3D12_GPU_DESCRIPTOR_HANDLE srvHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
 		srvHandle.ptr += static_cast<UINT64>(m_renderManager->m_hdrSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
 		commandList->SetGraphicsRootDescriptorTable(0, srvHandle);
+
+		pushConstants = {
+			.exposure = m_exposure
+		};
+		commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		commandList->DrawInstanced(3, 1, 0, 0);
@@ -211,4 +215,85 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 			return true;
 		}
 	);
+}
+
+void DXPostProcessContext::DrawImGui()
+{
+	if (m_fidelityFX)
+	{
+		// FidelityFX
+		auto currentEffect = m_fidelityFX->GetCurrentEffect();
+		FfxFsr1QualityMode currentFsrMode = m_fidelityFX->GetFSR1QualityMode();
+		FidelityFX::CASScalePreset currentCasScalePreset = m_fidelityFX->GetSCASScalePreset();
+		static FidelityFX::UpscaleEffect lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
+		if (currentEffect != FidelityFX::UpscaleEffect::NONE) lastActiveEffect = currentEffect;
+
+		// Enable/Disable FidelityFX
+		bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
+		int effectMode = (lastActiveEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
+		if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
+		{
+			FidelityFX::UpscaleEffect newEffect = ffxEnabled ? lastActiveEffect : FidelityFX::UpscaleEffect::NONE;
+			UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
+		}
+
+		if (ffxEnabled)
+		{
+			// Enable FSR1/CAS
+			if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
+			{
+				lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
+				UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
+			{
+				lastActiveEffect = FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
+				UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
+			}
+
+			bool rcasEnabled = m_fidelityFX->GetEnableRCAS();
+			bool casUpscalingEnabled = currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING;
+			// FSR1
+			if (currentEffect == FidelityFX::UpscaleEffect::FSR1)
+			{
+				if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
+				{
+					m_fidelityFX->SetEnableRCAS(rcasEnabled);
+				}
+
+				const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
+				int currentFsrModeInt = static_cast<int>(currentFsrMode);
+				if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
+				{
+					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
+				}
+			}
+			// CAS
+			else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
+			{
+				if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
+				{
+					FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
+					lastActiveEffect = newEffect;
+					UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
+				}
+				if (casUpscalingEnabled)
+				{
+					const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
+					int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
+					if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
+					{
+						UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
+					}
+				}
+			}
+
+			// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
+			if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &m_fidelityFX->m_sharpness, 0.0f, 1.f);
+		}
+	}
+
+	ImGui::Spacing();
+	ImGui::SliderFloat("Exposure", &m_exposure, 0.01f, 10.0f);
 }

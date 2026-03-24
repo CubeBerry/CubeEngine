@@ -1021,99 +1021,45 @@ glm::mat4 RenderManager::Quantize(
 //	return (-linear + std::sqrt(discriminant)) / (2.f * quadratic);
 //}
 
+glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj)
+{
+	// Transform world space to clip space
+	glm::vec4 clipSpace = proj * view * glm::vec4(worldPos, 1.0f);
+
+	// Discard points behind the camera
+	if (clipSpace.w <= 0.0f) return glm::vec2{ -1, -1 };
+
+	// Perspective divide to get Normalized Device Coordinates (NDC)
+	glm::vec3 ndc = glm::vec3(clipSpace) / clipSpace.w;
+
+	// Map NDC to screen coordinates using ImGui viewport data
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { viewport->Pos.x, viewport->Pos.y };
+	glm::vec2 windowSize = { viewport->Size.x, viewport->Size.y };
+
+	// Convert NDC to screen space and flip Y-axis for ImGui coordinate system
+	float screenX = (ndc.x + 1.0f) * 0.5f * windowSize.x + windowPos.x;
+	float screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+
+	return glm::vec2{ screenX, screenY };
+}
+
 void RenderManager::RenderingControllerForImGui()
 {
 	// @TODO Might need to make ImGui UI remember state (FSR1/CAS) of FFX effect even if FFX is turned off
 	RenderManager* renderManager = Engine::GetRenderManager();
 	ImGui::Begin("RenderingController");
 
+	auto* dxRenderManager = dynamic_cast<DXRenderManager*>(renderManager);
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
-		auto* dxRenderManager = dynamic_cast<DXRenderManager*>(renderManager);
-		auto* postProcessContext = dxRenderManager->GetPostProcessContext();
-		auto* fidelityFX = postProcessContext->GetFidelityFX();
-
-		if (fidelityFX)
-		{
-			// FidelityFX
-			auto currentEffect = fidelityFX->GetCurrentEffect();
-			FfxFsr1QualityMode currentFsrMode = fidelityFX->GetFSR1QualityMode();
-			FidelityFX::CASScalePreset currentCasScalePreset = fidelityFX->GetSCASScalePreset();
-			static FidelityFX::UpscaleEffect lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
-			if (currentEffect != FidelityFX::UpscaleEffect::NONE) lastActiveEffect = currentEffect;
-
-			// Enable/Disable FidelityFX
-			bool ffxEnabled = (currentEffect != FidelityFX::UpscaleEffect::NONE);
-			int effectMode = (lastActiveEffect == FidelityFX::UpscaleEffect::FSR1) ? 1 : 2;
-			if (ImGui::Checkbox("Enable FidelityFX", &ffxEnabled))
-			{
-				FidelityFX::UpscaleEffect newEffect = ffxEnabled ? lastActiveEffect : FidelityFX::UpscaleEffect::NONE;
-				UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
-			}
-
-			if (ffxEnabled)
-			{
-				// Enable FSR1/CAS
-				if (ImGui::RadioButton("FidelityFX FSR1", &effectMode, 1))
-				{
-					lastActiveEffect = FidelityFX::UpscaleEffect::FSR1;
-					UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, currentFsrMode, currentCasScalePreset);
-				}
-				ImGui::SameLine();
-				if (ImGui::RadioButton("FidelityFX CAS", &effectMode, 2))
-				{
-					lastActiveEffect = FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
-					UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY, currentFsrMode, currentCasScalePreset);
-				}
-
-				bool rcasEnabled = fidelityFX->GetEnableRCAS();
-				bool casUpscalingEnabled = (currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING);
-				// FSR1
-				if (currentEffect == FidelityFX::UpscaleEffect::FSR1)
-				{
-					if (ImGui::Checkbox("Enable FidelityFX RCAS", &rcasEnabled))
-					{
-						fidelityFX->SetEnableRCAS(rcasEnabled);
-					}
-
-					const char* fsrLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance" };
-					int currentFsrModeInt = static_cast<int>(currentFsrMode);
-					if (ImGui::Combo("Upscale Preset", &currentFsrModeInt, fsrLabels, IM_ARRAYSIZE(fsrLabels)))
-					{
-						UpdateScalePreset(FidelityFX::UpscaleEffect::FSR1, static_cast<FfxFsr1QualityMode>(currentFsrModeInt), currentCasScalePreset);
-					}
-				}
-				// CAS
-				else if (currentEffect == FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY || currentEffect == FidelityFX::UpscaleEffect::CAS_UPSCALING)
-				{
-					if (ImGui::Checkbox("Enable FidelityFX CAS Upscaling", &casUpscalingEnabled))
-					{
-						FidelityFX::UpscaleEffect newEffect = casUpscalingEnabled ? FidelityFX::UpscaleEffect::CAS_UPSCALING : FidelityFX::UpscaleEffect::CAS_SHARPEN_ONLY;
-						lastActiveEffect = newEffect;
-						UpdateScalePreset(newEffect, currentFsrMode, currentCasScalePreset);
-					}
-					if (casUpscalingEnabled)
-					{
-						const char* casLabels[] = { "Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance" };
-						int currentCasPresetInt = static_cast<int>(currentCasScalePreset);
-						if (ImGui::Combo("Upscale Preset", &currentCasPresetInt, casLabels, IM_ARRAYSIZE(casLabels)))
-						{
-							UpdateScalePreset(FidelityFX::UpscaleEffect::CAS_UPSCALING, currentFsrMode, static_cast<FidelityFX::CASScalePreset>(currentCasPresetInt));
-						}
-					}
-				}
-
-				// Slider shows up when both FSR1 & RCAS is enabled or CAS (both only sharpening and sharpening & upscaling) is enabled
-				if (!(currentEffect == FidelityFX::UpscaleEffect::FSR1 && !rcasEnabled)) ImGui::SliderFloat("Sharpness", &fidelityFX->m_sharpness, 0.0f, 1.f);
-			}
-		}
-
+		dxRenderManager->GetPostProcessContext()->DrawImGui();
 		// Meshlet Visualization
 		// Currently only works with DX graphics mode
 		ImGui::Spacing();
 		if (m_meshShaderEnabled)
 		{
-			bool meshletVisualizationEnabled = (m_meshletVisualization > 0);
+			bool meshletVisualizationEnabled = m_meshletVisualization > 0;
 			if (ImGui::Checkbox("Meshlet Visualization", &meshletVisualizationEnabled))
 			{
 				m_meshletVisualization = meshletVisualizationEnabled ? 1 : 0;
@@ -1134,6 +1080,14 @@ void RenderManager::RenderingControllerForImGui()
 	ImGui::Spacing();
 	ImGui::Checkbox("Normal Vector Visualization", &m_normalVectorVisualization);
 #endif
+	// Shadow Mapping
+	if (renderManager->gMode == GraphicsMode::DX)
+	{
+		ImGui::Spacing();
+		bool shadowEnabled = dxRenderManager->GetShadowMapContext()->IsEnabled();
+		if (ImGui::Checkbox("Shadow Map", &shadowEnabled)) dxRenderManager->GetShadowMapContext()->SetEnabled(shadowEnabled);
+		if (shadowEnabled) dxRenderManager->GetShadowMapContext()->DrawImGui();
+	}
 
 	ImGui::End();
 }
