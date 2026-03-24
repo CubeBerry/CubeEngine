@@ -133,6 +133,7 @@ dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 | 3D Mesh Deferred Rendering | ➖ | ❌ | ❌ | ✅ |
 | PBR (Physically Based Rendering) | ➖ | ✅ | ✅ | ✅ |
 | IBL (Image Based Lighting) | ➖ | ✅ | ✅ | ✅ |
+| Moment Shadow Mapping | ➖ | ❌ | ❌ | ✅ |
 | Skybox | ➖ | ✅ | ✅ | ✅ |
 | Normal Vector Visualization | ➖ | ✅ | ✅ | ✅ |
 | [Assimp Model Loading](https://github.com/assimp/assimp) | ✅ | ➖ | ➖ | ➖ |
