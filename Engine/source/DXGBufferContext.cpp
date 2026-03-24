@@ -148,7 +148,8 @@ void DXGBufferContext::Initialize()
 			.SetRenderTargets(rtvFormats)
 			.SetTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE)
 			.SetBlendMode(CD3DX12_BLEND_DESC(D3D12_DEFAULT).RenderTarget[0])
-			.SetSampleDesc(m_renderManager->m_renderTarget->GetMSAASampleCount(), m_renderManager->m_renderTarget->GetMSAAQualityLevel())
+			// Deferred shading typically doesn't use MSAA for G-Buffer, so we set sample count to 1
+			.SetSampleDesc(1, 0)
 			.Build();
 	}
 }
