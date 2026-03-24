@@ -388,7 +388,7 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     {
 
 #line 466
-        float4 lightSpacePosition_0 = mul(pushConstants_0.lightViewProjection_0, float4(_S9.fragmentPosition_2 + _S9.normal_0 * 0.05000000074505806f, 1.0f));
+        float4 lightSpacePosition_0 = mul(pushConstants_0.lightViewProjection_0, float4(_S9.fragmentPosition_2 + N_5 * 0.05000000074505806f, 1.0f));
         float3 projectionCoords_0 = lightSpacePosition_0.xyz / lightSpacePosition_0.w;
 
 

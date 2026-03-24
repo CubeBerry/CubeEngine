@@ -31,17 +31,22 @@ void computeMain(
     uint3 GTid: SV_GroupThreadID
 )
 {
+    uint width, height;
+    input.GetDimensions(width, height);
+
     int w = blurParams.blurWidth;;
     uint lpos = GTid.x;
     int2 gpos = blurParams.isVertical == 0 ? int2(GroupID.x * THREAD_GROUP_SIZE + GTid.x, GroupID.y) : int2(GroupID.x, GroupID.y * THREAD_GROUP_SIZE + GTid.x);
     int2 dir = blurParams.isVertical == 0 ? int2(1, 0) : int2(0, 1);
 
     int2 readPos = gpos - dir * w;
+    readPos = clamp(readPos, int2(0, 0), int2(width - 1, height - 1));
     v[lpos] = input[readPos];
 
     if (lpos < 2 * w)
     {
         int2 extraReadPos = gpos + dir * (128 - w);
+        extraReadPos = clamp(extraReadPos, int2(0, 0), int2(width - 1, height - 1));
         v[lpos + 128] = input[extraReadPos];
     }
 
@@ -52,8 +57,7 @@ void computeMain(
     {
         sum += v[lpos + i] * blurParams.weights[i].x;
     }
-    uint width, height;
-    output.GetDimensions(width, height);
+    
     if (gpos.x < width && gpos.y < height)
     {
         output[gpos] = sum;
