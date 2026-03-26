@@ -36,7 +36,7 @@ SLANG_SHADERS = [
 	# Shadow Map Pass
 	{ "file": "ShadowMapPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "ShadowMapPass.vert" },
 	{ "file": "ShadowMapPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "ShadowMapPass.frag" },
-	{ "file": "ConvolutionBlur.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "ConvolutionBlur.compute" },
+	{ "file": "ConvolutionBlur.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "ConvolutionBlur.comp" },
 	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GBuffer.frag" },
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" }, # Also need to convert to DXIL
@@ -66,7 +66,9 @@ SLANG_SHADERS = [
 	{ "file": "ToneMapping.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "ToneMapping.vert" },
 	{ "file": "ToneMapping.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "ToneMapping.frag" },
 	# Compute
-	{ "file": "Compute.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "Compute.compute" }
+	{ "file": "Compute.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "Compute.comp" },
+	# Mipmap
+	{ "file": "MipmapGen.slang", "entry": "computeMain", "stage": "compute", "profile_hlsl": "sm_5_1", "out_name": "MipmapGen.comp" }
 ]
 
 # DXC Shader List

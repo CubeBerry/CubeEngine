@@ -19,7 +19,7 @@ public:
 
 	Object* GetOwner() const { return owner; }
 	void SetOwner(Object* owner_) { this->owner = owner_; }
-	ComponentTypes GetType() { return componentType; }
+	ComponentTypes GetType() const { return componentType; }
 
 private:
 	Object* owner = nullptr;
