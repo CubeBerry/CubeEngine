@@ -9,6 +9,7 @@
 
 #include "DXVertexBuffer.hpp"
 #include "DXPipeLine.hpp"
+#include "DXMipmapGenerator.hpp"
 
 #include <filesystem>
 #include <functional>
@@ -79,6 +80,7 @@ private:
 
 	ComPtr<ID3D12Device> m_device;
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
+	std::unique_ptr<DXMipmapGenerator> m_mipmapGenerator;
 
 	ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;

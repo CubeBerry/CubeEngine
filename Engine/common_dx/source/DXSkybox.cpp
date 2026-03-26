@@ -27,6 +27,8 @@ DXSkybox::DXSkybox(const ComPtr<ID3D12Device>& device,
 	m_srvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_skyboxVertexBuffer = std::make_unique<DXVertexBuffer>(m_device, m_commandQueue, static_cast<UINT>(sizeof(glm::vec3)), static_cast<UINT>(sizeof(glm::vec3) * m_skyboxVertices.size()), m_skyboxVertices.data());
+
+	m_mipmapGenerator = std::make_unique<DXMipmapGenerator>(m_device);
 }
 
 DXSkybox::~DXSkybox()
@@ -91,10 +93,11 @@ void DXSkybox::EquirectangularToCube()
 	texDesc.Width = static_cast<UINT64>(faceSize);
 	texDesc.Height = static_cast<UINT>(faceSize);
 	texDesc.DepthOrArraySize = 6;
-	texDesc.MipLevels = 1;
+	UINT16 maxMipLevels = static_cast<UINT16>(std::log2(faceSize)) + 1;
+	texDesc.MipLevels = maxMipLevels;
 	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	texDesc.SampleDesc.Count = 1;
-	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	D3D12_CLEAR_VALUE clearValue = {};
 	clearValue.Format = texDesc.Format;
@@ -213,13 +216,15 @@ void DXSkybox::EquirectangularToCube()
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	m_commandList->ResourceBarrier(1, &barrier);
 
+	m_mipmapGenerator->Generate(m_device, m_commandList, m_cubemap.Get());
+
 	ExecuteCommandList();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = texDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.TextureCube.MipLevels = 1;
+	srvDesc.TextureCube.MipLevels = maxMipLevels;
 
 	// Store Cubemap texture in second array of m_srvDescriptorIndices offset
 	m_device->CreateShaderResourceView(m_cubemap.Get(), &srvDesc, m_srvHandles[1].first);

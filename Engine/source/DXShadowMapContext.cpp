@@ -52,7 +52,7 @@ void DXShadowMapContext::Initialize()
 	m_computeRootSignature->SetName(L"Shadow Blur Compute Root Signature");
 
 	ComPtr<ID3DBlob> computeShader, errorMessages;
-	HRESULT hr = D3DCompileFromFile(L"../Engine/shaders/hlsl/ConvolutionBlur.compute.hlsl", nullptr, nullptr, "computeMain", "cs_5_1", 0, 0, &computeShader, &errorMessages);
+	HRESULT hr = D3DCompileFromFile(L"../Engine/shaders/hlsl/ConvolutionBlur.comp.hlsl", nullptr, nullptr, "computeMain", "cs_5_1", 0, 0, &computeShader, &errorMessages);
 	if (FAILED(hr) && errorMessages) OutputDebugStringA(static_cast<const char*>(errorMessages->GetBufferPointer()));
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC computePsoDesc = {};
