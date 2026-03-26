@@ -862,7 +862,7 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 				glm::vec3 scale = currentObj->GetSize();
 
 				// Create model matrix for debug rendering
-				glm::mat4 rotationMatrix = glm::toMat4(glm::quat(glm::radians(-rot)));
+				glm::mat4 rotationMatrix = glm::mat4_cast(glm::quat(glm::radians(-rot)));
 				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos)
 					* rotationMatrix
 					* glm::scale(glm::mat4(1.0f), scale);
@@ -932,7 +932,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
-	glm::vec3 currentPos = glm::vec3(globalTransform[3]); // Extract translation
+	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]); // Extract translation
 	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
 
 	// Debug: Log bone positions
@@ -966,7 +966,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::mat4 childWorldMatrix = objectTransform * childGlobalMatrix;
 
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
-			glm::vec2 childScreenPos = WorldToScreen(childPos, view, proj);
+			glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj);
 
 			// Draw line if both positions are valid
 			if (screenPos.x >= 0 && screenPos.y >= 0 &&
@@ -1320,7 +1320,7 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			{
 				float theta = (2.0f * 3.14159265359f * i) / segments;
 				glm::vec3 worldPos = center + (right * cos(theta) + up * sin(theta)) * radius;
-				glm::vec2 screenPos = WorldToScreen(worldPos, view, proj);
+				glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos, view, proj);
 				
 				if (screenPos.x >= 0 && screenPos.y >= 0)
 				{
@@ -1366,7 +1366,7 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			};
 
 			std::vector<glm::vec2> screenPoints;
-			for(auto& wp : worldPoints) screenPoints.push_back(WorldToScreen(wp, view, proj));
+			for(auto& wp : worldPoints) screenPoints.push_back(Engine::GetRenderManager()->WorldToScreen(wp, view, proj));
 
 			for (int i = 0; i < 12; ++i)
 			{
