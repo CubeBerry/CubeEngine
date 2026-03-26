@@ -416,6 +416,9 @@ void DXSkybox::PrefilteredEnvironmentMap()
 	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	// MinLOD and MaxLOD are set to allow sampling across all mip levels of the cubemap, which is essential for accurate prefiltering results
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
 	sampler.ShaderRegister = 0;
 	sampler.RegisterSpace = 1;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
