@@ -56,6 +56,7 @@ SLANG_SHADERS = [
 	{ "file": "Cubemap.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "Cubemap.vert" },
 	{ "file": "Equirectangular.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Equirectangular.frag" },
 	{ "file": "Irradiance.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Irradiance.frag" },
+	{ "file": "SphericalHarmonicsIrradiance.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "SphericalHarmonicsIrradiance.frag" },
 	{ "file": "Prefilter.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "Prefilter.frag" },
 	{ "file": "BRDF.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "BRDF.vert" },
 	{ "file": "BRDF.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "BRDF.frag" },

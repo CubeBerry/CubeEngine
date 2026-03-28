@@ -9,18 +9,13 @@
 #endif
 
 
-#line 17 "slang/Irradiance.slang"
-struct SHCoefficients_0
-{
-    float4  E_lm_0[int(9)];
-};
+#line 12 "slang/Irradiance.slang"
+TextureCube<float4 > environmentMap_0 : register(t0, space1);
 
 
-#line 21
-cbuffer shBuffer_0 : register(b1)
-{
-    SHCoefficients_0 shBuffer_0;
-}
+#line 11
+SamplerState smp_0 : register(s0, space1);
+
 
 #line 3
 struct VSOutput_0
@@ -30,27 +25,89 @@ struct VSOutput_0
 };
 
 
-#line 58
+#line 18
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
     float3 N_0 = normalize(float3(input_0.uvw_0.x, input_0.uvw_0.y, input_0.uvw_0.z));
-    float x_0 = N_0.x;
-    float y_0 = N_0.y;
-    float z_0 = N_0.z;
+    float3 _S1 = (float3)0.0f;
 
 
-    float _S1 = 0.5f * sqrt(0.9549296498298645f);
+    float3 right_0 = normalize(cross(float3(0.0f, 1.0f, 0.0f), N_0));
+    float3 _S2 = normalize(cross(N_0, right_0));
+
+#line 25
+    float phi_0 = 0.0f;
+
+#line 25
+    float3 irradiance_0 = _S1;
+
+#line 25
+    float nrSamples_0 = 0.0f;
 
 
-    float _S2 = sqrt(4.77464818954467773f);
 
-#line 69
-    float _S3 = 0.5f * _S2;
+    for(;;)
+    {
 
-#line 69
-    float _S4 = _S3 * x_0;
+#line 29
+        if(phi_0 < 6.28318548202514648f)
+        {
+        }
+        else
+        {
 
-#line 86
-    return float4(shBuffer_0.E_lm_0[int(0)].xyz * (0.5f * sqrt(0.31830987334251404f)) + shBuffer_0.E_lm_0[int(1)].xyz * (_S1 * y_0) + shBuffer_0.E_lm_0[int(2)].xyz * (_S1 * z_0) + shBuffer_0.E_lm_0[int(3)].xyz * (_S1 * x_0) + shBuffer_0.E_lm_0[int(4)].xyz * (_S4 * y_0) + shBuffer_0.E_lm_0[int(5)].xyz * (_S3 * y_0 * z_0) + shBuffer_0.E_lm_0[int(6)].xyz * (0.25f * sqrt(1.59154939651489258f) * (3.0f * z_0 * z_0 - 1.0f)) + shBuffer_0.E_lm_0[int(7)].xyz * (_S4 * z_0) + shBuffer_0.E_lm_0[int(8)].xyz * (0.25f * _S2 * (x_0 * x_0 - y_0 * y_0)), 1.0f);
+#line 29
+            break;
+        }
+
+#line 29
+        float theta_0 = 0.0f;
+
+        for(;;)
+        {
+
+#line 31
+            if(theta_0 < 1.57079637050628662f)
+            {
+            }
+            else
+            {
+
+#line 31
+                break;
+            }
+
+            float _S3 = sin(theta_0);
+
+#line 34
+            float _S4 = cos(theta_0);
+
+#line 39
+            float3 irradiance_1 = irradiance_0 + environmentMap_0.Sample(smp_0, _S3 * cos(phi_0) * right_0 + _S3 * sin(phi_0) * _S2 + _S4 * N_0).xyz * _S4 * _S3;
+
+
+
+            float _S5 = nrSamples_0 + 1.0f;
+
+#line 31
+            theta_0 = theta_0 + 0.02500000037252903f;
+
+#line 31
+            irradiance_0 = irradiance_1;
+
+#line 31
+            nrSamples_0 = _S5;
+
+#line 31
+        }
+
+#line 29
+        phi_0 = phi_0 + 0.02500000037252903f;
+
+#line 29
+    }
+
+#line 48
+    return float4(3.14159274101257324f * irradiance_0 * (1.0f / nrSamples_0), 1.0f);
 }
 

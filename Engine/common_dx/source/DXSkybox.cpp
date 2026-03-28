@@ -525,7 +525,7 @@ void DXSkybox::CalculateIrradiance(const std::vector<glm::vec3>& E_lm)
 
 	std::vector<DXGI_FORMAT> rtvFormats = { texDesc.Format };
 	m_pipelines[1] = DXPipeLineBuilder(m_device, m_rootSignatures[1])
-		.SetShaders("../Engine/shaders/hlsl/Cubemap.vert.hlsl", "../Engine/shaders/hlsl/Irradiance.frag.hlsl")
+		.SetShaders("../Engine/shaders/hlsl/Cubemap.vert.hlsl", "../Engine/shaders/hlsl/SphericalHarmonicsIrradiance.frag.hlsl")
 		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
 		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_NONE, false)
 		.SetDepthStencil(false, false)
