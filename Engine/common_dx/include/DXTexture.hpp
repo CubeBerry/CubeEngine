@@ -29,6 +29,7 @@ public:
 		bool isHDR, const std::filesystem::path& path_, const std::string& name_, bool flip);
 	void SetTextureID(const int id) { texID = id; }
 
+	[[nodiscard]] void* GetTextureData() const { return m_textureData; }
 	[[nodiscard]] int GetWidth() const { return width; }
 	[[nodiscard]] int GetHeight() const { return height; }
 	[[nodiscard]] glm::vec2 GetSize() const { return glm::vec2{ width, height }; }
@@ -36,6 +37,7 @@ public:
 	[[nodiscard]] int GetTextrueId() const { return texID; }
 private:
 	ComPtr<ID3D12Resource> m_texture;
+	void* m_textureData;
 
 	int width, height;
 	int texID;

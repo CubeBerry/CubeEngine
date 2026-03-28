@@ -34,8 +34,8 @@ void DXTexture::LoadTexture(
 	auto path = path_;
 	int texChannels;
 	//Read in image file
-	void* data = isHDR ? data = stbi_loadf(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha) :
-	data = stbi_load(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	m_textureData = isHDR ? m_textureData = stbi_loadf(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha) :
+		m_textureData = stbi_load(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 
 	ComPtr<ID3D12Resource> textureUploadHeap;
 
@@ -76,7 +76,7 @@ void DXTexture::LoadTexture(
 		));
 
 		D3D12_SUBRESOURCE_DATA textureData = {};
-		textureData.pData = data;
+		textureData.pData = m_textureData;
 		textureData.RowPitch = static_cast<INT64>(width) * (isHDR ? 16 : 4); // 16 bytes for R32G32B32A32_FLOAT, 4 bytes for R8G8B8A8_UNORM
 		textureData.SlicePitch = textureData.RowPitch * static_cast<UINT>(height);
 
