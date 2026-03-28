@@ -411,17 +411,27 @@ std::vector<glm::vec3> DXSkybox::CalculateSHCoefficients(const float* hdrData, i
 
 			float dArea = sinTheta * dTheta * dPhi;
 
+			// Z-axis points up, Y-axis points forward, X-axis points right
+			//float Y00 = 0.5f * std::sqrt(1.0f / PI);
+			//float Y1_1 = 0.5f * std::sqrt(3.0f / PI) * y;
+			//float Y10 = 0.5f * std::sqrt(3.0f / PI) * z;
+			//float Y11 = 0.5f * std::sqrt(3.0f / PI) * x;
+			//float Y2_2 = 0.5f * std::sqrt(15.0f / PI) * x * y;
+			//float Y2_1 = 0.5f * std::sqrt(15.0f / PI) * y * z;
+			//float Y20 = 0.25f * std::sqrt(5.0f / PI) * (3.0f * z * z - 1.0f);
+			//float Y21 = 0.5f * std::sqrt(15.0f / PI) * x * z;
+			//float Y22 = 0.25f * std::sqrt(15.0f / PI) * (x * x - y * y);
+
+			// Reorder to match the cubemap's coordinate system where Y-axis points up, Z-axis points forward, X-axis points right
 			float Y00 = 0.5f * std::sqrt(1.0f / PI);
-
-			float Y1_1 = 0.5f * std::sqrt(3.0f / PI) * y;
-			float Y10 = 0.5f * std::sqrt(3.0f / PI) * z;
+			float Y1_1 = 0.5f * std::sqrt(3.0f / PI) * z;
+			float Y10 = 0.5f * std::sqrt(3.0f / PI) * y;
 			float Y11 = 0.5f * std::sqrt(3.0f / PI) * x;
-
-			float Y2_2 = 0.5f * std::sqrt(15.0f / PI) * x * y;
-			float Y2_1 = 0.5f * std::sqrt(15.0f / PI) * y * z;
-			float Y20 = 0.25f * std::sqrt(5.0f / PI) * (3.0f * z * z - 1.0f);
-			float Y21 = 0.5f * std::sqrt(15.0f / PI) * x * z;
-			float Y22 = 0.25f * std::sqrt(15.0f / PI) * (x * x - y * y);
+			float Y2_2 = 0.5f * std::sqrt(15.0f / PI) * x * z;
+			float Y2_1 = 0.5f * std::sqrt(15.0f / PI) * z * y;
+			float Y20 = 0.25f * std::sqrt(5.0f / PI) * (3.0f * y * y - 1.0f);
+			float Y21 = 0.5f * std::sqrt(15.0f / PI) * x * y;
+			float Y22 = 0.25f * std::sqrt(15.0f / PI) * (x * x - z * z);
 
 			L_lm[0] += color * Y00 * dArea;
 			L_lm[1] += color * Y1_1 * dArea;
