@@ -22,7 +22,7 @@ void DXTexture::LoadTexture(
 	std::function<void(UINT)> deallocator,
 	const ComPtr<ID3D12Fence>& fence,
 	const HANDLE& fenceEvent,
-	bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip)
+	bool isHDR, const std::filesystem::path& path_, const std::string& name_, bool flip)
 {
 	m_srvHandle = srvHandle;
 	m_deallocator = std::move(deallocator);
@@ -34,13 +34,8 @@ void DXTexture::LoadTexture(
 	auto path = path_;
 	int texChannels;
 	//Read in image file
-	void* data{ nullptr };
-	if (isHDR)
-	{
-		data = stbi_loadf(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
-	}
-	else
-		data = stbi_load(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+	void* data = isHDR ? data = stbi_loadf(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha) :
+	data = stbi_load(path.string().c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
 
 	ComPtr<ID3D12Resource> textureUploadHeap;
 
@@ -118,15 +113,4 @@ void DXTexture::LoadTexture(
 		WaitForSingleObject(fenceEvent, INFINITE);
 	}
 	//CloseHandle(fenceEvent);
-}
-
-void DXTexture::LoadSkyBox(bool isHDR, const std::filesystem::path& right, const std::filesystem::path& left, const std::filesystem::path& top, const std::filesystem::path& bottom, const std::filesystem::path& front, const std::filesystem::path& back)
-{
-	isHDR;
-	right;
-	left;
-	top;
-	bottom;
-	front;
-	back;
 }

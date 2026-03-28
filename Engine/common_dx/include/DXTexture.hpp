@@ -26,16 +26,7 @@ public:
 		std::function<void(UINT)> deallocator,
 		const ComPtr<ID3D12Fence>& fence,
 		const HANDLE& fenceEvent,
-		bool isHDR, const std::filesystem::path& path_, std::string name_, bool flip);
-	void LoadSkyBox(
-		bool isHDR,
-		const std::filesystem::path& right,
-		const std::filesystem::path& left,
-		const std::filesystem::path& top,
-		const std::filesystem::path& bottom,
-		const std::filesystem::path& front,
-		const std::filesystem::path& back
-	);
+		bool isHDR, const std::filesystem::path& path_, const std::string& name_, bool flip);
 	void SetTextureID(const int id) { texID = id; }
 
 	[[nodiscard]] int GetWidth() const { return width; }
