@@ -399,9 +399,12 @@ std::vector<glm::vec3> DXSkybox::CalculateSHCoefficients(const float* hdrData, i
 			float sinPhi = std::sin(phi);
 			float cosPhi = std::cos(phi);
 
-			float x = sinTheta * cosPhi;
-			float y = sinTheta * sinPhi;
-			float z = cosTheta;
+			// Y-axis points up, Z-axis points forward, X-axis points right
+			// Convert from spherical coordinates to Cartesian coordinates
+			// Minus sign is needed to flip the direction of the vector to match the cubemap's coordinate system
+			float x = -sinTheta * cosPhi;
+			float y = -cosTheta;
+			float z = -sinTheta * sinPhi;
 
 			int index = (j * width + i) * 4;
 			glm::vec3 color(hdrData[index], hdrData[index + 1], hdrData[index + 2]);
@@ -433,7 +436,7 @@ std::vector<glm::vec3> DXSkybox::CalculateSHCoefficients(const float* hdrData, i
 	}
 
 	float A0 = PI;
-	float A1 = (2.0f / 3.0f) * PI;
+	float A1 = 2.0f / 3.0f * PI;
 	float A2 = 0.25f * PI;
 
 	std::vector<glm::vec3> E_lm(9);
