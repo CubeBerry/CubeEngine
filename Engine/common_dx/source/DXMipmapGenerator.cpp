@@ -89,7 +89,7 @@ void DXMipmapGenerator::Generate(const ComPtr<ID3D12Device>& device, const ComPt
         for (uint32_t arraySlice = 0; arraySlice < texDesc.DepthOrArraySize; ++arraySlice)
         {
             uint32_t dstSubresource = D3D12CalcSubresource(dstMip, arraySlice, 0, texDesc.MipLevels, texDesc.DepthOrArraySize);
-            barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, dstSubresource));
+            barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, dstSubresource));
         }
         commandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 

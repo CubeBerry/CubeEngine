@@ -213,10 +213,13 @@ void DXSkybox::EquirectangularToCube()
 		rtvHandle.ptr += m_rtvDescriptorSize;
 	}
 
-	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	m_commandList->ResourceBarrier(1, &barrier);
 
 	m_mipmapGenerator->Generate(m_device, m_commandList, m_cubemap.Get());
+
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_cubemap.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	m_commandList->ResourceBarrier(1, &barrier);
 
 	ExecuteCommandList();
 
