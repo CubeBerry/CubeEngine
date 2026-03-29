@@ -19,7 +19,7 @@ float3 ReinhardToneMapping(float3 color)
     return color / (color + float3(1.0));
 }
 
-// Filimic/ACES Tone Mapping
+// Filmic/ACES Tone Mapping
 float3 FilmicToneMapping(float3 color) {
     const float a = 2.51;
     const float b = 0.03;
