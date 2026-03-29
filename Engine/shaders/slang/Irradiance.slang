@@ -20,7 +20,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float3 N = normalize(float3(input.uvw.x, input.uvw.y, input.uvw.z));
     float3 irradiance = float3(0.0);
 
-    float3 up = float3(0.0, 1.0, 0.0);
+    // float3 up = float3(0.0, 1.0, 0.0);
+    float3 up = abs(N.y) < 0.999 ? float3(0.0, 1.0, 0.0) : float3(0.0, 0.0, 1.0);
     float3 right = normalize(cross(up, N));
     up = normalize(cross(N, right));
 
