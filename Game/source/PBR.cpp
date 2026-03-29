@@ -34,11 +34,11 @@ void PBR::Init()
 	{
 		for (int c = 0; c < 6; ++c)
 		{
-			float x = (r - 2.5f) * 1.2f;
-			float y = (c - 2.5f) * 1.2f;
+			const float x = (static_cast<float>(r) - 2.5f) * 1.2f;
+			const float y = (static_cast<float>(c) - 2.5f) * 1.2f;
 
-			float metallic = static_cast<float>(c) * 0.2f;
-			float roughness = static_cast<float>(r) * 0.2f;
+			const float metallic = static_cast<float>(c) * 0.2f;
+			const float roughness = static_cast<float>(r) * 0.2f;
 
 			Engine::GetObjectManager().AddObject<Object>(glm::vec3{ x, y, 0.f }, glm::vec3{ 1.f,1.f,1.f }, "Mesh", ObjectType::NONE);
 			Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
