@@ -89,7 +89,7 @@ void DXMipmapGenerator::Generate(const ComPtr<ID3D12Device>& device, const ComPt
         for (uint32_t arraySlice = 0; arraySlice < texDesc.DepthOrArraySize; ++arraySlice)
         {
             uint32_t dstSubresource = D3D12CalcSubresource(dstMip, arraySlice, 0, texDesc.MipLevels, texDesc.DepthOrArraySize);
-            barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, dstSubresource));
+            barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, dstSubresource));
         }
         commandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 
@@ -121,7 +121,7 @@ void DXMipmapGenerator::Generate(const ComPtr<ID3D12Device>& device, const ComPt
         cpuHandle.Offset(1, m_descriptorSize);
         gpuHandle.Offset(1, m_descriptorSize);
 
-		float texelSize[2] = { 1.0f / dstWidth, 1.0f / dstHeight };
+		float texelSize[2] = { 1.0f / static_cast<float>(dstWidth), 1.0f / static_cast<float>(dstHeight) };
         commandList->SetComputeRoot32BitConstants(0, 2, texelSize, 0);
 
 		UINT dispatchX = (dstWidth + 7) / 8;

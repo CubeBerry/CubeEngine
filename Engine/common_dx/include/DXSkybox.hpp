@@ -37,6 +37,8 @@ public:
 
 	void EquirectangularToCube();
 	void CalculateIrradiance();
+	// Spherical Harmonics based irradiance calculation
+	void CalculateIrradiance(const std::vector<glm::vec3>& E_lm);
 	void PrefilteredEnvironmentMap();
 	void BRDFLUT();
 
@@ -177,4 +179,11 @@ private:
 	glm::lookAtLH(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 1.f, 0.f)),
 	glm::lookAtLH(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 1.f, 0.f))
 	};
+
+	// Spherical Harmonics Coefficients for diffuse irradiance
+	struct SHCoefficients
+	{
+		glm::vec4 E_lm[9];
+	};
+	std::vector<glm::vec3> CalculateSHCoefficients(const float* hdrData, int width, int height);
 };
