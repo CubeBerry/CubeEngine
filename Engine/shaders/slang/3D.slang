@@ -11,12 +11,12 @@
 // Vertex Shader
 struct VSInput
 {
-    uint position : POSITION0;
-    float3 normal : NORMAL0;
-    float2 uv : TEXCOORD0;
-    int tex_sub_index : TEXCOORD1;
-    int4 boneIDs : BLENDINDICES0;
-    float4 weights : BLENDWEIGHTS0;
+    [[vk::location(0)]] uint position : POSITION0;
+    [[vk::location(1)]] float3 normal : NORMAL0;
+    [[vk::location(2)]] float2 uv : TEXCOORD0;
+    [[vk::location(3)]] int tex_sub_index : TEXCOORD1;
+    [[vk::location(7)]] int4 boneIDs : BLENDINDICES0;
+    [[vk::location(8)]] float4 weights : BLENDWEIGHTS0;
 }
 
 struct VSOutput
@@ -45,6 +45,9 @@ struct vMatrix
     float4 color;
     // @TODO move to push constants
     float3 viewPosition;
+
+    // Bone Matrices for Skeletal Animation
+    float4x4 finalBones[128];
 }
 [[vk::binding(0, 0)]] ConstantBuffer<vMatrix> matrix : register(b0, space0);
 
@@ -67,12 +70,49 @@ VSOutput vertexMain(VSInput input)
     output.weights = input.weights;
     output.meshletVisualization = false;
 
+    // Skinning Logic
+    float4 totalPosition = float4(0.0, 0.0, 0.0, 0.0);
+    float3 totalNormal   = float3(0.0, 0.0, 0.0);
+
+    float totalWeight = input.weights[0] + input.weights[1] + input.weights[2] + input.weights[3];
+
+    if (totalWeight > 0.01f)
+    {
+        // Skinned mesh: apply bone transformations
+        float weightNormalizationScale = 1.0 / totalWeight;
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (input.boneIDs[i] < 0 || input.boneIDs[i] >= 128)
+                continue;
+            if (input.weights[i] <= 0.0f)
+                continue;
+
+            float normalizedWeight = input.weights[i] * weightNormalizationScale;
+
+            float4 localPosition = mul(matrix.finalBones[input.boneIDs[i]], float4(decoded_position, 1.0f));
+            totalPosition += localPosition * normalizedWeight;
+
+            float3 localNormal = mul((float3x3)matrix.finalBones[input.boneIDs[i]], input.normal);
+            totalNormal += localNormal * normalizedWeight;
+        }
+    }
+    else
+    {
+        // Non-skinned mesh: use vertex position/normal directly
+        totalPosition = float4(decoded_position, 1.0f);
+        totalNormal   = input.normal;
+    }
+
     // Lighting
-    output.normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
-    output.fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
+    //output.normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
+    //output.fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
+    output.normal = mul((float3x3)matrix.transposeInverseModel, totalNormal);
+    output.fragmentPosition = mul(matrix.model, totalPosition).xyz;
     output.viewPosition = matrix.viewPosition;
 
-    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
+    //output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
+    output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, totalPosition)));
     
     return output;
 }
@@ -269,16 +309,20 @@ Texture2D brdfLUT : register(t2, space2);
 [[vk::binding(6, 1)]] SamplerCube prefilterMap;
 [[vk::binding(7, 1)]] Sampler2D brdfLUT;
 #endif
+#if defined(__hlsl__)
 Texture2D shadowMap : register(t3, space2);
 SamplerState iblSmp : register(s1, space2);
+#endif
 
 struct PushConstants
 {
     int activeDirectionalLights;
     int activePointLights;
+#if defined(__hlsl__)
     int useShadow;
     float orthoSize;
     float4x4 lightViewProjection;
+#endif
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b5, space0);
@@ -457,6 +501,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
     //    preventing the shadow from artificially shrinking or detaching.
     // =========================================================================
     float shadow = 0.0;
+#if defined(__hlsl__)
     if (pushConstants.useShadow > 0)
     {
         // Transform to light space
@@ -496,6 +541,7 @@ float4 fragmentMain(VSOutput input) : SV_Target
         shadow = G * bounds;
     }
     else shadow = 0.0;
+#endif // defined(__hlsl__)
 
     // Calculate Directional Lights
     for (int l = 0; l < pushConstants.activeDirectionalLights; ++l)

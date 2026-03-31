@@ -1202,7 +1202,16 @@ glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view
 
 	// Convert NDC to screen space and flip Y-axis for ImGui coordinate system
 	float screenX = (ndc.x + 1.0f) * 0.5f * windowSize.x + windowPos.x;
-	float screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+	float screenY = 0.0f;
+
+	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+	{
+		screenY = (ndc.y + 1.0f) * 0.5f * windowSize.y + windowPos.y;
+	}
+	else
+	{
+		screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+	}
 
 	return glm::vec2{ screenX, screenY };
 }

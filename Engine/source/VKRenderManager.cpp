@@ -182,10 +182,22 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	tex_sub_index_layout.format = VK_FORMAT_R32_SINT;
 	tex_sub_index_layout.offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
+	// Bone IDs Layout (Location 7) - Skeletal Animation
+	VKAttributeLayout boneId_layout;
+	boneId_layout.vertex_layout_location = 7;
+	boneId_layout.format = VK_FORMAT_R32G32B32A32_SINT;
+	boneId_layout.offset = offsetof(ThreeDimension::QuantizedVertex, boneIDs);
+
+	// Weights Layout (Location 8) - Skeletal Animation
+	VKAttributeLayout weight_layout;
+	weight_layout.vertex_layout_location = 8;
+	weight_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	weight_layout.offset = offsetof(ThreeDimension::QuantizedVertex, weights);
+
 	vkPipeline3D = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3D->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout, boneId_layout, weight_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 	vkPipeline3DLine = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3D->GetDescriptorSetLayout());
-	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
+	vkPipeline3DLine->InitPipeLine(vkShader3D->GetVertexModule(), vkShader3D->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout, boneId_layout, weight_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::LINE, true, sizeof(PushConstants), VK_SHADER_STAGE_FRAGMENT_BIT);
 #ifdef _DEBUG
 	position_layout.vertex_layout_location = 0;
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
