@@ -36,12 +36,10 @@ DynamicSprite::~DynamicSprite()
 	}
 	animations.clear();
 	DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Dynamic Sprite");
 }
 
 void DynamicSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Dynamic Sprite");
 }
 
 void DynamicSprite::Update(float dt)

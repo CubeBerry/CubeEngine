@@ -44,7 +44,7 @@ struct vMatrix
     float4x4 decode;
     float4 color;
     // @TODO move to push constants
-    float3 viewPosition;
+    float4 viewPosition;
 
     // Bone Matrices for Skeletal Animation
     float4x4 finalBones[128];
@@ -109,7 +109,7 @@ VSOutput vertexMain(VSInput input)
     //output.fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
     output.normal = mul((float3x3)matrix.transposeInverseModel, totalNormal);
     output.fragmentPosition = mul(matrix.model, totalPosition).xyz;
-    output.viewPosition = matrix.viewPosition;
+    output.viewPosition = matrix.viewPosition.xyz;
 
     //output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
     output.position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, totalPosition)));
@@ -161,6 +161,38 @@ void meshMain(
         float z = float((input.position >> 22) & 0x3FFu);
         float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
 
+        // Skinning Logic
+        float4 totalPosition = float4(0.0, 0.0, 0.0, 0.0);
+        float3 totalNormal   = float3(0.0, 0.0, 0.0);
+
+        float totalWeight = input.weights[0] + input.weights[1] + input.weights[2] + input.weights[3];
+
+        if (totalWeight > 0.01f)
+        {
+            float weightNormalizationScale = 1.0 / totalWeight;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (input.boneIDs[i] < 0 || input.boneIDs[i] >= 128)
+                    continue;
+                if (input.weights[i] <= 0.0f)
+                    continue;
+
+                float normalizedWeight = input.weights[i] * weightNormalizationScale;
+
+                float4 localPosition = mul(matrix.finalBones[input.boneIDs[i]], float4(decoded_position, 1.0f));
+                totalPosition += localPosition * normalizedWeight;
+
+                float3 localNormal = mul((float3x3)matrix.finalBones[input.boneIDs[i]], input.normal);
+                totalNormal += localNormal * normalizedWeight;
+            }
+        }
+        else
+        {
+            totalPosition = float4(decoded_position, 1.0f);
+            totalNormal   = input.normal;
+        }
+
         verts[groupThreadID].uv = input.uv;
         verts[groupThreadID].meshletVisualization = meshletVisualizationEnabled;
         if (meshletVisualizationEnabled)
@@ -183,11 +215,11 @@ void meshMain(
         verts[groupThreadID].tex_sub_index = input.tex_sub_index;
 
         // Lighting
-        verts[groupThreadID].normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
-        verts[groupThreadID].fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
-        verts[groupThreadID].viewPosition = matrix.viewPosition;
+        verts[groupThreadID].normal = mul((float3x3)matrix.transposeInverseModel, totalNormal);
+        verts[groupThreadID].fragmentPosition = mul(matrix.model, totalPosition).xyz;
+        verts[groupThreadID].viewPosition = matrix.viewPosition.xyz;
 
-        verts[groupThreadID].position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
+        verts[groupThreadID].position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, totalPosition)));
     }
 
     if (groupThreadID < meshlet.primitiveCount)
@@ -216,16 +248,48 @@ void meshMain(
     //         float z = float((input.position >> 22) & 0x3FFu);
     //         float3 decoded_position = mul(matrix.decode, float4(float3(x, y, z), 1.0)).xyz;
 
+    //         // Skinning Logic
+    //         float4 totalPosition = float4(0.0, 0.0, 0.0, 0.0);
+    //         float3 totalNormal   = float3(0.0, 0.0, 0.0);
+
+    //         float totalWeight = input.weights[0] + input.weights[1] + input.weights[2] + input.weights[3];
+
+    //         if (totalWeight > 0.01f)
+    //         {
+    //             float weightNormalizationScale = 1.0 / totalWeight;
+
+    //             for (int j = 0; j < 4; j++)
+    //             {
+    //                 if (input.boneIDs[j] < 0 || input.boneIDs[j] >= 128)
+    //                     continue;
+    //                 if (input.weights[j] <= 0.0f)
+    //                     continue;
+
+    //                 float normalizedWeight = input.weights[j] * weightNormalizationScale;
+
+    //                 float4 localPosition = mul(matrix.finalBones[input.boneIDs[j]], float4(decoded_position, 1.0f));
+    //                 totalPosition += localPosition * normalizedWeight;
+
+    //                 float3 localNormal = mul((float3x3)matrix.finalBones[input.boneIDs[j]], input.normal);
+    //                 totalNormal += localNormal * normalizedWeight;
+    //             }
+    //         }
+    //         else
+    //         {
+    //             totalPosition = float4(decoded_position, 1.0f);
+    //             totalNormal   = input.normal;
+    //         }
+
     //         verts[primitiveId].uv = input.uv;
     //         verts[primitiveId].color = matrix.color;
     //         verts[primitiveId].tex_sub_index = input.tex_sub_index;
 
     //         // Lighting
-    //         verts[primitiveId].normal = mul((float3x3)matrix.transposeInverseModel, input.normal);
-    //         verts[primitiveId].fragmentPosition = mul(matrix.model, float4(decoded_position, 1.0f)).xyz;
-    //         verts[primitiveId].viewPosition = matrix.viewPosition;
+    //         verts[primitiveId].normal = mul((float3x3)matrix.transposeInverseModel, totalNormal);
+    //         verts[primitiveId].fragmentPosition = mul(matrix.model, totalPosition).xyz;
+    //         verts[primitiveId].viewPosition = matrix.viewPosition.xyz;
 
-    //         verts[primitiveId].position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, float4(decoded_position, 1.0))));
+    //         verts[primitiveId].position = mul(matrix.projection, mul(matrix.view, mul(matrix.model, totalPosition)));
     //     }
 
     //     if (primitiveId < meshlet.primitiveCount)

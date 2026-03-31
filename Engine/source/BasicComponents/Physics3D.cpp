@@ -13,12 +13,10 @@
 
 Physics3D::~Physics3D()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Phy3D");
 }
 
 void Physics3D::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Phy3D");
 }
 
 void Physics3D::Update(float dt)

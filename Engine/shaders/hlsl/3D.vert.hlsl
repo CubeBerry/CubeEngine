@@ -18,7 +18,7 @@ struct vMatrix_0
     float4x4 projection_0;
     float4x4 decode_0;
     float4 color_0;
-    float3 viewPosition_0;
+    float4 viewPosition_0;
     float4x4  finalBones_0[int(128)];
 };
 
@@ -207,7 +207,7 @@ VSOutput_0 vertexMain(VSInput_0 input_0)
 #line 110
     output_0.normal_0 = mul(float3x3(matrix_0.transposeInverseModel_0[int(0)].xyz, matrix_0.transposeInverseModel_0[int(1)].xyz, matrix_0.transposeInverseModel_0[int(2)].xyz), totalNormal_0);
     output_0.fragmentPosition_0 = mul(matrix_0.model_0, totalPosition_0).xyz;
-    output_0.viewPosition_1 = matrix_0.viewPosition_0;
+    output_0.viewPosition_1 = matrix_0.viewPosition_0.xyz;
 
 
     output_0.position_0 = mul(matrix_0.projection_0, mul(matrix_0.view_0, mul(matrix_0.model_0, totalPosition_0)));

@@ -144,7 +144,15 @@ void Object::DestroyAllComponents()
 {
 	for (auto* comp : componentList)
 	{
+		LogComponentAction(comp->GetType(), false);
 		delete comp;
 	}
 	componentList.clear();
+}
+
+void Object::LogComponentAction(ComponentTypes type, bool added)
+{
+	std::string message = (added ? "Component Added: " : "Component Deleted: ");
+	message += ComponentToString(type) + (added ? " to " : " from ") + objectName + " (ID: " + std::to_string(id) + ")";
+	Engine::GetLogger().LogDebug(LogCategory::Object, message);
 }

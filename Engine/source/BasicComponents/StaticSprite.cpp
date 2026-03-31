@@ -25,12 +25,10 @@ StaticSprite::~StaticSprite()
 	//	}
 	//}
 	//DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Static Sprite");
 }
 
 void StaticSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Static Sprite");
 }
 
 void StaticSprite::Update(float dt)

@@ -72,6 +72,7 @@ public:
 		ComponentTypes* componentType = new ComponentTypes();
 		dynamic_cast<IComponent*>(componentType)->SetOwner(this);
 		this->componentList.push_back(std::move(componentType));
+		LogComponentAction(dynamic_cast<IComponent*>(componentType)->GetType(), true);
 	}
 
 	template<typename ComponentTypes> ComponentTypes* GetComponent()
@@ -91,6 +92,7 @@ public:
 		{
 			if (typeid(*list).name() == typeid(ComponentTypes).name())
 			{
+				LogComponentAction(list->GetType(), false);
 				delete list;
 				componentList.erase(iterator);
 				break;
@@ -138,6 +140,7 @@ public:
 	//}
 
 	void DestroyAllComponents();
+	void LogComponentAction(ComponentTypes type, bool added);
 protected:
 
 	glm::vec3 position{ 0.f, 0.f, 0.f };

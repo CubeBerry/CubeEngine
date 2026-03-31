@@ -9,7 +9,7 @@
 #endif
 
 
-#line 208 "slang/GBuffer.slang"
+#line 312 "slang/GBuffer.slang"
 struct fMatrix_0
 {
     int isTex_0;
@@ -17,7 +17,7 @@ struct fMatrix_0
 };
 
 
-#line 213
+#line 317
 cbuffer f_matrix_0 : register(b1)
 {
     fMatrix_0 f_matrix_0;
@@ -25,11 +25,11 @@ cbuffer f_matrix_0 : register(b1)
 Texture2D<float4 >  tex_0[int(500)] : register(t0, space1);
 
 
-#line 216
+#line 320
 SamplerState smp_0 : register(s0, space1);
 
 
-#line 222
+#line 326
 struct fMaterial_0
 {
     float3 specularColor_0;
@@ -45,7 +45,7 @@ cbuffer f_material_0 : register(b2)
     fMaterial_0 f_material_0;
 }
 
-#line 200
+#line 304
 struct PSOutput_0
 {
     float4 Albedo_0 : SV_Target0;
@@ -71,16 +71,16 @@ struct VSOutput_0
 };
 
 
-#line 235
+#line 339
 PSOutput_0 fragmentMain(VSOutput_0 input_0)
 {
 
-#line 235
+#line 339
     VSOutput_0 _S1 = input_0;
 
     PSOutput_0 output_0;
 
-#line 237
+#line 341
     float4 albedo_0;
 
 
@@ -90,39 +90,39 @@ PSOutput_0 fragmentMain(VSOutput_0 input_0)
         if((f_matrix_0.isTex_0) > int(0))
         {
 
-#line 243
+#line 347
             albedo_0 = tex_0[f_matrix_0.texIndex_0 + _S1.tex_sub_index_0].Sample(smp_0, _S1.uv_0);
 
-#line 243
+#line 347
         }
         else
         {
 
-#line 243
+#line 347
             albedo_0 = _S1.color_0;
 
-#line 243
+#line 347
         }
 
-#line 240
+#line 344
     }
     else
     {
 
-#line 240
+#line 344
         albedo_0 = float4(_S1.color_0.xyz, 1.0f);
 
-#line 240
+#line 344
     }
 
-#line 251
+#line 355
     if((albedo_0.w) < 0.10000000149011612f)
     {
 
-#line 251
+#line 355
         discard;
 
-#line 251
+#line 355
     }
 
     output_0.Albedo_0 = albedo_0;
