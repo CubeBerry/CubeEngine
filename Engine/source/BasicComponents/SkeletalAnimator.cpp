@@ -490,13 +490,14 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
     // Send final bone matrices
     if (currentAnimation)
     {
-        SkeletalBone* bone = currentAnimation->FindBone(nodeName);
-        if (bone)
+        const auto& boneInfoMap = currentAnimation->GetBoneIDMap();
+        auto it = boneInfoMap.find(nodeName);
+        if (it != boneInfoMap.end())
         {
-            int index = bone->GetBoneID();
+            int index = it->second.id;
             if (index >= 0 && index < (int)finalBoneMatrices.size())
             {
-                finalBoneMatrices[index] = encodeMatrix * globalTransformation * bone->GetOffsetMatrix();
+                finalBoneMatrices[index] = encodeMatrix * globalTransformation * it->second.offset;
             }
         }
     }
