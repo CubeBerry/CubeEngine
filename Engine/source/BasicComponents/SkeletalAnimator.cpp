@@ -190,7 +190,7 @@ void SkeletalAnimator::Update(float dt)
     }
 
     // Calculate bone hierarchy transforms
-    CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f), encodeMatrix);
+    CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f), encodeMatrix, false);
 
     // Upload bone matrices to GPU
     if (owner)
@@ -248,29 +248,28 @@ void SkeletalAnimator::PlayAnimation(SkeletalAnimation* newAnimation, bool isLoo
     justLooped = false;
     playbackState = PlaybackState::Playing;
 
-    // Auto-detect root bone name
+    // Auto-detect root bone name (Dynamic Traversal)
     if (enableRootMotion && rootBoneName.empty() && newAnimation)
     {
-        const std::vector<std::string> commonRootNames = { "Hips", "hips", "Root", "root" };
-        bool rootBoneFound = false;
-        
-        for (const auto& bone : newAnimation->GetBones())
-        {
-            if (rootBoneFound) break;
+        std::function<void(const AssimpNodeData&)> findFirstBone;
+        findFirstBone = [&](const AssimpNodeData& node) {
+            if (!rootBoneName.empty()) return;
             
-            for (const auto& commonName : commonRootNames)
+            // Check if this node exists in the valid bone map
+            if (newAnimation->GetBoneIDMap().find(node.originalBoneName) != newAnimation->GetBoneIDMap().end())
             {
-                if (bone.GetBoneName().find(commonName) != std::string::npos)
-                {
-                    std::string baseName = bone.GetBoneName();
-                    size_t pos = baseName.find("_$");
-                    if (pos != std::string::npos) baseName = baseName.substr(0, pos);
-                    rootBoneName = baseName;
-                    rootBoneFound = true;
-                    break;
-                }
+                rootBoneName = node.originalBoneName;
+                return;
             }
-        }
+            
+            // Recursively check children
+            for (const auto& child : node.children)
+            {
+                findFirstBone(child);
+            }
+        };
+
+        findFirstBone(newAnimation->GetRootNode());
     }
 
 }
@@ -304,6 +303,10 @@ glm::mat4 SkeletalAnimator::GetRootTransformAtTime(SkeletalAnimation* anim, floa
     if (!rotBone) rotBone = anim->FindBone(rotBoneNameMocap);
 
     if (!posBone) posBone = anim->FindBone(rootBoneName);
+    
+    // Fallback for Rotation: If FBX dummy nodes don't exist (e.g., standard glTF export),
+    // use the actual root bone itself.
+    if (!rotBone) rotBone = anim->FindBone(rootBoneName);
 
     if (!posBone && !rotBone) return glm::mat4(1.0f);
 
@@ -381,7 +384,7 @@ void SkeletalAnimator::UpdateRootMotionTransformToTime(float time)
     lastRootMotionTime = time;
 }
 
-void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform, const glm::mat4& encodeMatrix)
+void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform, const glm::mat4& encodeMatrix, bool parentIsDummy)
 {
     const std::string& nodeName = node->name;
     glm::mat4 nodeTransform = node->transformation;
@@ -450,8 +453,8 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
             if (preIt != preRotMap.end())
                 preRot = preIt->second;
 
-            // Position follows bind pose (Translation dummies handle movement)
-            glm::vec3 p1 = glm::vec3(node->transformation[3]);
+            // Position follows animation for standard rigs, but uses bind pose if an FBX Translation dummy handled it
+            glm::vec3 p1 = parentIsDummy ? glm::vec3(node->transformation[3]) : bone->GetInterpolatedPosition(currentTime);
 
             // Rotation blending and calculation
             glm::quat animRot = bone->GetInterpolatedRotation(currentTime);
@@ -466,7 +469,7 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
             }
             else
             {
-                glm::vec3 p2 = glm::vec3(node->transformation[3]);
+                glm::vec3 p2 = parentIsDummy ? glm::vec3(node->transformation[3]) : prevBone->GetInterpolatedPosition(previousTime);
                 glm::quat prevAnimRot = prevBone->GetInterpolatedRotation(previousTime);
                 glm::quat r2 = glm::normalize(glm::inverse(preRot) * prevAnimRot);
                 glm::vec3 s2 = prevBone->GetInterpolatedScale(previousTime);
@@ -504,7 +507,7 @@ void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::m
 
     // Recursively process children
     for (const auto& child : node->children)
-        CalculateBoneTransform(&child, globalTransformation, encodeMatrix);
+        CalculateBoneTransform(&child, globalTransformation, encodeMatrix, node->isDummyNode);
 }
 
 bool SkeletalAnimator::HasDummyNodeParent(const AssimpNodeData* node, const std::string& boneName) const

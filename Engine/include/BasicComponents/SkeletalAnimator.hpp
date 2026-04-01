@@ -76,7 +76,7 @@ private:
     glm::mat4 GetRootTransformAtTime(SkeletalAnimation* anim, float time);
     glm::mat4 ExtractRootMotionDelta(SkeletalAnimation* anim, float timeStart, float timeEnd);
 
-    void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform, const glm::mat4& encodeMatrix);
+    void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform, const glm::mat4& encodeMatrix, bool parentIsDummy = false);
     bool HasDummyNodeParent(const AssimpNodeData* node, const std::string& boneName) const;
 
 

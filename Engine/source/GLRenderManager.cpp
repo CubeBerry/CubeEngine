@@ -192,41 +192,15 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 
 				buffer->vertexArray->Use(true);
 
-
-				// Vertex Attribute state check
-				static bool attributeChecked = false;
-				if (!attributeChecked)
+				for (int loc = 0; loc <= 8; ++loc)
 				{
-					attributeChecked = true;
-
-					GLint currentVAO;
-					glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &currentVAO);
-					Engine::GetLogger().LogDebug(LogCategory::OpenGL,
-						"Current VAO: " + std::to_string(currentVAO));
-
-					for (int loc = 0; loc <= 8; ++loc)
-					{
-						GLint enabled, size, type, stride, bufferBinding;
-						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
-						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_SIZE, &size);
-						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_TYPE, &type);
-						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &stride);
-						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &bufferBinding);
-
-						std::string typeStr;
-						if (type == GL_FLOAT) typeStr = "GL_FLOAT";
-						else if (type == GL_INT) typeStr = "GL_INT";
-						else if (type == GL_UNSIGNED_INT) typeStr = "GL_UNSIGNED_INT";
-						else typeStr = std::to_string(type);
-
-						Engine::GetLogger().LogDebug(LogCategory::OpenGL,
-							"Attrib[" + std::to_string(loc) + "] Enabled=" +
-							std::to_string(enabled) + ", Size=" + std::to_string(size) +
-							", Type=" + typeStr + ", Stride=" + std::to_string(stride) +
-							", VBO=" + std::to_string(bufferBinding));
-					}
+					GLint enabled, size, type, stride, bufferBinding;
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_SIZE, &size);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_TYPE, &type);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &stride);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &bufferBinding);
 				}
-				// Vertex Attribute state check
 
 				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
 				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, spriteData->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->GetHandle()));

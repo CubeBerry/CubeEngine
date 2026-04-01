@@ -2,6 +2,7 @@
 //Project: CubeEngine
 //File: SkeletalAnimation.cpp
 
+#include "Engine.hpp"
 #include "SkeletalAnimation/SkeletalAnimation.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -17,7 +18,7 @@ SkeletalAnimation::SkeletalAnimation(const std::string& animationPath, BufferWra
     if (!scene || !scene->mRootNode) return;
 
     if (scene->mNumAnimations == 0) {
-        std::cerr << "[SkeletalAnimation] No animations found in: " << animationPath << std::endl;
+		Engine::GetLogger().LogError(LogCategory::SkelAnimation, "[SkeletalAnimation] No animations found in: " + animationPath);
         return;
     }
 

@@ -21,21 +21,6 @@ void SkeletalAnimationDemo::Init()
 	Engine::GetCameraManager().SetCameraSensitivity(10.f);
 	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,10.f });
 
-	// Plane Stage
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 10.f,0.001f,10.f }, "Stage", ObjectType::NONE);
-	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
-	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 0.5f, 0.5f, 0.5f, 1.0f });
-
-	// 16 Point Lights
-	for (int i = 0; i < 16; ++i)
-	{
-		std::string lightName = "DemoPointLight" + std::to_string(i);
-		Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, lightName, ObjectType::NONE);
-		Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 1.f, 1.f);
-		Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
-	}
-
 	// Player with Skeletal Animation
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0, 0, 0), glm::vec3(0.01f, 0.01f, 0.01f), "Player");
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
@@ -57,6 +42,21 @@ void SkeletalAnimationDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_3.fbx", "../Game/assets/Models/AnimationModels/Thriller_3.fbx");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->AddState("Thriller_4.fbx", "../Game/assets/Models/AnimationModels/Thriller_4.fbx");
 	Engine::GetObjectManager().GetLastObject()->GetComponent<SkeletalAnimationStateMachine>()->ChangeState("Idle");
+
+	// Plane Stage
+	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 10.f,0.001f,10.f }, "Stage", ObjectType::NONE);
+	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
+	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::CUBE, "", 1, 1, { 0.5f, 0.5f, 0.5f, 1.0f });
+
+	// 16 Point Lights
+	for (int i = 0; i < 16; ++i)
+	{
+		std::string lightName = "DemoPointLight" + std::to_string(i);
+		Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.f, 0.f), glm::vec3{ 0.05f,0.05f,0.05f }, lightName, ObjectType::NONE);
+		Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->AddLight(LightType::POINT, 1.f, 1.f);
+		Engine::GetObjectManager().GetLastObject()->GetComponent<Light>()->SetColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
+	}
 
 	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/park_music_stage_4k.hdr");
 }
