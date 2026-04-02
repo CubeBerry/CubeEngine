@@ -82,7 +82,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		gl2DShader.Use(false);
 
 		break;
-	case RenderType::ThreeDimension:
+		case RenderType::ThreeDimension:
 		glCheck(glEnable(GL_CULL_FACE));
 		glCheck(glCullFace(GL_BACK));
 
@@ -161,6 +161,26 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 
 				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 
+				//// Initialize bone matrices to identity for non-skeletal meshes
+				//// This ensures all meshes render correctly, whether skinned or not
+				//if (spriteData->boneInfoMap.empty())
+				//{
+				//	// Non-skeletal mesh: set all bone matrices to identity
+				//	for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
+				//	{
+				//		spriteData->vertexUniform.finalBones[i] = glm::mat4(1.0f);
+				//	}
+				//}
+				// Only initialize bone matrices for non-skeletal meshes
+				if (spriteData->boneInfoMap.empty())
+				{
+					for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
+					{
+						spriteData->vertexUniform.finalBones[i] = glm::mat4(1.0f);
+					}
+				}
+				// Note: Skeletal meshes will have their bone matrices updated by SkeletalAnimator::Update()
+
 				//auto& vertexUniformBuffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBuffer()->buffer);
 				spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &spriteData->vertexUniform);
 
@@ -171,6 +191,17 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 				spriteData->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->UpdateUniform(sizeof(ThreeDimension::Material), &spriteData->material);
 
 				buffer->vertexArray->Use(true);
+
+				for (int loc = 0; loc <= 8; ++loc)
+				{
+					GLint enabled, size, type, stride, bufferBinding;
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_SIZE, &size);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_TYPE, &type);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &stride);
+					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &bufferBinding);
+				}
+
 				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
 				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, spriteData->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->GetHandle()));
 				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, spriteData->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->GetHandle()));

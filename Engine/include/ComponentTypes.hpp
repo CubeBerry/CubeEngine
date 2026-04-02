@@ -25,6 +25,10 @@ inline ComponentTypes StringToComponent(const std::string& string)
         return ComponentTypes::PHYSICS3D;
     else if (string == "LIGHT")
         return ComponentTypes::LIGHT;
+    else if (string == "SKETANIMATOR")
+        return ComponentTypes::SKETANIMATOR;
+    else if (string == "SKETANIMASTATE")
+        return ComponentTypes::SKETANIMASTATE;
 
     return ComponentTypes::INVALID;
 }
@@ -39,6 +43,10 @@ inline std::string ComponentToString(ComponentTypes type)
         return "PHYSICS3D";
     else if (type == ComponentTypes::LIGHT)
         return "LIGHT";
+    else if (type == ComponentTypes::SKETANIMATOR)
+        return "SKETANIMATOR";
+    else if (type == ComponentTypes::SKETANIMASTATE)
+        return "SKETANIMASTATE";
 
     return "INVALID";
 }

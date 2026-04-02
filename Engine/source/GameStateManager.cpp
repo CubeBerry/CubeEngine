@@ -329,6 +329,16 @@ void GameStateManager::StateChanger()
 				ImGui::CloseCurrentPopup();
 			}
 			break;
+		case GameLevel::SKELETALANIMATIONDEMO:
+			ImGui::Text("SKELETAL ANIMATION DEMO");
+			ImGui::Separator();
+
+			ImGui::TextWrapped("Move Camera view: Drag with Mouse Right Click\n16 point lights rotate around the animated skeletal player.");
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			break;
 		}
 		ImGui::EndPopup();
 	}
@@ -361,6 +371,9 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 		break;
 	case GameLevel::MULTIPLELIGHTS:
 		return "MULTIPLELIGHTS";
+		break;
+	case GameLevel::SKELETALANIMATIONDEMO:
+		return "SKELETALANIMATIONDEMO";
 		break;
 	}
 	return "NONE";

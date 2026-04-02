@@ -24,6 +24,7 @@ enum class LogCategory
 	Level,
 	Object,
 	Physics,
+	SkelAnimation,
 	Sound,
 	Camera,
 	Game,

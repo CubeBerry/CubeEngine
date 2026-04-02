@@ -2,7 +2,6 @@
 //Project: CubeEngine
 //File: SkeletalAnimator.cpp
 
-// Define NOMINMAX to prevent macro collisions with std::min/std::max on Windows
 #define NOMINMAX
 
 #include "BasicComponents/SkeletalAnimator.hpp"
@@ -18,28 +17,7 @@
 
 #include <iostream>
 #include <algorithm>
-
-// Helper: Reconstruct Model Matrix from Object's Transform Data
-glm::mat4 GetObjectModelMatrix(Object* obj)
-{
-    if (!obj) return glm::mat4(1.0f);
-
-    glm::vec3 pos = obj->GetPosition();
-    glm::vec3 rot = obj->GetRotate3D(); // Euler angles
-    glm::vec3 scale = obj->GetSize();
-
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, pos);
-
-    // Rotate (Order: Z -> Y -> X or similar, matching Engine convention)
-    model = glm::rotate(model, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
-    model = glm::scale(model, scale);
-
-    return model;
-}
+#include <functional>
 
 SkeletalAnimator::SkeletalAnimator()
     : IComponent(ComponentTypes::SKETANIMATOR),
@@ -47,142 +25,253 @@ SkeletalAnimator::SkeletalAnimator()
     currentAnimation(nullptr),
     previousAnimation(nullptr)
 {
-    // Reserve space for bone matrices
     finalBoneMatrices.reserve(ThreeDimension::MAX_BONES);
     for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
-    {
         finalBoneMatrices.push_back(glm::mat4(1.0f));
-    }
 }
 
-void SkeletalAnimator::Init()
-{
-}
-
-void SkeletalAnimator::End()
-{
-}
+void SkeletalAnimator::Init() {}
+void SkeletalAnimator::End() {}
 
 void SkeletalAnimator::Update(float dt)
 {
     if (!currentAnimation) return;
 
-    // 1. Update Blend Factor
-    if (blendFactor < 1.0f)
+    // Update blending factor
+    if (currentBlendDuration <= 0.0f) currentBlendDuration = 0.01f;
+    blendFactor += dt / currentBlendDuration;
+    if (blendFactor >= 1.0f)
     {
-        if (currentBlendDuration <= 0.0f) currentBlendDuration = 0.01f;
-        blendFactor += dt / currentBlendDuration;
-        if (blendFactor >= 1.0f)
-        {
-            blendFactor = 1.0f;
-            previousAnimation = nullptr;
-        }
+        blendFactor = 1.0f;
+        previousAnimation = nullptr;
     }
 
-    // 2. Update Animation Time
+    bool currentJustLooped = false;
+    bool previousJustLooped = false;
+    float oldPreviousTime = previousTime;
+    float oldCurrentTime = currentTime;
+
+    // Update animation playback time
     if (playbackState == PlaybackState::Playing)
     {
-        // Update Previous Animation Time
+        // Update previous animation time during blending
         if (previousAnimation && blendFactor < 1.0f)
         {
-            previousTime += dt * animationSpeed * previousAnimation->GetTicksPerSecond();
+            float deltaAnimTime = dt * animationSpeed * previousAnimation->GetTicksPerSecond();
+            previousTime += deltaAnimTime;
             float prevDuration = previousAnimation->GetDuration();
-            if (isLooping)
-                previousTime = fmod(previousTime, prevDuration);
-            else if (previousTime >= prevDuration)
-                previousTime = prevDuration;
-        }
-
-        // Update Current Animation Time
-        if (!isScrubbing)
-        {
-            float ticks = dt * animationSpeed * currentAnimation->GetTicksPerSecond();
-            currentTime += ticks;
-
-            // Handle Root Motion
-            if (enableRootMotion)
+            if (previousTime >= prevDuration)
             {
-                glm::mat4 rootMotionDelta = CalculateAbsoluteRootMotion(currentAnimation, currentTime, glm::mat4(1.0f));
+                previousJustLooped = true;
+                if (isLooping) previousTime = fmod(previousTime, prevDuration);
+                else previousTime = prevDuration - 0.001f;
             }
         }
 
-        // Handle Looping
-        float duration = currentAnimation->GetDuration();
-        if (currentTime >= duration)
+        if (!isScrubbing)
         {
-            if (isLooping)
+            float deltaAnimTime = dt * animationSpeed * currentAnimation->GetTicksPerSecond();
+            currentTime += deltaAnimTime;
+
+            float duration = currentAnimation->GetDuration();
+            if (currentTime >= duration)
             {
-                currentTime = fmod(currentTime, duration);
+                currentJustLooped = true;
                 justLooped = true;
+                if (isLooping)
+                    currentTime = fmod(currentTime, duration);
+                else
+                {
+                    currentTime = duration - 0.001f;
+                    playbackState = PlaybackState::Stopped;
+                }
+            }
+        }
+    }
+
+    // Apply Root Motion
+    if (enableRootMotion && playbackState == PlaybackState::Playing && !isScrubbing)
+    {
+        glm::mat4 currentDelta = glm::mat4(1.0f);
+        if (currentJustLooped && isLooping)
+        {
+            glm::mat4 d1 = ExtractRootMotionDelta(currentAnimation, oldCurrentTime, currentAnimation->GetDuration());
+            glm::mat4 d2 = ExtractRootMotionDelta(currentAnimation, 0.0f, currentTime);
+            currentDelta = d1 * d2;
+        }
+        else
+        {
+            currentDelta = ExtractRootMotionDelta(currentAnimation, oldCurrentTime, currentTime);
+        }
+
+        glm::mat4 finalDelta = currentDelta;
+
+        if (blendFactor < 1.0f && previousAnimation)
+        {
+            glm::mat4 previousDelta = glm::mat4(1.0f);
+            if (previousJustLooped && isLooping)
+            {
+                glm::mat4 d1 = ExtractRootMotionDelta(previousAnimation, oldPreviousTime, previousAnimation->GetDuration());
+                glm::mat4 d2 = ExtractRootMotionDelta(previousAnimation, 0.0f, previousTime);
+                previousDelta = d1 * d2;
             }
             else
             {
-                currentTime = duration;
-                // Stop or Pause could be called here
+                previousDelta = ExtractRootMotionDelta(previousAnimation, oldPreviousTime, previousTime);
+            }
+
+            glm::vec3 prevDT, currDT;
+            glm::quat prevDR, currDR;
+            glm::vec3 dS, dSk; glm::vec4 dP;
+            glm::decompose(previousDelta, dS, prevDR, prevDT, dSk, dP);
+            glm::decompose(currentDelta, dS, currDR, currDT, dSk, dP);
+
+            glm::vec3 finalDT = glm::mix(prevDT, currDT, blendFactor);
+            glm::quat finalDR = glm::slerp(prevDR, currDR, blendFactor);
+            finalDelta = glm::translate(glm::mat4(1.0f), finalDT) * glm::mat4_cast(finalDR);
+        }
+
+        // Apply result to owner object
+        Object* owner = GetOwner();
+        if (owner)
+        {
+            glm::vec3 dt; glm::quat dr; glm::vec3 ds; glm::vec3 dskew; glm::vec4 dpers;
+            glm::decompose(finalDelta, ds, dr, dt, dskew, dpers);
+
+            glm::vec3 objPos = owner->GetPosition();
+            glm::vec3 objRotE = owner->GetRotate3D();
+            glm::vec3 objScale = owner->GetSize();
+
+            // Apply translation delta in local space
+            // Match the Engine's exact rotation convention (using negative Euler angles internally)
+            glm::quat engineRotQuat = glm::quat(glm::radians(-objRotE));
+
+            if (glm::length(dt) > 0.000001f)
+            {
+                glm::vec3 scaledAndRotatedTranslation = engineRotQuat * (dt * objScale);
+                owner->SetPosition(objPos + scaledAndRotatedTranslation);
+            }
+
+            // Directly add delta rotation only if there is a noticeable rotation change
+            // This prevents glm::eulerAngles from constantly flipping axes in ImGui when dr is identity
+            if (glm::abs(dr.w) < 0.999999f || glm::length(glm::vec3(dr.x, dr.y, dr.z)) > 0.000001f)
+            {
+                glm::quat newEngineRotQuat = engineRotQuat * dr;
+                
+                // Negate the extracted Euler angles to match the Engine's positive logic
+                glm::vec3 newEulerAngles = -glm::degrees(glm::eulerAngles(newEngineRotQuat));
+
+                if (std::isnan(newEulerAngles.x)) newEulerAngles.x = objRotE.x;
+                if (std::isnan(newEulerAngles.y)) newEulerAngles.y = objRotE.y;
+                if (std::isnan(newEulerAngles.z)) newEulerAngles.z = objRotE.z;
+
+                owner->SetRotate(newEulerAngles);
             }
         }
     }
 
-    // 3. Calculate Bone Transforms
-    CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f));
-
-    // 4. Upload Matrices to DynamicSprite (GPU)
+    // Ensure bone array capacity and fetch encode matrices
     Object* owner = GetOwner();
+    glm::mat4 encodeMatrix = glm::mat4(1.0f);
+    if (owner)
+    {
+        DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
+        if (sprite && !sprite->GetSubMeshes().empty())
+        {
+            auto* meshData = sprite->GetSubMeshes()[0]->GetData<BufferWrapper::DynamicSprite3DMesh>();
+            if (meshData)
+            {
+                if (finalBoneMatrices.size() < meshData->boneInfoMap.size())
+                    finalBoneMatrices.resize(meshData->boneInfoMap.size(), glm::mat4(1.0f));
+                
+                encodeMatrix = meshData->meshNormalizationTransform;
+            }
+        }
+    }
+
+    // Calculate bone hierarchy transforms
+    CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f), encodeMatrix, false);
+
+    // Upload bone matrices to GPU
     if (owner)
     {
         DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
         if (sprite)
         {
-            auto& subMeshes = sprite->GetSubMeshes();
-            for (auto& subMesh : subMeshes)
+            for (auto& subMesh : sprite->GetSubMeshes())
             {
-                // Access mesh data in BufferWrapper
                 auto* meshData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
-                if (meshData)
-                {
-                    // Copy matrices to Uniform Buffer struct
-                    // Use (std::min) to prevent macro expansion error from windows.h
-                    int count = (std::min)((int)finalBoneMatrices.size(), ThreeDimension::MAX_BONES);
-                    for (int i = 0; i < count; ++i)
-                    {
-                        meshData->vertexUniform.finalBones[i] = finalBoneMatrices[i];
-                    }
+                if (!meshData) continue;
 
-                    // 현재 활성화된 그래픽스 모드가 GL인지 확인 후 업데이트
-                    if (std::holds_alternative<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer))
-                    {
-                        auto& glBuffer = std::get<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer);
-                        // 전체 VertexUniform 구조체를 업데이트하여 finalBones 배열도 GPU로 전송
-                        glBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &meshData->vertexUniform);
-                    }
-                    // 추후 DX, VK 지원시 else if 추가
+                int count = (std::min)((int)finalBoneMatrices.size(), ThreeDimension::MAX_BONES);
+                for (int i = 0; i < count; ++i)
+                    meshData->vertexUniform.finalBones[i] = finalBoneMatrices[i];
+
+                if (std::holds_alternative<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer))
+                {
+                    auto& glBuffer = std::get<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer);
+                    glBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &meshData->vertexUniform);
                 }
             }
         }
     }
+
+    lastRootMotionTime = currentTime;
 }
 
 void SkeletalAnimator::PlayAnimation(SkeletalAnimation* newAnimation, bool isLoop, float speed, float blendDuration)
 {
     if (currentAnimation == newAnimation) return;
 
-    // Set Blending
-    previousAnimation = currentAnimation;
-    previousTime = currentTime;
-    blendFactor = 0.0f;
-    currentBlendDuration = blendDuration;
+    Object* owner = GetOwner();
 
-    // Set New Animation
-    currentAnimation = newAnimation;
-    currentTime = 0.0f;
-    isLooping = isLoop;
-    animationSpeed = speed;
-    playbackState = PlaybackState::Playing;
-
-    if (!previousAnimation)
+    // Setup blending state
+    if (blendDuration > 0.0f && currentAnimation != nullptr)
     {
+        previousAnimation = currentAnimation;
+        previousTime = currentTime;
+        blendFactor = 0.0f;
+        currentBlendDuration = blendDuration;
+    }
+    else
+    {
+        previousAnimation = nullptr;
         blendFactor = 1.0f;
     }
+
+    // Initialize new animation state
+    currentAnimation = newAnimation;
+    currentTime = 0.0f;
+    lastRootMotionTime = 0.0f;
+    isLooping = isLoop;
+    animationSpeed = speed;
+    justLooped = false;
+    playbackState = PlaybackState::Playing;
+
+    // Auto-detect root bone name (Dynamic Traversal)
+    if (enableRootMotion && rootBoneName.empty() && newAnimation)
+    {
+        std::function<void(const AssimpNodeData&)> findFirstBone;
+        findFirstBone = [&](const AssimpNodeData& node) {
+            if (!rootBoneName.empty()) return;
+            
+            // Check if this node exists in the valid bone map
+            if (newAnimation->GetBoneIDMap().find(node.originalBoneName) != newAnimation->GetBoneIDMap().end())
+            {
+                rootBoneName = node.originalBoneName;
+                return;
+            }
+            
+            // Recursively check children
+            for (const auto& child : node.children)
+            {
+                findFirstBone(child);
+            }
+        };
+
+        findFirstBone(newAnimation->GetRootNode());
+    }
+
 }
 
 void SkeletalAnimator::Play()
@@ -201,174 +290,248 @@ void SkeletalAnimator::Stop()
     currentTime = 0.0f;
 }
 
-void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform)
+glm::mat4 SkeletalAnimator::GetRootTransformAtTime(SkeletalAnimation* anim, float time)
 {
-    std::string nodeName = node->name;
-    glm::mat4 nodeTransform = node->transformation;
+    if (!anim || rootBoneName.empty()) return glm::mat4(1.0f);
 
-    // 1. Get Current Animation Transform
-    SkeletalBone* bone = currentAnimation->FindBone(nodeName);
-    if (bone)
+    std::string posBoneName = rootBoneName + "_$AssimpFbx$_Translation";
+    std::string rotBoneName = rootBoneName + "_$AssimpFbx$_Rotation";
+    std::string rotBoneNameMocap = rootBoneName + "_$AssMocapFix$_Rotation";
+
+    SkeletalBone* posBone = anim->FindBone(posBoneName);
+    SkeletalBone* rotBone = anim->FindBone(rotBoneName);
+    if (!rotBone) rotBone = anim->FindBone(rotBoneNameMocap);
+
+    if (!posBone) posBone = anim->FindBone(rootBoneName);
+    
+    // Fallback for Rotation: If FBX dummy nodes don't exist (e.g., standard glTF export),
+    // use the actual root bone itself.
+    if (!rotBone) rotBone = anim->FindBone(rootBoneName);
+
+    if (!posBone && !rotBone) return glm::mat4(1.0f);
+
+    glm::vec3 targetPos = posBone ? posBone->GetInterpolatedPosition(time) : glm::vec3(0.f);
+    glm::quat targetRot = rotBone ? rotBone->GetInterpolatedRotation(time) : glm::quat(1, 0, 0, 0);
+
+    return glm::translate(glm::mat4(1.0f), targetPos) * glm::mat4_cast(targetRot);
+}
+
+glm::mat4 SkeletalAnimator::ExtractRootMotionDelta(SkeletalAnimation* anim, float timeStart, float timeEnd)
+{
+    glm::mat4 startM = GetRootTransformAtTime(anim, timeStart);
+    glm::mat4 endM = GetRootTransformAtTime(anim, timeEnd);
+
+    // Delta in local space of startM
+    glm::mat4 delta = glm::inverse(startM) * endM;
+
+    if (bakeOptions.bakePositionX) delta[3][0] = 0.0f;
+    if (bakeOptions.bakePositionY) delta[3][1] = 0.0f;
+    if (bakeOptions.bakePositionZ) delta[3][2] = 0.0f;
+    
+    // If we bake rotation, we remove the rotation part from delta 
+    // leaving only translation and scale
+    if (bakeOptions.bakeRotation)
     {
-        bone->Update(currentTime);
-        nodeTransform = bone->GetLocalTransform();
+        delta[0] = glm::vec4(1, 0, 0, 0);
+        delta[1] = glm::vec4(0, 1, 0, 0);
+        delta[2] = glm::vec4(0, 0, 1, 0);
     }
 
-    // 2. Handle Blending
-    if (blendFactor < 1.0f && previousAnimation)
-    {
-        SkeletalBone* prevBone = previousAnimation->FindBone(nodeName);
-        if (prevBone)
-        {
-            prevBone->Update(previousTime);
-            glm::mat4 prevTransform = prevBone->GetLocalTransform();
-
-            // Decompose matrices for interpolation
-            glm::vec3 p1, p2, p;
-            glm::quat r1, r2, r;
-            glm::vec3 s1, s2, s;
-            glm::vec3 skew;
-            glm::vec4 perspective;
-
-            glm::decompose(nodeTransform, s1, r1, p1, skew, perspective);
-            glm::decompose(prevTransform, s2, r2, p2, skew, perspective);
-
-            p = glm::mix(p2, p1, blendFactor);
-            r = glm::slerp(r2, r1, blendFactor);
-            s = glm::mix(s2, s1, blendFactor);
-
-            // Recompose
-            nodeTransform = glm::translate(glm::mat4(1.0f), p) *
-                glm::mat4_cast(r) *
-                glm::scale(glm::mat4(1.0f), s);
-        }
-    }
-
-    // 3. Calculate Global Transform
-    glm::mat4 globalTransformation = parentTransform * nodeTransform;
-    globalBoneTransforms[nodeName] = globalTransformation;
-
-    // 4. Update Final Bone Matrix
-    const auto& boneInfoMap = currentAnimation->GetBoneIDMap();
-    if (boneInfoMap.find(nodeName) != boneInfoMap.end())
-    {
-        int index = boneInfoMap.at(nodeName).id;
-        glm::mat4 offset = boneInfoMap.at(nodeName).offset;
-        if (index < finalBoneMatrices.size())
-        {
-            finalBoneMatrices[index] = globalTransformation * offset;
-        }
-    }
-
-    // 5. Recursively Process Children
-    for (const auto& child : node->children)
-    {
-        CalculateBoneTransform(&child, globalTransformation);
-    }
-}
-
-const std::vector<glm::mat4>& SkeletalAnimator::GetFinalBoneMatrices() const
-{
-    return finalBoneMatrices;
-}
-
-float SkeletalAnimator::GetCurrentAnimationTime() const
-{
-    return currentTime;
-}
-
-float SkeletalAnimator::GetDuration() const
-{
-    return currentAnimation ? currentAnimation->GetDuration() : 0.0f;
-}
-
-void SkeletalAnimator::SetLooping(bool loop)
-{
-    isLooping = loop;
-}
-
-void SkeletalAnimator::SetCurrentAnimationTime(float time)
-{
-    currentTime = time;
-    justLooped = false;
+    return delta;
 }
 
 void SkeletalAnimator::UpdateRootMotionTransformToTime(float time)
 {
+    if (!enableRootMotion || !currentAnimation) return;
+
     Object* owner = GetOwner();
-    if (!owner || !currentAnimation) return;
+    if (!owner) return;
 
-    // Calculate delta from start to time
-    glm::mat4 rootMotion = CalculateAbsoluteRootMotion(currentAnimation, time, glm::mat4(1.0f));
+    glm::mat4 delta = ExtractRootMotionDelta(currentAnimation, lastRootMotionTime, time);
 
-    // Extract position delta
-    glm::vec3 deltaPos = glm::vec3(rootMotion[3]);
+    glm::vec3 dt; glm::quat dr; glm::vec3 ds; glm::vec3 dskew; glm::vec4 dpers;
+    glm::decompose(delta, ds, dr, dt, dskew, dpers);
 
-    // Apply to Object (Simplified: Add delta to current position)
-    // In a real editor scrubbing scenario, you might want to set absolute position relative to start
-    glm::vec3 currentPos = owner->GetPosition();
-    owner->SetPosition(currentPos + deltaPos);
+    glm::vec3 objPos = owner->GetPosition();
+    glm::vec3 objRotE = owner->GetRotate3D();
+    glm::vec3 objScale = owner->GetSize();
+
+    // Apply translation delta in local space
+    // Match the Engine's exact rotation convention (using negative Euler angles internally)
+    glm::quat engineRotQuat = glm::quat(glm::radians(-objRotE));
+
+    if (glm::length(dt) > 0.000001f)
+    {
+        glm::vec3 scaledAndRotatedTranslation = engineRotQuat * (dt * objScale);
+        owner->SetPosition(objPos + scaledAndRotatedTranslation);
+    }
+
+    // Directly add delta rotation only if there is a noticeable rotation change
+    if (glm::abs(dr.w) < 0.999999f || glm::length(glm::vec3(dr.x, dr.y, dr.z)) > 0.000001f)
+    {
+        glm::quat newEngineRotQuat = engineRotQuat * dr;
+        
+        // Negate the extracted Euler angles to match the Engine's positive logic
+        glm::vec3 newEulerAngles = -glm::degrees(glm::eulerAngles(newEngineRotQuat));
+
+        if (std::isnan(newEulerAngles.x)) newEulerAngles.x = objRotE.x;
+        if (std::isnan(newEulerAngles.y)) newEulerAngles.y = objRotE.y;
+        if (std::isnan(newEulerAngles.z)) newEulerAngles.z = objRotE.z;
+
+        owner->SetRotate(newEulerAngles);
+    }
+
+    lastRootMotionTime = time;
 }
 
-glm::mat4 SkeletalAnimator::CalculateAbsoluteRootMotion(SkeletalAnimation* anim, float time, glm::mat4 startTransform)
+void SkeletalAnimator::CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform, const glm::mat4& encodeMatrix, bool parentIsDummy)
 {
-    if (!anim) return glm::mat4(1.0f);
-    if (rootBoneName.empty()) return startTransform;
+    const std::string& nodeName = node->name;
+    glm::mat4 nodeTransform = node->transformation;
 
-    // Define special bone names for FBX/Mocap
-    std::string posBoneName_Fbx = rootBoneName + "_$AssimpFbx$_Translation";
-    std::string rotBoneName_Fbx = rootBoneName + "_$AssimpFbx$_Rotation";
-    std::string rotBoneName_Mocap = rootBoneName + "_$AssMocapFix$_Rotation";
-
-    SkeletalBone* posBone = anim->FindBone(posBoneName_Fbx);
-    SkeletalBone* rotBone = anim->FindBone(rotBoneName_Fbx);
-
-    if (!rotBone)
+    if (node->isDummyNode)
     {
-        rotBone = anim->FindBone(rotBoneName_Mocap);
-    }
-
-    // Calculate Delta
-    glm::mat4 totalDelta = glm::mat4(1.0f);
-
-    if (posBone && rotBone)
-    {
-        // Calculate transforms at time 0 and current time
-        glm::mat4 startBoneLocalT = glm::translate(glm::mat4(1.0f), posBone->GetInterpolatedPosition(0.0f)) * glm::mat4_cast(rotBone->GetInterpolatedRotation(0.0f));
-        glm::mat4 targetBoneLocalT = glm::translate(glm::mat4(1.0f), posBone->GetInterpolatedPosition(time)) * glm::mat4_cast(rotBone->GetInterpolatedRotation(time));
-
-        totalDelta = glm::inverse(startBoneLocalT) * targetBoneLocalT;
-
-        // Apply to Object
-        Object* owner = GetOwner();
-        if (owner && enableRootMotion)
+        // Translation Dummy: Apply position from animation
+        if (node->isTranslationDummy)
         {
-            // Create Rotation Matrix from Object's Euler Angles
-            glm::mat4 rotationMatrix = glm::mat4(1.0f);
-            glm::vec3 rot = owner->GetRotate3D();
-            rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-            rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-            rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+            const std::string& boneName = node->originalBoneName;
 
-            // Extract translation from delta and rotate to world space
-            glm::vec3 deltaPos = glm::vec3(totalDelta[3]);
-            glm::vec3 worldDelta = glm::vec3(rotationMatrix * glm::vec4(deltaPos, 1.0f));
+            SkeletalBone* bone = currentAnimation ? currentAnimation->FindBone(boneName) : nullptr;
+            SkeletalBone* prevBone = (blendFactor < 1.0f && previousAnimation)
+                ? previousAnimation->FindBone(boneName) : nullptr;
 
-            // Update Object Position
-            glm::vec3 currentPos = owner->GetPosition();
-            owner->SetPosition(currentPos + worldDelta);
+            if (bone)
+            {
+                glm::vec3 p1 = bone->GetInterpolatedPosition(currentTime);
+
+                if (!prevBone)
+                {
+                    nodeTransform = node->transformation;
+                    nodeTransform[3] = glm::vec4(p1, 1.0f);
+                }
+                else
+                {
+                    glm::vec3 p2 = prevBone->GetInterpolatedPosition(previousTime);
+                    glm::vec3 p = glm::mix(p2, p1, blendFactor);
+                    nodeTransform = node->transformation;
+                    nodeTransform[3] = glm::vec4(p, 1.0f);
+                }
+            }
         }
 
-        return startTransform * totalDelta;
+        // Root Motion: Reset dummy transforms so the mesh stays centered
+        // Only reset the axes that are NOT baked into the pose.
+        // If baked (true), the animation stats on the bone and moves the mesh.
+        // If not baked (false), the animation moves the Object, so we reset the bone to prevent double-movement.
+        if (enableRootMotion && node->originalBoneName == rootBoneName)
+        {
+            if (node->isTranslationDummy)
+            {
+                if (!bakeOptions.bakePositionX) nodeTransform[3][0] = 0.0f;
+                if (!bakeOptions.bakePositionY) nodeTransform[3][1] = 0.0f;
+                if (!bakeOptions.bakePositionZ) nodeTransform[3][2] = 0.0f;
+            }
+            else if (nodeName.find("_Rotation") != std::string::npos)
+            {
+                if (!bakeOptions.bakeRotation) nodeTransform = glm::mat4(1.0f);
+            }
+        }
     }
-
-    // Fallback: Standard Root Bone
-    SkeletalBone* rootBone = anim->FindBone(rootBoneName);
-    if (rootBone)
+    else
     {
-        // Simple implementation for standard bone if needed
-        // For now, returning identity if special bones aren't found
+        // Standard Bone Node
+        SkeletalBone* bone = currentAnimation ? currentAnimation->FindBone(nodeName) : nullptr;
+        SkeletalBone* prevBone = (blendFactor < 1.0f && previousAnimation)
+            ? previousAnimation->FindBone(nodeName) : nullptr;
+
+        if (bone)
+        {
+            // Extract and remove PreRotation to get pure Local Rotation
+            glm::quat preRot = glm::quat(1.f, 0.f, 0.f, 0.f);
+            const auto& preRotMap = currentAnimation->GetPreRotations();
+            auto preIt = preRotMap.find(nodeName);
+            if (preIt != preRotMap.end())
+                preRot = preIt->second;
+
+            // Position follows animation for standard rigs, but uses bind pose if an FBX Translation dummy handled it
+            glm::vec3 p1 = parentIsDummy ? glm::vec3(node->transformation[3]) : bone->GetInterpolatedPosition(currentTime);
+
+            // Rotation blending and calculation
+            glm::quat animRot = bone->GetInterpolatedRotation(currentTime);
+            glm::quat r1 = glm::normalize(glm::inverse(preRot) * animRot);
+            glm::vec3 s1 = bone->GetInterpolatedScale(currentTime);
+
+            if (!prevBone)
+            {
+                nodeTransform = glm::translate(glm::mat4(1.0f), p1)
+                    * glm::mat4_cast(r1)
+                    * glm::scale(glm::mat4(1.0f), s1);
+            }
+            else
+            {
+                glm::vec3 p2 = parentIsDummy ? glm::vec3(node->transformation[3]) : prevBone->GetInterpolatedPosition(previousTime);
+                glm::quat prevAnimRot = prevBone->GetInterpolatedRotation(previousTime);
+                glm::quat r2 = glm::normalize(glm::inverse(preRot) * prevAnimRot);
+                glm::vec3 s2 = prevBone->GetInterpolatedScale(previousTime);
+
+                glm::vec3 p = glm::mix(p2, p1, blendFactor);
+                if (glm::dot(r2, r1) < 0.0f) r1 = -r1; // Shortest path rotation
+                glm::quat r = glm::normalize(glm::slerp(r2, r1, blendFactor));
+                glm::vec3 s = glm::mix(s2, s1, blendFactor);
+
+                nodeTransform = glm::translate(glm::mat4(1.0f), p)
+                    * glm::mat4_cast(r)
+                    * glm::scale(glm::mat4(1.0f), s);
+            }
+        }
     }
 
-    return glm::mat4(1.0f);
+    // Update global hierarchy and store transform
+    glm::mat4 globalTransformation = parentTransform * nodeTransform;
+    globalBoneTransforms[nodeName] = globalTransformation;
+
+    // Send final bone matrices
+    if (currentAnimation)
+    {
+        const auto& boneInfoMap = currentAnimation->GetBoneIDMap();
+        auto it = boneInfoMap.find(nodeName);
+        if (it != boneInfoMap.end())
+        {
+            int index = it->second.id;
+            if (index >= 0 && index < (int)finalBoneMatrices.size())
+            {
+                finalBoneMatrices[index] = encodeMatrix * globalTransformation * it->second.offset;
+            }
+        }
+    }
+
+    // Recursively process children
+    for (const auto& child : node->children)
+        CalculateBoneTransform(&child, globalTransformation, encodeMatrix, node->isDummyNode);
+}
+
+bool SkeletalAnimator::HasDummyNodeParent(const AssimpNodeData* node, const std::string& boneName) const
+{
+    if (!currentAnimation) return false;
+
+    std::function<const AssimpNodeData* (const AssimpNodeData*, const std::string&)> findParent;
+    findParent = [&](const AssimpNodeData* current, const std::string& targetName) -> const AssimpNodeData*
+    {
+        for (const auto& child : current->children)
+        {
+            if (child.name == targetName) return current;
+            auto* result = findParent(&child, targetName);
+            if (result) return result;
+        }
+        return nullptr;
+    };
+
+    const AssimpNodeData* parent = findParent(&currentAnimation->GetRootNode(), boneName);
+    if (!parent) return false;
+    return parent->isDummyNode;
+}
+
+float SkeletalAnimator::GetDuration() const 
+{ 
+    return currentAnimation ? currentAnimation->GetDuration() : 0.0f; 
 }

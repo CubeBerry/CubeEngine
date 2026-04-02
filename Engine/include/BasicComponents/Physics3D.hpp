@@ -11,9 +11,6 @@
 
 #include "Interface/IComponent.hpp"
 #include "Object.hpp"
-#ifdef _DEBUG
-#include "BasicComponents/DynamicSprite.hpp"
-#endif
 
 enum class CollisionDetectionMode
 {
@@ -29,13 +26,7 @@ struct CollisionResult
 	glm::vec3 collisionNormal = { 0.f, 0.f, 0.f };
 };
 
-#ifdef _DEBUG
-struct Point3D
-{
-	glm::vec3 pos = { 0.f,0.f,0.f };
-	DynamicSprite* sprite = nullptr;
-};
-#endif
+
 
 enum class BodyType3D
 {
@@ -113,6 +104,7 @@ public:
 
 	//2d->3d
 	std::vector<glm::vec3> GetCollidePolyhedron() { return collidePolyhedron; }
+	float GetSphereRadius() const { return sphere.radius; }
 	bool CheckCollision(Object* obj);
 	bool CollisionPP(Object* obj, Object* obj2);
 	bool CollisionSS(Object* obj, Object* obj2);
@@ -168,8 +160,5 @@ private:
 	Sphere sphere;
 
 	//2d->3d
-#ifdef _DEBUG
-	void AddPoint(glm::vec3 pos);
-	std::vector<Point3D> points;
-#endif
+
 };

@@ -404,3 +404,7 @@ FodyWeavers.xsd
 !Engine/libs/FidelityFX-SDK-v1.1.4/**
 Engine/libs/FidelityFX-SDK-v1.1.4/sdk/build
 !Engine/libs/FidelityFX-SDK-v2.0.0/**
+
+# Include bin directories under Tools
+!Tools/**/bin/
+!Tools/**/bin/**

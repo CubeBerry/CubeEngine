@@ -19,22 +19,17 @@ struct KeyScale { glm::vec3 scale; float timeStamp; };
 class SkeletalBone
 {
 public:
-    SkeletalBone(const std::string& name, int ID, const aiNodeAnim* channel);
+    SkeletalBone(const std::string& name, int ID, const aiNodeAnim* channel, const glm::mat4& offset);
 
-    void Update(float animationTime);
-
-    glm::mat4 GetLocalTransform() const { return localTransform; }
     const std::string& GetBoneName() const { return name; }
     int GetBoneID() const { return id; }
+    glm::mat4 GetOffsetMatrix() const { return offsetMatrix; }
 
     glm::vec3 GetInterpolatedPosition(float animationTime);
     glm::quat GetInterpolatedRotation(float animationTime);
     glm::vec3 GetInterpolatedScale(float animationTime);
 
 private:
-    glm::mat4 InterpolatePosition(float animationTime);
-    glm::mat4 InterpolateRotation(float animationTime);
-    glm::mat4 InterpolateScaling(float animationTime);
 
     int GetPositionIndex(float animationTime);
     int GetRotationIndex(float animationTime);
@@ -48,7 +43,11 @@ private:
     int numRotations;
     int numScales;
 
-    glm::mat4 localTransform;
+    int lastPositionIndex = 0;
+    int lastRotationIndex = 0;
+    int lastScaleIndex = 0;
+
+    glm::mat4 offsetMatrix;
     std::string name;
     int id;
 };

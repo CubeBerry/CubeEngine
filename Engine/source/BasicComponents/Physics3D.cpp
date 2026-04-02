@@ -1,4 +1,4 @@
-﻿//Author: DOYEONG LEE
+//Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Physics3D.cpp
 
@@ -13,68 +13,15 @@
 
 Physics3D::~Physics3D()
 {
-#ifdef _DEBUG
-	for (auto& v : points)
-	{
-		delete v.sprite;
-	}
-	points.clear();
-#endif
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Phy3D");
 }
 
 void Physics3D::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Phy3D");
 }
 
 void Physics3D::Update(float dt)
 {
 	UpdatePhysics(dt);
-#ifdef _DEBUG
-	if (!points.empty())
-	{
-		std::vector<glm::vec3> rotatedPoints1;
-		glm::quat rotation1 = glm::quat(glm::radians(-GetOwner()->GetRotate3D()));
-
-		int i = 0;
-		for (auto& v : points)
-		{
-			if (i == 0)
-			{
-				i++;
-			}
-			else
-			{
-				rotatedPoints1.push_back(RotatePoint(v.pos, GetOwner()->GetPosition(), rotation1));
-			}
-		}
-		for (auto& v : rotatedPoints1)
-		{
-			v;
-			//v;
-			//glm::vec3 A = rotatedPoints1[i - 1];
-			glm::vec3 B = { 0.f, 0.f, 0.f };
-			if (rotatedPoints1.size() > i)
-			{
-				B = rotatedPoints1[i];
-			}
-			else
-			{
-				B = rotatedPoints1[0];
-			}
-
-			points[i].sprite->UpdateModel(B, { 0.1f,0.1f,0.1f }, 0.f);
-			points[i].sprite->UpdateProjection();
-			points[i].sprite->UpdateView();
-			i++;
-		}
-		glm::vec3 centerP = FindSATCenter(rotatedPoints1);
-		points[0].sprite->UpdateModel({ centerP.x, centerP.y ,centerP.z }, { 0.1f,0.1f,0.1f }, 0.f);
-		points[0].sprite->UpdateProjection();
-		points[0].sprite->UpdateView();
-	}
-#endif // _DEBUG
 
 }
 
@@ -454,9 +401,6 @@ void Physics3D::AddCollidePolyhedron(glm::vec3 position)
 {
 	colliderType = ColliderType3D::BOX;
 	collidePolyhedron.push_back(position);
-#ifdef _DEBUG
-	AddPoint(position);
-#endif
 }
 
 void Physics3D::AddCollidePolyhedronAABB(glm::vec3 min, glm::vec3 max)
@@ -468,18 +412,6 @@ void Physics3D::AddCollidePolyhedronAABB(glm::vec3 min, glm::vec3 max)
 	   {min.x, min.y, min.z}, {min.x, max.y, min.z}, {max.x, max.y, min.z}, {max.x, min.y, min.z},
 	   {min.x, min.y, max.z}, {min.x, max.y, max.z}, {max.x, max.y, max.z}, {max.x, min.y, max.z}
 	};
-#ifdef _DEBUG
-	for (auto& v : points)
-	{
-		delete v.sprite;
-	}
-	points.clear();
-
-	for (auto poly : collidePolyhedron)
-	{
-		AddPoint(poly);
-	}
-#endif
 }
 
 void Physics3D::AddCollidePolyhedronAABB(glm::vec3 size)
@@ -489,23 +421,6 @@ void Physics3D::AddCollidePolyhedronAABB(glm::vec3 size)
 
 void Physics3D::AddCollideSphere(float r)
 {
-#ifdef _DEBUG
-	for (auto& v : points)
-	{
-		delete v.sprite;
-	}
-	points.clear();
-
-	if (points.empty() == true)
-	{
-		Point3D temp;
-		temp.pos = { 0.f,0.f,0.f };
-		points.push_back(std::move(temp));
-		points.at(points.size() - 1).sprite = new DynamicSprite();
-		points.at(points.size() - 1).sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 30, 30, { 0.0, 1.0, 0.0, 1.0 });
-		//temp.sprite = nullptr;
-	}
-#endif
 	colliderType = ColliderType3D::SPHERE;
 	collidePolyhedron.clear();
 	sphere.radius = r;
@@ -641,35 +556,6 @@ glm::vec3 Physics3D::FindClosestPointOnSegment(const glm::vec3& sphereCenter, st
 	return closestPoint;
 }
 
-#ifdef _DEBUG
-void Physics3D::AddPoint(glm::vec3 pos)
-{
-	if (points.empty() == true)
-	{
-		Point3D temp;
-		temp.pos = { 0.f,0.f,0.f };
-		temp.sprite = new DynamicSprite();
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
-		points.push_back(std::move(temp));
-	}
-	Point3D temp;
-	temp.pos = pos;
-	temp.sprite = new DynamicSprite();
-	switch (bodyType)
-	{
-	case BodyType3D::RIGID:
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 1.0, 0.0, 1.0 });
-		break;
-	case BodyType3D::BLOCK:
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 1.0, 0.0, 0.0, 1.0 });
-		break;
-	default:
-		temp.sprite->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 1.0, 0.0, 1.0 });
-		break;
-	}
-	points.push_back(std::move(temp));
-}
-#endif
 
 void Physics3D::ProjectPolygon(const std::vector<glm::vec3>& vertices, const glm::vec3& axis, float& min, float& max)
 {

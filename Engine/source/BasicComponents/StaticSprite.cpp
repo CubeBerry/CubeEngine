@@ -25,12 +25,10 @@ StaticSprite::~StaticSprite()
 	//	}
 	//}
 	//DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Static Sprite");
 }
 
 void StaticSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Static Sprite");
 }
 
 void StaticSprite::Update(float dt)
@@ -131,10 +129,11 @@ void StaticSprite::UpdateView()
 		vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
 		// @TODO move to push constants later
 		glm::mat4 inverseView = glm::inverse(vertexUniform.view);
-		vertexUniform.viewPosition = glm::vec3(
+		vertexUniform.viewPosition = glm::vec4(
 			inverseView[3].x,
 			inverseView[3].y,
-			inverseView[3].z
+			inverseView[3].z,
+			1.0f
 		);
 	}
 }

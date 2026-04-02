@@ -102,9 +102,9 @@ void Logger::Log(Severity severity, LogCategory category, std::string displayTex
 	std::string timestampStr = ss_timestamp.str();
 
 	std::stringstream ss_console;
-	ss_console << '[' << timestampStr << "]\t";
-	ss_console << '[' << SeverityToString(severity) << "]\t";
-	ss_console << '[' << CategoryToString(category) << "]\t";
+	ss_console << '[' << timestampStr << "] ";
+	ss_console << '[' << SeverityToString(severity) << "] ";
+	ss_console << '[' << CategoryToString(category) << "] ";
 	ss_console << displayText << '\n';
 
 	std::string consoleMessage = ss_console.str();
@@ -178,6 +178,8 @@ const char* Logger::CategoryToString(LogCategory category)
 		return "Object";
 	case LogCategory::Physics:
 		return "Physics";
+	case LogCategory::SkelAnimation:
+		return "SkelAnimation";
 	case LogCategory::Sound:
 		return "Sound";
 	case LogCategory::Camera:

@@ -118,7 +118,8 @@ void RenderManager::CreateMesh(
 			aiProcess_FlipUVs |
 			aiProcess_JoinIdenticalVertices |
 			aiProcess_TransformUVCoords |
-			aiProcess_PreTransformVertices
+			aiProcess_LimitBoneWeights
+			//| aiProcess_PreTransformVertices
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -127,6 +128,7 @@ void RenderManager::CreateMesh(
 			std::exit(EXIT_FAILURE);
 		}
 
+		m_importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
 		glm::vec3 globalMinPos{ FLT_MAX }, globalMaxPos{ FLT_MIN };
 		for (unsigned int m = 0; m < scene->mNumMeshes; ++m)
 		{
@@ -144,7 +146,32 @@ void RenderManager::CreateMesh(
 		float extent = glm::max(size.x, glm::max(size.y, size.z));
 		float unitScale = 1.f / extent;
 
-		ProcessNode(subMeshes, scene->mRootNode, scene, 0, globalMaxPos - globalMinPos, center, unitScale, color, metallic, roughness);
+		std::map<std::string, ThreeDimension::BoneInfo> globalBoneInfoMap;
+		int globalBoneCount = 0;
+
+		// Store the model's root inverse transform for skeletal animation
+		glm::mat4 modelGlobalInverse = glm::inverse(AssimpToGLMMatrix(scene->mRootNode->mTransformation));
+
+		// Generate the same transformation matrix (M) used for vertex manipulation
+		glm::mat4 meshNorm = glm::mat4(1.0f);
+		meshNorm = glm::scale(meshNorm, glm::vec3(unitScale));
+		meshNorm = glm::translate(meshNorm, -center);
+
+		ProcessNode(subMeshes, scene->mRootNode, scene, 0,
+			globalMaxPos - globalMinPos, center, unitScale,
+			color, metallic, roughness,
+			globalBoneInfoMap, globalBoneCount);
+
+		// Store modelGlobalInverse in all sub-meshes that have bones
+		for (auto& subMesh : subMeshes)
+		{
+			auto* meshData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+			if (meshData && !meshData->boneInfoMap.empty())
+			{
+				meshData->modelGlobalInverseTransform = modelGlobalInverse;
+				//meshData->meshNormalizationTransform = meshNorm;
+			}
+		}
 		return;
 	}
 
@@ -175,11 +202,13 @@ void RenderManager::CreateMesh(
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				vertices.emplace_back(ThreeDimension::Vertex{
-					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
-					glm::vec3(0.0f, 0.0f, 1.0f),
-					glm::vec2(col, row)
-					});
+				ThreeDimension::Vertex v{};  // Zero-initialize all members first
+				v.position = glm::vec3(col - 0.5f, row - 0.5f, 0.0f);
+				v.normal = glm::vec3(0.0f, 0.0f, 1.0f);
+				v.uv = glm::vec2(col, row);
+				// boneIDs and weights will use default values from Material.hpp
+				
+				vertices.push_back(v);
 			}
 		}
 
@@ -200,11 +229,13 @@ void RenderManager::CreateMesh(
 			{
 				float col = static_cast<float>(slice) / static_cast<float>(slices);
 
-				planeVertices.emplace_back(ThreeDimension::Vertex{
-					glm::vec3(col - 0.5f, row - 0.5f, 0.0f),
-					glm::vec3(0.0f, 0.0f, 1.0f),
-					glm::vec2(col, row)
-					});
+				ThreeDimension::Vertex v{};  // Zero-initialize all members first
+				v.position = glm::vec3(col - 0.5f, row - 0.5f, 0.0f);
+				v.normal = glm::vec3(0.0f, 0.0f, 1.0f);
+				v.uv = glm::vec2(col, row);
+				// boneIDs and weights will use default values from Material.hpp
+				
+				planeVertices.push_back(v);
 			}
 		}
 
@@ -238,11 +269,13 @@ void RenderManager::CreateMesh(
 
 			for (const auto& plane_vertex : planeVertices)
 			{
-				vertices.emplace_back(ThreeDimension::Vertex{
-					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f))),
-					RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f))),
-					plane_vertex.uv
-					});
+				ThreeDimension::Vertex v{};  // Zero-initialize
+				v.position = RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.position, 1.f)));
+				v.normal = RoundDecimal(glm::vec3(transformMat * glm::vec4(plane_vertex.normal, 0.f)));
+				v.uv = plane_vertex.uv;
+				// boneIDs and weights will use default values from Material.hpp
+				
+				vertices.push_back(v);
 			}
 
 			//Indices
@@ -267,12 +300,14 @@ void RenderManager::CreateMesh(
 			{
 				const float col = static_cast<float>(slice) / static_cast<float>(slices);
 				const float alpha = col * PI * 2.f;
-				ThreeDimension::Vertex v;
+				ThreeDimension::Vertex v{};  // Zero-initialize
 				v.position = glm::vec3(radius * sin(alpha) * cos_beta, radius * sin_beta, radius * cos(alpha) * cos_beta);
 				v.normal = glm::normalize(v.position);
 				v.normal /= radius;
 				v.uv = glm::vec2(col, row);
-				vertices.emplace_back(v);
+				// boneIDs and weights will use default values from Material.hpp
+				
+				vertices.push_back(v);
 			}
 		}
 
@@ -297,7 +332,7 @@ void RenderManager::CreateMesh(
 				float col = static_cast<float>(j) / static_cast<float>(slices);
 				float beta = 2.0f * col * PI;
 
-				ThreeDimension::Vertex v;
+				ThreeDimension::Vertex v{};  // Zero-initialize
 				v.position = glm::vec3{ (R + r * cos(beta)) * sinAlpha,r * sin(-beta),(R + r * cos(beta)) * cosAlpha };
 				v.position /= 2 * (R + r);
 
@@ -306,8 +341,9 @@ void RenderManager::CreateMesh(
 				v.normal /= r;
 				v.uv.x = row;
 				v.uv.y = col;
+				// boneIDs and weights will use default values from Material.hpp
 
-				vertices.emplace_back(v);
+				vertices.push_back(v);
 			}
 		}
 
@@ -328,13 +364,14 @@ void RenderManager::CreateMesh(
 				float col = static_cast<float>(j) / static_cast<float>(slices);
 				float alpha = col * 2.0f * PI;
 
-				ThreeDimension::Vertex v;
+				ThreeDimension::Vertex v{};  // Zero-initialize
 				v.position = glm::vec3{ radius * sin(alpha), row - radius, radius * cos(alpha) };
 				v.normal = glm::vec3{ v.position.x / radius, v.position.y, v.position.z / radius };
 				v.uv.x = col;
 				v.uv.y = row;
+				// boneIDs and weights will use default values from Material.hpp
 
-				vertices.emplace_back(v);
+				vertices.push_back(v);
 			}
 		}
 
@@ -342,21 +379,22 @@ void RenderManager::CreateMesh(
 		BuildIndices(vertices, indices, stacks, slices);
 
 		//Top
-		ThreeDimension::Vertex P0, Pi;
+		ThreeDimension::Vertex P0{}, Pi{};  // Zero-initialize
 		P0.position = glm::vec3{ 0.0f,0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, 1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		vertices.emplace_back(P0);
+		vertices.push_back(P0);
 		size_t top_cap_index = vertices.size() - 1;
 		for (int i = 0; i <= slices; ++i)
 		{
 			float col = (float)i / slices;
 			float alpha = col * 2.0f * PI;
 
+			Pi = {};  // Reset
 			Pi.position = glm::vec3{ radius * sin(alpha), 0.5f, radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, 1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			vertices.emplace_back(Pi);
+			vertices.push_back(Pi);
 
 			if (i > 0)
 			{
@@ -367,21 +405,23 @@ void RenderManager::CreateMesh(
 		}
 
 		//Bottom
+		P0 = {};  // Reset
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		vertices.emplace_back(P0);
+		vertices.push_back(P0);
 		size_t bottom_cap_index = vertices.size() - 1;
 		size_t current_index = vertices.size();
 		for (int i = 0; i <= slices; ++i)
 		{
-			float col = static_cast<float>(i) / static_cast<float>(slices);
+			float col = static_cast<float>(i) / slices;
 			float alpha = col * 2.0f * PI;
 
+			Pi = {};  // Reset
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			vertices.emplace_back(Pi);
+			vertices.push_back(Pi);
 
 			if (i > 0)
 			{
@@ -405,14 +445,15 @@ void RenderManager::CreateMesh(
 				float col = static_cast<float>(j) / static_cast<float>(slices);
 				float alpha = col * 2.0f * PI;
 
-				ThreeDimension::Vertex v;
+				ThreeDimension::Vertex v{};  // Zero-initialize
 				//row == stacks
 				v.position = glm::vec3{ radius * (height - row) * sin(alpha),row - radius ,radius * (height - row) * cos(alpha) };
 				v.normal = v.position / radius;
 				v.uv.x = col;
 				v.uv.y = 1 - row;
+				// boneIDs and weights will use default values from Material.hpp
 
-				vertices.emplace_back(v);
+				vertices.push_back(v);
 			}
 		}
 
@@ -420,11 +461,11 @@ void RenderManager::CreateMesh(
 		BuildIndices(vertices, indices, stacks, slices);
 
 		//Bottom
-		ThreeDimension::Vertex P0, Pi;
+		ThreeDimension::Vertex P0{}, Pi{};  // Zero-initialize
 		P0.position = glm::vec3{ 0.0f,-0.5f,0.0f };
 		P0.normal = glm::vec3{ 0.f, -1.f, 0.f };
 		P0.uv = glm::vec2{ 0.5f, 0.5f };
-		vertices.emplace_back(P0);
+		vertices.push_back(P0);
 		size_t bottom_cap_index = vertices.size() - 1;
 		size_t current_index = vertices.size();
 		for (int i = 0; i <= slices; ++i)
@@ -432,10 +473,11 @@ void RenderManager::CreateMesh(
 			float col = static_cast<float>(i) / slices;
 			float alpha = col * 2.0f * PI;
 
+			Pi = {};  // Reset
 			Pi.position = glm::vec3{ radius * sin(alpha), -0.5f,radius * cos(alpha) };
 			Pi.normal = glm::vec3{ 0.f, -1.f, 0.f };
 			Pi.uv = glm::vec2{ col, 0.f };
-			vertices.emplace_back(Pi);
+			vertices.push_back(Pi);
 
 			if (i > 0)
 			{
@@ -575,7 +617,28 @@ void RenderManager::CreateMesh(
 			tex_sub_index_layout.offset = 0;
 			tex_sub_index_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, texSubIndex);
 
-			buffer->vertexArray->AddVertexBuffer(std::move(*buffer->vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout });
+			// Bone IDs Layout (Location 7)
+			// We use GLAttributeLayout::Int for integer attributes (glVertexAttribIFormat)
+			GLAttributeLayout bone_id_layout;
+			bone_id_layout.component_type = GLAttributeLayout::Int;
+			bone_id_layout.component_dimension = GLAttributeLayout::_4;
+			bone_id_layout.normalized = false; // Integers are not normalized
+			bone_id_layout.vertex_layout_location = 7;
+			bone_id_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+			bone_id_layout.offset = 0;
+			bone_id_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, boneIDs);
+
+			// Weights Layout (Location 8)
+			GLAttributeLayout weight_layout;
+			weight_layout.component_type = GLAttributeLayout::Float;
+			weight_layout.component_dimension = GLAttributeLayout::_4;
+			weight_layout.normalized = false;
+			weight_layout.vertex_layout_location = 8;
+			weight_layout.stride = sizeof(ThreeDimension::QuantizedVertex);
+			weight_layout.offset = 0;
+			weight_layout.relative_offset = offsetof(ThreeDimension::QuantizedVertex, weights);
+
+			buffer->vertexArray->AddVertexBuffer(std::move(*buffer->vertexBuffer), sizeof(ThreeDimension::QuantizedVertex), { position_layout, normal_layout, uv_layout, tex_sub_index_layout, bone_id_layout, weight_layout });
 			buffer->vertexArray->SetIndexBuffer(std::move(*buffer->indexBuffer));
 
 #ifdef _DEBUG
@@ -642,17 +705,21 @@ void RenderManager::ProcessNode(
 	std::vector<SubMesh>& subMeshes,
 	const aiNode* node, const aiScene* scene, int childCount,
 	glm::vec3 size, glm::vec3 center, float unitScale,
-	glm::vec4 color, float metallic, float roughness)
+	glm::vec4 color, float metallic, float roughness,
+	std::map<std::string, ThreeDimension::BoneInfo>& globalBoneInfoMap,
+	int& globalBoneCount)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(subMeshes, mesh, scene, childCount, size, center, unitScale, color, metallic, roughness);
+		ProcessMesh(subMeshes, mesh, scene, childCount, size, center, unitScale,
+			color, metallic, roughness, globalBoneInfoMap, globalBoneCount);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; ++i)
 	{
-		ProcessNode(subMeshes, node->mChildren[i], scene, i, size, center, unitScale, color, metallic, roughness);
+		ProcessNode(subMeshes, node->mChildren[i], scene, i, size, center, unitScale,
+			color, metallic, roughness, globalBoneInfoMap, globalBoneCount);
 	}
 }
 
@@ -660,12 +727,20 @@ void RenderManager::ProcessMesh(
 	std::vector<SubMesh>& subMeshes,
 	const aiMesh* mesh, const aiScene* scene, int childCount,
 	glm::vec3 size, glm::vec3 center, float unitScale,
-	glm::vec4 color, float metallic, float roughness)
+	glm::vec4 color, float metallic, float roughness,
+	std::map<std::string, ThreeDimension::BoneInfo>& globalBoneInfoMap,
+	int& globalBoneCount)
 {
 	SubMesh subMesh;
 	subMesh = m_meshShaderEnabled ? std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, true) : std::make_unique<BufferWrapper>(SpriteType::DYNAMIC, false);
 	
 	auto* sprite = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+	
+	if (mesh->mNumBones > 0)
+	{
+		unitScale = 1.0f;
+		center = glm::vec3(0.0f);
+	}
 
 	auto& quantizedVertices = sprite->vertices;
 #ifdef _DEBUG
@@ -680,48 +755,122 @@ void RenderManager::ProcessMesh(
 		aiVector3D vertex = mesh->mVertices[v];
 		aiVector3D normal = mesh->mNormals[v];
 
-		// Initialize bone IDs and weights to default values
-		/*int boneIDs[ThreeDimension::MAX_BONE_INFLUENCE] = { -1,-1,-1,-1 };
-		float weights[ThreeDimension::MAX_BONE_INFLUENCE] = { 0.0f,0.0f,0.0f,0.0f };*/
+		ThreeDimension::Vertex vtx{}; 
+		vtx.position = glm::vec3(vertex.x, vertex.y, vertex.z);
+		vtx.normal = glm::vec3(normal.x, normal.y, normal.z);
+		vtx.uv = mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f };
+		vtx.texSubIndex = childCount;
+		// boneIDs and weights are already initialized to default values
 
-
-		vertices.emplace_back(ThreeDimension::Vertex{
-			glm::vec3(vertex.x, vertex.y, vertex.z),
-			glm::vec3(normal.x, normal.y, normal.z),
-			mesh->HasTextureCoords(0) ? glm::vec2{ mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y } : glm::vec2{ 0.f, 0.f },
-			childCount, { -1,-1,-1,-1 }, { 0.0f,0.0f,0.0f,0.0f } }
-			);
+		vertices.push_back(vtx);
 	}
 
+	// Apply the same normalization to Bone Offsets to match vertex transformations.
+	glm::mat4 meshNormalizationTransform = glm::mat4(1.0f);
+	meshNormalizationTransform = glm::scale(meshNormalizationTransform, glm::vec3(unitScale));
+	meshNormalizationTransform = glm::translate(meshNormalizationTransform, -center);
+
+	sprite->meshNormalizationTransform = meshNormalizationTransform;
+
 	// Process Bones (Skeletal Animation Data)
-	// We populate the boneInfoMap stored in the DynamicSprite3DMesh
+	//for (unsigned int i = 0; i < mesh->mNumBones; i++)
+	//{
+	//	int boneID = -1;
+	//	std::string boneName = mesh->mBones[i]->mName.C_Str();
+
+	//	if (sprite->boneInfoMap.find(boneName) == sprite->boneInfoMap.end())
+	//	{
+	//		ThreeDimension::BoneInfo newBoneInfo;
+	//		newBoneInfo.id = sprite->boneCount;
+
+	//		//// ===== Normalize Bone Offset Matrix =====
+	//		//glm::mat4 originalOffset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+
+	//		///* * Logical Flow:
+	//		// * 1. Offset Matrix maps [Mesh Space] -> [Bone Space].
+	//		// * 2. Vertices are now transformed by 'M' (meshNormalizationTransform).
+	//		// * 3. To compensate, we must reverse 'M' before applying the original offset.
+	//		// * Formula: NewOffset = OriginalOffset * Inverse(M)
+	//		// */
+	//		//newBoneInfo.offset = originalOffset * glm::inverse(meshNormalizationTransform);
+
+	//		newBoneInfo.offset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+	//		sprite->boneInfoMap[boneName] = newBoneInfo;
+	//		boneID = sprite->boneCount;
+	//		sprite->boneCount++;
+	//	}
+	//	else
+	//	{
+	//		// Bone already exists
+	//		boneID = sprite->boneInfoMap[boneName].id;
+	//	}
+
+	//	// Assign weights to vertices affected by this bone
+	//	/*auto weights = mesh->mBones[i]->mWeights;
+	//	int numWeights = mesh->mBones[i]->mNumWeights;
+
+	//	for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+	//	{
+	//		int vertexId = weights[weightIndex].mVertexId;
+	//		float weight = weights[weightIndex].mWeight;
+	//		SetVertexBoneData(vertices[vertexId], boneID, weight);
+	//	}*/
+	//	aiVertexWeight* weights = mesh->mBones[i]->mWeights;
+	//	int numWeights = mesh->mBones[i]->mNumWeights;
+
+	//	for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+	//	{
+	//		int vertexId = weights[weightIndex].mVertexId;
+	//		float weight = weights[weightIndex].mWeight;
+
+	//		// ������ BoneID�� Weight�� �ɾ��ִ� ���� �Լ� ȣ��
+	//		// vertices �迭(quantizedVertices Ȥ�� �Ϲ� vertices)�� �����ؾ� ��
+
+	//		// ����: RenderManager�� QuantizedVertex�� ���ٸ� ������ �°� ���� �ʿ�
+	//		// ���⼭�� vertices(����)�� ���� �����͸� �ְ� ���߿� Quantize�Ѵٰ� �����ϰų�
+	//		// �̹� Quantize�� �迭�� �����ؾ� �Ѵٸ� �Ʒ� ������ �����ؾ� ��.
+
+	//		// ���� vertices ���Ͱ� �����Ѵٸ�:
+	//		if (vertexId < vertices.size())
+	//		{
+	//			SetVertexBoneData(vertices[vertexId], boneID, weight);
+	//		}
+	//	}
+	//}
 	for (unsigned int i = 0; i < mesh->mNumBones; i++)
 	{
 		int boneID = -1;
 		std::string boneName = mesh->mBones[i]->mName.C_Str();
 
-		// Check if bone already exists in the map
-		if (sprite->boneInfoMap.find(boneName) == sprite->boneInfoMap.end())
+		// Check if the bone is already registered in the global map
+		if (globalBoneInfoMap.find(boneName) == globalBoneInfoMap.end())
 		{
-			// New bone found, register it
 			ThreeDimension::BoneInfo newBoneInfo;
-			newBoneInfo.id = sprite->boneCount;
-			newBoneInfo.offset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+			newBoneInfo.id = globalBoneCount;
 
-			sprite->boneInfoMap[boneName] = newBoneInfo;
-			boneID = sprite->boneCount;
-			sprite->boneCount++;
+			// Convert Assimp matrix and adjust the offset based on model normalization
+			glm::mat4 originalOffset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+			//newBoneInfo.offset = originalOffset * glm::inverse(meshNormalizationTransform);
+			newBoneInfo.offset = AssimpToGLMMatrix(mesh->mBones[i]->mOffsetMatrix);
+			sprite->meshNormalizationTransform = meshNormalizationTransform;
+
+			// Store the new bone info and increment the global bone counter
+			globalBoneInfoMap[boneName] = newBoneInfo;
+			boneID = globalBoneCount;
+			globalBoneCount++;
 		}
 		else
 		{
-			// Bone already exists
-			boneID = sprite->boneInfoMap[boneName].id;
+			// Reuse the ID if the bone was already registered by another mesh
+			boneID = globalBoneInfoMap[boneName].id;
 		}
 
-		// Assign weights to vertices affected by this bone
+		// Sync the local map with the global bone information
+		sprite->boneInfoMap[boneName] = globalBoneInfoMap[boneName];
+
+		// Assign bone weights and IDs to each affected vertex
 		auto weights = mesh->mBones[i]->mWeights;
 		int numWeights = mesh->mBones[i]->mNumWeights;
-
 		for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
 		{
 			int vertexId = weights[weightIndex].mVertexId;
@@ -729,6 +878,9 @@ void RenderManager::ProcessMesh(
 			SetVertexBoneData(vertices[vertexId], boneID, weight);
 		}
 	}
+
+	// Update the final bone count for this sprite after processing all bones
+	sprite->boneCount = globalBoneCount;
 
 	// Indices
 	for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
@@ -742,7 +894,7 @@ void RenderManager::ProcessMesh(
 
 	// Material
 	//aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-	//LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+	//LoadMaterialTextures(material, aiTextureType_DIFFUSE);
 
 	for (auto it = vertices.begin(); it != vertices.end(); ++it)
 	{
@@ -807,6 +959,11 @@ void RenderManager::ProcessMesh(
 	//	staticQuantizedVertices.push_back(ThreeDimension::StaticQuantizedVertex{ quantizedVertices[meshIndex], meshIndex });
 	//}
 	vertexUniform.color = color;
+
+	for (int i = 0; i < ThreeDimension::MAX_BONES; ++i)
+	{
+		vertexUniform.finalBones[i] = glm::mat4(1.0f); // Initialize as a non-zero identity matrix
+	}
 
 	auto& fragmentUniform = sprite->fragmentUniform;
 	fragmentUniform.texIndex = 0;
@@ -974,15 +1131,15 @@ glm::mat4 RenderManager::Quantize(
 
 		minQuantizedPos = glm::min(minQuantizedPos, qp);
 
-		// Copy skeletal data directly
-		quantizedVertices[i].boneIDs = glm::ivec4(
-			vertices[i].boneIDs[0], vertices[i].boneIDs[1],
-			vertices[i].boneIDs[2], vertices[i].boneIDs[3]
-		);
-		quantizedVertices[i].weights = glm::vec4(
-			vertices[i].weights[0], vertices[i].weights[1],
-			vertices[i].weights[2], vertices[i].weights[3]
-		);
+		//// Copy skeletal data directly
+		//quantizedVertices[i].boneIDs = glm::ivec4(
+		//	vertices[i].boneIDs[0], vertices[i].boneIDs[1],
+		//	vertices[i].boneIDs[2], vertices[i].boneIDs[3]
+		//);
+		//quantizedVertices[i].weights = glm::vec4(
+		//	vertices[i].weights[0], vertices[i].weights[1],
+		//	vertices[i].weights[2], vertices[i].weights[3]
+		//);
 	}
 
 	// 4. For each partition, find the minimum quantized coordinates for the x, y, and z axes, and keep the values as the offsets (Ox, Oy, Oz).
@@ -997,6 +1154,12 @@ glm::mat4 RenderManager::Quantize(
 		quantizedVertices[i].normal = vertices[i].normal;
 		quantizedVertices[i].uv = vertices[i].uv;
 		quantizedVertices[i].texSubIndex = vertices[i].texSubIndex;
+
+		for (int j = 0; j < 4; ++j)
+		{
+			quantizedVertices[i].boneIDs[j] = vertices[i].boneIDs[j];
+			quantizedVertices[i].weights[j] = vertices[i].weights[j];
+		}
 	}
 
 	// Decode
@@ -1039,7 +1202,16 @@ glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view
 
 	// Convert NDC to screen space and flip Y-axis for ImGui coordinate system
 	float screenX = (ndc.x + 1.0f) * 0.5f * windowSize.x + windowPos.x;
-	float screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+	float screenY = 0.0f;
+
+	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+	{
+		screenY = (ndc.y + 1.0f) * 0.5f * windowSize.y + windowPos.y;
+	}
+	else
+	{
+		screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+	}
 
 	return glm::vec2{ screenX, screenY };
 }

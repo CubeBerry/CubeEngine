@@ -12,6 +12,7 @@
 #include "BeatEmUpDemo/BeatEmUpDemo.hpp"
 #include "PBR.hpp"
 #include "MultipleLights.hpp"
+#include "SkeletalAnimationDemo.hpp"
 
 #include "DebugTools.hpp"
 
@@ -54,6 +55,7 @@ int main(void)
         engine.GetGameStateManager().AddLevel(new BeatEmUpDemo);
         engine.GetGameStateManager().AddLevel(new PBR);
         engine.GetGameStateManager().AddLevel(new MultipleLights);
+        engine.GetGameStateManager().AddLevel(new SkeletalAnimationDemo);
         engine.GetGameStateManager().LevelInit(GameLevel::PROCEDURALMESHES);
 
         engine.Update();

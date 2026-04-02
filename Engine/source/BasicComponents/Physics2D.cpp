@@ -16,12 +16,10 @@ Physics2D::~Physics2D()
 	}
 	points.clear();
 #endif
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Phy2D");
 }
 
 void Physics2D::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Phy2D");
 }
 
 void Physics2D::Update(float dt)

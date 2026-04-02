@@ -3,6 +3,7 @@
 //Project: CubeEngine
 //File: DynamicSprite.cpp
 #include "BasicComponents/DynamicSprite.hpp"
+#include "BasicComponents/SkeletalAnimator.hpp"
 #include "Animation.hpp"
 
 #pragma warning(push)
@@ -35,18 +36,19 @@ DynamicSprite::~DynamicSprite()
 	}
 	animations.clear();
 	DeleteFromSpriteManagerList();
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Deleted : Dynamic Sprite");
 }
 
 void DynamicSprite::Init()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Object, "Component Added : Dynamic Sprite");
 }
 
 void DynamicSprite::Update(float dt)
 {
 	UpdateProjection();
 	UpdateView();
+	
+	
+	// object transform 
 	UpdateModel(GetOwner()->GetPosition(), GetOwner()->GetSize(), GetOwner()->GetRotate3D());
 
 	UpdateAnimation(dt);
@@ -269,10 +271,11 @@ void DynamicSprite::UpdateView()
 			vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
 			// @TODO move to push constants later
 			glm::mat4 inverseView = glm::inverse(vertexUniform.view);
-			vertexUniform.viewPosition = glm::vec3(
+			vertexUniform.viewPosition = glm::vec4(
 				inverseView[3].x,
 				inverseView[3].y,
-				inverseView[3].z
+				inverseView[3].z,
+				1.0f
 			);
 			break;
 		}

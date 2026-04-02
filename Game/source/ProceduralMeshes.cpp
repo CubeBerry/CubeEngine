@@ -5,8 +5,9 @@
 #include "ProceduralMeshes.hpp"
 #include "Engine.hpp"
 #include "BasicComponents/Light.hpp"
-#include "BasicComponents/DynamicSprite.hpp"
-//#include "BasicComponents/StaticSprite.hpp"
+#include "BasicComponents/StaticSprite.hpp"
+#include "BasicComponents/SkeletalAnimator.hpp"
+#include "BasicComponents/SkeletalAnimationStateMachine.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -51,8 +52,8 @@ void ProceduralMeshes::Init()
 	//Engine::GetObjectManager().ProcessFunctionQueue();
 	//Engine::GetObjectManager().GetLastObject()->GetComponent<StaticSprite>()->InitializeBuffers();
 
-	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 
+	Engine::GetRenderManager()->LoadTexture("../Game/assets/monkey.png", "monkey", false);
 	Engine::GetRenderManager()->LoadSkybox("../Game/assets/Skybox/HDR/kloppenheim_06_puresky_4k.hdr");
 }
 
