@@ -137,6 +137,7 @@ dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 | Skybox | ➖ | ✅ | ✅ | ✅ |
 | Normal Vector Visualization | ➖ | ✅ | ✅ | ✅ |
 | [Assimp Model Loading](https://github.com/assimp/assimp) | ✅ | ➖ | ➖ | ➖ |
+| Skeletal Animation | ➖ | ✅ | ✅ | ✅ |
 | **Graphics Backend Features** | | | | |
 | [Slang Shading Language](https://shader-slang.org/) | ➖ | ❌ | ✅ | ✅ |
 | [ImGui](https://github.com/ocornut/imgui) | ➖ | ✅ | ✅ | ✅ |
