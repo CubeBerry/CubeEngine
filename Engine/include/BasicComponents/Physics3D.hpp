@@ -48,13 +48,12 @@ struct Sphere
 class Physics3D : public IComponent
 {
 public:
-	Physics3D() : IComponent(ComponentTypes::PHYSICS3D) {/* Init(); */};
+	Physics3D() : IComponent(ComponentTypes::PHYSICS3D) { Init(); };
 	~Physics3D() override;
 
 	void Init() override ;
 	void Update(float dt) override;
 	void UpdatePhysics(float dt);
-	void UpdateForParticle(float dt, glm::vec3& pos);
 	void End() override {};
 
 	void SetVelocity(glm::vec3 v) { velocity = v; }
@@ -115,6 +114,11 @@ public:
 	void AddCollidePolyhedronAABB(glm::vec3 size);
 	void AddCollideSphere(float r);
 	//2d->3d
+
+	// Made public so PhysicsManager can drive the CCD loop directly.
+	CollisionResult FindClosestCollision(float dt);
+	void CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::vec3 normal, float* axisDepth);
+
 private:
 	glm::vec3 velocity = { 0.0f, 0.0f, 0.0f };
 	glm::vec3 velocityMin = { 0.f, 0.f, 0.0f };
@@ -139,7 +143,6 @@ private:
 	glm::vec3 FindSATCenter(const std::vector<glm::vec3>& points_);
 	glm::vec3 RotatePoint(const glm::vec3& point, const glm::vec3& position, const glm::quat& rotation);
 	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> points1, const std::vector<glm::vec3> points2, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
-	void CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::vec3 normal, float* axisDepth);
 	
 	glm::vec3 FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices);
 	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1_, float* max1_, float* min2_, float* max2_);
@@ -153,7 +156,6 @@ private:
 	bool SweptSATOBB(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
 	bool SweptSpheres(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
 	bool SweptSphereVsOBB(Physics3D* boxBody, float dt, CollisionResult& outResult);
-	CollisionResult FindClosestCollision(float dt);
 	//CollisionDetectionMode : Continuous
 
 	std::vector<glm::vec3> collidePolyhedron;

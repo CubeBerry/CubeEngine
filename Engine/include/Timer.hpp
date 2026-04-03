@@ -141,6 +141,15 @@ public:
 private:
 	void UpdateHistory(float fps)
 	{
+		if (frame != FrameRate::UNLIMIT)
+		{
+			float limit = static_cast<float>(frame);
+			if (fps > limit)
+			{
+				fps = limit;
+			}
+		}
+
 		if (fpsHistory.empty())
 		{
 			minFps = fps;

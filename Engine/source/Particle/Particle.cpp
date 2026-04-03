@@ -8,7 +8,7 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, float
 {
 	position = position_;
 	size = size_;
-	speed = speed_;
+	velocity = speed_;
 	angle.z = angle_;
 	this->lifeTime = lifeTime_;
 
@@ -41,7 +41,7 @@ Particle::Particle(glm::vec3 position_, glm::vec3 size_, glm::vec3 speed_, glm::
 {
 	position = position_;
 	size = size_;
-	speed = speed_;
+	velocity = speed_;
 	angle = angle_;
 	this->lifeTime = lifeTime_;
 
@@ -76,9 +76,18 @@ Particle::~Particle()
 
 void Particle::Update(float dt)
 {
-	position.x += speed.x * dt;
-	position.y += speed.y * dt;
-	pPhysics.UpdateForParticle(dt, position);
+	// Self-contained physics integration (no Physics2D dependency).
+	if (useGravity)
+	{
+		velocity.y -= gravity * dt;
+	}
+	if (drag > 0.f)
+	{
+		velocity *= (1.f - drag * dt);
+	}
+
+	position += velocity * dt;
+
 	switch (effect)
 	{
 	case ParticleEffect::NORMAL:

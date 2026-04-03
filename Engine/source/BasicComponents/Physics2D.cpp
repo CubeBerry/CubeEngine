@@ -1,4 +1,4 @@
-﻿//Author: DOYEONG LEE
+//Author: DOYEONG LEE
 //Project: CubeEngine
 //File: Physics2D.cpp
 #include "BasicComponents/Physics2D.hpp"
@@ -9,6 +9,7 @@
 
 Physics2D::~Physics2D()
 {
+	Engine::GetPhysicsManager().RemoveBody2D(this);
 #ifdef _DEBUG
 	for (auto& v : points)
 	{
@@ -20,6 +21,7 @@ Physics2D::~Physics2D()
 
 void Physics2D::Init()
 {
+	Engine::GetPhysicsManager().AddBody2D(this);
 }
 
 void Physics2D::Update(float dt)
@@ -65,8 +67,8 @@ void Physics2D::Update(float dt)
 		velocity.y = 0.f;
 	}
 
-	IComponent::GetOwner()->SetXPosition(IComponent::GetOwner()->GetPosition().x + velocity.x * dt);
-	IComponent::GetOwner()->SetYPosition(IComponent::GetOwner()->GetPosition().y + velocity.y * dt);
+	// Position is now applied by PhysicsManager::ApplyMovement2D() after collision.
+	// The integration above — velocity, gravity, friction — still runs here.
 
 #ifdef _DEBUG
 	/*std::vector<glm::vec2> rotatedPoints1;
@@ -111,51 +113,8 @@ void Physics2D::Update(float dt)
 
 }
 
-void Physics2D::UpdateForParticle(float dt, glm::vec3& pos)
-{
-	if (isGravityOn)
-	{
-		Gravity(dt);
-	}
 
-	acceleration = force / mass;
-	velocity += acceleration * dt;
 
-	force = { 0.f, 0.f };
-
-	if (friction > 0.f)
-	{
-		if (isGravityOn)
-		{
-			velocity.x *= (1.f - friction * dt);
-		}
-		else
-		{
-			velocity *= (1.f - friction * dt);
-		}
-	}
-
-	if (std::abs(velocity.y) > velocityMax.y)
-	{
-		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
-	}
-	if (std::abs(velocity.x) > velocityMax.x)
-	{
-		velocity.x = velocityMax.x * ((velocity.x < 0.f) ? -1.f : 1.f);
-	}
-
-	if (std::abs(velocity.x) < velocityMin.x)
-	{
-		velocity.x = 0.f;
-	}
-	if (std::abs(velocity.y) < velocityMin.y)
-	{
-		velocity.y = 0.f;
-	}
-
-	pos.x += velocity.x * dt;
-	pos.y += velocity.y * dt;
-}
 
 void Physics2D::Gravity(float dt)
 {

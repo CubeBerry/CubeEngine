@@ -45,7 +45,6 @@ public:
 
 	void Init() override ;
 	void Update(float dt) override;
-	void UpdateForParticle(float dt, glm::vec3& pos);
 	void End() override {};
 
 	void SetVelocity(glm::vec2 v) { velocity = v; }
@@ -76,7 +75,9 @@ public:
 	float GetCircleCollideRadius() { return circle.radius; }
 	std::vector<glm::vec2> GetCollidePolygon() { return collidePolygon; }
 	float GetRestitution() { return restitution; }
+	bool GetIsGravityOn() const { return isGravityOn; }
 	bool GetIsGhostCollision() { return isGhostCollision; }
+
 
 	bool CheckCollision(Object* obj);
 	bool CollisionPP(Object* obj, Object* obj2);

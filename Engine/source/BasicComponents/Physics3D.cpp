@@ -13,17 +13,19 @@
 
 Physics3D::~Physics3D()
 {
+	Engine::GetPhysicsManager().RemoveBody3D(this);
 }
 
 void Physics3D::Init()
 {
+	Engine::GetPhysicsManager().AddBody3D(this);
 }
 
-void Physics3D::Update(float dt)
+void Physics3D::Update(float /*dt*/)
 {
-	UpdatePhysics(dt);
-
+	// Integration and movement are now handled by PhysicsManager::StepPhysics3D().
 }
+
 
 void Physics3D::UpdatePhysics(float dt)
 {
@@ -104,59 +106,8 @@ void Physics3D::UpdatePhysics(float dt)
 	}
 }
 
-void Physics3D::UpdateForParticle(float dt, glm::vec3& pos)
-{
-	if (isGravityOn)
-	{
-		Gravity(dt);
-	}
 
-	acceleration = force / mass;
-	velocity += acceleration * dt;
 
-	if (friction > 0.f)
-	{
-		if (isGravityOn)
-		{
-			velocity.x *= (1.f - friction * dt);
-			velocity.z *= (1.f - friction * dt);
-		}
-		else
-		{
-			velocity *= (1.f - friction * dt);
-		}
-	}
-
-	force = { 0.f, 0.f, 0.f };
-
-	if (std::abs(velocity.x) > velocityMax.x)
-	{
-		velocity.x = velocityMax.x * ((velocity.x < 0.f) ? -1.f : 1.f);
-	}
-	if (std::abs(velocity.y) > velocityMax.y)
-	{
-		velocity.y = velocityMax.y * ((velocity.y < 0.f) ? -1.f : 1.f);
-	}
-	if (std::abs(velocity.z) > velocityMax.z)
-	{
-		velocity.z = velocityMax.z * ((velocity.z < 0.f) ? -1.f : 1.f);
-	}
-
-	if (std::abs(velocity.x) < velocityMin.x)
-	{
-		velocity.x = 0.f;
-	}
-	if (std::abs(velocity.y) < velocityMin.y)
-	{
-		velocity.y = 0.f;
-	}
-	if (std::abs(velocity.z) < velocityMin.z)
-	{
-		velocity.z = 0.f;
-	}
-
-	pos += velocity * dt;
-}
 
 void Physics3D::Gravity(float dt)
 {
