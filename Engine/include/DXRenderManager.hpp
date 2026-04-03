@@ -23,6 +23,7 @@
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
 #include "DXGBufferContext.hpp"
+#include "DXSSAOContext.hpp"
 #include "DXNaiveLightingContext.hpp"
 #include "DXGlobalLightingContext.hpp"
 #include "DXLocalLightingContext.hpp"
@@ -40,6 +41,7 @@ class DXRenderManager : public RenderManager
 	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
 	friend class DXGBufferContext;
+	friend class DXSSAOContext;
 	friend class DXNaiveLightingContext;
 	friend class DXGlobalLightingContext;
 	friend class DXLocalLightingContext;
