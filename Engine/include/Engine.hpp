@@ -14,7 +14,6 @@
 #include "ThreadManager.hpp"
 #include "Logger.hpp"
 #include "Particle/ParticleManager.hpp"
-#include "PhysicsManager.hpp"
 
 class Engine
 {
@@ -32,7 +31,6 @@ public:
 	static SoundManager& GetSoundManager() { return Instance().soundManager; }
 	static SpriteManager& GetSpriteManager() { return *Instance().spriteManager; }
 	static ParticleManager& GetParticleManager() { return Instance().particleManager; }
-	static PhysicsManager& GetPhysicsManager() { return Instance().physicsManager; }
 	static Timer& GetTimer() { return Instance().timer; }
 	static Logger& GetLogger() { return *Instance().logger; }
 
@@ -60,7 +58,6 @@ private:
 	SoundManager soundManager;
 	SpriteManager* spriteManager;
 	ParticleManager particleManager;
-	PhysicsManager physicsManager;
 	ThreadManager threadManager;
 	Logger* logger;
 };

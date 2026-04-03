@@ -63,9 +63,7 @@ void Engine::Update()
 			threadManager.ProcessEvents();
 			timer.ResetLastTimeStamp();
 			frameCount++;
-
-			// if (frameCount >= static_cast<int>(timer.GetFrameRate()))
-			if (timer.GetFrameRateCalculateTime() >= 1.f) //frame rate history update every 1 seconds
+			if (frameCount >= static_cast<int>(timer.GetFrameRate()))
 			{
 				timer.AddFrameHistory(frameCount / timer.GetFrameRateCalculateTime());
 				timer.ResetFPSCalculateTime();
@@ -100,13 +98,10 @@ void Engine::SetFPS(FrameRate fps)
 {
 	ResetDeltaTime();
 	timer.Init(fps);
-	frameCount = 0;
 }
 
 void Engine::ResetDeltaTime()
 {
 	timer.Reset();
-	timer.ResetFPSCalculateTime();
 	deltaTime = 0.f;
-	frameCount = 0;
 }
