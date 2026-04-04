@@ -221,6 +221,10 @@ void DXRenderManager::Initialize(SDL_Window* window)
 	m_gBufferContext = std::make_unique<DXGBufferContext>(this);
 	m_gBufferContext->Initialize();
 
+	// Create SSAO Context
+	m_ssaoContext = std::make_unique<DXSSAOContext>(this);
+	m_ssaoContext->Initialize();
+
 	// Create Naive Render Context
 	m_naiveLightingContext = std::make_unique<DXNaiveLightingContext>(this);
 	m_naiveLightingContext->Initialize();
@@ -352,6 +356,7 @@ void DXRenderManager::OnResize()
 	if (m_deferredRenderingEnabled)
 	{
 		m_gBufferContext->OnResize();
+		m_ssaoContext->OnResize();
 		m_globalLightingContext->OnResize();
 		m_localLightingContext->OnResize();
 		m_naiveLightingContext->OnResize();
@@ -431,6 +436,7 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 			m_shadowMapContext->Execute(&wrapper);
 			m_gBufferContext->Execute(&wrapper);
+			m_ssaoContext->Execute(&wrapper);
 			//m_naiveLightingContext->Execute(&wrapper);
 			m_globalLightingContext->Execute(&wrapper);
 			if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper);

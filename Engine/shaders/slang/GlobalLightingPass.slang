@@ -66,6 +66,7 @@ Texture2D gAlbedo : register(t0, space1);
 Texture2D gNormal : register(t1, space1);
 Texture2D gPosition : register(t2, space1);
 Texture2D gMaterial : register(t3, space1);
+Texture2D SSAO : register(t4, space1);
 SamplerState gSampler : register(s0, space1);
 
 #if defined(__hlsl__)
@@ -313,8 +314,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
 #endif
     float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
-    // 1.0 == ao
-    float3 ambient = (Kd * diffuse + specular) * 1.0;
+    float ao = SSAO.Sample(gSampler, input.uv).r;
+    float3 ambient = (Kd * diffuse + specular) * ao;
     resultColor = ambient + resultColor;
 
     // Blinn-Phong Result Color

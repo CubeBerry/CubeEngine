@@ -134,6 +134,8 @@ private:
 	// G-Buffer Render Context
 	std::unique_ptr<DXGBufferContext> m_gBufferContext;
 	DXGBufferContext* GetGBufferContext() const { return m_gBufferContext.get(); }
+	std::unique_ptr<DXSSAOContext> m_ssaoContext;
+	DXSSAOContext* GetSSAOContext() const { return m_ssaoContext.get(); }
 	// Naive Lighting Context
 	std::unique_ptr<DXNaiveLightingContext> m_naiveLightingContext;
 	// Global (Directional) Lighting Context

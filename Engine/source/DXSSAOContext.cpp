@@ -24,7 +24,7 @@ void DXSSAOContext::Initialize()
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters(2);
 	rootParameters[0].InitAsConstants(sizeof(PushConstants) / 4, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL);;
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferRange;
-	gBufferRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 0);
+	gBufferRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 1);
 	rootParameters[1].InitAsDescriptorTable(1, &gBufferRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_ssaoRootSignature, rootParameters);
@@ -45,7 +45,7 @@ void DXSSAOContext::Initialize()
 	rootParameters[0].InitAsConstants(sizeof(PushConstants) / 4, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL);;
 	rootParameters[1].InitAsDescriptorTable(1, &gBufferRange, D3D12_SHADER_VISIBILITY_PIXEL);
 	CD3DX12_DESCRIPTOR_RANGE1 ssaoRange;
-	ssaoRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 0);
+	ssaoRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 1);
 	rootParameters[2].InitAsDescriptorTable(1, &ssaoRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_blurRootSignature, rootParameters);
@@ -165,6 +165,9 @@ void DXSSAOContext::CreateSSAOResources()
 	D3D12_CLEAR_VALUE clearValue = {};
 	clearValue.Format = DXGI_FORMAT_R8_UNORM;
 	clearValue.Color[0] = 1.0f;
+	clearValue.Color[1] = 1.0f;
+	clearValue.Color[2] = 1.0f;
+	clearValue.Color[3] = 1.0f;
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
@@ -211,6 +214,9 @@ void DXSSAOContext::CreateBlurResources()
 	D3D12_CLEAR_VALUE clearValue = {};
 	clearValue.Format = DXGI_FORMAT_R8_UNORM;
 	clearValue.Color[0] = 1.0f;
+	clearValue.Color[1] = 1.0f;
+	clearValue.Color[2] = 1.0f;
+	clearValue.Color[3] = 1.0f;
 
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
