@@ -45,7 +45,8 @@ private:
 	// Push Constants for SSAO
 	struct alignas(16) PushConstants
 	{
-		glm::mat4 inverseProjection;
+		glm::mat4 view;
+		glm::mat4 projection;
 		float radius;
 		float scale;
 		float contrast;

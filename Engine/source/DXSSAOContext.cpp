@@ -82,7 +82,8 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->RSSetScissorRects(1, &scissorRect);
 
 	// Update Push Constants
-	pushConstants.inverseProjection = glm::inverse(Engine::GetCameraManager().GetProjectionMatrix());
+	pushConstants.view = Engine::GetCameraManager().GetViewMatrix();
+	pushConstants.projection = Engine::GetCameraManager().GetProjectionMatrix();
 	pushConstants.radius = m_radius;
 	pushConstants.scale = m_scale;
 	pushConstants.contrast = m_contrast;
