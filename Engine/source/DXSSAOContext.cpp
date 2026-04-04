@@ -235,6 +235,6 @@ void DXSSAOContext::CreateBlurResources()
 	m_renderManager->m_device->CreateRenderTargetView(m_blurTexture.Get(), nullptr, rtvHandle);
 
 	// Create SRV in Main SRV Heap
-	m_ssaoSrvHandle = m_renderManager->AllocateSrvHandles(1);
-	m_renderManager->m_device->CreateShaderResourceView(m_blurTexture.Get(), nullptr, m_ssaoSrvHandle.first);
+	m_blurSrvHandle = m_renderManager->AllocateSrvHandles(1);
+	m_renderManager->m_device->CreateShaderResourceView(m_blurTexture.Get(), nullptr, m_blurSrvHandle.first);
 }
