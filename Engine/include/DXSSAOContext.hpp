@@ -37,6 +37,11 @@ private:
 	ComPtr<ID3D12Resource> m_blurTexture; // R8_UNORM
 	ComPtr<ID3D12DescriptorHeap> m_blurRtvHeap;
 	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, UINT> m_blurSrvHandle;
+
+	ComPtr<ID3D12Resource> m_blurIntermediateTexture;
+	ComPtr<ID3D12DescriptorHeap> m_blurIntermediateRtvHeap;
+	std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, UINT> m_blurIntermediateSrvHandle;
+
 	ComPtr<ID3D12RootSignature> m_blurRootSignature;
 	std::unique_ptr<DXPipeLine> m_blurPipeline;
 
@@ -47,6 +52,7 @@ private:
 	{
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::ivec2 blurDirection;
 		float radius;
 		float scale;
 		float contrast;

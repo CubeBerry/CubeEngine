@@ -67,6 +67,7 @@ public:
 
 	DXShadowMapContext* GetShadowMapContext() const { return m_shadowMapContext.get(); }
 	DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
+	DXSSAOContext* GetSSAOContext() const { return m_ssaoContext.get(); }
 private:
 	int m_width, m_height;
 	bool m_isResize{ false };
@@ -135,7 +136,6 @@ private:
 	std::unique_ptr<DXGBufferContext> m_gBufferContext;
 	DXGBufferContext* GetGBufferContext() const { return m_gBufferContext.get(); }
 	std::unique_ptr<DXSSAOContext> m_ssaoContext;
-	DXSSAOContext* GetSSAOContext() const { return m_ssaoContext.get(); }
 	// Naive Lighting Context
 	std::unique_ptr<DXNaiveLightingContext> m_naiveLightingContext;
 	// Global (Directional) Lighting Context

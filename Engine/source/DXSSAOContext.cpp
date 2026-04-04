@@ -120,7 +120,30 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_ssaoTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	commandList->ResourceBarrier(1, &barrier);
 
-	// Bilateral Blur Pass
+	// Bilateral Blur Pass (Horizontal)
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blurIntermediateTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(1, &barrier);
+
+	commandList->SetPipelineState(m_blurPipeline->GetPipelineState().Get());
+	commandList->SetGraphicsRootSignature(m_blurRootSignature.Get());
+
+	rtvHandle = m_blurIntermediateRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	pushConstants.blurDirection = glm::ivec2(1, 0);
+	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
+	commandList->SetGraphicsRootDescriptorTable(1, gBufferGpuHandle);
+	D3D12_GPU_DESCRIPTOR_HANDLE ssaoSrvGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+	ssaoSrvGpuHandle.ptr += static_cast<UINT64>(m_ssaoSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
+	commandList->SetGraphicsRootDescriptorTable(2, ssaoSrvGpuHandle);
+
+	commandList->DrawInstanced(3, 1, 0, 0);
+
+	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blurIntermediateTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	commandList->ResourceBarrier(1, &barrier);
+
+	// Bilateral Blur Pass (Vertical)
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blurTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	commandList->ResourceBarrier(1, &barrier);
 
@@ -131,11 +154,12 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+	pushConstants.blurDirection = glm::ivec2(0, 1);
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
 	commandList->SetGraphicsRootDescriptorTable(1, gBufferGpuHandle);
-	D3D12_GPU_DESCRIPTOR_HANDLE ssaoSrvGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
-	ssaoSrvGpuHandle.ptr += static_cast<UINT64>(m_ssaoSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
-	commandList->SetGraphicsRootDescriptorTable(2, ssaoSrvGpuHandle);
+	D3D12_GPU_DESCRIPTOR_HANDLE intermediateSrvGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+	intermediateSrvGpuHandle.ptr += static_cast<UINT64>(m_blurIntermediateSrvHandle.second) * m_renderManager->m_srvDescriptorSize;
+	commandList->SetGraphicsRootDescriptorTable(2, intermediateSrvGpuHandle);
 
 	commandList->DrawInstanced(3, 1, 0, 0);
 
@@ -218,7 +242,35 @@ void DXSSAOContext::CreateBlurResources()
 	clearValue.Color[2] = 1.0f;
 	clearValue.Color[3] = 1.0f;
 
+	// 2. Create Intermediate Blur Render Target (Horizontal Pass)
 	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		&clearValue,
+		IID_PPV_ARGS(&m_blurIntermediateTexture)
+	));
+
+	// Create RTV Heap for SSAO Render Target
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = 1;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_blurIntermediateRtvHeap)));
+	DXHelper::ThrowIfFailed(m_blurIntermediateRtvHeap->SetName(L"SSAO Intermediate Blur Render Target View Heap"));
+
+	// Create RTV for SSAO Render Target
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_blurIntermediateRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	m_renderManager->m_device->CreateRenderTargetView(m_blurIntermediateTexture.Get(), nullptr, rtvHandle);
+
+	// Create SRV in Main SRV Heap
+	m_blurIntermediateSrvHandle = m_renderManager->AllocateSrvHandles(1);
+	m_renderManager->m_device->CreateShaderResourceView(m_blurIntermediateTexture.Get(), nullptr, m_blurIntermediateSrvHandle.first);
+
+	// 3. Create Final Blur Render Target (Vertical Pass)
+	heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateCommittedResource(
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
@@ -228,19 +280,35 @@ void DXSSAOContext::CreateBlurResources()
 		IID_PPV_ARGS(&m_blurTexture)
 	));
 
-	// 2. Create RTV Heap for SSAO Render Target
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	// Create RTV Heap for SSAO Render Target
 	rtvHeapDesc.NumDescriptors = 1;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	DXHelper::ThrowIfFailed(m_renderManager->m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_blurRtvHeap)));
-	DXHelper::ThrowIfFailed(m_blurRtvHeap->SetName(L"SSAO Blur Render Target View Heap"));
+	DXHelper::ThrowIfFailed(m_blurRtvHeap->SetName(L"SSAO Final Blur Render Target View Heap"));
 
-	// 3. Create RTV for SSAO Render Target
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_blurRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	// Create RTV for SSAO Render Target
+	rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_blurRtvHeap->GetCPUDescriptorHandleForHeapStart());
 	m_renderManager->m_device->CreateRenderTargetView(m_blurTexture.Get(), nullptr, rtvHandle);
 
 	// Create SRV in Main SRV Heap
 	m_blurSrvHandle = m_renderManager->AllocateSrvHandles(1);
 	m_renderManager->m_device->CreateShaderResourceView(m_blurTexture.Get(), nullptr, m_blurSrvHandle.first);
+}
+
+void DXSSAOContext::DrawImGui()
+{
+	if (ImGui::CollapsingHeader("Ambient Occlusion (Alchemy AO)"))
+	{
+		ImGui::Checkbox("Enable SSAO", &m_enabled);
+
+		if (m_enabled)
+		{
+			ImGui::SliderFloat("Radius", &m_radius, 0.01f, 2.0f, "%.3f");
+			ImGui::SliderFloat("Scale", &m_scale, 0.1f, 5.0f, "%.2f");
+			ImGui::SliderFloat("Contrast", &m_contrast, 0.1f, 5.0f, "%.2f");
+			ImGui::SliderInt("Samples", &m_numSamples, 1, 32);
+			ImGui::DragFloat("Depth Delta", &m_delta, 0.0001f, 0.0f, 0.05f, "%.4f");
+		}
+	}
 }

@@ -1256,9 +1256,13 @@ void RenderManager::RenderingControllerForImGui()
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
 		ImGui::Spacing();
+		// Shadow Map Context
 		bool shadowEnabled = dxRenderManager->GetShadowMapContext()->IsEnabled();
 		if (ImGui::Checkbox("Shadow Map", &shadowEnabled)) dxRenderManager->GetShadowMapContext()->SetEnabled(shadowEnabled);
 		if (shadowEnabled) dxRenderManager->GetShadowMapContext()->DrawImGui();
+
+		// SSAO Context
+		dxRenderManager->GetSSAOContext()->DrawImGui();
 	}
 
 	ImGui::End();

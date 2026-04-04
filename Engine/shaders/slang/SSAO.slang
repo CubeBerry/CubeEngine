@@ -23,6 +23,7 @@ struct PushConstants
 {
     float4x4 view;
     float4x4 projection;
+    int2 blurDirection;
     float radius;
     float scale;
     float contrast;
