@@ -68,7 +68,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
         float theta = 2.f * PI * alpha * (7.0f * (float)pushConstants.numSamples / 9.0f) + phi;
 
         float2 offset = h * float2(cos(theta), sin(theta));
-        float2 sampleUV = input.uv + offset * float2(pushConstants.projection[1][1] / pushConstants.projection[0][0], 1.0f) * 0.5f;
+        // float2 sampleUV = input.uv + offset * float2(pushConstants.projection[1][1] / pushConstants.projection[0][0], 1.0f) * 0.5f;
+        float2 sampleUV = input.uv + offset;
 
         float3 Pi = gPosition.SampleLevel(gSampler, sampleUV, 0).xyz;
         float3 wi = Pi - P;
