@@ -64,60 +64,62 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
         return (float4)1.0f;
     }
 
-    float _S2 = mul(pushConstants_0.view_0, float4(P_0, 1.0f)).z;
+
+
+    float _S2 = abs(mul(pushConstants_0.view_0, float4(P_0, 1.0f)).z);
 
     int2 _S3 = int2(_S1.position_0.xy);
     int _S4 = _S3.x;
 
-#line 59
+#line 61
     int _S5 = _S3.y;
 
-#line 59
+#line 61
     float _S6 = float(((int(30) * _S4) ^ _S5) + int(10) * _S4 * _S5);
 
 
     float c_0 = 0.10000000149011612f * pushConstants_0.radius_0;
 
-#line 62
+#line 64
     int i_0 = int(0);
 
-#line 62
+#line 64
     float S_0 = 0.0f;
 
     for(;;)
     {
 
-#line 64
+#line 66
         if(i_0 < (pushConstants_0.numSamples_0))
         {
         }
         else
         {
 
-#line 64
+#line 66
             break;
         }
         float alpha_0 = (float(i_0) + 0.5f) / float(pushConstants_0.numSamples_0);
 
         float theta_0 = 6.28318548202514648f * alpha_0 * (7.0f * float(pushConstants_0.numSamples_0) / 9.0f) + _S6;
 
-#line 74
+#line 76
         float3 Pi_0 = gPosition_0.SampleLevel(gSampler_0, _S1.uv_0 + alpha_0 * pushConstants_0.radius_0 / _S2 * float2(cos(theta_0), sin(theta_0)), 0.0f).xyz;
         float3 wi_0 = Pi_0 - P_0;
 
-#line 82
-        float S_1 = S_0 + max(0.0f, dot(N_0, wi_0) - pushConstants_0.delta_0 * mul(pushConstants_0.view_0, float4(Pi_0, 1.0f)).z) * step(length(wi_0), pushConstants_0.radius_0) / max(c_0 * c_0, dot(wi_0, wi_0));
+#line 85
+        float S_1 = S_0 + max(0.0f, dot(N_0, wi_0) - pushConstants_0.delta_0 * abs(mul(pushConstants_0.view_0, float4(Pi_0, 1.0f)).z)) * step(length(wi_0), pushConstants_0.radius_0) / max(c_0 * c_0, dot(wi_0, wi_0));
 
-#line 64
+#line 66
         i_0 = i_0 + int(1);
 
-#line 64
+#line 66
         S_0 = S_1;
 
-#line 64
+#line 66
     }
 
-#line 87
+#line 90
     return (float4)pow(max(0.0f, 1.0f - pushConstants_0.scale_0 * (S_0 * (6.28318548202514648f * c_0 / float(pushConstants_0.numSamples_0)))), pushConstants_0.contrast_0);
 }
 

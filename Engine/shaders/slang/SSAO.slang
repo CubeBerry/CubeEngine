@@ -53,7 +53,9 @@ float4 fragmentMain(VSOutput input) : SV_Target
     if (length(N) < 0.1f) return 1.0f;
 
     float4 viewPosition = mul(pushConstants.view, float4(P, 1.0f));
-    float d = viewPosition.z;
+    // Currently Engine uses right-handed system on DirectX
+    // Use abs to handle right-handed coordinate system where viewPosition.z is negative
+    float d = abs(viewPosition.z);
 
     int2 coord = int2(input.position.xy);
     float phi = (float)(((30 * coord.x) ^ coord.y) + 10 * coord.x * coord.y);
@@ -73,7 +75,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
 
         float3 Pi = gPosition.SampleLevel(gSampler, sampleUV, 0).xyz;
         float3 wi = Pi - P;
-        float di = mul(pushConstants.view, float4(Pi, 1.0f)).z;
+        // Use abs to handle both left-handed and right-handed coordinate systems
+        float di = abs(mul(pushConstants.view, float4(Pi, 1.0f)).z);
         float heaviside = step(length(wi), pushConstants.radius);
 
         float numerator = max(0.0f, dot(N, wi) - pushConstants.delta * di) * heaviside;
