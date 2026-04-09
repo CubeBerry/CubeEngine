@@ -70,7 +70,7 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
     float _S3 = mul(pushConstants_0.view_0, float4(gPosition_0.SampleLevel(gSampler_0, _S1.uv_0, 0.0f).xyz, 1.0f)).z;
 
 #line 43
-    int i_0 = int(-2);
+    int i_0 = int(-6);
 
 #line 43
     float result_0 = 0.0f;
@@ -78,45 +78,45 @@ float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 #line 43
     float weightSum_0 = 0.0f;
 
-#line 49
+#line 52
     for(;;)
     {
 
-#line 49
-        if(i_0 <= int(2))
+#line 52
+        if(i_0 <= int(6))
         {
         }
         else
         {
 
-#line 49
+#line 52
             break;
         }
 
         float2 sampleUV_0 = _S1.uv_0 + float2(float(pushConstants_0.blurDirection_0.x * i_0), float(pushConstants_0.blurDirection_0.y * i_0)) * _S2;
 
-#line 62
+#line 65
         float depthDiff_0 = mul(pushConstants_0.view_0, float4(gPosition_0.SampleLevel(gSampler_0, sampleUV_0, 0.0f).xyz, 1.0f)).z - _S3;
 
 
-        float weight_0 = exp(float(- (i_0 * i_0)) / 8.0f) * max(0.0f, dot(gNormal_0.SampleLevel(gSampler_0, sampleUV_0, 0.0f).xyz, centerN_0)) * (1.0f / sqrt(0.06283184140920639f) * exp(- (depthDiff_0 * depthDiff_0) / 0.01999999955296516f));
+        float weight_0 = exp(float(- (i_0 * i_0)) / 18.0f) * max(0.0f, dot(gNormal_0.SampleLevel(gSampler_0, sampleUV_0, 0.0f).xyz, centerN_0)) * (1.0f / sqrt(0.06283185631036758f) * exp(- (depthDiff_0 * depthDiff_0) / 0.01999999955296516f));
 
         float result_1 = result_0 + SSAO_0.SampleLevel(gSampler_0, sampleUV_0, 0.0f).x * weight_0;
         float weightSum_1 = weightSum_0 + weight_0;
 
-#line 49
+#line 52
         i_0 = i_0 + int(1);
 
-#line 49
+#line 52
         result_0 = result_1;
 
-#line 49
+#line 52
         weightSum_0 = weightSum_1;
 
-#line 49
+#line 52
     }
 
-#line 71
-    return (float4)(result_0 / max(weightSum_0, 0.00009999999747379f));
+#line 74
+    return (float4)(result_0 / weightSum_0);
 }
 

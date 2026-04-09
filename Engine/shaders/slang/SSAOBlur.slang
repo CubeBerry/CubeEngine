@@ -46,7 +46,10 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float weightSum = 0.0f;
     float variance = 0.01f;
 
-    for (int i = -2; i <= 2; ++i)
+    float w = 6.0f;
+    float s = w / 2.0f;
+    float s2 = 2.0f * s * s;
+    for (int i = -6; i <= 6; ++i)
     {
         float2 offset = float2(pushConstants.blurDirection.x * i, pushConstants.blurDirection.y * i) * texelSize;
         float2 sampleUV = input.uv + offset;
@@ -56,11 +59,11 @@ float4 fragmentMain(VSOutput input) : SV_Target
         float3 sampleP = gPosition.SampleLevel(gSampler, sampleUV, 0).xyz;
         float sampleD = mul(pushConstants.view, float4(sampleP, 1.0f)).z;
 
-        float spatialWeight = exp(-(i * i) / 8.0f);
+        float spatialWeight = exp(-(i * i) / s2);
 
         float normalTerm = max(0.0f, dot(sampleN, centerN));
         float depthDiff = sampleD - centerD;
-        float depthTerm = (1.0f / sqrt(2.0f * 3.141592f * variance)) * exp(-(depthDiff * depthDiff) / (2.0f * variance));
+        float depthTerm = (1.0f / sqrt(2.0f * PI * variance)) * exp(-(depthDiff * depthDiff) / (2.0f * variance));
 
         float weight = spatialWeight * normalTerm * depthTerm;
 
@@ -68,5 +71,5 @@ float4 fragmentMain(VSOutput input) : SV_Target
         weightSum += weight;
     }
 
-    return result / max(weightSum, 0.0001f);
+    return result / weightSum;
 }
