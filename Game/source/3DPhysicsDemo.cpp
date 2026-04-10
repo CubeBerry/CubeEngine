@@ -6,6 +6,7 @@
 #include "BasicComponents/Light.hpp"
 #include "Engine.hpp"
 
+#include <random>
 #include <glm/gtc/matrix_transform.hpp>
 
 void PhysicsDemo::Init()
@@ -52,7 +53,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(2.f);
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetCollisionDetectionMode(CollisionDetectionMode::CONTINUOUS);
 
-	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 2.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE1", ObjectType::NONE);
+	/*Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 2.0f,0.f,0.f }, glm::vec3{ 1.f,1.f,1.f }, "CUBE1", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<DynamicSprite>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, { 0.0, 0.0, 1.0, 1.0 }, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
@@ -79,7 +80,7 @@ void PhysicsDemo::Init()
 	Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, {0.0, 0.0, 1.0, 1.0}, 0.5f, 0.5f);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Physics3D>();
 	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->AddCollideSphere(0.5f);
-	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(4.f);
+	Engine::GetObjectManager().GetLastObject()->GetComponent<Physics3D>()->SetGravity(4.f);*/
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, 0.5f, 0.f), glm::vec3{ 0.1f,0.1f,0.1f }, "LIGHT", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->AddComponent<Light>();
@@ -128,6 +129,47 @@ void PhysicsDemo::Update(float dt)
 		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT))
 		{
 			movement -= Engine::GetCameraManager().GetRightVector() * speed;
+		}
+		if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::BACKSPACE))
+		{
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_int_distribution<> disType(0, 1);
+			std::uniform_real_distribution<float> disPosXZ(-4.0f, 4.0f);
+			std::uniform_real_distribution<float> disPosY(4.0f, 8.0f);  
+			std::uniform_real_distribution<float> disScale(0.4f, 1.2f);
+			std::uniform_real_distribution<float> disColor(0.2f, 1.0f); 
+			std::uniform_real_distribution<float> disRot(-180.0f, 180.0f);
+
+			int type = disType(gen);
+			float s = disScale(gen);
+			glm::vec3 randomPos = { disPosXZ(gen), disPosY(gen), disPosXZ(gen) };
+			glm::vec3 randomScale = { s, s, s };
+			glm::vec4 randomColor = { disColor(gen), disColor(gen), disColor(gen), 1.0f };
+
+			Engine::GetObjectManager().AddObject<Object>(randomPos, randomScale, "PhysicsObj", ObjectType::NONE);
+			Object* newObj = Engine::GetObjectManager().GetLastObject();
+			newObj->SetRotate({ disRot(gen), disRot(gen), disRot(gen) });
+
+			newObj->AddComponent<DynamicSprite>();
+			newObj->AddComponent<Physics3D>();
+			Physics3D* phys = newObj->GetComponent<Physics3D>();
+
+			if (type == 0)
+			{
+				newObj->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/cube.obj", 1, 1, randomColor, 0.5f, 0.5f);
+				phys->AddCollidePolyhedronAABB(randomScale);
+				phys->SetEnableRotationalPhysics(true);
+			}
+			else
+			{
+				newObj->GetComponent<DynamicSprite>()->AddMesh3D(MeshType::OBJ, "../Game/assets/Models/sphere.obj", 1, 1, randomColor, 0.5f, 0.5f);
+				phys->AddCollideSphere(s);
+				phys->SetRestitution(1.f);
+			}
+
+			phys->SetGravity(9.8f);
+			phys->SetMass(s * s * s);
 		}
 
 		movement.y = 0;

@@ -257,6 +257,12 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		ImGui::Checkbox("Use Gravity", &isGravityOn);
 		physics->SetGravity(physics->GetGravity(), isGravityOn);
 
+		bool enableRotational = physics->GetEnableRotationalPhysics();
+		if (ImGui::Checkbox("Enable Rotational Physics", &enableRotational))
+		{
+			physics->SetEnableRotationalPhysics(enableRotational);
+		}
+
 		glm::vec3 velocity = physics->GetVelocity();
 		ImGui::DragFloat3("Velocity", &velocity.x, 0.01f);
 		physics->SetVelocity(velocity);
@@ -280,6 +286,13 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		float mass = physics->GetMass();
 		ImGui::DragFloat("Mass", &mass, 0.01f);
 		physics->SetMass(mass);
+
+		float inertia = physics->GetMomentOfInertia();
+		ImGui::DragFloat("Moment Of Inertia", &inertia, 0.1f, 0.0f, 1000.0f);
+		if (inertia != physics->GetMomentOfInertia())
+		{
+			physics->SetMomentOfInertia(inertia);
+		}
 
 		ImGui::SeparatorText("Collision");
 		int mode_int = static_cast<int>(phy->GetCollisionDetectionMode());
