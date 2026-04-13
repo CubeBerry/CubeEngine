@@ -46,8 +46,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float weightSum = 0.0f;
     float variance = 0.01f;
 
-    int w = 6.0f;
-    float s = w / 2.0f;
+    int w = 6;
+    float s = (float)w / 2.0f;
     float s2 = 2.0f * s * s;
     for (int i = -w; i <= w; ++i)
     {
