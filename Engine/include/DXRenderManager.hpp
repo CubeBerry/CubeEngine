@@ -65,9 +65,9 @@ public:
 	bool BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;
 
-	DXShadowMapContext* GetShadowMapContext() const { return m_shadowMapContext.get(); }
-	DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
-	DXSSAOContext* GetSSAOContext() const { return m_ssaoContext.get(); }
+	[[nodiscard]] DXShadowMapContext* GetShadowMapContext() const { return m_shadowMapContext.get(); }
+	[[nodiscard]] DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
+	[[nodiscard]] DXSSAOContext* GetSSAOContext() const { return m_ssaoContext.get(); }
 private:
 	int m_width, m_height;
 	bool m_isResize{ false };

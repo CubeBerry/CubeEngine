@@ -317,10 +317,8 @@ void DXSSAOContext::CreateBlurResources()
 
 void DXSSAOContext::DrawImGui()
 {
-	if (ImGui::CollapsingHeader("Ambient Occlusion (Alchemy AO)"))
+	if (ImGui::CollapsingHeader("Ambient Occlusion Settings", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::Checkbox("Enable SSAO", &m_enabled);
-
 		if (m_enabled)
 		{
 			ImGui::SliderFloat("Radius", &m_radius, 0.01f, 2.0f, "%.3f");

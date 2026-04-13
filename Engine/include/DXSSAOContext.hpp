@@ -20,7 +20,10 @@ public:
 	void Execute(ICommandListWrapper* commandListWrapper) override;
 	void CleanUp() override;
 
-	UINT GetBlurredAOSrvIndex() const { return m_blurSrvHandle.second; }
+	void SetEnabled(bool enabled) { m_enabled = enabled; }
+
+	[[nodiscard]] UINT GetBlurredAOSrvIndex() const { return m_blurSrvHandle.second; }
+	[[nodiscard]] bool IsEnabled() const { return m_enabled; }
 
 	void DrawImGui();
 private:

@@ -1262,7 +1262,9 @@ void RenderManager::RenderingControllerForImGui()
 		if (shadowEnabled) dxRenderManager->GetShadowMapContext()->DrawImGui();
 
 		// SSAO Context
-		dxRenderManager->GetSSAOContext()->DrawImGui();
+		bool ssaoEnabled = dxRenderManager->GetSSAOContext()->IsEnabled();
+		if (ImGui::Checkbox("Ambient Occlusion (Alchemy AO)", &ssaoEnabled)) dxRenderManager->GetSSAOContext()->SetEnabled(ssaoEnabled);
+		if (dxRenderManager->GetSSAOContext()->IsEnabled()) dxRenderManager->GetSSAOContext()->DrawImGui();
 	}
 
 	ImGui::End();
