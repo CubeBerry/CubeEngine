@@ -46,10 +46,10 @@ float4 fragmentMain(VSOutput input) : SV_Target
     float weightSum = 0.0f;
     float variance = 0.01f;
 
-    float w = 6.0f;
+    int w = 6.0f;
     float s = w / 2.0f;
     float s2 = 2.0f * s * s;
-    for (int i = -6; i <= 6; ++i)
+    for (int i = -w; i <= w; ++i)
     {
         float2 offset = float2(pushConstants.blurDirection.x * i, pushConstants.blurDirection.y * i) * texelSize;
         float2 sampleUV = input.uv + offset;
