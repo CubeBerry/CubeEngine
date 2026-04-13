@@ -97,7 +97,8 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
-		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()
+		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize(),
+		.useSSAO = m_renderManager->GetSSAOContext()->IsEnabled() ? 1 : 0
 	};
 	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 

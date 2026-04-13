@@ -35,5 +35,6 @@ private:
 		int activeDirectionalLight;
 		int useShadow;
 		float orthoSize;
+		int useSSAO;
 	} pushConstants;
 };

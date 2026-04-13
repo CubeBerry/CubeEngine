@@ -55,6 +55,7 @@ struct PushConstants
     int activeDirectionalLights;
     int useShadow;
     float orthoSize;
+    int useSSAO;
 }
 #if defined(__hlsl__)
 ConstantBuffer<PushConstants> pushConstants : register(b1, space0);
@@ -314,7 +315,8 @@ float4 fragmentMain(VSOutput input) : SV_Target
 #endif
     float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
-    float ao = SSAO.Sample(gSampler, input.uv).r;
+    float ao = 1.0;
+    if (pushConstants.useSSAO > 0) ao = SSAO.Sample(gSampler, input.uv).r;
     float3 ambient = (Kd * diffuse + specular) * ao;
     resultColor = ambient + resultColor;
 
