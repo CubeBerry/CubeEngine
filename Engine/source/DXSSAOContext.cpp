@@ -63,6 +63,25 @@ void DXSSAOContext::Initialize()
 
 void DXSSAOContext::OnResize()
 {
+	m_ssaoTexture.Reset();
+	m_ssaoRtvHeap.Reset();
+
+	m_blurIntermediateTexture.Reset();
+	m_blurIntermediateRtvHeap.Reset();
+
+	m_blurTexture.Reset();
+	m_blurRtvHeap.Reset();
+
+	m_renderManager->DeallocateSrvBlock(m_ssaoSrvHandle.second, 1);
+	m_renderManager->DeallocateSrvBlock(m_blurIntermediateSrvHandle.second, 1);
+	m_renderManager->DeallocateSrvBlock(m_blurSrvHandle.second, 1);
+
+	CreateSSAOResources();
+	CreateBlurResources();
+
+	D3D12_CPU_DESCRIPTOR_HANDLE destHandle = m_gBufferSrvHandle.first;
+	D3D12_CPU_DESCRIPTOR_HANDLE srcHandle = m_renderManager->GetGBufferContext()->GetSRVHeap()->GetCPUDescriptorHandleForHeapStart();
+	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
