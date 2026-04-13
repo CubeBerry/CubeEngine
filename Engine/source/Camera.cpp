@@ -348,5 +348,5 @@ void Camera::SetViewSize(int width, int height) noexcept
 
 void Camera::SetZoom(float amount) noexcept
 {
-	zoom = glm::clamp(amount, nearClip, farClip);
+	zoom = glm::clamp(amount, 0.01f, 1000.f);
 }

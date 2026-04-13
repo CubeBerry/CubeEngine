@@ -40,6 +40,11 @@ SLANG_SHADERS = [
 	# Geometry Pass, Use totally same vertex and mesh shader but different pixel shader
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "GBuffer.frag" },
 	{ "file": "GBuffer.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_6_5", "out_name": "GBufferMesh.frag" }, # Also need to convert to DXIL
+	# SSAO Pass
+	{ "file": "SSAO.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "SSAO.vert" },
+	{ "file": "SSAO.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "SSAO.frag" },
+	# SSAO Bilateral Blur Pass
+	{ "file": "SSAOBlur.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "SSAOBlur.frag" },
 	# Naive Lighting Pass
 	{ "file": "NaiveLightingPass.slang", "entry": "vertexMain", "stage": "vertex", "profile_hlsl": "sm_5_1", "out_name": "NaiveLightingPass.vert" },
 	{ "file": "NaiveLightingPass.slang", "entry": "fragmentMain", "stage": "fragment", "profile_hlsl": "sm_5_1", "out_name": "NaiveLightingPass.frag" },

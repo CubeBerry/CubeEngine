@@ -19,9 +19,10 @@ void DXGlobalLightingContext::Initialize()
 	// Create root signature and pipeline
 	// The slot of a root signature version 1.1
 	std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-	rootParameters.resize(5);
+	rootParameters.resize(6);
 	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameters[1].InitAsConstants(sizeof(PushConstants) / 4, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	// G-Buffer SRVs: Albedo, Normal, Depth, Material
 	CD3DX12_DESCRIPTOR_RANGE1 gBufferSrvRange;
 	gBufferSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 1);
 	rootParameters[2].InitAsDescriptorTable(1, &gBufferSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -31,6 +32,9 @@ void DXGlobalLightingContext::Initialize()
 	CD3DX12_DESCRIPTOR_RANGE1 shadowMapRange;
 	shadowMapRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 2);
 	rootParameters[4].InitAsDescriptorTable(1, &shadowMapRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_DESCRIPTOR_RANGE1 ssaoRange;
+	ssaoRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 1);
+	rootParameters[5].InitAsDescriptorTable(1, &ssaoRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	m_renderManager->CreateRootSignature(m_rootSignature, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature->SetName(L"Global Lighting-Pass Root Signature"));
@@ -93,7 +97,8 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		.meshletVisualization = m_renderManager->m_meshletVisualization ? 1 : 0,
 		.activeDirectionalLight = static_cast<int>(m_renderManager->directionalLightUniforms.size()),
 		.useShadow = m_renderManager->m_shadowMapContext->IsEnabled() ? 1 : 0,
-		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize()
+		.orthoSize = m_renderManager->m_shadowMapContext->GetOrthoSize(),
+		.useSSAO = m_renderManager->GetSSAOContext()->IsEnabled() ? 1 : 0
 	};
 	commandList->SetGraphicsRoot32BitConstants(1, sizeof(PushConstants) / 4, &pushConstants, 0);
 
@@ -109,6 +114,10 @@ void DXGlobalLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	D3D12_GPU_DESCRIPTOR_HANDLE shadowGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
 	shadowGpuHandle.ptr += static_cast<UINT64>(shadowSrvIndex) * m_renderManager->m_srvDescriptorSize;
 	commandList->SetGraphicsRootDescriptorTable(4, shadowGpuHandle);
+
+	D3D12_GPU_DESCRIPTOR_HANDLE ssaoGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
+	ssaoGpuHandle.ptr += static_cast<UINT64>(m_renderManager->GetSSAOContext()->GetBlurredAOSrvIndex()) * m_renderManager->m_srvDescriptorSize;
+	commandList->SetGraphicsRootDescriptorTable(5, ssaoGpuHandle);
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3, 1, 0, 0);

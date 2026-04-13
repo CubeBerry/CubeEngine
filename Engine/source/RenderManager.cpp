@@ -1256,9 +1256,15 @@ void RenderManager::RenderingControllerForImGui()
 	if (renderManager->gMode == GraphicsMode::DX)
 	{
 		ImGui::Spacing();
+		// Shadow Map Context
 		bool shadowEnabled = dxRenderManager->GetShadowMapContext()->IsEnabled();
 		if (ImGui::Checkbox("Shadow Map", &shadowEnabled)) dxRenderManager->GetShadowMapContext()->SetEnabled(shadowEnabled);
 		if (shadowEnabled) dxRenderManager->GetShadowMapContext()->DrawImGui();
+
+		// SSAO Context
+		bool ssaoEnabled = dxRenderManager->GetSSAOContext()->IsEnabled();
+		if (ImGui::Checkbox("Ambient Occlusion (Alchemy AO)", &ssaoEnabled)) dxRenderManager->GetSSAOContext()->SetEnabled(ssaoEnabled);
+		if (dxRenderManager->GetSSAOContext()->IsEnabled()) dxRenderManager->GetSSAOContext()->DrawImGui();
 	}
 
 	ImGui::End();
