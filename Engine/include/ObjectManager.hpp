@@ -15,6 +15,7 @@
 
 class DynamicSprite;
 class Physics3D;
+class Physics2D;
 class Light;
 
 class SkeletalAnimator;
@@ -95,7 +96,9 @@ public:
     void ProcessFunctionQueue();
 private:
     void Physics3DControllerForImGui(Physics3D* phy);
+    void Physics2DControllerForImGui(Physics2D* phy);
     void RenderPhysics3DDebug(Physics3D* phy);
+    void RenderPhysics2DDebug(Physics2D* phy);
     void SpriteControllerForImGui(DynamicSprite* sprite);
     void LightControllerForImGui(Light* light);
 

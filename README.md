@@ -125,7 +125,8 @@ dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 | **Core Engine** | | | | |
 | CPU Dump Writer | ✅ | ➖ | ➖ | ➖ |
 | CRT Memory Leak Detector | ✅ | ➖ | ➖ | ➖ |
-| Sound Manager | ✅ | ➖ | ➖ | ➖ |
+| Sound Manager (FMOD) | ✅ | ➖ | ➖ | ➖ |
+| Physics Manager (2D / 3D) | ✅ | ➖ | ➖ | ➖ |
 | Logger (CMD, CSV) | ✅ | ➖ | ➖ | ➖ |
 | **Rendering Features** | | | | |
 | 2D (Sprite Based Animation) Rendering | ➖ | ✅ | ✅ | ✅ |
@@ -162,7 +163,7 @@ dxc WorkGraphs.hlsl -T lib_6_8 -E broadcastNode -Fo WorkGraphs.cso
 
 <img width="2560" height="1392" alt="image" src="https://github.com/user-attachments/assets/7b40822c-f84d-4f42-ae0a-7a203dc34732" />
 
-![image](https://github.com/user-attachments/assets/0116de70-4fcc-465d-be30-21321d67ee25)
+<img width="1277" height="665" alt="Image" src="https://github.com/user-attachments/assets/b5840bfc-4075-4dda-92ad-89d2b37f0b0d" />
 
 ![image](https://github.com/user-attachments/assets/e7221576-5010-48b5-8a58-78bd5f197625)
 

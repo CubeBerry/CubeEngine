@@ -14,6 +14,7 @@ public:
 	void Init(glm::vec2 viewSize, CameraType type = CameraType::TwoDimension, float zoom = 45.f, float angle = 0.f);
 	void Update(); 
 	void Reset();
+	CameraType GetCameraType() const { return camera.GetCameraType(); }
 
 	// 2D, 3D
 	void SetZoom(float zoom) noexcept { camera.SetZoom(zoom); }

@@ -4,7 +4,6 @@
 #pragma once
 #include <string>
 #include <glm/vec4.hpp>
-#include "BasicComponents/Physics2D.hpp"
 #include "BasicComponents/DynamicSprite.hpp"
 
 enum class ParticleType
@@ -34,12 +33,19 @@ public:
     void SetFadeOutAmount(float amount) { fadeOutAmount = amount; }
     DynamicSprite* GetSprite() { return sprite; }
     float GetLifetime() { return lifeTime; }
-    Physics2D* GetPhysics() { return &pPhysics; }
+
+    void SetGravity(float g, bool on = true) { gravity = g; useGravity = on; }
+    void SetDrag(float d) { drag = d; }
 private:
     glm::vec3 position = { 0.f, 0.f, 0.f };
-    glm::vec3 speed = { 0.f, 0.f, 0.f };
-    glm::vec3 size = { 0.f, 0.f, 0.f };
-    glm::vec3 angle = { 0.f, 0.f, 0.f };
+    glm::vec3 velocity = { 0.f, 0.f, 0.f };
+    glm::vec3 size     = { 0.f, 0.f, 0.f };
+    glm::vec3 angle    = { 0.f, 0.f, 0.f };
+
+    // Self-contained physics state.
+    float gravity    = 9.8f;
+    bool  useGravity = false;
+    float drag       = 0.f;   // velocity damping per second (0 = no drag)
 
     float fadeOutAmount = 0.1f;
 
@@ -51,5 +57,4 @@ private:
 
     DynamicSprite* sprite = nullptr;
     ParticleEffect effect;
-    Physics2D pPhysics;
 };

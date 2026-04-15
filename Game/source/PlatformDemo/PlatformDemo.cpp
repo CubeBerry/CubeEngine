@@ -35,19 +35,18 @@ void PlatformDemo::Init()
 	Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ -64.f,196.f,0.f }, glm::vec3{ 64.f, 96.f,0.f }, "Enemy", EnemyType::NORMAL);
 	Engine::GetObjectManager().AddObject<PEnemy>(glm::vec3{ 640.f,0.f,0.f }, glm::vec3{ 320.f, 320.f,0.f }, "Enemy", EnemyType::AIRSHIP);
 	platformDemoSystem->InitHealthBar();
+
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::ENEMY, CollisionMode::DETECT);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::ENEMYBULLET, CollisionMode::DETECT);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::ENEMY, ObjectType::BULLET, CollisionMode::DETECT);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::ENEMY, ObjectType::ENEMY, CollisionMode::DETECT);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::WALL, CollisionMode::COLLIDE);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::ENEMY, ObjectType::WALL, CollisionMode::COLLIDE);
 }
 
 void PlatformDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_1))
-	{
-		Engine::GetGameStateManager().ChangeLevel(GameLevel::POCKETBALL);
-	}
-	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::NUMBER_2))
-	{
-		Engine::GetGameStateManager().ChangeLevel(GameLevel::PLATFORMDEMO);
-	}
-	else if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
+	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}

@@ -176,10 +176,11 @@ void GameStateManager::UpdateGameLogic(float dt)
 		Engine::GetObjectManager().Update(dt);
 		Engine::GetParticleManager().Update(dt);
 		Engine::GetCameraManager().Update();
-		CollideObjects();
+		Engine::GetPhysicsManager().Update(dt);
 		Engine::GetSpriteManager().Update(dt);
 	}
 }
+
 void GameStateManager::UpdateDraw(float dt)
 {
 	if (!(SDL_GetWindowFlags(Engine::GetWindow().GetWindow()) & SDL_WINDOW_MINIMIZED))
@@ -379,23 +380,4 @@ const char* GameStateManager::GameLevelTypeEnumToChar(GameLevel type)
 	return "NONE";
 }
 
-void GameStateManager::CollideObjects()
-{
-	for (auto& target : Engine::GetObjectManager().GetObjectMap())
-	{
-		for (auto& object : Engine::GetObjectManager().GetObjectMap())
-		{
-			if (target.second != nullptr && object.second != nullptr && target.second != object.second)
-			{
-				if (target.second->HasComponent<Physics2D>() == true && object.second->HasComponent<Physics2D>() == true)
-				{
-					target.second->CollideObject(object.second.get());
-				}
-				else if (target.second->HasComponent<Physics3D>() == true && object.second->HasComponent<Physics3D>() == true)
-				{
-					target.second->CollideObject(object.second.get());
-				}
-			}
-		}
-	}
-}
+

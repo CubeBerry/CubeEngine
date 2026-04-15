@@ -69,73 +69,90 @@ void CameraManager::CameraControllerImGui()
 		}
 	}
 
+	ImGui::Begin("CameraController");
 	glm::vec3 position = GetCameraPosition();
 	float zoom = GetZoom();
-	float nearClip = GetNear();
-	float farClip = GetFar();
-	float pitch = GetPitch();
-	float yaw = GetYaw();
-	float cameraSensitivity = GetCameraSensitivity();
-	bool isRelativeOn = Engine::GetInputManager().GetRelativeMouseMode();
 
-	glm::vec3 cameraOffset = GetCameraOffset(); 
-	float cameraDistance = GetCameraDistance();
-	bool isThirdPersonView = GetIsThirdPersonView();
-
-	ImGui::Begin("CameraController");
-
-	ImGui::Checkbox("Third Person View Mod", &isThirdPersonView);
-	SetIsThirdPersonViewMod(isThirdPersonView);
-
-	ImGui::Checkbox("Relative Mouse Mod (Press Q)", &isRelativeOn);
-	Engine::GetInputManager().SetRelativeMouseMode(isRelativeOn);
-
-	ImGui::SliderFloat("CameraSensitivity", &cameraSensitivity, 0.1f, 100.f);
-	SetCameraSensitivity(cameraSensitivity);
-
-	ImGui::DragFloat3("Position", &position.x, 0.01f);
-	SetCameraPosition(position);
-
-	ImGui::DragFloat("Zoom", &zoom, 0.5f);
-	SetZoom(zoom);
-
-	ImGui::DragFloat("Near", &nearClip, 0.05f);
-	SetNear(nearClip);
-
-	ImGui::DragFloat("Far", &farClip, 0.05f);
-	SetFar(farClip);
-
-	ImGui::DragFloat("Pitch", &pitch, 0.5f);
-	SetPitch(pitch);
-
-	ImGui::DragFloat("Yaw", &yaw, 0.5f);
-	SetYaw(yaw);
-	
-	if (isThirdPersonView == true && !Engine::GetObjectManager().GetObjectMap().empty())
+	if (GetCameraType() == CameraType::ThreeDimension)
 	{
-		if (ImGui::CollapsingHeader("Third Person View Option", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::BeginChild("Scolling");
-			int index = 0;
-			for (auto& object : Engine::GetObjectManager().GetObjectMap())
-			{
-				ImGui::PushStyleColor(ImGuiCol_Text, (currentObjIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
-				if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
-				{
-					currentObjIndex = index;
-				}
-				ImGui::PopStyleColor();
-				index++;
-			}
-			ImGui::EndChild();
-			SetTarget(Engine::GetObjectManager().FindObjectWithId(currentObjIndex)->GetPosition());
+		float nearClip = GetNear();
+		float farClip = GetFar();
+		float pitch = GetPitch();
+		float yaw = GetYaw();
 
-			ImGui::DragFloat("Distance", &cameraDistance, 0.05f);
-			SetCameraDistance(cameraDistance);
-			ImGui::DragFloat3("Offset", &cameraOffset.x, 0.01f);
-			SetCameraOffset(cameraOffset);
+		glm::vec3 cameraOffset = GetCameraOffset();
+		float cameraDistance = GetCameraDistance();
+		bool isThirdPersonView = GetIsThirdPersonView();
+
+		bool isRelativeOn = Engine::GetInputManager().GetRelativeMouseMode();
+		ImGui::Checkbox("Relative Mouse Mod (Press Q)", &isRelativeOn);
+		Engine::GetInputManager().SetRelativeMouseMode(isRelativeOn);
+
+		ImGui::Checkbox("Third Person View Mod", &isThirdPersonView);
+		SetIsThirdPersonViewMod(isThirdPersonView);
+
+		float cameraSensitivity = GetCameraSensitivity();
+		ImGui::SliderFloat("CameraSensitivity", &cameraSensitivity, 0.1f, 100.f);
+		SetCameraSensitivity(cameraSensitivity);
+
+		ImGui::DragFloat3("Position", &position.x, 0.01f);
+		SetCameraPosition(position);
+
+		ImGui::DragFloat("Zoom", &zoom, 0.5f);
+		SetZoom(zoom);
+
+		ImGui::DragFloat("Near", &nearClip, 0.05f);
+		SetNear(nearClip);
+
+		ImGui::DragFloat("Far", &farClip, 0.05f);
+		SetFar(farClip);
+
+		ImGui::DragFloat("Pitch", &pitch, 0.5f);
+		SetPitch(pitch);
+
+		ImGui::DragFloat("Yaw", &yaw, 0.5f);
+		SetYaw(yaw);
+
+		if (isThirdPersonView == true && !Engine::GetObjectManager().GetObjectMap().empty())
+		{
+			if (ImGui::CollapsingHeader("Third Person View Option", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::BeginChild("Scrolling", ImVec2(0, 100));
+				int index = 0;
+				for (auto& object : Engine::GetObjectManager().GetObjectMap())
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, (currentObjIndex == index) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImGui::GetStyleColorVec4(ImGuiCol_Text));
+					if (ImGui::Selectable(object.second.get()->GetName().c_str(), index))
+					{
+						currentObjIndex = index;
+					}
+					ImGui::PopStyleColor();
+					index++;
+				}
+				ImGui::EndChild();
+				SetTarget(Engine::GetObjectManager().FindObjectWithId(currentObjIndex)->GetPosition());
+
+				ImGui::DragFloat("Distance", &cameraDistance, 0.05f);
+				SetCameraDistance(cameraDistance);
+				ImGui::DragFloat3("Offset", &cameraOffset.x, 0.01f);
+				SetCameraOffset(cameraOffset);
+			}
 		}
 	}
+	else if (GetCameraType() == CameraType::TwoDimension)
+	{
+		float rotate2D = GetRotate2D();
+
+		ImGui::DragFloat2("Position", &position.x, 0.1f);
+		SetCameraPosition(position);
+
+		ImGui::DragFloat("Zoom", &zoom, 0.1f);
+		SetZoom(zoom);
+
+		ImGui::DragFloat("Rotation", &rotate2D, 0.5f);
+		SetRotate2D(rotate2D);
+	}
+
 	ImGui::End();
 }
 

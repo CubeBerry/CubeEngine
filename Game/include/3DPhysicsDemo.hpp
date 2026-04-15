@@ -9,6 +9,12 @@
 
 #include "Material.hpp"
 
+enum class PhysicsMode
+{
+	TwoDimension,
+	ThreeDimension
+};
+
 class PhysicsDemo : public GameState
 {
 public:
@@ -20,6 +26,16 @@ public:
 	void ImGuiDraw(float dt) override;
 	void Restart() override;
 	void End() override;
+
+	void Init3D();
+	void Init2D();
+
+	void Spawn3D();
+	void Spawn2D();
+
+	void ClearScene();
+
 private:
 	ThreeDimension::PointLightUniform l;
+	PhysicsMode mode = PhysicsMode::ThreeDimension;
 };
