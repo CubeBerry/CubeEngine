@@ -318,7 +318,7 @@ bool Physics3D::CheckCollision(Object* obj)
     return false;
 }
 
-bool Physics3D::CollisionPP(Object* obj, Object* obj2)
+bool Physics3D::CollisionPP(Object* obj, Object* obj2, CollisionMode mode)
 {
     auto* physics1 = obj->GetComponent<Physics3D>();
     auto* physics2 = obj2->GetComponent<Physics3D>();
@@ -396,7 +396,7 @@ bool Physics3D::CollisionPP(Object* obj, Object* obj2)
         }
 
         // Resolve penetration and calculate contact physics
-        if (!physics1->GetIsGhostCollision() && !physics2->GetIsGhostCollision())
+        if (mode == CollisionMode::COLLIDE && !physics1->GetIsGhostCollision() && !physics2->GetIsGhostCollision())
         {
             const float slop = 0.005f;
             const float correctionPercent = 0.15f;
@@ -524,7 +524,7 @@ bool Physics3D::CollisionPP(Object* obj, Object* obj2)
     return false;
 }
 
-bool Physics3D::CollisionSS(Object* obj, Object* obj2)
+bool Physics3D::CollisionSS(Object* obj, Object* obj2, CollisionMode mode)
 {
     // Simple sphere-to-sphere distance check
     glm::vec3 center1 = obj->GetPosition();
@@ -541,7 +541,7 @@ bool Physics3D::CollisionSS(Object* obj, Object* obj2)
         glm::vec3 normal = (center2 - center1) / distance;
         float depth = radiusSum - distance;
 
-        if (obj->GetComponent<Physics3D>()->GetIsGhostCollision() == false && obj2->GetComponent<Physics3D>()->GetIsGhostCollision() == false)
+        if (mode == CollisionMode::COLLIDE && obj->GetComponent<Physics3D>()->GetIsGhostCollision() == false && obj2->GetComponent<Physics3D>()->GetIsGhostCollision() == false)
         {
             const float slop = 0.005f;
             float penetrationAmt = std::max(depth - slop, 0.0f);
@@ -583,7 +583,7 @@ bool Physics3D::CollisionSS(Object* obj, Object* obj2)
     return false;
 }
 
-bool Physics3D::CollisionPS(Object* poly, Object* sph)
+bool Physics3D::CollisionPS(Object* poly, Object* sph, CollisionMode mode)
 {
     // Polygon vs Sphere: Find the closest point on the polygon to the sphere center
     Physics3D* polyPhysics = poly->GetComponent<Physics3D>();
@@ -616,7 +616,7 @@ bool Physics3D::CollisionPS(Object* poly, Object* sph)
 
     if (distSq <= (sphereRadius * sphereRadius))
     {
-        if (!polyPhysics->GetIsGhostCollision() && !sphPhysics->GetIsGhostCollision())
+        if (mode == CollisionMode::COLLIDE && !polyPhysics->GetIsGhostCollision() && !sphPhysics->GetIsGhostCollision())
         {
             glm::vec3 normalInLocal = sphereCenterInLocal - closestPointInLocal;
             if (glm::length2(normalInLocal) < 0.0001f)

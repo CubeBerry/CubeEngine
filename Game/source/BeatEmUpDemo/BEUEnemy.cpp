@@ -32,7 +32,7 @@ BEUEnemy::BEUEnemy(glm::vec3 pos_, glm::vec3 size_, std::string name, BeatEmUpDe
 	GetComponent<Physics2D>()->SetMaxVelocity({ 10.f,50.f });
 	GetComponent<Physics2D>()->SetGravity(75.0f);
 	GetComponent<Physics2D>()->SetFriction(0.f);
-	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 4.f,  size_.y / 2.f });
+	GetComponent<Physics2D>()->AddCollidePolygonAABB({ size_.x / 2.f,  size_.y});
 	GetComponent<Physics2D>()->SetBodyType(BodyType::RIGID);
 	beatEmUpDemoSystem = sys;
 	SetStateOn(BEUObjectStates::DIRECTION);
@@ -133,11 +133,10 @@ void BEUEnemy::CollideObject(Object* obj)
 	switch (obj->GetObjectType())
 	{
 	case ObjectType::WALL:
-		GetComponent<Physics2D>()->CheckCollision(obj);
-		obj->GetComponent<Physics2D>()->CheckCollision(this);
+		// Resolution handled by PhysicsManager automatically
 		break;
 	case ObjectType::BULLET:
-		if (GetInvincibleState() == false && GetComponent<Physics2D>()->CheckCollision(obj) == true && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
+		if (GetInvincibleState() == false && (position.z < obj->GetPosition().z + 1.f && position.z > obj->GetPosition().z - 1.f))
 		{
 			Hit(static_cast<BEUAttackBox*>(obj)->GetDamage());
 			beatEmUpDemoSystem->ShowEnemyHpBarOn(hp, maxHp);

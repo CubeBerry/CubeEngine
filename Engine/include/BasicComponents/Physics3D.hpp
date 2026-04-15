@@ -27,7 +27,6 @@ struct CollisionResult
 };
 
 
-
 enum class BodyType3D
 {
 	RIGID = 0,
@@ -44,6 +43,8 @@ struct Sphere
 {
 	float radius = 0;
 };
+
+#include "CollisionMode.hpp"
 
 class Physics3D : public IComponent
 {
@@ -124,10 +125,11 @@ public:
 	//2d->3d
 	std::vector<glm::vec3> GetCollidePolyhedron() { return collidePolyhedron; }
 	float GetSphereRadius() const { return sphere.radius; }
+
 	bool CheckCollision(Object* obj);
-	bool CollisionPP(Object* obj, Object* obj2);
-	bool CollisionSS(Object* obj, Object* obj2);
-	bool CollisionPS(Object* poly, Object* sph);
+	bool CollisionPP(Object* obj, Object* obj2, CollisionMode mode = static_cast<CollisionMode>(0));
+	bool CollisionSS(Object* obj, Object* obj2, CollisionMode mode = static_cast<CollisionMode>(0));
+	bool CollisionPS(Object* poly, Object* sph, CollisionMode mode = static_cast<CollisionMode>(0));
 
 	void AddCollidePolyhedron(glm::vec3 position);
 	void AddCollidePolyhedronAABB(glm::vec3 min, glm::vec3 max);

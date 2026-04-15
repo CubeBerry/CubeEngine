@@ -22,6 +22,10 @@ void BeatEmUpDemoSystem::Init()
 	emeyHealthBar = new DynamicSprite();
 	emeyHealthBar->AddQuadWithTexture("hpbar", { 0.f,0.f,0.f,0.f });
 	emeyHealthBar->SetSpriteDrawType(SpriteDrawType::UI);
+
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::ENEMY, CollisionMode::DETECT);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::WALL, CollisionMode::COLLIDE);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::ENEMY, ObjectType::ENEMY, CollisionMode::DETECT);
 }
 
 void BeatEmUpDemoSystem::Update(float dt)

@@ -150,7 +150,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 				Engine::GetObjectManager().GetLastObject()->GetComponent<DynamicSprite>()->AddQuad({ 0.5f,0.5f,0.5f,1.f });*/
 
 				Engine::GetObjectManager().GetLastObject()->AddComponent<Physics2D>();
-				Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::GetObjectManager().GetLastObject()->GetSize().x / 2.f,  Engine::GetObjectManager().GetLastObject()->GetSize().y / 2.f });
+				Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->AddCollidePolygonAABB({ Engine::GetObjectManager().GetLastObject()->GetSize().x,  Engine::GetObjectManager().GetLastObject()->GetSize().y});
 				Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
 				Engine::GetObjectManager().GetLastObject()->GetComponent<Physics2D>()->SetMass(1.f);
 			}
@@ -161,7 +161,7 @@ void PDemoMapEditorDemo::LoadLevelData(const std::filesystem::path& filePath)
 				temp->GetComponent<DynamicSprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
 				temp->AddComponent<Physics2D>();
-				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x / 2.f,  temp->GetSize().y / 2.f });
+				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x,  temp->GetSize().y});
 				temp->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
 				temp->GetComponent<Physics2D>()->SetMass(1.f);
 				walls.push_back(std::move(temp));
@@ -589,7 +589,7 @@ void PDemoMapEditorDemo::WallCreator()
 				temp->GetComponent<DynamicSprite>()->AddQuad({ 0.f,1.f,0.f,0.25f });
 
 				temp->AddComponent<Physics2D>();
-				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x / 2.f,  temp->GetSize().y / 2.f });
+				temp->GetComponent<Physics2D>()->AddCollidePolygonAABB({ temp->GetSize().x,  temp->GetSize().y});
 				temp->GetComponent<Physics2D>()->SetBodyType(BodyType::BLOCK);
 				temp->GetComponent<Physics2D>()->SetMass(1.f);
 				walls.push_back(std::move(temp));

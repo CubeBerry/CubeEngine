@@ -9,6 +9,7 @@
 #include "VKRenderManager.hpp"
 #include "DXRenderManager.hpp"
 
+#include "BasicComponents/Physics2D.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Light.hpp"
 #include "BasicComponents/SkeletalAnimator.hpp"
@@ -194,6 +195,9 @@ void ObjectManager::ObjectControllerForImGui()
 			case ComponentTypes::PHYSICS3D:
 				Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
 				break;
+			case ComponentTypes::PHYSICS2D:
+				Physics2DControllerForImGui(reinterpret_cast<Physics2D*>(comp));
+				break;
 			case ComponentTypes::LIGHT:
 				LightControllerForImGui(reinterpret_cast<Light*>(comp));
 				break;
@@ -250,6 +254,10 @@ void ObjectManager::ProcessFunctionQueue()
 
 void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 {
+	if (!phy) 
+	{
+		return;
+	}
 	Physics3D* physics = phy;
 	if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
 	{
@@ -331,8 +339,87 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 	physics = nullptr;
 }
 
+void ObjectManager::Physics2DControllerForImGui(Physics2D* phy)
+{
+	if (!phy) 
+	{
+		return;
+	}
+	Physics2D* physics = phy;
+	if (ImGui::CollapsingHeader("Physics2D", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		bool isGravityOn = physics->GetIsGravityOn();
+		ImGui::Checkbox("Use Gravity", &isGravityOn);
+		physics->SetGravity(physics->GetGravity(), isGravityOn);
+
+		bool enableRotational = physics->GetEnableRotationalPhysics();
+		if (ImGui::Checkbox("Enable Rotational Physics", &enableRotational))
+		{
+			physics->SetEnableRotationalPhysics(enableRotational);
+		}
+
+		glm::vec2 velocity = physics->GetVelocity();
+		ImGui::DragFloat2("Velocity", &velocity.x, 0.01f);
+		physics->SetVelocity(velocity);
+
+		glm::vec2 minVelocity = physics->GetMinVelocity();
+		ImGui::DragFloat2("Min Velocity", &minVelocity.x, 0.01f);
+		physics->SetMinVelocity(minVelocity);
+
+		glm::vec2 maxVelocity = physics->GetMaxVelocity();
+		ImGui::DragFloat2("Max Velocity", &maxVelocity.x, 0.01f);
+		physics->SetMaxVelocity(maxVelocity);
+
+		float gravity = physics->GetGravity();
+		ImGui::DragFloat("Gravity", &gravity, 0.01f);
+		physics->SetGravity(gravity, isGravityOn);
+
+		float friction = physics->GetFriction();
+		ImGui::DragFloat("Friction", &friction, 0.01f);
+		physics->SetFriction(friction);
+
+		float mass = physics->GetMass();
+		ImGui::DragFloat("Mass", &mass, 0.01f);
+		physics->SetMass(mass);
+
+		float restitution = physics->GetRestitution();
+		ImGui::DragFloat("Restitution", &restitution, 0.01f);
+		physics->SetRestitution(restitution);
+
+		float inertia = physics->GetMomentOfInertia();
+		ImGui::DragFloat("Moment Of Inertia", &inertia, 0.1f, 0.0f, 1000.0f);
+		if (inertia != physics->GetMomentOfInertia())
+		{
+			physics->SetMomentOfInertia(inertia);
+		}
+
+		if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType::RIGID))
+		{
+			physics->SetBodyType(BodyType::RIGID);
+		}
+		ImGui::SameLine();
+		if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType::BLOCK))
+		{
+			physics->SetBodyType(BodyType::BLOCK);
+		}
+
+		ImGui::SeparatorText("Debug");
+		ImGui::Checkbox("Show Physics Debug", &isShowPhysics);
+
+		if (isShowPhysics)
+		{
+			RenderPhysics2DDebug(physics);
+		}
+	}
+	physics = nullptr;
+}
+
 void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 {
+	if (!sprite) 
+	{
+		return;
+	}
 	RenderManager* renderManager = Engine::GetRenderManager();
 	DynamicSprite* spriteComp = sprite;
 	bool isSelectedObjModel = false;
@@ -612,6 +699,10 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 
 void ObjectManager::LightControllerForImGui(Light* light)
 {
+	if (!light) 
+	{
+		return;
+	}
 	if (light->GetLightType() != LightType::NONE)
 	{
 		glm::vec3 position = light->GetPosition();
@@ -734,7 +825,10 @@ void ObjectManager::LightControllerForImGui(Light* light)
 
 void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animator)
 {
-	if (!animator) return;
+	if (!animator) 
+	{
+		return;
+	}
 
 	if (ImGui::CollapsingHeader("Skeletal Animator"))
 	{
@@ -889,7 +983,10 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 
 void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationStateMachine* fsm)
 {
-	if (!fsm) return;
+	if (!fsm) 
+	{
+		return;
+	}
 
 	ImGui::Text("Animation State Machine");
 	ImGui::Spacing();
@@ -1302,7 +1399,10 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 
 void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 {
-	if (!phy) return;
+	if (!phy) 
+	{
+		return;
+	}
 	
 	Object* obj = phy->GetOwner();
 	if (!obj) return;
@@ -1314,9 +1414,12 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 	ImU32 color;
 	switch (phy->GetBodyType())
 	{
-	case BodyType3D::RIGID: color = IM_COL32(0, 255, 0, 255); break; // Green
-	case BodyType3D::BLOCK: color = IM_COL32(255, 0, 0, 255); break; // Red
-	default: color = IM_COL32(255, 255, 0, 255); break; // Yellow
+	case BodyType3D::RIGID: color = IM_COL32(0, 255, 0, 255); 
+		break;
+	case BodyType3D::BLOCK: color = IM_COL32(255, 0, 0, 255); 
+		break;
+	default: color = IM_COL32(255, 255, 0, 255); 
+		break;
 	}
 
 	if (phy->GetColliderType() == ColliderType3D::SPHERE)
@@ -1331,7 +1434,7 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			glm::vec2 firstScreenPos;
 			for (int i = 0; i <= segments; ++i)
 			{
-				float theta = (2.0f * 3.14159265359f * i) / segments;
+				float theta = (2.0f * PI * i) / segments;
 				glm::vec3 worldPos = center + (right * cos(theta) + up * sin(theta)) * radius;
 				glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos, view, proj);
 				
@@ -1390,6 +1493,87 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 					drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
 				}
 			}
+		}
+	}
+}
+
+void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
+{
+	if (!phy) return;
+	Object* obj = phy->GetOwner();
+	if (!obj) return;
+
+	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
+	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	ImU32 color;
+	switch (phy->GetBodyType())
+	{
+	case BodyType::RIGID: color = IM_COL32(0, 255, 0, 255); 
+		break;
+	case BodyType::BLOCK: color = IM_COL32(255, 0, 0, 255); 
+		break;
+	default: color = IM_COL32(255, 255, 0, 255); 
+		break;
+	}
+
+	glm::vec2 objPos = obj->GetPosition();
+	// Apply the engine's unconventional 2D position scaling (2.0f) to match DynamicSprite and Camera logic
+	glm::vec2 scaledPos = objPos * 2.0f;
+
+	float objRotVal = obj->GetRotate();
+	// Handle graphics API specific rotation direction (GL typically negates the angle)
+	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		objRotVal = -objRotVal;
+	}
+	float objRotRad = objRotVal * PI / 180.f;
+
+	if (phy->GetCollideType() == CollideType::POLYGON)
+	{
+		const auto& localPoints = phy->GetCollidePolygon();
+		if (localPoints.empty()) 
+		{
+			return;
+		}
+
+		std::vector<glm::vec2> screenPoints;
+		for (const auto& localPt : localPoints)
+		{
+			// Scale the local point by 2 to match the engine's 2D rendering scale
+			glm::vec2 scaledLocalPt = localPt * 2.0f;
+
+			// Rotate and scale local point
+			float cosTheta = cos(objRotRad);
+			float sinTheta = sin(objRotRad);
+			glm::vec2 worldPt = scaledPos + glm::vec2(scaledLocalPt.x * cosTheta - scaledLocalPt.y * sinTheta, scaledLocalPt.x * sinTheta + scaledLocalPt.y * cosTheta);
+
+			glm::vec2 screenPt = Engine::GetRenderManager()->WorldToScreen(glm::vec3(worldPt, 0.f), view, proj);
+			screenPoints.push_back(screenPt);
+		}
+
+		for (size_t i = 0; i < screenPoints.size(); ++i)
+		{
+			glm::vec2 p1 = screenPoints[i];
+			glm::vec2 p2 = screenPoints[(i + 1) % screenPoints.size()];
+			if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
+			{
+				drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
+			}
+		}
+	}
+	else if (phy->GetCollideType() == CollideType::CIRCLE)
+	{
+		// Scale radius by 2 to match the engine's 2D rendering scale
+		float radius = phy->GetCircleCollideRadius() * 2.0f;
+		glm::vec2 screenCenter = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos, 0.f), view, proj);
+		glm::vec2 screenEdge = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos.x + radius, scaledPos.y, 0.f), view, proj);
+
+		float screenRadius = glm::distance(screenCenter, screenEdge);
+		if (screenCenter.x >= 0 && screenCenter.y >= 0)
+		{
+			drawList->AddCircle(ImVec2(screenCenter.x, screenCenter.y), screenRadius, color, 32, 2.0f);
 		}
 	}
 }

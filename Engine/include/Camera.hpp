@@ -70,6 +70,7 @@ public:
 	float			GetCameraSensitivity() { return cameraSensitivity; }
 
 	void			SetCameraType(CameraType type) { cameraType = type; }
+	CameraType      GetCameraType() const { return cameraType; }
 	void            SetNear(float amount) noexcept { nearClip = amount; }
 	void            SetFar(float amount) noexcept { farClip = amount; }
 	void            SetPitch(float amount) noexcept { pitch = amount; }

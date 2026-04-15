@@ -16,6 +16,29 @@ void PhysicsManager::Update(float dt)
     UpdatePhysics3D(dt);
 }
 
+void PhysicsManager::SetCollisionMode(ObjectType typeA, ObjectType typeB, CollisionMode mode)
+{
+    if (typeA > typeB)
+    {
+        std::swap(typeA, typeB);
+    }
+    collisionMaskMap[{typeA, typeB}] = mode;
+}
+
+CollisionMode PhysicsManager::GetCollisionMode(ObjectType typeA, ObjectType typeB)
+{
+    if (typeA > typeB)
+    {
+        std::swap(typeA, typeB);
+    }
+    auto it = collisionMaskMap.find({typeA, typeB});
+    if (it != collisionMaskMap.end())
+    {
+        return it->second;
+    }
+    return CollisionMode::COLLIDE;
+}
+
 void PhysicsManager::AddBody2D(Physics2D* body)
 {
     // Add the body if it's not already in the list
@@ -67,7 +90,10 @@ void PhysicsManager::UpdatePhysics2D(float dt)
     // Step 2: Broad Phase - Quickly filter out objects that are far apart
     auto collisionPairs = BroadPhase2D();
 
-    // Step 3: Notify objects about potential collisions
+	// Step 3: Narrow Phase - Perform detailed collision checks on potential pairs
+    NarrowPhase2D(collisionPairs, dt);
+
+    // Step 4: Notify objects about potential collisions
     for (auto& pair : collisionPairs)
     {
         Object* objectA = pair.bodyA->GetOwner();
@@ -170,44 +196,60 @@ std::vector<CollisionPair2D> PhysicsManager::BroadPhase2D()
 
 void PhysicsManager::NarrowPhase2D(std::vector<CollisionPair2D>& pairs, float /*dt*/)
 {
-    // Perform precise collision detection for AABB-overlapping pairs
-    for (auto& pair : pairs)
+    auto it = pairs.begin();
+    while (it != pairs.end())
     {
-        Physics2D* bodyA = pair.bodyA;
-        Physics2D* bodyB = pair.bodyB;
+        Physics2D* bodyA = it->bodyA;
+        Physics2D* bodyB = it->bodyB;
+        bool isColliding = false;
 
-        if (bodyA == nullptr || bodyB == nullptr)
+        if (bodyA != nullptr && bodyB != nullptr)
         {
-            continue;
+            Object* objectA = bodyA->GetOwner();
+            Object* objectB = bodyB->GetOwner();
+
+            if (objectA != nullptr && objectB != nullptr)
+            {
+                CollisionMode currentMode = GetCollisionMode(objectA->GetObjectType(), objectB->GetObjectType());
+                
+                if (currentMode == CollisionMode::IGNORED)
+                {
+                    it = pairs.erase(it);
+                    continue;
+                }
+
+                CollideType typeA = bodyA->GetCollideType();
+                CollideType typeB = bodyB->GetCollideType();
+
+                // Perform SAT and distance checks, receiving results as bools.
+                if (typeA == CollideType::POLYGON && typeB == CollideType::POLYGON)
+                {
+                    isColliding = bodyA->CollisionPP(objectA, objectB, currentMode);
+                }
+                else if (typeA == CollideType::CIRCLE && typeB == CollideType::CIRCLE)
+                {
+                    isColliding = bodyA->CollisionCC(objectA, objectB, currentMode);
+                }
+                else if (typeA == CollideType::POLYGON && typeB == CollideType::CIRCLE)
+                {
+                    isColliding = bodyA->CollisionPC(objectA, objectB, currentMode);
+                }
+                else if (typeA == CollideType::CIRCLE && typeB == CollideType::POLYGON)
+                {
+                    isColliding = bodyB->CollisionPC(objectB, objectA, currentMode);
+                }
+            }
         }
 
-        Object* objectA = bodyA->GetOwner();
-        Object* objectB = bodyB->GetOwner();
-
-        if (objectA == nullptr || objectB == nullptr)
+        // If the SAT narrow phase check determines that the objects are not actually colliding, 
+        // we remove the pair from the list to eliminate false positives from the broad phase AABB check.
+        if (isColliding)
         {
-            continue;
+            ++it;
         }
-
-        CollideType typeA = bodyA->GetCollideType();
-        CollideType typeB = bodyB->GetCollideType();
-
-        // Dispatch specific collision logic based on shape combinations
-        if (typeA == CollideType::POLYGON && typeB == CollideType::POLYGON)
+        else
         {
-            bodyA->CollisionPP(objectA, objectB);
-        }
-        else if (typeA == CollideType::CIRCLE && typeB == CollideType::CIRCLE)
-        {
-            bodyA->CollisionCC(objectA, objectB);
-        }
-        else if (typeA == CollideType::POLYGON && typeB == CollideType::CIRCLE)
-        {
-            bodyA->CollisionPC(objectA, objectB);
-        }
-        else if (typeA == CollideType::CIRCLE && typeB == CollideType::POLYGON)
-        {
-            bodyB->CollisionPC(objectB, objectA);
+            it = pairs.erase(it);
         }
     }
 }
@@ -332,6 +374,13 @@ void PhysicsManager::NarrowPhase3D(std::vector<CollisionPair3D>& pairs, float dt
             continue;
         }
 
+        CollisionMode currentMode = GetCollisionMode(bodyA->GetOwner()->GetObjectType(), bodyB->GetOwner()->GetObjectType());
+
+        if (currentMode == CollisionMode::IGNORED)
+        {
+            continue;
+        }
+
         ColliderType3D typeA = bodyA->GetColliderType();
         ColliderType3D typeB = bodyB->GetColliderType();
 
@@ -348,36 +397,21 @@ void PhysicsManager::NarrowPhase3D(std::vector<CollisionPair3D>& pairs, float dt
         // Discrete collision dispatch
         if (typeA == ColliderType3D::BOX && typeB == ColliderType3D::BOX)
         {
-            SolveDiscrete_BoxBox(bodyA, bodyB);
+            bodyA->CollisionPP(bodyA->GetOwner(), bodyB->GetOwner(), currentMode);
         }
         else if (typeA == ColliderType3D::SPHERE && typeB == ColliderType3D::SPHERE)
         {
-            SolveDiscrete_SphereSphere(bodyA, bodyB);
+            bodyA->CollisionSS(bodyA->GetOwner(), bodyB->GetOwner(), currentMode);
         }
         else if (typeA == ColliderType3D::BOX && typeB == ColliderType3D::SPHERE)
         {
-            SolveDiscrete_BoxSphere(bodyA, bodyB);
+            bodyA->CollisionPS(bodyA->GetOwner(), bodyB->GetOwner(), currentMode);
         }
         else if (typeA == ColliderType3D::SPHERE && typeB == ColliderType3D::BOX)
         {
-            SolveDiscrete_BoxSphere(bodyB, bodyA);
+            bodyB->CollisionPS(bodyB->GetOwner(), bodyA->GetOwner(), currentMode);
         }
     }
-}
-
-void PhysicsManager::SolveDiscrete_BoxBox(Physics3D* a, Physics3D* b)
-{
-    a->CollisionPP(a->GetOwner(), b->GetOwner());
-}
-
-void PhysicsManager::SolveDiscrete_SphereSphere(Physics3D* a, Physics3D* b)
-{
-    a->CollisionSS(a->GetOwner(), b->GetOwner());
-}
-
-void PhysicsManager::SolveDiscrete_BoxSphere(Physics3D* box, Physics3D* sphere)
-{
-    box->CollisionPS(box->GetOwner(), sphere->GetOwner());
 }
 
 void PhysicsManager::SolveContinuous(Physics3D* body, float dt)

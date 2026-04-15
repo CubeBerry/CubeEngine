@@ -7,6 +7,7 @@
 #include <glm/vec3.hpp>
 
 #include "Interface/IComponent.hpp"
+#include "CollisionMode.hpp"
 #ifdef _DEBUG
 #include "BasicComponents/DynamicSprite.hpp"
 #endif
@@ -90,11 +91,17 @@ public:
 
 	void SetEnableRotationalPhysics(bool v) { enableRotationalPhysics = v; }
 
+	float GetGravity() const { return gravity; }
+	float GetFriction() const { return friction; }
+	float GetMass() const { return mass; }
+	glm::vec2 GetMinVelocity() const { return velocityMin; }
+	glm::vec2 GetMaxVelocity() const { return velocityMax; }
+
 
 	bool CheckCollision(Object* obj);
-	bool CollisionPP(Object* obj, Object* obj2);
-	bool CollisionCC(Object* obj, Object* obj2);
-	bool CollisionPC(Object* poly, Object* cir);
+	bool CollisionPP(Object* obj, Object* obj2, CollisionMode mode = static_cast<CollisionMode>(0));
+	bool CollisionCC(Object* obj, Object* obj2, CollisionMode mode = static_cast<CollisionMode>(0));
+	bool CollisionPC(Object* poly, Object* cir, CollisionMode mode = static_cast<CollisionMode>(0));
 	bool CollisionPPWithoutPhysics(Object* obj, Object* obj2);
 
 	void AddCollideCircle(float r);

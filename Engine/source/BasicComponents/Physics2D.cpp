@@ -160,7 +160,7 @@ bool Physics2D::CheckCollision(Object* obj)
     return false;
 }
 
-bool Physics2D::CollisionPP(Object* obj, Object* obj2)
+bool Physics2D::CollisionPP(Object* obj, Object* obj2, CollisionMode mode)
 {
     // Polygon vs Polygon collision using Separating Axis Theorem (SAT)
     if (obj->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false &&
@@ -226,27 +226,47 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
         }
 
         // Penetration resolution and collision response
-        if (obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
+        if (mode == CollisionMode::COLLIDE &&
+            obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
             obj2->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
         {
-            // Apply positional correction based on body types
+            // Ensure the normal points from obj to obj2 for consistent collision response
+            glm::vec2 objCenter = glm::vec2(obj->GetPosition());
+            glm::vec2 obj2Center = glm::vec2(obj2->GetPosition());
+            glm::vec2 direction = obj2Center - objCenter;
+
+            // Ensure the normal points from obj to obj2 for consistent collision response
+            if (glm::dot(direction, normal) < 0.f)
+            {
+                normal = -normal;
+            }
+
+            // Apply Baumgarte stabilization technique (Slop)
+            const float slop = 0.01f;
+            const float correctionPercent = 0.2f;
+            float penetrationAmt = std::max(depth - slop, 0.0f);
+
+            // Calculate the actual amount to push
+            glm::vec2 moveVector = normal * penetrationAmt * correctionPercent;
+
+            // Position correction (applying moveVector)
             if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
                 obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
             {
-                obj->SetXPosition(obj->GetPosition().x + (-normal * depth / 2.f).x);
-                obj->SetYPosition(obj->GetPosition().y + (-normal * depth / 2.f).y);
-                obj2->SetXPosition(obj2->GetPosition().x + (normal * depth / 2.f).x);
-                obj2->SetYPosition(obj2->GetPosition().y + (normal * depth / 2.f).y);
+                obj->SetXPosition(obj->GetPosition().x - moveVector.x * 0.5f);
+                obj->SetYPosition(obj->GetPosition().y - moveVector.y * 0.5f);
+                obj2->SetXPosition(obj2->GetPosition().x + moveVector.x * 0.5f);
+                obj2->SetYPosition(obj2->GetPosition().y + moveVector.y * 0.5f);
             }
             else if (obj->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
             {
-                obj->SetXPosition(obj->GetPosition().x + (-normal * depth).x);
-                obj->SetYPosition(obj->GetPosition().y + (-normal * depth).y);
+                obj->SetXPosition(obj->GetPosition().x - moveVector.x);
+                obj->SetYPosition(obj->GetPosition().y - moveVector.y);
             }
             else if (obj2->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
             {
-                obj2->SetXPosition(obj2->GetPosition().x + (normal * depth).x);
-                obj2->SetYPosition(obj2->GetPosition().y + (normal * depth).y);
+                obj2->SetXPosition(obj2->GetPosition().x + moveVector.x);
+                obj2->SetYPosition(obj2->GetPosition().y + moveVector.y);
             }
 
             // Find contact points to apply rotational impulses
@@ -309,7 +329,7 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2)
     return false;
 }
 
-bool Physics2D::CollisionCC(Object* obj, Object* obj2)
+bool Physics2D::CollisionCC(Object* obj, Object* obj2, CollisionMode mode)
 {
     // Circle vs Circle distance-based collision check
     float distanceX = obj->GetPosition().x - obj2->GetPosition().x;
@@ -331,7 +351,8 @@ bool Physics2D::CollisionCC(Object* obj, Object* obj2)
         normal = normalize(glm::vec2(obj2->GetPosition()) - glm::vec2(obj->GetPosition()));
         depth = overlap - distance;
 
-        if (obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
+        if (mode == CollisionMode::COLLIDE &&
+            obj->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
             obj2->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
         {
             // Position correction
@@ -356,14 +377,14 @@ bool Physics2D::CollisionCC(Object* obj, Object* obj2)
 
             // Resolve impulse at the point of contact
             glm::vec2 contactPoint = glm::vec2(obj->GetPosition()) + normal * obj->GetComponent<Physics2D>()->GetCircleCollideRadius();
-            CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), -normal, &depth, contactPoint);
+            CalculateLinearVelocity(*obj->GetComponent<Physics2D>(), *obj2->GetComponent<Physics2D>(), normal, &depth, contactPoint);
         }
         return true;
     }
     return false;
 }
 
-bool Physics2D::CollisionPC(Object* poly, Object* cir)
+bool Physics2D::CollisionPC(Object* poly, Object* cir, CollisionMode mode)
 {
     // Polygon vs Circle collision check
     glm::vec2 circleCenter = cir->GetPosition();
@@ -421,34 +442,36 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir)
         }
     }
 
-    // Ensure collision normal is pointing in the correct direction
-    glm::vec2 direction = FindSATCenter(rotatedPoints) - circleCenter;
+    // Ensure collision normal points from Polygon (A) to Circle (B)
+    glm::vec2 polyCenter = FindSATCenter(rotatedPoints);
+    glm::vec2 direction = circleCenter - polyCenter;
     if (glm::dot(direction, normal) < 0.f)
     {
         normal = -normal;
     }
 
-    if (poly->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
+    if (mode == CollisionMode::COLLIDE &&
+        poly->GetComponent<Physics2D>()->GetIsGhostCollision() == false &&
         cir->GetComponent<Physics2D>()->GetIsGhostCollision() == false)
     {
         // Resolve overlap
         if (poly->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID &&
             cir->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
         {
-            poly->SetXPosition(poly->GetPosition().x + (normal * depth / 2.f).x);
-            poly->SetYPosition(poly->GetPosition().y + (normal * depth / 2.f).y);
-            cir->SetXPosition(cir->GetPosition().x + (-normal * depth / 2.f).x);
-            cir->SetYPosition(cir->GetPosition().y + (-normal * depth / 2.f).y);
+            poly->SetXPosition(poly->GetPosition().x - (normal * depth / 2.f).x);
+            poly->SetYPosition(poly->GetPosition().y - (normal * depth / 2.f).y);
+            cir->SetXPosition(cir->GetPosition().x + (normal * depth / 2.f).x);
+            cir->SetYPosition(cir->GetPosition().y + (normal * depth / 2.f).y);
         }
         else if (poly->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
         {
-            poly->SetXPosition(poly->GetPosition().x + (normal * depth).x);
-            poly->SetYPosition(poly->GetPosition().y + (normal * depth).y);
+            poly->SetXPosition(poly->GetPosition().x - (normal * depth).x);
+            poly->SetYPosition(poly->GetPosition().y - (normal * depth).y);
         }
         else if (cir->GetComponent<Physics2D>()->GetBodyType() == BodyType::RIGID)
         {
-            cir->SetXPosition(cir->GetPosition().x + (-normal * depth).x);
-            cir->SetYPosition(cir->GetPosition().y + (-normal * depth).y);
+            cir->SetXPosition(cir->GetPosition().x + (normal * depth).x);
+            cir->SetYPosition(cir->GetPosition().y + (normal * depth).y);
         }
 
         // Apply impulse calculation
@@ -489,7 +512,11 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
             glm::vec2 axis = normalize(glm::vec2(-edge.y, edge.x));
             if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
             {
-                return false;
+                // Strict separation check for grounding (using tiny epsilon)
+                if (axisDepth < -0.1f)
+                {
+                    return false;
+                }
             }
             if (axisDepth < depth)
             {
@@ -505,7 +532,10 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
             glm::vec2 axis = normalize(glm::vec2(-edge.y, edge.x));
             if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
             {
-                return false;
+                if (axisDepth < -0.1f)
+                {
+                    return false;
+                }
             }
             if (axisDepth < depth)
             {
@@ -533,6 +563,9 @@ void Physics2D::AddCollideCircle(float r)
     collideType = CollideType::CIRCLE;
     collidePolygon.clear();
     circle.radius = r;
+
+    float calcInertia = (mass * r * r) / 2.0f;
+    SetMomentOfInertia(calcInertia);
 }
 
 void Physics2D::AddCollidePolygon(glm::vec2 position)
@@ -555,6 +588,11 @@ void Physics2D::AddCollidePolygonAABB(glm::vec2 min, glm::vec2 max)
     collideType = CollideType::POLYGON;
     collidePolygon.clear();
     collidePolygon = { {min.x, min.y}, {min.x, max.y}, {max.x, max.y}, {max.x, min.y} };
+
+    float width = (min.x + max.x) * 2.0f;
+    float height = (min.y + max.y) * 2.0f;
+    float calcInertia = (mass * (width * width + height * height)) / 12.0f;
+    SetMomentOfInertia(calcInertia);
 }
 
 void Physics2D::AddCollidePolygonAABB(glm::vec2 size)
@@ -567,7 +605,13 @@ void Physics2D::AddCollidePolygonAABB(glm::vec2 size)
 #endif
     collideType = CollideType::POLYGON;
     collidePolygon.clear();
-    collidePolygon = { {-size.x, -size.y}, {-size.x, size.y}, {size.x, size.y}, {size.x, -size.y} };
+    collidePolygon = { {-size.x / 2.f, -size.y / 2.f}, {-size.x / 2.f, size.y / 2.f},
+                   {size.x / 2.f, size.y / 2.f}, {size.x / 2.f, -size.y / 2.f} };
+    
+    float width = size.x * 2.0f;
+    float height = size.y * 2.0f;
+    float calcInertia = (mass * (width * width + height * height)) / 12.0f;
+    SetMomentOfInertia(calcInertia);
 }
 
 glm::vec2 Physics2D::FindSATCenter(const std::vector<glm::vec2>& points)
@@ -776,7 +820,8 @@ void Physics2D::CalculateLinearVelocity(Physics2D& body, Physics2D& body2, glm::
     }
 
     // Apply the impulse to both bodies
-    float j = -(1.f + res) * velAlongNormal / denominator;
+    // Using historical formula: (1.0f - restitution) where -1.0f = perfect bounce
+    float j = -(1.f - res) * velAlongNormal / denominator;
     glm::vec2 impulse = normal * j;
 
     if (body.GetBodyType() == BodyType::RIGID)
