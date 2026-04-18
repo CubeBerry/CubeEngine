@@ -8,13 +8,6 @@
 
 #include <iostream>
 
-//Thread
-#include <thread>
-#include <mutex>
-#include <queue>
-#include <atomic>
-//Thread
-
 enum class MOUSEBUTTON
 {
 	LEFT   =  1,
@@ -160,6 +153,70 @@ enum class KEYBOARDKEYS
 	 MODE = SDL_SCANCODE_TO_KEYCODE(SDL_SCANCODE_MODE),
 };
 
+// Immutable snapshot of input state captured at the start of each frame.
+// All query functions are const — safe to call from any thread.
+struct InputSnapshot
+{
+	std::unordered_map<KEYBOARDKEYS, bool> keyStates;
+	std::unordered_map<KEYBOARDKEYS, bool> keyStatePrev;
+	std::unordered_map<MOUSEBUTTON, bool>  mouseStates;
+	std::unordered_map<MOUSEBUTTON, bool>  mouseStatePrev;
+	glm::vec2 mousePosition      = { 0.f, 0.f };
+	glm::vec2 mouseWheel         = { 0.f, 0.f };
+	glm::vec2 relativeMouseState = { 0.f, 0.f };
+
+	bool IsKeyPressed(KEYBOARDKEYS key) const
+	{
+		auto it = keyStates.find(key);
+		return it != keyStates.end() && it->second;
+	}
+
+	bool IsKeyPressOnce(KEYBOARDKEYS key) const
+	{
+		auto itCur  = keyStates.find(key);
+		auto itPrev = keyStatePrev.find(key);
+		bool cur  = (itCur  != keyStates.end())    && itCur->second;
+		bool prev = (itPrev != keyStatePrev.end()) && itPrev->second;
+		return cur && !prev;
+	}
+
+	bool IsKeyReleaseOnce(KEYBOARDKEYS key) const
+	{
+		auto itCur  = keyStates.find(key);
+		auto itPrev = keyStatePrev.find(key);
+		bool cur  = (itCur  != keyStates.end())    && itCur->second;
+		bool prev = (itPrev != keyStatePrev.end()) && itPrev->second;
+		return !cur && prev;
+	}
+
+	bool IsMouseButtonPressed(MOUSEBUTTON btn) const
+	{
+		auto it = mouseStates.find(btn);
+		return it != mouseStates.end() && it->second;
+	}
+
+	bool IsMouseButtonPressOnce(MOUSEBUTTON btn) const
+	{
+		auto itCur  = mouseStates.find(btn);
+		auto itPrev = mouseStatePrev.find(btn);
+		bool cur  = (itCur  != mouseStates.end())    && itCur->second;
+		bool prev = (itPrev != mouseStatePrev.end()) && itPrev->second;
+		return cur && !prev;
+	}
+
+	bool IsMouseButtonReleaseOnce(MOUSEBUTTON btn) const
+	{
+		auto itCur  = mouseStates.find(btn);
+		auto itPrev = mouseStatePrev.find(btn);
+		bool cur  = (itCur  != mouseStates.end())    && itCur->second;
+		bool prev = (itPrev != mouseStatePrev.end()) && itPrev->second;
+		return !cur && prev;
+	}
+
+	glm::vec2 GetMousePosition() const { return mousePosition; }
+	glm::vec2 GetMouseWheelMotion() const { return mouseWheel; }
+	glm::vec2 GetRelativeMouseState() const { return relativeMouseState; }
+};
 
 class InputManager
 {
@@ -184,6 +241,13 @@ public:
 	void SetRelativeMouseMode(bool state);
 	bool GetRelativeMouseMode();
 	glm::vec2 GetRelativeMouseState();
+
+	// Batch update previous state at frame boundary (call before CreateSnapshot)
+	void UpdatePreviousState();
+
+	// Create an immutable snapshot of current input state for thread-safe reading
+	InputSnapshot CreateSnapshot();
+
 protected:
 	void KeyDown(KEYBOARDKEYS keycode)
 	{

@@ -114,13 +114,13 @@ void PPlayer::CollideObject(Object* obj)
 
 void PPlayer::Control(float /*dt*/)
 {
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::DOWN))
 	{
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::UP))
 	{
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::LEFT))
 	{
 		if (IsStateOn(PlayerStates::DIRECTION) == true)
 		{
@@ -129,7 +129,7 @@ void PPlayer::Control(float /*dt*/)
 		SetStateOff(PlayerStates::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(-300.f);
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::RIGHT))
 	{
 		if (IsStateOn(PlayerStates::DIRECTION) == false)
 		{
@@ -138,13 +138,13 @@ void PPlayer::Control(float /*dt*/)
 		SetStateOn(PlayerStates::DIRECTION);
 		GetComponent<Physics2D>()->AddForceX(300.f);
 	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::X)
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::X)
 		&& IsStateOn(PlayerStates::FALLING) == false && IsStateOn(PlayerStates::JUMPING) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
 		GetComponent<Physics2D>()->SetVelocityY(400.f);
 	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Z))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::Z))
 	{
 		if (canAttack == true)
 		{

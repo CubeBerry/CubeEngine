@@ -9,6 +9,33 @@
 #include "VKRenderManager.hpp"
 #include "DXRenderManager.hpp"
 
+void ISprite::AddQuad(glm::vec4 color_)
+{
+	Engine::GetObjectManager().QueueComponentFunction<ISprite>(this,
+		[=](ISprite* sprite)
+	{
+		this->CreateQuad(color_);
+	});
+}
+
+void ISprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexel_)
+{
+	Engine::GetObjectManager().QueueComponentFunction<ISprite>(this,
+		[=](ISprite* sprite)
+	{
+		this->CreateQuadWithTexture(name_, color_, isTexel_);
+	});
+}
+
+void ISprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
+{
+	Engine::GetObjectManager().QueueComponentFunction<ISprite>(this,
+		[=](ISprite* sprite)
+	{
+		this->LoadAnimationData(spriteInfoFile, name);
+	});
+}
+
 void ISprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color, float metallic_, float roughness_)
 {
 	Engine::GetObjectManager().QueueComponentFunction<ISprite>(this,

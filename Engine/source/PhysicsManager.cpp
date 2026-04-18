@@ -109,15 +109,27 @@ void PhysicsManager::UpdatePhysics2D(float dt)
 
 void PhysicsManager::ApplyMovement2D(float dt)
 {
-    // Update owner positions using linear velocity
-    for (Physics2D* body : bodies2D)
+    if (bodies2D.empty())
     {
-        Object* owner = body->GetOwner();
-        glm::vec2 currentVelocity = body->GetVelocity();
-
-        owner->SetXPosition(owner->GetPosition().x + currentVelocity.x * dt);
-        owner->SetYPosition(owner->GetPosition().y + currentVelocity.y * dt);
+        return;
     }
+
+    // Parallel integration: each body's position update is independent
+    auto handle = Engine::GetJobSystem().QueueParallelWork(
+        static_cast<uint32_t>(bodies2D.size()),
+        [this, dt](uint32_t begin, uint32_t end)
+        {
+            for (uint32_t i = begin; i < end; ++i)
+            {
+                Object* owner = bodies2D[i]->GetOwner();
+                glm::vec2 currentVelocity = bodies2D[i]->GetVelocity();
+                owner->SetXPosition(owner->GetPosition().x + currentVelocity.x * dt);
+                owner->SetYPosition(owner->GetPosition().y + currentVelocity.y * dt);
+            }
+        },
+        16
+    );
+    Engine::GetJobSystem().WaitForWork(handle);
 }
 
 
@@ -285,11 +297,24 @@ void PhysicsManager::UpdatePhysics3D(float dt)
 
 void PhysicsManager::Integrate3D(float dt)
 {
-    // Delegate integration to each 3D physics body
-    for (Physics3D* body : bodies3D)
+    if (bodies3D.empty())
     {
-        body->UpdatePhysics(dt);
+        return;
     }
+
+    // Parallel integration: each body's physics update is independent
+    auto handle = Engine::GetJobSystem().QueueParallelWork(
+        static_cast<uint32_t>(bodies3D.size()),
+        [this, dt](uint32_t begin, uint32_t end)
+        {
+            for (uint32_t i = begin; i < end; ++i)
+            {
+                bodies3D[i]->UpdatePhysics(dt);
+            }
+        },
+        16
+    );
+    Engine::GetJobSystem().WaitForWork(handle);
 }
 
 std::vector<CollisionPair3D> PhysicsManager::BroadPhase3D(float dt)

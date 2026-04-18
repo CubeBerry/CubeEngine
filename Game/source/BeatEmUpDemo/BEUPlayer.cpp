@@ -217,13 +217,13 @@ void BEUPlayer::CollideObject(Object* obj)
 
 void BEUPlayer::Control(float dt)
 {
-	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::DOWN)
+	if (Engine::GetInputSnapshot().IsKeyReleaseOnce(KEYBOARDKEYS::DOWN)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		SetStateOff(BEUObjectStates::MOVE);
 		GetComponent<DynamicSprite>()->PlayAnimation(0);
 	}
-	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN)
+	else if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::DOWN)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		if (IsStateOn(BEUObjectStates::MOVE) == false)
@@ -240,13 +240,13 @@ void BEUPlayer::Control(float dt)
 			SetZPosition(GetPosition().z - 10.f * dt);
 		}
 	}
-	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::UP)
+	if (Engine::GetInputSnapshot().IsKeyReleaseOnce(KEYBOARDKEYS::UP)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		GetComponent<DynamicSprite>()->PlayAnimation(0);
 		SetStateOff(BEUObjectStates::MOVE);
 	}
-	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP)
+	else if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::UP)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		if (IsStateOn(BEUObjectStates::MOVE) == false)
@@ -263,7 +263,7 @@ void BEUPlayer::Control(float dt)
 			SetZPosition(GetPosition().z + 10.f * dt);
 		}
 	}
-	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::LEFT) && IsStateOn(BEUObjectStates::ATTACK) == false)
+	if (Engine::GetInputSnapshot().IsKeyReleaseOnce(KEYBOARDKEYS::LEFT) && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		SetStateOff(BEUObjectStates::MOVE);
 		SetStateOff(BEUObjectStates::MOVEFOWARD);
@@ -271,7 +271,7 @@ void BEUPlayer::Control(float dt)
 		if (IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false)
 			GetComponent<DynamicSprite>()->PlayAnimation(0);
 	}
-	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT)
+	else if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::LEFT)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		if (IsStateOn(BEUObjectStates::DIRECTION) == true)
@@ -290,7 +290,7 @@ void BEUPlayer::Control(float dt)
 		SetStateOff(BEUObjectStates::DIRECTION);
 		SetXPosition(GetPosition().x - 10.f * dt);
 	}
-	if (Engine::GetInputManager().IsKeyReleaseOnce(KEYBOARDKEYS::RIGHT) && IsStateOn(BEUObjectStates::ATTACK) == false)
+	if (Engine::GetInputSnapshot().IsKeyReleaseOnce(KEYBOARDKEYS::RIGHT) && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		SetStateOff(BEUObjectStates::MOVE);
 		SetStateOff(BEUObjectStates::MOVEFOWARD);
@@ -298,7 +298,7 @@ void BEUPlayer::Control(float dt)
 		if (IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false)
 			GetComponent<DynamicSprite>()->PlayAnimation(0);
 	}
-	else if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT)
+	else if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::RIGHT)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		if (IsStateOn(BEUObjectStates::DIRECTION) == false)
@@ -323,7 +323,7 @@ void BEUPlayer::Control(float dt)
 			Engine::GetCameraManager().SetCameraPosition({ position.x , Engine::GetCameraManager().GetCameraPosition().y, Engine::GetCameraManager().GetCameraPosition().z });
 		}*/
 	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::X)
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::X)
 		&& IsStateOn(BEUObjectStates::FALLING) == false && IsStateOn(BEUObjectStates::JUMPING) == false && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		Object::SetYPosition(Object::GetPosition().y + 1.f);
@@ -340,7 +340,7 @@ void BEUPlayer::Control(float dt)
 			}
 		}
 	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Z) && IsStateOn(BEUObjectStates::ATTACK) == false)
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::Z) && IsStateOn(BEUObjectStates::ATTACK) == false)
 	{
 		if (canAttack == true)
 		{

@@ -11,7 +11,7 @@
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
-#include "ThreadManager.hpp"
+#include "JobSystem.hpp"
 #include "Logger.hpp"
 #include "Particle/ParticleManager.hpp"
 #include "PhysicsManager.hpp"
@@ -35,6 +35,8 @@ public:
 	static PhysicsManager& GetPhysicsManager() { return Instance().physicsManager; }
 	static Timer& GetTimer() { return Instance().timer; }
 	static Logger& GetLogger() { return *Instance().logger; }
+	static JobSystem& GetJobSystem() { return Instance().jobSystem; }
+	static const InputSnapshot& GetInputSnapshot() { return Instance().inputSnapshot; }
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
@@ -61,6 +63,7 @@ private:
 	SpriteManager* spriteManager;
 	ParticleManager particleManager;
 	PhysicsManager physicsManager;
-	ThreadManager threadManager;
+	JobSystem jobSystem;
+	InputSnapshot inputSnapshot;
 	Logger* logger;
 };

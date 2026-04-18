@@ -323,7 +323,7 @@ void DynamicSprite::UpdateProjection()
 	}
 }
 
-void DynamicSprite::AddQuad(glm::vec4 color_)
+void DynamicSprite::CreateQuad(glm::vec4 color_)
 {
 	SubMesh subMesh;
 
@@ -380,7 +380,7 @@ void DynamicSprite::AddQuad(glm::vec4 color_)
 	AddSpriteToManager();
 }
 
-void DynamicSprite::AddQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexel_)
+void DynamicSprite::CreateQuadWithTexture(std::string name_, glm::vec4 color_, bool isTexel_)
 {
 	SubMesh subMesh;
 
@@ -465,7 +465,7 @@ void DynamicSprite::CreateMesh3D(MeshType type, const std::filesystem::path& pat
 	AddSpriteToManager();
 }
 
-void DynamicSprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name)
+void DynamicSprite::LoadAnimationData(const std::filesystem::path& spriteInfoFile, std::string name)
 {
 	hotSpotList.clear();
 	frameTexel.clear();
@@ -487,7 +487,7 @@ void DynamicSprite::LoadAnimation(const std::filesystem::path& spriteInfoFile, s
 	//texturePtr = Engine::GetTextureManager().Load(text, true);
 	//frameSize = texturePtr->GetSize();
 	Engine::Instance().GetRenderManager()->LoadTexture(text, name, true);
-	AddQuadWithTexture(name, glm::vec4(1.f), true);
+	CreateQuadWithTexture(name, glm::vec4(1.f), true);
 
 	inFile >> text;
 	while (inFile.eof() == false)

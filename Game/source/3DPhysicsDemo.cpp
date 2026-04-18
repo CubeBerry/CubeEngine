@@ -93,19 +93,19 @@ void PhysicsDemo::Update(float dt)
 			glm::vec3 movement(0.0f);
 			float speed = 200.0f * dt;
 
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::UP))
 			{
 				movement += Engine::GetCameraManager().GetBackVector() * speed;
 			}
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::DOWN))
 			{
 				movement -= Engine::GetCameraManager().GetBackVector() * speed;
 			}
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::RIGHT))
 			{
 				movement += Engine::GetCameraManager().GetRightVector() * speed;
 			}
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::LEFT))
 			{
 				movement -= Engine::GetCameraManager().GetRightVector() * speed;
 			}
@@ -155,7 +155,7 @@ void PhysicsDemo::Update(float dt)
 		}
 	}
 
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}

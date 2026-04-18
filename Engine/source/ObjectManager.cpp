@@ -30,8 +30,31 @@ ObjectManager::~ObjectManager()
 
 void ObjectManager::Update(float dt)
 {
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
-	//DeleteObjectsFromList();
+	if (objectMap.empty())
+	{
+		return;
+	}
+
+	// Cache map values into contiguous vector for parallel iteration
+	std::vector<Object*> objects;
+	objects.reserve(objectMap.size());
+	for (auto& [id, obj] : objectMap)
+	{
+		objects.push_back(obj.get());
+	}
+
+	auto handle = Engine::GetJobSystem().QueueParallelWork(
+		static_cast<uint32_t>(objects.size()),
+		[&objects, dt](uint32_t begin, uint32_t end)
+		{
+			for (uint32_t i = begin; i < end; ++i)
+			{
+				objects[i]->Update(dt);
+			}
+		},
+		32 // Batch size
+	);
+	Engine::GetJobSystem().WaitForWork(handle);
 }
 
 void ObjectManager::DeleteObjectsFromList()
@@ -56,12 +79,9 @@ void ObjectManager::Draw(float dt)
 
 void ObjectManager::Destroy(int id)
 {
-	//objectsToBeDeleted.push_back(id);
-	//objectMap.at(id).get()->DestroyAllComponents();
-
+	// Thread-safe: objects may self-destruct during parallel updates
+	std::lock_guard<std::mutex> lock(queueMutex);
 	objectsToBeDeleted.push_back(id);
-	//std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
-	//objectsToBeDeleted.clear();
 }
 
 void ObjectManager::DestroyAllObjects()

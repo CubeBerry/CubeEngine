@@ -46,7 +46,7 @@ void PlatformDemo::Init()
 
 void PlatformDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}

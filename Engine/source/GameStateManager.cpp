@@ -172,12 +172,39 @@ void GameStateManager::UpdateGameLogic(float dt)
 	}
 	else
 	{
+		// Phase 1: Main thread — level logic (uses InputSnapshot, may queue object operations)
 		levelList.at(static_cast<int>(currentLevel))->Update(dt);
-		Engine::GetObjectManager().Update(dt);
-		Engine::GetParticleManager().Update(dt);
+
+		// Phase 2: Parallel jobs — independent system updates
+		auto& js = Engine::GetJobSystem();
+
+		auto objectsHandle = js.QueueWork([dt]()
+		{
+			Engine::GetObjectManager().Update(dt);
+		});
+
+		auto particleHandle = js.QueueWork([dt]()
+		{
+			Engine::GetParticleManager().Update(dt);
+		});
+
+		auto spriteHandle = js.QueueWork([dt]()
+		{
+			Engine::GetSpriteManager().Update(dt);
+		});
+
+		// Wait for object updates before physics (objects may modify velocities)
+		js.WaitForAll({ objectsHandle, particleHandle, spriteHandle });
+
+		// Phase 3: Physics runs after object updates to avoid race conditions
+		auto physicsHandle = js.QueueWork([dt]()
+		{
+			Engine::GetPhysicsManager().Update(dt);
+		});
+		js.WaitForWork(physicsHandle);
+
+		// Phase 4: Main thread — camera (uses InputManager directly for mouse mode)
 		Engine::GetCameraManager().Update();
-		Engine::GetPhysicsManager().Update(dt);
-		Engine::GetSpriteManager().Update(dt);
 	}
 }
 

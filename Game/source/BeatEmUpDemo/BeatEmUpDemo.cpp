@@ -115,27 +115,27 @@ void BeatEmUpDemo::Init()
 
 void BeatEmUpDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	} 
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::W))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::W))
 	{
 		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::FOWARD, 10.f * dt);
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::S))
 	{
 		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::BACKWARD, 10.f * dt);
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::A))
 	{
 		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::LEFT, 10.f * dt);
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::D))
+	if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::D))
 	{
 		Engine::GetCameraManager().MoveCameraPos(CameraMoveDir::RIGHT, 10.f * dt);
 	}
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::Q))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::Q))
 	{
 		if (rand() % 2 == 1)
 		{

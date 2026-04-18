@@ -27,11 +27,11 @@ public:
 	void UpdateProjection() override;
 
 	// Add Quad
-	void AddQuad(glm::vec4 color_);
-	void AddQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f }, bool isTexel_ = false);
+	void CreateQuad(glm::vec4 color_);
+	void CreateQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f }, bool isTexel_ = false);
 
 	// Animation
-	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
+	void LoadAnimationData(const std::filesystem::path& spriteInfoFile, std::string name);
 	glm::vec2 GetHotSpot(int index);
 	glm::vec2 GetFrameSize() const { return frameSize; };
 

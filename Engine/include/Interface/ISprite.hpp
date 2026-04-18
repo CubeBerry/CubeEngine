@@ -36,6 +36,9 @@ public:
 	virtual void UpdateProjection() = 0;
 
 	// Add Mesh
+	void AddQuad(glm::vec4 color_);
+	void AddQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f }, bool isTexel_ = false);
+	void LoadAnimation(const std::filesystem::path& spriteInfoFile, std::string name);
 	void AddMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f);
 
 	// Getter
@@ -64,6 +67,9 @@ public:
 	void SetRoughness(float amount, int index = 0) { subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness = amount; }
 
 	//For CompFuncQueue
+	virtual void CreateQuad(glm::vec4 color_) = 0;
+	virtual void CreateQuadWithTexture(std::string name_, glm::vec4 color_ = { 1.f,1.f,1.f,1.f }, bool isTexel_ = false) = 0;
+	virtual void LoadAnimationData(const std::filesystem::path& spriteInfoFile, std::string name) = 0;
 	virtual void CreateMesh3D(MeshType type, const std::filesystem::path& path, int stacks_, int slices_, glm::vec4 color = { 1.f,1.f,1.f,1.f }, float metallic_ = 0.3f, float roughness_ = 0.3f) = 0;
 
 	// BoneInfoMap

@@ -435,7 +435,7 @@ void PDemoMapEditorDemo::ObjectCreator()
 	target->name = newName;
 
 	ImGui::InputFloat2("Position", targetP);
-	glm::vec2 mPos = Engine::GetInputManager().GetMousePosition();
+	glm::vec2 mPos = Engine::GetInputSnapshot().GetMousePosition();
 	glm::vec2 newPosition = { mPos.x - std::fmod(mPos.x, gridSize.x),  mPos.y - std::fmod(mPos.y, gridSize.y) };
 	target->pos = newPosition;
 
@@ -449,7 +449,7 @@ void PDemoMapEditorDemo::ObjectCreator()
 	for (auto& obj : objects)
 	{
 		if (!(obj->GetPosition().x + obj->GetSize().x / 2.f < mPos.x || mPos.y < obj->GetPosition().x - obj->GetSize().x / 2.f
-			|| obj->GetPosition().y + obj->GetSize().y / 2.f < mPos.y || mPos.y < obj->GetPosition().y - obj->GetSize().y / 2.f) && Engine::GetInputManager().IsMouseButtonPressOnce(MOUSEBUTTON::RIGHT))
+			|| obj->GetPosition().y + obj->GetSize().y / 2.f < mPos.y || mPos.y < obj->GetPosition().y - obj->GetSize().y / 2.f) && Engine::GetInputSnapshot().IsMouseButtonPressOnce(MOUSEBUTTON::RIGHT))
 		{
 			delete obj;
 			objects.erase(objects.begin() + id);
@@ -457,7 +457,7 @@ void PDemoMapEditorDemo::ObjectCreator()
 		}
 		id++;
 	}
-	if (Engine::GetInputManager().IsMouseButtonPressOnce(MOUSEBUTTON::MIDDLE))
+	if (Engine::GetInputSnapshot().IsMouseButtonPressOnce(MOUSEBUTTON::MIDDLE))
 	{
 		switch (objectNum)
 		{
@@ -518,7 +518,7 @@ void PDemoMapEditorDemo::BackgroundCreator()
 	}
 
 	ImGui::InputFloat2("Position", targetP);
-	glm::vec2 mPos = Engine::GetInputManager().GetMousePosition();
+	glm::vec2 mPos = Engine::GetInputSnapshot().GetMousePosition();
 	glm::vec2 newPosition = { mPos.x - std::fmod(mPos.x, gridSize.x),  -(mPos.y - std::fmod(mPos.y, gridSize.y)) };
 	target->pos = newPosition;
 
@@ -539,7 +539,7 @@ void PDemoMapEditorDemo::BackgroundCreator()
 		for (int i = 0; i < group.second.size(); i++)
 		{
 			if (!(group.second.at(i).position.x + group.second.at(i).size.x < mPos.x || mPos.y < group.second.at(i).position.x - group.second.at(i).size.x
-				|| group.second.at(i).position.y + group.second.at(i).size.y < mPos.y || mPos.y < group.second.at(i).position.y - group.second.at(i).size.y) && Engine::GetInputManager().IsMouseButtonPressOnce(MOUSEBUTTON::RIGHT))
+				|| group.second.at(i).position.y + group.second.at(i).size.y < mPos.y || mPos.y < group.second.at(i).position.y - group.second.at(i).size.y) && Engine::GetInputSnapshot().IsMouseButtonPressOnce(MOUSEBUTTON::RIGHT))
 			{
 				delete group.second.at(i).sprite;
 				group.second.erase(group.second.begin() + i);
@@ -547,7 +547,7 @@ void PDemoMapEditorDemo::BackgroundCreator()
 			}
 		}
 	}
-	if (Engine::GetInputManager().IsMouseButtonPressOnce(MOUSEBUTTON::MIDDLE))
+	if (Engine::GetInputSnapshot().IsMouseButtonPressOnce(MOUSEBUTTON::MIDDLE))
 	{
 		bgm->AddSaveBackgroundList(target->spriteName, "none", target->backgroundType, target->pos, target->size,
 			0.f, target->speed, { 0.f,0.f }, target->depth, false, target->isAnimation);
@@ -567,20 +567,20 @@ void PDemoMapEditorDemo::WallCreator()
 		glm::vec2 midPoint = { (target->startPos.x + target->endPos.x) / 2.f, (target->startPos.y + target->endPos.y) / 2.f };
 		if (isWallSetting == false)
 		{
-			glm::vec2 mPos = Engine::GetInputManager().GetMousePosition();
+			glm::vec2 mPos = Engine::GetInputSnapshot().GetMousePosition();
 			target->startPos = { mPos.x - std::fmod(mPos.x, gridSize.x),  mPos.y - std::fmod(mPos.y, gridSize.y) };
 			target->rect->UpdateModel({ target->startPos.x, -target->startPos.y, 0.f }, { 4.f,4.f,0.f }, 0.f);
 		}
 		else
 		{
-			glm::vec2 mPos = Engine::GetInputManager().GetMousePosition();
+			glm::vec2 mPos = Engine::GetInputSnapshot().GetMousePosition();
 			target->endPos = { mPos.x - std::fmod(mPos.x, gridSize.x),  mPos.y - std::fmod(mPos.y, gridSize.y) };
 			target->rect->UpdateModel({ midPoint.x, -midPoint.y, 0.f }, { abs(target->endPos.x - target->startPos.x) , abs(target->endPos.y - target->startPos.y),0.f }, 0.f);
 		}
 		target->rect->UpdateProjection();
 		target->rect->UpdateView();
 
-		if (Engine::GetInputManager().IsMouseButtonPressOnce(MOUSEBUTTON::LEFT))
+		if (Engine::GetInputSnapshot().IsMouseButtonPressOnce(MOUSEBUTTON::LEFT))
 		{
 			if (isWallSetting == true)
 			{
@@ -600,7 +600,7 @@ void PDemoMapEditorDemo::WallCreator()
 				isWallSetting = true;
 			}
 		}
-		else if (Engine::GetInputManager().IsMouseButtonPressOnce(MOUSEBUTTON::RIGHT))
+		else if (Engine::GetInputSnapshot().IsMouseButtonPressOnce(MOUSEBUTTON::RIGHT))
 		{
 			if (isWallSetting == true)
 			{

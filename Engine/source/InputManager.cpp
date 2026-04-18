@@ -185,3 +185,23 @@ glm::vec2 InputManager::GetRelativeMouseState()
 	mouseRelY = 0;
 	return temp;
 }
+
+void InputManager::UpdatePreviousState()
+{
+	// Batch update prev states at frame boundary instead of per-query
+	keyStatePrev = keyStates;
+	mouseButtonStatePrev = mouseButtonStates;
+}
+
+InputSnapshot InputManager::CreateSnapshot()
+{
+	InputSnapshot snap;
+	snap.keyStates    = keyStates;
+	snap.keyStatePrev = keyStatePrev;
+	snap.mouseStates    = mouseButtonStates;
+	snap.mouseStatePrev = mouseButtonStatePrev;
+	snap.mouseWheel     = mouseWheelMotion;
+	snap.relativeMouseState = { mouseRelX, mouseRelY };
+	snap.mousePosition = GetMousePosition();
+	return snap;
+}

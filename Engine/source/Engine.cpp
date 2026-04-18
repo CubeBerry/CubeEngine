@@ -43,7 +43,7 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 	
 	spriteManager = new SpriteManager;
 
-	threadManager.Start();
+	jobSystem.Start();
 }
 
 void Engine::Update()
@@ -60,7 +60,14 @@ void Engine::Update()
 		if (timer.GetFrameRate() == FrameRate::UNLIMIT || deltaTime >= timer.GetFramePerTime())
 		{
 			Uint64 winFlag = SDL_GetWindowFlags(window.GetWindow());
-			threadManager.ProcessEvents();
+			// Save previous frame's input state before polling new events
+			inputManager.UpdatePreviousState();
+
+			jobSystem.ProcessEvents();
+
+			// Capture immutable input snapshot for this frame
+			inputSnapshot = inputManager.CreateSnapshot();
+
 			timer.ResetLastTimeStamp();
 			frameCount++;
 
@@ -93,7 +100,7 @@ void Engine::End()
 		break;
 	}
 
-	threadManager.Stop();
+	jobSystem.Stop();
 }
 
 void Engine::SetFPS(FrameRate fps)
