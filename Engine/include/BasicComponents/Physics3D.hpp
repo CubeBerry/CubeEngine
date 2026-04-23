@@ -8,6 +8,7 @@
 #pragma warning(disable : 4201)
 #include <glm/gtc/quaternion.hpp>
 #pragma warning(default : 4201)
+#include <unordered_map>
 
 #include "Interface/IComponent.hpp"
 #include "Object.hpp"
@@ -26,7 +27,6 @@ struct CollisionResult
 	glm::vec3 collisionNormal = { 0.f, 0.f, 0.f };
 };
 
-
 enum class BodyType3D
 {
 	RIGID = 0,
@@ -44,12 +44,35 @@ struct Sphere
 	float radius = 0;
 };
 
+struct SupportPoint
+{
+	glm::vec3 minkowskiDifference;
+	glm::vec3 pointOnA;
+	glm::vec3 pointOnB;
+};
+
+struct EpaFace
+{
+	glm::vec3 normal;
+	float distance;
+	int vertexIndices[3];
+};
+
+struct GjkShape
+{
+	ColliderType3D type;
+	const std::vector<glm::vec3>* vertices = nullptr;
+	glm::vec3 center = { 0.0f, 0.0f, 0.0f };
+	float radius = 0.0f;
+	glm::vec3 offset = { 0.0f, 0.0f, 0.0f };
+};
+
 #include "CollisionMode.hpp"
 
 class Physics3D : public IComponent
 {
 public:
-	Physics3D() : IComponent(ComponentTypes::PHYSICS3D) { Init(); };
+	Physics3D() : IComponent(ComponentTypes::PHYSICS3D) {};
 	~Physics3D() override;
 
 	void Init() override ;
@@ -122,7 +145,7 @@ public:
 	bool GetEnableRotationalPhysics() const { return enableRotationalPhysics; }
 	void SetEnableRotationalPhysics(bool v);
 
-	//2d->3d
+	// Methods for handling collisions mapped from two-dimensional space to three-dimensional space
 	std::vector<glm::vec3> GetCollidePolyhedron() { return collidePolyhedron; }
 	float GetSphereRadius() const { return sphere.radius; }
 
@@ -135,11 +158,23 @@ public:
 	void AddCollidePolyhedronAABB(glm::vec3 min, glm::vec3 max);
 	void AddCollidePolyhedronAABB(glm::vec3 size);
 	void AddCollideSphere(float r);
-	//2d->3d
+	// End of methods for mapping two-dimensional space to three-dimensional space
 
 	// Made public so PhysicsManager can drive the CCD loop directly.
 	CollisionResult FindClosestCollision(float dt);
 	void CalculateLinearVelocity(Physics3D& body, Physics3D& body2, glm::vec3 normal, float* axisDepth, glm::vec3 contactPoint, float impulseScale = 1.0f);
+
+	void RemoveFromCollisionCache(Physics3D* otherBody)
+	{
+		separatingAxisCache.erase(otherBody);
+	}
+
+
+	//======== Legacy: SAT ========//
+	//bool CollisionPPSAT(Object* obj, Object* obj2, CollisionMode mode = static_cast<CollisionMode>(0));
+	//bool CollisionSSSAT(Object* obj, Object* obj2, CollisionMode mode = static_cast<CollisionMode>(0));
+	//bool CollisionPSSAT(Object* poly, Object* sph, CollisionMode mode = static_cast<CollisionMode>(0));
+	//======== Legacy: SAT ========//
 
 private:
 	// Linear Physical Properties
@@ -172,29 +207,41 @@ private:
 	BodyType3D bodyType = BodyType3D::RIGID;
 	CollisionDetectionMode collisionMode = CollisionDetectionMode::DISCRETE;
 
-	//2d->3d
-	// Discrete Collision Helpers (SAT)
-	glm::vec3 FindSATCenter(const std::vector<glm::vec3>& points);
-	glm::vec3 RotatePoint(const glm::vec3& point, const glm::vec3& position, const glm::quat& rotation);
-	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> points1, const std::vector<glm::vec3> points2, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
-	
-	glm::vec3 FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices);
-	bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
-
-	// Continuous Collision Helpers (CCD)
-	void ProjectPolygon(const std::vector<glm::vec3>& vertices, const glm::vec3& axis, float& min, float& max);
-	bool StaticSATIntersection(Physics3D* body1, Physics3D* body2,
-		const std::vector<glm::vec3>& rotatedPoly1, const std::vector<glm::vec3>& rotatedPoly2,
-		const glm::mat4& rotationMatrix1, const glm::mat4& rotationMatrix2,
-		glm::vec3& outNormal, float& outDepth);
-	bool SweptSATOBB(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
+	glm::vec3 ComputePolygonCenter(const std::vector<glm::vec3>& points);
+	// Continuous collision detection mode for preventing tunneling at high speeds
 	bool SweptSpheres(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
-	bool SweptSphereVsOBB(Physics3D* boxBody, float dt, CollisionResult& outResult);
-	//CollisionDetectionMode : Continuous
+	
+	// Gilbert-Johnson-Keerthi distance algorithm and Expanding Polytope Algorithm for convex collision resolution
+	// universal support function that handles all shape types
+	glm::vec3 GetShapeSupportPoint(const GjkShape& shape, glm::vec3 searchDirection);
+	// updated gjk and epa signatures using GjkShape
+	SupportPoint GetSupport(const GjkShape& shapeA, const GjkShape& shapeB, glm::vec3 searchDirection);
+	bool CheckCollisionGJK(const GjkShape& shapeA, const GjkShape& shapeB, std::vector<SupportPoint>& outSimplex);
+	bool HandleSimplex(std::vector<SupportPoint>& currentSimplex, glm::vec3& currentDirection);
+	void CalculatePenetrationEPA(const GjkShape& shapeA, const GjkShape& shapeB, std::vector<SupportPoint>& currentSimplex, glm::vec3& outNormal, float& outDepth, glm::vec3& outContactPoint);
+	// Helper methods for Continuous Collision Detection to solve time of impact
+	bool SweptGJK(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
 
 	std::vector<glm::vec3> collidePolyhedron;
 	Sphere sphere;
 
-	//2d->3d
+	// Cache previous separating axes to exploit temporal coherence and accelerate the algorithm in subsequent frames
+	std::unordered_map<Physics3D*, glm::vec3> separatingAxisCache;
+
+	//======== Legacy: SAT ========//
+	//glm::vec3 RotatePoint(const glm::vec3& point, const glm::vec3& position, const glm::quat& rotation);
+	//bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> points1, const std::vector<glm::vec3> points2, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
+	//bool IsSeparatingAxis(const glm::vec3 axis, const std::vector<glm::vec3> pointsPoly, const glm::vec3 pointSphere, const float radius, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
+
+	//glm::vec3 FindClosestPointOnSegment(const glm::vec3& sphereCenter, std::vector<glm::vec3>& vertices);
+
+	//void ProjectPolygon(const std::vector<glm::vec3>& vertices, const glm::vec3& axis, float& min, float& max);
+	//bool StaticSATIntersection(Physics3D* body1, Physics3D* body2,
+	//	const std::vector<glm::vec3>& rotatedPoly1, const std::vector<glm::vec3>& rotatedPoly2,
+	//	const glm::mat4& rotationMatrix1, const glm::mat4& rotationMatrix2,
+	//	glm::vec3& outNormal, float& outDepth);
+	//bool SweptSATOBB(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
+	//bool SweptSphereVsOBB(Physics3D* boxBody, float dt, CollisionResult& outResult);
+	//======== Legacy: SAT ========//
 
 };

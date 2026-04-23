@@ -166,14 +166,14 @@ void PhysicsDemo::Update(float dt)
 void PhysicsDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::Begin("Physics Control");
-	/*if (mode == PhysicsMode::ThreeDimension)
+	if (mode == PhysicsMode::ThreeDimension)
 	{
-		if (ImGui::Button("Switch to 2D"))
+		/*if (ImGui::Button("Switch to 2D"))
 		{
 			ClearScene();
 			mode = PhysicsMode::TwoDimension;
 			Init();
-		}
+		}*/
 	}
 	else
 	{
@@ -183,7 +183,26 @@ void PhysicsDemo::ImGuiDraw(float /*dt*/)
 			mode = PhysicsMode::ThreeDimension;
 			Init();
 		}
-	}*/
+	}
+
+
+	if (ImGui::Button("Spawn Object (Amount = 100)"))
+	{
+		if (mode == PhysicsMode::ThreeDimension)
+		{
+			for (int i = 0; i < 100; ++i)
+			{
+				Spawn3D();
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < 30; i++)
+			{
+				Spawn2D();
+			}
+		}
+	}
 
 	if (ImGui::Button("Spawn Object"))
 	{

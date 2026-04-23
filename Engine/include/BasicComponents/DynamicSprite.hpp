@@ -10,7 +10,7 @@ class Animation;
 class DynamicSprite : public ISprite
 {
 public:
-	DynamicSprite() : ISprite() { Init(); spriteType = SpriteType::DYNAMIC; };
+	DynamicSprite() : ISprite() { spriteType = SpriteType::DYNAMIC; };
 	~DynamicSprite() override;
 
 	void Init() override;

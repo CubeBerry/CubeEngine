@@ -5,6 +5,7 @@
 #include <vector>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <unordered_map>
 
 #include "Interface/IComponent.hpp"
 #include "CollisionMode.hpp"
@@ -41,7 +42,7 @@ struct Circle
 class Physics2D : public IComponent
 {
 public:
-	Physics2D() : IComponent(ComponentTypes::PHYSICS2D) { Init(); };
+	Physics2D() : IComponent(ComponentTypes::PHYSICS2D) {};
 	~Physics2D() override;
 
 	void Init() override ;
@@ -108,6 +109,9 @@ public:
 	void AddCollidePolygon(glm::vec2 position);
 	void AddCollidePolygonAABB(glm::vec2 min, glm::vec2 max);
 	void AddCollidePolygonAABB(glm::vec2 size);
+
+	// Remove the destroyed body from the cache to prevent dangling pointers
+	void RemoveFromCollisionCache(Physics2D* otherBody){ separatingAxisCache.erase(otherBody); }
 private:
 	// Mathematical helper methods for collision detection
 	glm::vec2 FindSATCenter(const std::vector<glm::vec2>& points);
@@ -118,8 +122,8 @@ private:
 	glm::vec2 RotatePoint(const glm::vec2 point, const glm::vec2 size, float angle);
 	
 	// SAT (Separating Axis Theorem) helper functions
-	bool IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> points1, const std::vector<glm::vec2> points2, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
-	bool IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> pointsPoly, const glm::vec2 pointCir, const float radius, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
+	bool IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& points1, const std::vector<glm::vec2>& points2, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
+	bool IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& pointsPoly, const glm::vec2& pointCircle, const float radius, float* axisDepth, float* min1, float* max1, float* min2, float* max2);
 	
 	// Calculates and applies impulses due to collision
 	void CalculateLinearVelocity(Physics2D& body, Physics2D& body2, glm::vec2 normal, float* axisDepth, glm::vec2 contactPoint);
@@ -167,6 +171,9 @@ private:
 	bool isGhostCollision = false;
 	bool isGravityOn = false;
 	bool enableRotationalPhysics = false;
+
+	// Cache for Temporal Coherence (Separating Axis Theorem)
+	std::unordered_map<Physics2D*, glm::vec2> separatingAxisCache;
 #ifdef _DEBUG
 	void AddPoint(glm::vec2 pos);
 	std::vector<Point> points;

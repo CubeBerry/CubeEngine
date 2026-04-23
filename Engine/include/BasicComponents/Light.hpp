@@ -20,7 +20,7 @@ class DynamicSprite;
 class Light : public IComponent
 {
 public:
-	Light() : IComponent(ComponentTypes::LIGHT) { Init(); };
+	Light() : IComponent(ComponentTypes::LIGHT) {};
 	~Light() override;
 
 	void Init() override;
