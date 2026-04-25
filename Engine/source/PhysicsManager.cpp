@@ -41,12 +41,6 @@ CollisionMode PhysicsManager::GetCollisionMode(ObjectType typeA, ObjectType type
 
 void PhysicsManager::AddBody2D(Physics2D* body)
 {
-    //// Add the body if it's not already in the list
-    //if (std::find(bodies2D.begin(), bodies2D.end(), body) == bodies2D.end())
-    //{
-    //    bodies2D.push_back(body);
-    //}
-
     if (std::find(bodies2D.begin(), bodies2D.end(), body) == bodies2D.end())
     {
         bodies2D.push_back(body);
@@ -77,13 +71,6 @@ void PhysicsManager::AddBody2D(Physics2D* body)
 
 void PhysicsManager::RemoveBody2D(Physics2D* body)
 {
-    //// Search and erase the specified 2D body
-    //auto iterator = std::find(bodies2D.begin(), bodies2D.end(), body);
-    //if (iterator != bodies2D.end())
-    //{
-    //    bodies2D.erase(iterator);
-    //}
-
     auto iterator = std::find(bodies2D.begin(), bodies2D.end(), body);
     if (iterator != bodies2D.end())
     {
@@ -107,12 +94,6 @@ void PhysicsManager::RemoveBody2D(Physics2D* body)
 
 void PhysicsManager::AddBody3D(Physics3D* body)
 {
-    //// Add the body if it's not already in the list
-    //if (std::find(bodies3D.begin(), bodies3D.end(), body) == bodies3D.end())
-    //{
-    //    bodies3D.push_back(body);
-    //}
-
     if (std::find(bodies3D.begin(), bodies3D.end(), body) == bodies3D.end())
     {
         bodies3D.push_back(body);
@@ -147,13 +128,6 @@ void PhysicsManager::AddBody3D(Physics3D* body)
 
 void PhysicsManager::RemoveBody3D(Physics3D* body)
 {
-    //// Search and erase the specified 3D body
-    //auto iterator = std::find(bodies3D.begin(), bodies3D.end(), body);
-    //if (iterator != bodies3D.end())
-    //{
-    //    bodies3D.erase(iterator);
-    //}
-
     auto iterator = std::find(bodies3D.begin(), bodies3D.end(), body);
     if (iterator != bodies3D.end())
     {

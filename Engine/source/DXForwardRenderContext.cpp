@@ -103,8 +103,9 @@ void DXForwardRenderContext::Initialize()
 #ifdef _DEBUG
 	// Create root signature and pipeline for Normal 3D
 	rootParameters.clear();
-	rootParameters.resize(1, {});
-	rootParameters[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters.resize(2, {});
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[1].InitAsConstants(16, 0, 1, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	m_renderManager->CreateRootSignature(m_rootSignature3DNormal, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
@@ -112,9 +113,12 @@ void DXForwardRenderContext::Initialize()
 	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
+	DXAttributeLayout boneIndexLayoutNormal{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, offsetof(ThreeDimension::NormalVertex, boneIDs), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout weightLayoutNormal{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(ThreeDimension::NormalVertex, weights), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
 	m_pipeline3DNormal = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3DNormal)
 		.SetShaders("../Engine/shaders/hlsl/Normal3D.vert.hlsl", "../Engine/shaders/hlsl/Normal3D.frag.hlsl")
-		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, boneIndexLayoutNormal, weightLayoutNormal })
 		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
 		.SetDepthStencil(true, true)
 		.SetRenderTargets(rtvFormats)
@@ -283,9 +287,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
 				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
+				commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+
 				auto& vertexUniform = spriteData->vertexUniform;
 				glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-				commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
+				commandList->SetGraphicsRoot32BitConstants(1, 16, &modelToNDC, 0);
 
 				D3D12_VERTEX_BUFFER_VIEW nvbv = buffer->normalVertexBuffer->GetView();
 				commandList->IASetVertexBuffers(0, 1, &nvbv);

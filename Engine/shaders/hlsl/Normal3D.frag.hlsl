@@ -9,14 +9,14 @@
 #endif
 
 
-#line 8 "slang/Normal3D.slang"
+#line 10 "slang/Normal3D.slang"
 struct VSOutput_0
 {
     float4 position_0 : SV_POSITION;
 };
 
 
-#line 34
+#line 80
 float4 fragmentMain(VSOutput_0 input_0) : SV_TARGET
 {
     return float4(1.0f, 1.0f, 1.0f, 1.0f);

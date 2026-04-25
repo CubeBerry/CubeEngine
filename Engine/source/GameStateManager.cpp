@@ -172,12 +172,12 @@ void GameStateManager::UpdateGameLogic(float dt)
 	}
 	else
 	{
-		// Phase 1: Main thread — level logic (uses InputSnapshot, may queue object operations)
+		// Main thread — level logic (may call PlayAnimation, queue object ops)
 		levelList.at(static_cast<int>(currentLevel))->Update(dt);
 
-		// Phase 2: Parallel jobs — independent system updates
 		auto& js = Engine::GetJobSystem();
 
+		// Parallel — object and particle updates
 		auto objectsHandle = js.QueueWork([dt]()
 		{
 			Engine::GetObjectManager().Update(dt);
@@ -188,25 +188,30 @@ void GameStateManager::UpdateGameLogic(float dt)
 			Engine::GetParticleManager().Update(dt);
 		});
 
-		auto spriteHandle = js.QueueWork([dt]()
+		js.WaitForAll({ objectsHandle, particleHandle });
+
+		// Bone matrix calculation
+		auto animHandle = js.QueueWork([dt]()
 		{
-			Engine::GetSpriteManager().Update(dt);
+			Engine::GetSkeletalAnimationManager().Update(dt);
 		});
+		js.WaitForWork(animHandle);
 
-		// Wait for object updates before physics (objects may modify velocities)
-		js.WaitForAll({ objectsHandle, particleHandle, spriteHandle });
+		// GPU upload
+		Engine::GetRenderManager()->ProcessGPUCommands();
 
-		// Phase 3: Physics runs after object updates to avoid race conditions
+		// Physics — after object updates (objects may modify velocities)
 		auto physicsHandle = js.QueueWork([dt]()
 		{
 			Engine::GetPhysicsManager().Update(dt);
 		});
 		js.WaitForWork(physicsHandle);
 
-		// Phase 4: Main thread — camera (uses InputManager directly for mouse mode)
+		// Main thread — camera (uses InputManager directly for mouse mode)
 		Engine::GetCameraManager().Update();
 	}
 }
+
 
 void GameStateManager::UpdateDraw(float dt)
 {

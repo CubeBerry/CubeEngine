@@ -139,7 +139,10 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 #ifdef _DEBUG
 	// Initialize Descriptor3DNormal
-	vkDescriptor3DNormal = new VKDescriptor(vkInit, {}, {});
+	VKDescriptorLayout normalVertexLayout;
+	normalVertexLayout.descriptorType = VKDescriptorLayout::UNIFORM_DYNAMIC;
+	normalVertexLayout.descriptorCount = 1;
+	vkDescriptor3DNormal = new VKDescriptor(vkInit, { normalVertexLayout }, {});
 #endif
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
@@ -203,8 +206,18 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
+	VKAttributeLayout normal_boneId_layout;
+	normal_boneId_layout.vertex_layout_location = 7;
+	normal_boneId_layout.format = VK_FORMAT_R32G32B32A32_SINT;
+	normal_boneId_layout.offset = offsetof(ThreeDimension::NormalVertex, boneIDs);
+
+	VKAttributeLayout normal_weight_layout;
+	normal_weight_layout.vertex_layout_location = 8;
+	normal_weight_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	normal_weight_layout.offset = offsetof(ThreeDimension::NormalVertex, weights);
+
 	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3DNormal->GetDescriptorSetLayout());
-	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, normal_boneId_layout, normal_weight_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
 #endif
 
 	// Uniform
@@ -820,6 +833,29 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
 		}
+#ifdef _DEBUG
+		if (m_normalVectorVisualization)
+		{
+			auto& vertexUniformBuffer = uniformBuffer3D.vertexUniformBuffer;
+			VkDescriptorSet* normalVertexDescriptorSet = &(*vkDescriptor3DNormal->GetVertexDescriptorSets())[frameIndex];
+			{
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform);
+
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *normalVertexDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorWrite.pBufferInfo = &bufferInfo;
+
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+		}
+#endif
 		break;
 	}
 
@@ -1017,8 +1053,15 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 					//Dynamic Viewport & Scissor
 					vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
 					vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-					//Change Primitive Topology
-					//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+					// Bind Vertex DescriptorSet (for bone matrices)
+					// Recalculate the vertex uniform dynamic offset (dynamicOffset was overwritten by the fragment uniform calc above)
+					size_t normalAlignment = vkInit->GetMinUniformBufferOffsetAlignment();
+					size_t normalUniformSize = sizeof(ThreeDimension::VertexUniform);
+					uint32_t normalDynamicOffset = static_cast<uint32_t>(subMeshIndex * ((normalUniformSize + normalAlignment - 1) & ~(normalAlignment - 1)));
+					VkDescriptorSet* normalVertexDescriptorSet = &(*vkDescriptor3DNormal->GetVertexDescriptorSets())[frameIndex];
+					vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLineLayout(), 0, 1, normalVertexDescriptorSet, 1, &normalDynamicOffset);
+
 					//Push Constant Model-To_NDC
 					auto& vertexUniform = spriteData->vertexUniform;
 					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;

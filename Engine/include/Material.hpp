@@ -90,6 +90,8 @@ namespace ThreeDimension
 	struct alignas(16) NormalVertex
 	{
 		glm::vec3 position;
+		int boneIDs[MAX_BONE_INFLUENCE]{ -1, -1, -1, -1 };
+		float weights[MAX_BONE_INFLUENCE]{ 0.0f, 0.0f, 0.0f, 0.0f };
 	};
 #endif
 

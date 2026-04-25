@@ -503,10 +503,26 @@ void RenderManager::CreateMesh(
 	{
 #ifdef _DEBUG
 		glm::vec3 start = it->position;
-		glm::vec3 end = it->position + it->normal * 0.1f;
+		glm::vec3 end   = it->position + it->normal * 0.1f;
 
-		normalVertices.push_back(ThreeDimension::NormalVertex{ start });
-		normalVertices.push_back(ThreeDimension::NormalVertex{ end });
+		ThreeDimension::NormalVertex nvStart;
+		nvStart.position = start;
+		for (int b = 0; b < ThreeDimension::MAX_BONE_INFLUENCE; ++b)
+		{
+			nvStart.boneIDs[b] = it->boneIDs[b];
+			nvStart.weights[b] = it->weights[b];
+		}
+
+		ThreeDimension::NormalVertex nvEnd;
+		nvEnd.position = end;
+		for (int b = 0; b < ThreeDimension::MAX_BONE_INFLUENCE; ++b)
+		{
+			nvEnd.boneIDs[b] = it->boneIDs[b];
+			nvEnd.weights[b] = it->weights[b];
+		}
+
+		normalVertices.push_back(nvStart);
+		normalVertices.push_back(nvEnd);
 #endif
 	}
 
@@ -651,8 +667,27 @@ void RenderManager::CreateMesh(
 			normal_position_layout.offset = 0;
 			normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
 
-			buffer->normalVertexArray->AddVertexBuffer(std::move(*buffer->normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
+			GLAttributeLayout normal_bone_id_layout;
+			normal_bone_id_layout.component_type = GLAttributeLayout::Int;
+			normal_bone_id_layout.component_dimension = GLAttributeLayout::_4;
+			normal_bone_id_layout.normalized = false;
+			normal_bone_id_layout.vertex_layout_location = 7;
+			normal_bone_id_layout.stride = sizeof(ThreeDimension::NormalVertex);
+			normal_bone_id_layout.offset = 0;
+			normal_bone_id_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, boneIDs);
+
+			GLAttributeLayout normal_weight_layout;
+			normal_weight_layout.component_type = GLAttributeLayout::Float;
+			normal_weight_layout.component_dimension = GLAttributeLayout::_4;
+			normal_weight_layout.normalized = false;
+			normal_weight_layout.vertex_layout_location = 8;
+			normal_weight_layout.stride = sizeof(ThreeDimension::NormalVertex);
+			normal_weight_layout.offset = 0;
+			normal_weight_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, weights);
+
+			buffer->normalVertexArray->AddVertexBuffer(std::move(*buffer->normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_bone_id_layout, normal_weight_layout });
 #endif
+
 		}
 	}
 
@@ -903,10 +938,26 @@ void RenderManager::ProcessMesh(
 
 #ifdef _DEBUG
 		glm::vec3 start = it->position;
-		glm::vec3 end = it->position + it->normal * 0.1f;
+		glm::vec3 end   = it->position + it->normal * 0.1f;
 
-		normalVertices.push_back(ThreeDimension::NormalVertex{ start });
-		normalVertices.push_back(ThreeDimension::NormalVertex{ end });
+		ThreeDimension::NormalVertex nvStart;
+		nvStart.position = start;
+		for (int b = 0; b < ThreeDimension::MAX_BONE_INFLUENCE; ++b)
+		{
+			nvStart.boneIDs[b] = it->boneIDs[b];
+			nvStart.weights[b] = it->weights[b];
+		}
+
+		ThreeDimension::NormalVertex nvEnd;
+		nvEnd.position = end;
+		for (int b = 0; b < ThreeDimension::MAX_BONE_INFLUENCE; ++b)
+		{
+			nvEnd.boneIDs[b] = it->boneIDs[b];
+			nvEnd.weights[b] = it->weights[b];
+		}
+
+		normalVertices.push_back(nvStart);
+		normalVertices.push_back(nvEnd);
 #endif
 	}
 
@@ -1060,7 +1111,25 @@ void RenderManager::ProcessMesh(
 			normal_position_layout.offset = 0;
 			normal_position_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, position);
 
-			buffer->normalVertexArray->AddVertexBuffer(std::move(*buffer->normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout });
+			GLAttributeLayout normal_bone_id_layout;
+			normal_bone_id_layout.component_type = GLAttributeLayout::Int;
+			normal_bone_id_layout.component_dimension = GLAttributeLayout::_4;
+			normal_bone_id_layout.normalized = false;
+			normal_bone_id_layout.vertex_layout_location = 7;
+			normal_bone_id_layout.stride = sizeof(ThreeDimension::NormalVertex);
+			normal_bone_id_layout.offset = 0;
+			normal_bone_id_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, boneIDs);
+
+			GLAttributeLayout normal_weight_layout;
+			normal_weight_layout.component_type = GLAttributeLayout::Float;
+			normal_weight_layout.component_dimension = GLAttributeLayout::_4;
+			normal_weight_layout.normalized = false;
+			normal_weight_layout.vertex_layout_location = 8;
+			normal_weight_layout.stride = sizeof(ThreeDimension::NormalVertex);
+			normal_weight_layout.offset = 0;
+			normal_weight_layout.relative_offset = offsetof(ThreeDimension::NormalVertex, weights);
+
+			buffer->normalVertexArray->AddVertexBuffer(std::move(*buffer->normalVertexBuffer), sizeof(ThreeDimension::NormalVertex), { normal_position_layout, normal_bone_id_layout, normal_weight_layout });
 #endif
 		}
 	}

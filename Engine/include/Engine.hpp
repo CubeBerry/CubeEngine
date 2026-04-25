@@ -15,6 +15,7 @@
 #include "Logger.hpp"
 #include "Particle/ParticleManager.hpp"
 #include "PhysicsManager.hpp"
+#include "SkeletalAnimationManager.hpp"
 
 class Engine
 {
@@ -37,6 +38,7 @@ public:
 	static Logger& GetLogger() { return *Instance().logger; }
 	static JobSystem& GetJobSystem() { return Instance().jobSystem; }
 	static const InputSnapshot& GetInputSnapshot() { return Instance().inputSnapshot; }
+	static SkeletalAnimationManager& GetSkeletalAnimationManager() { return Instance().skeletalAnimationManager; }
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
@@ -65,5 +67,6 @@ private:
 	PhysicsManager physicsManager;
 	JobSystem jobSystem;
 	InputSnapshot inputSnapshot;
+	SkeletalAnimationManager skeletalAnimationManager;
 	Logger* logger;
 };

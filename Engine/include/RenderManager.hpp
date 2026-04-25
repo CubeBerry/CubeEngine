@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <variant>
 #include <functional>
+#include <mutex>
+#include <vector>
 #include "Window.hpp"
 #include "Utility.hpp"
 #include "Interface/ISprite.hpp"
@@ -92,6 +94,27 @@ public:
 		//	if ((*it)()) it = functionQueue.erase(it);
 		//	else ++it;
 		//}
+	}
+
+	// Thread-safe: queue a GPU command to be executed on the main thread
+	void QueueGPUCommand(std::function<void()> command)
+	{
+		std::lock_guard<std::mutex> lock(gpuCommandMutex);
+		gpuCommandQueue.push_back(std::move(command));
+	}
+
+	// Main thread only: execute all queued GPU commands and clear the queue
+	void ProcessGPUCommands()
+	{
+		std::vector<std::function<void()>> commands;
+		{
+			std::lock_guard<std::mutex> lock(gpuCommandMutex);
+			commands.swap(gpuCommandQueue);
+		}
+		for (auto& cmd : commands)
+		{
+			cmd();
+		}
 	}
 
 	void CreateMesh(
@@ -211,6 +234,10 @@ private:
 	
 	// Deferred Deletion
 	std::vector<std::function<bool()>> functionQueue;
+
+	// GPU Command Queue (written by worker threads, flushed on main thread)
+	std::vector<std::function<void()>> gpuCommandQueue;
+	std::mutex gpuCommandMutex;
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)

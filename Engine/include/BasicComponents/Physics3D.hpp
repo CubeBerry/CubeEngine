@@ -75,7 +75,7 @@ public:
 	Physics3D() : IComponent(ComponentTypes::PHYSICS3D) {};
 	~Physics3D() override;
 
-	void Init() override ;
+	void Init() override;
 	void Update(float dt) override;
 	void UpdatePhysics(float dt);
 	void End() override {};
@@ -117,16 +117,16 @@ public:
 	void Teleport(glm::vec3 newPosition);
 
 	void SetFriction(float f) { friction = f; }
-	void SetGravity(float g, bool isGravityOnParam = true) 
-	{ 
-		gravity = g; 
-		isGravityOn = isGravityOnParam; 
-		if (isGravityOnParam) Awake(); 
+	void SetGravity(float g, bool isGravityOnParam = true)
+	{
+		gravity = g;
+		isGravityOn = isGravityOnParam;
+		if (isGravityOnParam) Awake();
 	}
-	void SetIsGravityOn(bool state) 
-	{ 
-		isGravityOn = state; 
-		if (state) Awake(); 
+	void SetIsGravityOn(bool state)
+	{
+		isGravityOn = state;
+		if (state) Awake();
 	}
 	void SetMass(float m);
 	void SetRestitution(float amount) { restitution = amount; }
@@ -203,14 +203,14 @@ private:
 	float momentOfInertia = 1.0f;
 	float inverseInertia = 1.0f;
 
-	ColliderType3D colliderType =  ColliderType3D::BOX;
+	ColliderType3D colliderType = ColliderType3D::BOX;
 	BodyType3D bodyType = BodyType3D::RIGID;
 	CollisionDetectionMode collisionMode = CollisionDetectionMode::DISCRETE;
 
 	glm::vec3 ComputePolygonCenter(const std::vector<glm::vec3>& points);
 	// Continuous collision detection mode for preventing tunneling at high speeds
 	bool SweptSpheres(Physics3D* body1, Physics3D* body2, float dt, CollisionResult& outResult);
-	
+
 	// Gilbert-Johnson-Keerthi distance algorithm and Expanding Polytope Algorithm for convex collision resolution
 	// universal support function that handles all shape types
 	glm::vec3 GetShapeSupportPoint(const GjkShape& shape, glm::vec3 searchDirection);
@@ -244,4 +244,5 @@ private:
 	//bool SweptSphereVsOBB(Physics3D* boxBody, float dt, CollisionResult& outResult);
 	//======== Legacy: SAT ========//
 
+	//@TODO: Create Capsule collider type
 };

@@ -35,6 +35,11 @@ void GLRenderManager::Initialize(SDL_Window* window_, SDL_GLContext context_)
 	gl3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/3D.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/3D.frag" } });
 #ifdef _DEBUG
 	glNormal3DShader.LoadShader({ { GLShader::VERTEX, "../Engine/shaders/glsl/Normal3D.vert" }, { GLShader::FRAGMENT, "../Engine/shaders/glsl/Normal3D.frag" } });
+	GLuint normalBlockIndex = glGetUniformBlockIndex(glNormal3DShader.GetProgramHandle(), "vUniformMatrix");
+	if (normalBlockIndex != GL_INVALID_INDEX)
+	{
+		glUniformBlockBinding(glNormal3DShader.GetProgramHandle(), normalBlockIndex, 2);
+	}
 #endif
 
 	//Lighting
@@ -227,6 +232,9 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 				{
 					glNormal3DShader.Use(true);
 
+					// Bind VertexUniform (binding 2) so Normal3D.vert can access finalBones[]
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
+
 					buffer->normalVertexArray->Use(true);
 					GLsizei size = static_cast<GLsizei>(spriteData->normalVertices.size());
 					glDrawArrays(GL_LINES, 0, size);
@@ -234,6 +242,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 
 					glNormal3DShader.Use(false);
 				}
+
 #endif
 				break;
 			}

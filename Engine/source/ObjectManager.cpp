@@ -1065,19 +1065,6 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]); // Extract translation
 	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
 
-	// Debug: Log bone positions
-	static bool debugPrint = true;
-	if (debugPrint && node->name.find("Armature") == std::string::npos)
-	{
-		char debugBuffer[256];
-		snprintf(debugBuffer, sizeof(debugBuffer),
-			"Bone: %s | GlobalPos: (%.2f, %.2f, %.2f) | ScreenPos: (%.2f, %.2f)",
-			node->name.c_str(),
-			currentPos.x, currentPos.y, currentPos.z,
-			screenPos.x, screenPos.y);
-		Engine::GetLogger().LogDebug(LogCategory::Engine, debugBuffer);
-	}
-
 	// Draw joint point
 	if (screenPos.x != -1 && screenPos.y != -1)
 	{
