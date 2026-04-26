@@ -7,6 +7,8 @@
 #include "glm/glm.hpp"
 #include "Ray.hpp"
 
+#include <string>
+
 enum class CameraMoveDir
 {
 	FOWARD,
@@ -30,6 +32,14 @@ enum CameraCenterMode
 	RightOriginBottomLeft,
 	LeftOriginTopLeft,
 	NormalizedDeviceCoordinates
+};
+
+struct ViewportRect
+{
+	float x;
+	float y;
+	float width;
+	float height;
 };
 
 class Camera
@@ -77,10 +87,13 @@ public:
 	void            SetYaw(float amount) noexcept { yaw = amount; }
 	void            SetBaseFov(float amount) noexcept { baseFov = amount; }
 	void            SetCameraSensitivity(float amount) noexcept { cameraSensitivity = amount; }
-	void			UpdaetCameraDirectrion(glm::vec2 dir);
+	void			UpdateCameraDirection(glm::vec2 dir);
 	void			SetIsThirdPersonViewMod(bool state) { isThirdPersonView = state; }
 	void            SetCameraDistance(float amount) noexcept { cameraDistance = amount; }
 	void            SetCameraOffset(glm::vec3 amount) noexcept { cameraOffset = amount; }
+	void			SetViewport(float x, float y, float w, float h) { viewport = { x, y, w, h }; }
+	void			SetName(const std::string& name_) { name = name_; }
+	void			SetIsActive(bool state) { isActive = state; }
 
 	float	  GetNear() { return nearClip; }
 	float	  GetFar() { return farClip; }
@@ -90,6 +103,10 @@ public:
 	float	  GetIsThirdPersonView() { return isThirdPersonView; }
 	float	  GetCameraDistance() { return cameraDistance; }
 	glm::vec3 GetCameraOffset() { return cameraOffset; }
+	ViewportRect GetViewport() const { return viewport; }
+	std::string GetName() const { return name; }
+	bool GetIsActive() const { return isActive; }
+
 
 	glm::vec3 GetUpVector() const { return up; }
 	glm::vec3 GetBackVector() const { return back; }
@@ -127,4 +144,8 @@ private:
 	float cameraSensitivity = 1.f;
 	float cameraDistance = 5.0f; //In ThirdPersonView
 	bool isThirdPersonView = false; //In ThirdPersonView
+
+	ViewportRect viewport{ 0.0f, 0.0f, 1.0f, 1.0f };
+	std::string name = "Camera";
+	bool isActive = true;
 };

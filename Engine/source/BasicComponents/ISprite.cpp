@@ -47,6 +47,8 @@ void ISprite::AddMesh3D(MeshType type, const std::filesystem::path& path, int st
 
 glm::vec4 ISprite::GetColor()
 {
+	if (subMeshes.empty()) return { 1.f, 1.f, 1.f, 1.f };
+
 	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
 		auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
@@ -63,6 +65,15 @@ glm::vec4 ISprite::GetColor()
 
 void ISprite::SetColor(glm::vec4 color)
 {
+	if (subMeshes.empty())
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetColor(color);
+		});
+		return;
+	}
+
 	if (spriteDrawType == SpriteDrawType::TwoDimension || spriteDrawType == SpriteDrawType::UI)
 	{
 		auto& vertexUniform = subMeshes[0]->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
@@ -79,6 +90,15 @@ void ISprite::SetColor(glm::vec4 color)
 
 void ISprite::ChangeTexture(std::string name)
 {
+	if (subMeshes.empty())
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->ChangeTexture(name);
+		});
+		return;
+	}
+
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	switch (renderManager->GetGraphicsMode())
 	{
@@ -221,6 +241,15 @@ void ISprite::ChangeTexture(std::string name)
 
 void ISprite::SetIsTex(bool state)
 {
+	if (subMeshes.empty())
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetIsTex(state);
+		});
+		return;
+	}
+
 	isTex = state;
 	RenderManager* renderManager = Engine::Instance().GetRenderManager();
 	switch (renderManager->GetGraphicsMode())
@@ -279,4 +308,93 @@ void ISprite::SetIsTex(bool state)
 	default:
 		break;
 	}
+}
+
+glm::vec3 ISprite::GetSpecularColor(int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size())) return { 0.f, 0.f, 0.f };
+	return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.specularColor;
+}
+
+float ISprite::GetShininess(int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size())) return 0.f;
+	return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.shininess;
+}
+
+float ISprite::GetMetallic(int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size())) return 0.f;
+	return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.metallic;
+}
+
+float ISprite::GetRoughness(int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size())) return 0.f;
+	return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness;
+}
+
+void ISprite::SetSpecularColor(glm::vec3 sColor, int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size()))
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetSpecularColor(sColor, index);
+		});
+		return;
+	}
+	subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.specularColor = sColor;
+}
+
+void ISprite::SetShininess(float amount, int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size()))
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetShininess(amount, index);
+		});
+		return;
+	}
+	subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.shininess = amount;
+}
+
+void ISprite::SetMetallic(float amount, int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size()))
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetMetallic(amount, index);
+		});
+		return;
+	}
+	subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.metallic = amount;
+}
+
+void ISprite::SetRoughness(float amount, int index)
+{
+	if (index < 0 || index >= static_cast<int>(subMeshes.size()))
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetRoughness(amount, index);
+		});
+		return;
+	}
+	subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness = amount;
+}
+void ISprite::SetSpriteDrawType(SpriteDrawType type)
+{
+	if (subMeshes.empty())
+	{
+		Engine::GetObjectManager().QueueComponentFunction<ISprite>(this, [=](ISprite* sprite)
+		{
+			sprite->SetSpriteDrawType(type);
+		});
+		return;
+	}
+
+	spriteDrawType = type;
 }

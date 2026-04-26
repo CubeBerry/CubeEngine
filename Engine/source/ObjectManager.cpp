@@ -994,7 +994,18 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 					* rotationMatrix
 					* glm::scale(glm::mat4(1.0f), scale);
 
+				ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+				glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+				glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+				Camera* mainCam = Engine::GetCameraManager().GetCamera();
+				ViewportRect vp = mainCam->GetViewport();
+
+				ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+				ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+				ImGui::GetBackgroundDrawList()->PushClipRect(clipMin, clipMax);
 				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
+				ImGui::GetBackgroundDrawList()->PopClipRect();
 			}
 		}
 
@@ -1057,16 +1068,23 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::mat4 nodeGlobalMatrix = animatedTransforms.at(node->name);
 	glm::mat4 nodeWorldMatrix = objectTransform * nodeGlobalMatrix;
 
+	CameraManager& camManager = Engine::GetCameraManager();
+	int mainCamIdx = camManager.GetMainCameraIndex();
+	Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+	// Skip if camera is inactive
+	if (!mainCam || !mainCam->GetIsActive()) return;
+
 	// Convert world position to screen coordinates
-	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
-	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	glm::mat4 view = mainCam->GetViewMatrix();
+	glm::mat4 proj = mainCam->GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
 	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]); // Extract translation
 	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
 
 	// Draw joint point
-	if (screenPos.x != -1 && screenPos.y != -1)
+	if (screenPos.x != -1 && screenPos.y != -1 && !camManager.IsScreenPointOccluded(screenPos, mainCamIdx))
 	{
 		ImU32 color = IM_COL32(0, 255, 0, 255);
 		if (node->name == selectedBoneName) color = IM_COL32(255, 0, 0, 255);
@@ -1085,9 +1103,11 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
 			glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj);
 
-			// Draw line if both positions are valid
+			// Draw line if both positions are valid and not occluded
 			if (screenPos.x >= 0 && screenPos.y >= 0 &&
-				childScreenPos.x >= 0 && childScreenPos.y >= 0)
+				childScreenPos.x >= 0 && childScreenPos.y >= 0 &&
+				!camManager.IsScreenPointOccluded(screenPos, mainCamIdx) &&
+				!camManager.IsScreenPointOccluded(childScreenPos, mainCamIdx))
 			{
 				drawList->AddLine(
 					ImVec2(screenPos.x, screenPos.y),
@@ -1105,7 +1125,7 @@ void ObjectManager::SelectObjectWithMouse()
 	//SelectObject
 	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT) && isShowPopup == false)
 	{
-		Ray ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+		Ray ray = Engine::GetCameraManager().GetCamera()->CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
 		if (isDragObject == false)
 		{
 			float tMin, tMax;
@@ -1148,8 +1168,8 @@ void ObjectManager::SelectObjectWithMouse()
 					objT->GetComponent<Physics3D>()->SetIsGravityOn(false);
 					isObjGravityOn = true;
 				}
-				ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
-				glm::vec3 planeNormal = Engine::GetCameraManager().GetBackVector();
+				ray = Engine::GetCameraManager().GetCamera()->CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+				glm::vec3 planeNormal = Engine::GetCameraManager().GetCamera()->GetBackVector();
 				glm::vec3 objectPosition = objT->GetPosition();
 				float distanceToPlane = glm::dot(planeNormal, objectPosition - ray.origin) / glm::dot(planeNormal, ray.direction);
 				glm::vec3 intersectionPoint = ray.origin + distanceToPlane * ray.direction;
@@ -1414,9 +1434,26 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 	Object* obj = phy->GetOwner();
 	if (!obj) return;
 
-	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
-	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	CameraManager& camManager = Engine::GetCameraManager();
+	int mainCamIdx = camManager.GetMainCameraIndex();
+	Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+	// Skip if camera is inactive
+	if (!mainCam || !mainCam->GetIsActive()) return;
+
+	glm::mat4 view = mainCam->GetViewMatrix();
+	glm::mat4 proj = mainCam->GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+	glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+	ViewportRect vp = mainCam->GetViewport();
+
+	ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+	ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+	drawList->PushClipRect(clipMin, clipMax);
 
 	ImU32 color;
 	switch (phy->GetBodyType())
@@ -1447,7 +1484,9 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 				
 				if (screenPos.x >= 0 && screenPos.y >= 0)
 				{
-					if (!first && prevScreenPos.x >= 0 && prevScreenPos.y >= 0)
+					if (!first && prevScreenPos.x >= 0 && prevScreenPos.y >= 0 &&
+						!camManager.IsScreenPointOccluded(prevScreenPos, mainCamIdx) &&
+						!camManager.IsScreenPointOccluded(screenPos, mainCamIdx))
 					{
 						drawList->AddLine(ImVec2(prevScreenPos.x, prevScreenPos.y), ImVec2(screenPos.x, screenPos.y), color, 2.0f);
 					}
@@ -1495,13 +1534,16 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			{
 				glm::vec2 p1 = screenPoints[edges[i][0]];
 				glm::vec2 p2 = screenPoints[edges[i][1]];
-				if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
+				if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0 &&
+					!camManager.IsScreenPointOccluded(p1, mainCamIdx) &&
+					!camManager.IsScreenPointOccluded(p2, mainCamIdx))
 				{
 					drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
 				}
 			}
 		}
 	}
+	drawList->PopClipRect();
 }
 
 void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
@@ -1510,9 +1552,26 @@ void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
 	Object* obj = phy->GetOwner();
 	if (!obj) return;
 
-	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
-	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	CameraManager& camManager = Engine::GetCameraManager();
+	int mainCamIdx = camManager.GetMainCameraIndex();
+	Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+	// Skip if camera is inactive
+	if (!mainCam || !mainCam->GetIsActive()) return;
+
+	glm::mat4 view = mainCam->GetViewMatrix();
+	glm::mat4 proj = mainCam->GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+	glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+	ViewportRect vp = mainCam->GetViewport();
+
+	ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+	ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+	drawList->PushClipRect(clipMin, clipMax);
 
 	ImU32 color;
 	switch (phy->GetBodyType())
@@ -1564,7 +1623,9 @@ void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
 		{
 			glm::vec2 p1 = screenPoints[i];
 			glm::vec2 p2 = screenPoints[(i + 1) % screenPoints.size()];
-			if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
+			if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0 &&
+				!camManager.IsScreenPointOccluded(p1, mainCamIdx) &&
+				!camManager.IsScreenPointOccluded(p2, mainCamIdx))
 			{
 				drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
 			}
@@ -1578,9 +1639,10 @@ void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
 		glm::vec2 screenEdge = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos.x + radius, scaledPos.y, 0.f), view, proj);
 
 		float screenRadius = glm::distance(screenCenter, screenEdge);
-		if (screenCenter.x >= 0 && screenCenter.y >= 0)
+		if (screenCenter.x >= 0 && screenCenter.y >= 0 && !camManager.IsScreenPointOccluded(screenCenter, mainCamIdx))
 		{
 			drawList->AddCircle(ImVec2(screenCenter.x, screenCenter.y), screenRadius, color, 32, 2.0f);
 		}
 	}
+	drawList->PopClipRect();
 }

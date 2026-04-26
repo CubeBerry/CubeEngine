@@ -11,9 +11,9 @@ void VerticesDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetFar(45.f);
-	Engine::GetCameraManager().SetBaseFov(22.5f);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().GetCamera()->SetFar(45.f);
+	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);
+	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);
 
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/texture_sample2.jpg", "1", true);
 	Engine::GetRenderManager()->LoadTexture("../Game/assets/texture_sample.jpg", "2", true);

@@ -40,7 +40,7 @@ void DXSkyboxRenderContext::OnResize()
 	Initialize();
 }
 
-void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	if (!m_renderManager->m_skyboxEnabled || !m_skybox) return;
 
@@ -60,7 +60,29 @@ void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 	ID3D12DescriptorHeap* ppHeapsSkybox[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeapsSkybox), ppHeapsSkybox);
 
-	glm::mat4 worldToNDC[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera();
+
+	uint32_t renderWidth = m_renderManager->m_width;
+	uint32_t renderHeight = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
+	ViewportRect vp = activeCamera->GetViewport();
+
+	D3D12_VIEWPORT viewport = { vp.x * renderWidth, vp.y * renderHeight, vp.width * renderWidth, vp.height * renderHeight, 0.f, 1.f };
+	D3D12_RECT scissorRect = {
+		static_cast<LONG>(vp.x * renderWidth),
+		static_cast<LONG>(vp.y * renderHeight),
+		static_cast<LONG>((vp.x + vp.width) * renderWidth),
+		static_cast<LONG>((vp.y + vp.height) * renderHeight)
+	};
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
+	glm::mat4 worldToNDC[2] = { activeCamera->GetViewMatrix(), activeCamera->GetProjectionMatrix() };
 	commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
 	commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
 

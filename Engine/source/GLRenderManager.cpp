@@ -67,6 +67,7 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	}
+	glCheck(glDisable(GL_SCISSOR_TEST));
 	glCheck(glClearColor(bgColor.r, bgColor.g, bgColor.b, 1.f));
 	glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -134,160 +135,170 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 	}
 
 	std::vector<DynamicSprite*> sprites = Engine::Instance().GetSpriteManager().GetDynamicSprites();
-	for (const auto& sprite : sprites)
+	size_t cameraCount = Engine::GetCameraManager().GetCameraCount();
+
+	for (size_t c = 0; c < cameraCount; ++c)
 	{
-		for (auto& subMesh : sprite->GetSubMeshes())
+		Camera* cam = Engine::GetCameraManager().GetCamera(static_cast<int>(c));
+		if (cam == nullptr || !cam->GetIsActive()) continue;
+
+		ViewportRect vp = cam->GetViewport();
+		GLsizei w, h;
+		SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &w, &h);
+		GLint vx = static_cast<GLint>(vp.x * w);
+		GLint vy = static_cast<GLint>((1.0f - vp.y - vp.height) * h);
+		GLsizei vw = static_cast<GLsizei>(vp.width * w);
+		GLsizei vh = static_cast<GLsizei>(vp.height * h);
+		glViewport(vx, vy, vw, vh);
+
+		// Clear only the camera's viewport region
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(vx, vy, vw, vh);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDisable(GL_SCISSOR_TEST);
+
+		for (const auto& sprite : sprites)
 		{
-			auto* buffer = subMesh->GetBuffer<BufferWrapper::GLBuffer>();
-			switch (rMode)
+			for (auto& subMesh : sprite->GetSubMeshes())
 			{
-			case RenderType::TwoDimension:
-			{
-				gl2DShader.Use(true);
-
-				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
-
-				spriteData->GetVertexUniformBuffer<GLUniformBuffer<TwoDimension::VertexUniform>>()->UpdateUniform(sizeof(TwoDimension::VertexUniform), &spriteData->vertexUniform);
-				spriteData->GetFragmentUniformBuffer<GLUniformBuffer<TwoDimension::FragmentUniform>>()->UpdateUniform(sizeof(TwoDimension::FragmentUniform), &spriteData->fragmentUniform);
-
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 0, spriteData->GetVertexUniformBuffer<GLUniformBuffer<TwoDimension::VertexUniform>>()->GetHandle()));
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 1, spriteData->GetFragmentUniformBuffer<GLUniformBuffer<TwoDimension::FragmentUniform>>()->GetHandle()));
-
-				buffer->vertexArray->Use(true);
-				GLDrawIndexed(*buffer->vertexArray);
-				buffer->vertexArray->Use(false);
-
-				gl2DShader.Use(false);
-				break;
-			}
-			case RenderType::ThreeDimension:
-			{
-				gl3DShader.Use(true);
-
-				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
-
-				//// Initialize bone matrices to identity for non-skeletal meshes
-				//// This ensures all meshes render correctly, whether skinned or not
-				//if (spriteData->boneInfoMap.empty())
-				//{
-				//	// Non-skeletal mesh: set all bone matrices to identity
-				//	for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
-				//	{
-				//		spriteData->vertexUniform.finalBones[i] = glm::mat4(1.0f);
-				//	}
-				//}
-				// Only initialize bone matrices for non-skeletal meshes
-				if (spriteData->boneInfoMap.empty())
+				auto* buffer = subMesh->GetBuffer<BufferWrapper::GLBuffer>();
+				switch (rMode)
 				{
-					for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
+				case RenderType::TwoDimension:
+				{
+					gl2DShader.Use(true);
+
+					auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
+
+					spriteData->vertexUniform.view = cam->GetViewMatrix();
+					if (sprite->GetSpriteDrawType() == SpriteDrawType::UI)
 					{
-						spriteData->vertexUniform.finalBones[i] = glm::mat4(1.0f);
+						glm::vec2 cameraViewSize = cam->GetViewSize();
+						spriteData->vertexUniform.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+						spriteData->vertexUniform.view = glm::mat4(1.f);
 					}
+					else
+					{
+						spriteData->vertexUniform.projection = cam->GetProjectionMatrix();
+					}
+
+					spriteData->GetVertexUniformBuffer<GLUniformBuffer<TwoDimension::VertexUniform>>()->UpdateUniform(sizeof(TwoDimension::VertexUniform), &spriteData->vertexUniform);
+					spriteData->GetFragmentUniformBuffer<GLUniformBuffer<TwoDimension::FragmentUniform>>()->UpdateUniform(sizeof(TwoDimension::FragmentUniform), &spriteData->fragmentUniform);
+
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 0, spriteData->GetVertexUniformBuffer<GLUniformBuffer<TwoDimension::VertexUniform>>()->GetHandle()));
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 1, spriteData->GetFragmentUniformBuffer<GLUniformBuffer<TwoDimension::FragmentUniform>>()->GetHandle()));
+
+					buffer->vertexArray->Use(true);
+					GLDrawIndexed(*buffer->vertexArray);
+					buffer->vertexArray->Use(false);
+
+					gl2DShader.Use(false);
+					break;
 				}
-				// Note: Skeletal meshes will have their bone matrices updated by SkeletalAnimator::Update()
-
-				//auto& vertexUniformBuffer = std::get<BufferWrapper::GLBuffer>(sprite->GetBuffer()->buffer);
-				spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &spriteData->vertexUniform);
-
-				//auto& fragmentUniformBuffer = std::get<GLUniformBuffer<FragmentUniform>*>(sprite->GetFragmentUniformBuffer()->buffer);
-				spriteData->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->UpdateUniform(sizeof(ThreeDimension::FragmentUniform), &spriteData->fragmentUniform);
-
-				//auto& materialUniformBuffer = std::get<GLUniformBuffer<ThreeDimension::Material>*>(sprite->GetMaterialUniformBuffer()->buffer);
-				spriteData->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->UpdateUniform(sizeof(ThreeDimension::Material), &spriteData->material);
-
-				buffer->vertexArray->Use(true);
-
-				for (int loc = 0; loc <= 8; ++loc)
+				case RenderType::ThreeDimension:
 				{
-					GLint enabled, size, type, stride, bufferBinding;
-					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
-					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_SIZE, &size);
-					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_TYPE, &type);
-					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &stride);
-					glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &bufferBinding);
-				}
+					gl3DShader.Use(true);
 
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, spriteData->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->GetHandle()));
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, spriteData->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->GetHandle()));
+					auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 5, directionalLightUniformBuffer->GetHandle()));
-				glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 6, pointLightUniformBuffer->GetHandle()));
-				GLDrawIndexed(*buffer->vertexArray);
-				buffer->vertexArray->Use(false);
+					spriteData->vertexUniform.view = cam->GetViewMatrix();
+					spriteData->vertexUniform.projection = cam->GetProjectionMatrix();
+					glm::mat4 inverseView = glm::inverse(spriteData->vertexUniform.view);
+					spriteData->vertexUniform.viewPosition = glm::vec4(inverseView[3].x, inverseView[3].y, inverseView[3].z, 1.0f);
 
-				gl3DShader.Use(false);
+					//// Initialize bone matrices to identity for non-skeletal meshes
+					//// This ensures all meshes render correctly, whether skinned or not
+					//if (spriteData->boneInfoMap.empty())
+					//{
+					//	// Non-skeletal mesh: set all bone matrices to identity
+					//	for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
+					//	{
+					//		spriteData->vertexUniform.finalBones[i] = glm::mat4(1.0f);
+					//	}
+					//}
+					// Only initialize bone matrices for non-skeletal meshes
+					if (spriteData->boneInfoMap.empty())
+					{
+						for (int i = 0; i < ThreeDimension::MAX_BONES; i++)
+						{
+							spriteData->vertexUniform.finalBones[i] = glm::mat4(1.0f);
+						}
+					}
+
+					spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &spriteData->vertexUniform);
+					spriteData->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->UpdateUniform(sizeof(ThreeDimension::FragmentUniform), &spriteData->fragmentUniform);
+					spriteData->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->UpdateUniform(sizeof(ThreeDimension::Material), &spriteData->material);
+
+					buffer->vertexArray->Use(true);
+
+					for (int loc = 0; loc <= 8; ++loc)
+					{
+						GLint enabled, size, type, stride, bufferBinding;
+						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_SIZE, &size);
+						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_TYPE, &type);
+						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &stride);
+						glGetVertexAttribiv(loc, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &bufferBinding);
+					}
+
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 3, spriteData->GetFragmentUniformBuffer<GLUniformBuffer<ThreeDimension::FragmentUniform>>()->GetHandle()));
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 4, spriteData->GetMaterialUniformBuffer<GLUniformBuffer<ThreeDimension::Material>>()->GetHandle()));
+
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 5, directionalLightUniformBuffer->GetHandle()));
+					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 6, pointLightUniformBuffer->GetHandle()));
+					GLDrawIndexed(*buffer->vertexArray);
+					buffer->vertexArray->Use(false);
+
+					gl3DShader.Use(false);
 
 #ifdef _DEBUG
-				//if (isDrawNormals)
-				//{
-				//	glNormal3DShader.Use(true);
-				//	normalVertexArray.Use(true);
-				//	//glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalVertices3D.size()));
-				//	normalVertexArray.Use(false);
-				//	glNormal3DShader.Use(false);
-				//}
+					if (m_normalVectorVisualization)
+					{
+						glNormal3DShader.Use(true);
 
-				if (m_normalVectorVisualization)
-				{
-					glNormal3DShader.Use(true);
+						// Bind VertexUniform (binding 2) so Normal3D.vert can access finalBones[]
+						glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
 
-					// Bind VertexUniform (binding 2) so Normal3D.vert can access finalBones[]
-					glCheck(glBindBufferBase(GL_UNIFORM_BUFFER, 2, spriteData->GetVertexUniformBuffer<GLUniformBuffer<ThreeDimension::VertexUniform>>()->GetHandle()));
+						buffer->normalVertexArray->Use(true);
+						GLsizei size = static_cast<GLsizei>(spriteData->normalVertices.size());
+						glDrawArrays(GL_LINES, 0, size);
+						buffer->normalVertexArray->Use(false);
 
-					buffer->normalVertexArray->Use(true);
-					GLsizei size = static_cast<GLsizei>(spriteData->normalVertices.size());
-					glDrawArrays(GL_LINES, 0, size);
-					buffer->normalVertexArray->Use(false);
-
-					glNormal3DShader.Use(false);
-				}
-
+						glNormal3DShader.Use(false);
+					}
 #endif
-				break;
-			}
+					break;
+				}
+				}
 			}
 		}
-	}
 
-	//switch (rMode)
-	//{
-	//case RenderType::TwoDimension:
-	//	gl2DShader.Use(false);
-	//	break;
-	//case RenderType::ThreeDimension:
-	//	gl3DShader.Use(false);
-	//	break;
-	//}
+		//Skybox
+		if (m_skyboxEnabled)
+		{
+			skyboxShader.Use(true);
+			GLint viewLoc = glGetUniformLocation(skyboxShader.GetProgramHandle(), "view");
+			GLint projectionLoc = glGetUniformLocation(skyboxShader.GetProgramHandle(), "projection");
 
-	//Skybox
-	if (m_skyboxEnabled)
-	{
-		skyboxShader.Use(true);
-		//if (vertexUniform3D != nullptr)
-		//{
-		//	vertexUniform3D->UpdateUniform(vertexUniforms3D.size() * sizeof(ThreeDimension::VertexUniform), vertexUniforms3D.data());
-		//}
-		GLint viewLoc = glGetUniformLocation(skyboxShader.GetProgramHandle(), "view");
-		GLint projectionLoc = glGetUniformLocation(skyboxShader.GetProgramHandle(), "projection");
+			std::span<const float, 16> spanView(&cam->GetViewMatrix()[0][0], 16);
+			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, spanView.data());
+			std::span<const float, 16> spanProjection(&cam->GetProjectionMatrix()[0][0], 16);
+			glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
 
-		std::span<const float, 16> spanView(&Engine::GetCameraManager().GetViewMatrix()[0][0], 16);
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, spanView.data());
-		std::span<const float, 16> spanProjection(&Engine::GetCameraManager().GetProjectionMatrix()[0][0], 16);
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
+			GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
+			glCheck(glUniform1i(skyboxLoc, 0));
 
-		GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));
-		glCheck(glUniform1i(skyboxLoc, 0));
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubeMap());
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubeMap());
+			skyboxVertexArray.Use(true);
+			glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
+			skyboxVertexArray.Use(false);
 
-		skyboxVertexArray.Use(true);
-		glCheck(glDrawArrays(GL_TRIANGLES, 0, 36));
-		skyboxVertexArray.Use(false);
-
-		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-		skyboxShader.Use(false);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+			skyboxShader.Use(false);
+		}
 	}
 
 	imguiManager->Begin();

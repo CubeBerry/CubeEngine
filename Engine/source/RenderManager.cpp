@@ -1253,7 +1253,7 @@ glm::mat4 RenderManager::Quantize(
 //	return (-linear + std::sqrt(discriminant)) / (2.f * quadratic);
 //}
 
-glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj)
+glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj, Camera* camera)
 {
 	// Transform world space to clip space
 	glm::vec4 clipSpace = proj * view * glm::vec4(worldPos, 1.0f);
@@ -1265,21 +1265,24 @@ glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view
 	glm::vec3 ndc = glm::vec3(clipSpace) / clipSpace.w;
 
 	// Map NDC to screen coordinates using ImGui viewport data
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	glm::vec2 windowPos = { viewport->Pos.x, viewport->Pos.y };
-	glm::vec2 windowSize = { viewport->Size.x, viewport->Size.y };
+	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+	glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
 
-	// Convert NDC to screen space and flip Y-axis for ImGui coordinate system
-	float screenX = (ndc.x + 1.0f) * 0.5f * windowSize.x + windowPos.x;
+	Camera* cam = camera ? camera : Engine::GetCameraManager().GetCamera();
+	ViewportRect vp = cam->GetViewport();
+
+	// Convert NDC to screen space within the camera's viewport
+	float screenX = (ndc.x + 1.0f) * 0.5f * (windowSize.x * vp.width) + (windowSize.x * vp.x) + windowPos.x;
 	float screenY = 0.0f;
 
 	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
 	{
-		screenY = (ndc.y + 1.0f) * 0.5f * windowSize.y + windowPos.y;
+		screenY = (ndc.y + 1.0f) * 0.5f * (windowSize.y * vp.height) + (windowSize.y * vp.y) + windowPos.y;
 	}
 	else
 	{
-		screenY = (1.0f - ndc.y) * 0.5f * windowSize.y + windowPos.y;
+		screenY = (1.0f - ndc.y) * 0.5f * (windowSize.y * vp.height) + (windowSize.y * vp.y) + windowPos.y;
 	}
 
 	return glm::vec2{ screenX, screenY };

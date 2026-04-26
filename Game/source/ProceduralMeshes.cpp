@@ -15,12 +15,12 @@ void ProceduralMeshes::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(cNear);
-	Engine::GetCameraManager().SetFar(cFar);
-	Engine::GetCameraManager().SetBaseFov(cFov);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
-	Engine::GetCameraManager().SetCameraPosition({ 0.f,0.f,10.f });
-	//Engine::GetCameraManager().SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
+	Engine::GetCameraManager().GetCamera()->SetNear(cNear);
+	Engine::GetCameraManager().GetCamera()->SetFar(cFar);
+	Engine::GetCameraManager().GetCamera()->SetBaseFov(cFov);
+	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().GetCamera()->SetCameraPosition({ 0.f,0.f,10.f });
+	//Engine::GetCameraManager().GetCamera()->SetCameraPosition(glm::vec3{ 2.f, 2.f, 2.f });
 	//Engine::GetCameraManager().SetCenter(glm::vec3{ 0.f, 0.f, 0.f });
 
 	//Debug Lighting

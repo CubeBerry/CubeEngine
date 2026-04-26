@@ -34,6 +34,7 @@ void GameStateManager::LevelInit()
 void GameStateManager::LevelInit(GameLevel currentLevel_)
 {
 	currentLevel = currentLevel_;
+	Engine::GetCameraManager().DeleteAllCameras();
 	LevelInit();
 	Engine::GetObjectManager().ProcessFunctionQueue();
 	state = State::UPDATE;
@@ -55,6 +56,7 @@ void GameStateManager::Update(float dt)
 		}
 		break;
 	case State::LOAD:
+		Engine::GetCameraManager().DeleteAllCameras();
 		LevelInit();
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());

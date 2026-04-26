@@ -38,7 +38,6 @@ void Engine::Init(const char* title, int windowWidth, int windowHeight, bool ful
 		dynamic_cast<DXRenderManager*>(renderManager)->Initialize(window.GetWindow());
 	}
 
-	cameraManager.Init({ windowWidth ,windowHeight }, CameraType::TwoDimension, 1.f);
 	soundManager.Initialize(8);
 	
 	spriteManager = new SpriteManager;

@@ -147,7 +147,7 @@ public:
 	//static float CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic);
 
 	// Helper function to world-to-screen transform for ImGui drawing
-	glm::vec2 WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj);
+	glm::vec2 WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj, class Camera* camera = nullptr);
 	void RenderingControllerForImGui();
 
 	//Skybox

@@ -26,12 +26,12 @@ void PhysicsDemo::Init3D()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(0.001f);
-	Engine::GetCameraManager().SetFar(1000.f);
-	Engine::GetCameraManager().SetBaseFov(22.5f);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
-	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,13.f });
-	Engine::GetCameraManager().SetTarget(glm::vec3{ 0.f, 0.f,0.f });
+	Engine::GetCameraManager().GetCamera()->SetNear(0.001f);
+	Engine::GetCameraManager().GetCamera()->SetFar(1000.f);
+	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);
+	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().GetCamera()->SetCameraPosition({ 0.f,2.f,13.f });
+	Engine::GetCameraManager().GetCamera()->SetTarget(glm::vec3{ 0.f, 0.f,0.f });
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-2.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
@@ -95,19 +95,19 @@ void PhysicsDemo::Update(float dt)
 
 			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::UP))
 			{
-				movement += Engine::GetCameraManager().GetBackVector() * speed;
+				movement += Engine::GetCameraManager().GetCamera()->GetBackVector() * speed;
 			}
 			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::DOWN))
 			{
-				movement -= Engine::GetCameraManager().GetBackVector() * speed;
+				movement -= Engine::GetCameraManager().GetCamera()->GetBackVector() * speed;
 			}
 			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::RIGHT))
 			{
-				movement += Engine::GetCameraManager().GetRightVector() * speed;
+				movement += Engine::GetCameraManager().GetCamera()->GetRightVector() * speed;
 			}
 			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::LEFT))
 			{
-				movement -= Engine::GetCameraManager().GetRightVector() * speed;
+				movement -= Engine::GetCameraManager().GetCamera()->GetRightVector() * speed;
 			}
 
 

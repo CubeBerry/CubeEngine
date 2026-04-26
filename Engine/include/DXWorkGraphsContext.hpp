@@ -29,7 +29,7 @@ public:
 	void CheckMeshNodesSupport() const;
 
 	void InitializeWorkGraphs() override;
-	void ExecuteWorkGraphs() override;
+	void ExecuteWorkGraphs(class Camera* camera = nullptr) override;
 	void PrintWorkGraphsResults() override;
 private:
 	DXRenderManager* m_renderManager;

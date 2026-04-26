@@ -10,7 +10,7 @@
 
 Camera::~Camera()
 {
-	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Deleted");
+	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera [" + name + "] Deleted");
 }
 
 void Camera::Update()
@@ -33,6 +33,7 @@ void Camera::Update()
 				glm::rotate(glm::mat4(1.0f), glm::radians(rotate2D), glm::vec3(0.0f, 0.0f, 1.0f)) *
 				glm::scale(glm::mat4(1.0f), glm::vec3(zoom, zoom, 1.0f));
 		}
+
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
@@ -53,6 +54,7 @@ void Camera::Update()
 		glm::vec3 desiredPosition = cameraCenter + cameraOffset;
 
 		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
@@ -65,6 +67,7 @@ void Camera::Update()
 			direction.y = sin(glm::radians(-pitch));
 			break;
 		}
+
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		back = glm::normalize(direction);
 
@@ -83,7 +86,6 @@ void Camera::Update()
 		switch (Engine::GetRenderManager()->GetGraphicsMode())
 		{
 		case GraphicsMode::GL:
-
 			if (isThirdPersonView == true)
 			{
 				view = glm::lookAt(cameraPosition, cameraCenter, up);
@@ -95,8 +97,8 @@ void Camera::Update()
 			}
 			projection = glm::perspectiveRH_NO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			break;
-		case GraphicsMode::VK:
 
+		case GraphicsMode::VK:
 			if (isThirdPersonView == true)
 			{
 				view = glm::lookAt({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
@@ -111,10 +113,9 @@ void Camera::Update()
 			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
 			// Flip y-axis for Vulkan
 			projection[1][1] *= -1.0f;
-
 			break;
-		case GraphicsMode::DX:
 
+		case GraphicsMode::DX:
 			if (isThirdPersonView == true)
 			{
 				view = glm::lookAtRH({ cameraPosition.x, -cameraPosition.y, cameraPosition.z }, { cameraCenter.x, -cameraCenter.y, cameraCenter.z }, up);
@@ -127,10 +128,10 @@ void Camera::Update()
 			}
 			//projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), static_cast<float>(wSize.x) / static_cast<float>(wSize.y), nearClip, farClip);
 			projection = glm::perspectiveRH_ZO(glm::radians(baseFov / log2(zoom + 1.0f)), wSize.x / wSize.y, nearClip, farClip);
-
 			break;
 		}
 		break;
+
 	default:
 		break;
 	}
@@ -225,7 +226,7 @@ void Camera::MoveCameraPos(CameraMoveDir dir, float speed)
 	}
 }
 
-void Camera::UpdaetCameraDirectrion(glm::vec2 dir)
+void Camera::UpdateCameraDirection(glm::vec2 dir)
 {
 	yaw += dir.x * cameraSensitivity;
 	pitch += dir.y * cameraSensitivity;

@@ -10,12 +10,12 @@ void MultipleLights::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
 	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(0.01f);
-	Engine::GetCameraManager().SetFar(1000.f);
-	Engine::GetCameraManager().SetBaseFov(22.5f);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
-	Engine::GetCameraManager().SetCameraPosition({ 20.f,15.f,20.f });
-	Engine::GetCameraManager().SetTarget(glm::vec3{ 0.f, 5.f,0.f });
+	Engine::GetCameraManager().GetCamera()->SetNear(0.01f);
+	Engine::GetCameraManager().GetCamera()->SetFar(1000.f);
+	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);
+	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().GetCamera()->SetCameraPosition({ 20.f,15.f,20.f });
+	Engine::GetCameraManager().GetCamera()->SetTarget(glm::vec3{ 0.f, 5.f,0.f });
 
 	// Plane
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,0.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);

@@ -49,22 +49,23 @@ public:
 	int GetSlices() const { return slices; };
 	std::string GetTextureName() { return textureName; }
 	bool GetIsTex() const { return isTex; }
-	glm::vec3 GetSpecularColor(int index = 0) { return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.specularColor; }
-	float GetShininess(int index = 0) { return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.shininess; }
-	float GetMetallic(int index = 0) { return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.metallic; }
-	float GetRoughness(int index = 0) { return subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness; }
+	glm::vec3 GetSpecularColor(int index = 0);
+	float GetShininess(int index = 0);
+	float GetMetallic(int index = 0);
+	float GetRoughness(int index = 0);
+	SpriteDrawType GetSpriteDrawType() const { return spriteDrawType; }
 	// Buffer
 	std::vector<SubMesh>& GetSubMeshes() { return subMeshes; }
 
 	//Setter
 	void SetColor(glm::vec4 color);
-	void SetSpriteDrawType(SpriteDrawType type) { spriteDrawType = type; }
+	void SetSpriteDrawType(SpriteDrawType type);
 	void ChangeTexture(std::string name);
 	void SetIsTex(bool state);
-	void SetSpecularColor(glm::vec3 sColor, int index = 0) { subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.specularColor = sColor; }
-	void SetShininess(float amount, int index = 0) { subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.shininess = amount; }
-	void SetMetallic(float amount, int index = 0) { subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.metallic = amount; }
-	void SetRoughness(float amount, int index = 0) { subMeshes[index]->GetData<BufferWrapper::DynamicSprite3DMesh>()->material.roughness = amount; }
+	void SetSpecularColor(glm::vec3 sColor, int index = 0);
+	void SetShininess(float amount, int index = 0);
+	void SetMetallic(float amount, int index = 0);
+	void SetRoughness(float amount, int index = 0);
 
 	//For CompFuncQueue
 	virtual void CreateQuad(glm::vec4 color_) = 0;

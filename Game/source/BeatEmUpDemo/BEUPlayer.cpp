@@ -112,7 +112,7 @@ void BEUPlayer::Update(float dt)
 			invincibleDelay = 0.f;
 		}
 	}
-	glm::vec3 cameraPos = Engine::GetCameraManager().GetCameraPosition();
+	glm::vec3 cameraPos = Engine::GetCameraManager().GetCamera()->GetCameraPosition();
 	if (position.x < cameraPos.x - 11.f)
 	{
 		position.x = -11.f;
@@ -318,9 +318,9 @@ void BEUPlayer::Control(float dt)
 		SetStateOn(BEUObjectStates::MOVEFOWARD);
 		SetXPosition(GetPosition().x + 10.f * dt);
 		/*
-		if (beatEmUpDemoSystem->GetIsCameraMoveAble() == true && Engine::GetCameraManager().GetCameraPosition().x < position.x)
+		if (beatEmUpDemoSystem->GetIsCameraMoveAble() == true && Engine::GetCameraManager().GetCamera()->GetCameraPosition().x < position.x)
 		{
-			Engine::GetCameraManager().SetCameraPosition({ position.x , Engine::GetCameraManager().GetCameraPosition().y, Engine::GetCameraManager().GetCameraPosition().z });
+			Engine::GetCameraManager().GetCamera()->SetCameraPosition({ position.x , Engine::GetCameraManager().GetCamera()->GetCameraPosition().y, Engine::GetCameraManager().GetCamera()->GetCameraPosition().z });
 		}*/
 	}
 	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::X)

@@ -178,7 +178,7 @@ void DXWorkGraphsContext::InitializeWorkGraphs()
 #endif
 }
 
-void DXWorkGraphsContext::ExecuteWorkGraphs()
+void DXWorkGraphsContext::ExecuteWorkGraphs(Camera* camera)
 {
 #if USE_PREVIEW_SDK
 	if (!m_renderManager->m_workGraphsEnabled || !m_renderManager->m_meshNodesEnabled) return;
@@ -194,7 +194,8 @@ void DXWorkGraphsContext::ExecuteWorkGraphs()
 	if (spriteData->meshlets.empty()) return;
 
 	// Update Culling Data
-	glm::mat4 viewProjection = Engine::GetCameraManager().GetProjectionMatrix() * Engine::GetCameraManager().GetViewMatrix();
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera();
+	glm::mat4 viewProjection = activeCamera->GetProjectionMatrix() * activeCamera->GetViewMatrix();
 	auto planes = ExtractFrustumPlanes(viewProjection);
 	CullingData cullingData;
 	for (int i = 0; i < 6; ++i) cullingData.frustumPlanes[i] = planes[i];

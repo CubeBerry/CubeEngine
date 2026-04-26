@@ -262,13 +262,13 @@ void DynamicSprite::UpdateView()
 		case SpriteDrawType::TwoDimension:
 		{
 			auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
-			vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
+			vertexUniform.view = Engine::GetCameraManager().GetCamera()->GetViewMatrix();
 			break;
 		}
 		case SpriteDrawType::ThreeDimension:
 		{
 			auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
-			vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
+			vertexUniform.view = Engine::GetCameraManager().GetCamera()->GetViewMatrix();
 			// @TODO move to push constants later
 			glm::mat4 inverseView = glm::inverse(vertexUniform.view);
 			vertexUniform.viewPosition = glm::vec4(
@@ -298,24 +298,27 @@ void DynamicSprite::UpdateProjection()
 		case SpriteDrawType::TwoDimension:
 		{
 			auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
-			vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
+			vertexUniform.projection = Engine::GetCameraManager().GetCamera()->GetProjectionMatrix();
 			break;
 		}
 		case SpriteDrawType::ThreeDimension:
 		{
 			auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
-			vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
+			vertexUniform.projection = Engine::GetCameraManager().GetCamera()->GetProjectionMatrix();
 			break;
 		}
 		case SpriteDrawType::UI:
 		{
 			auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite2D>()->vertexUniform;
-			glm::vec2 cameraViewSize = Engine::GetCameraManager().GetViewSize();
-			vertexUniform.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			glm::vec2 cameraViewSize = Engine::GetCameraManager().GetCamera()->GetViewSize();
 			// Flip y-axis for Vulkan
-			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+			if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
 			{
-				vertexUniform.projection[1][1] *= -1;
+				vertexUniform.projection = glm::orthoRH_NO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+			}
+			else
+			{
+				vertexUniform.projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
 			}
 			break;
 		}
