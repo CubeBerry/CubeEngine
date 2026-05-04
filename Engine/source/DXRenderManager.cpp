@@ -413,6 +413,22 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 			m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 1, &rect);
 
 			m_2dRenderContext->Execute(&wrapper, cam);
+
+			if (c < cameraCount - 1)
+			{
+				// @TODO: This WaitForGPU() is currently required because the VertexUniform (model/view/proj) is shared per object per frame.
+				// Without synchronization, multiple camera updates will overwrite the same constant buffer memory before the GPU can finish rendering previous views.
+				// To optimize this, separate camera-specific constants (View/Projection) from object-specific constants (Model) or use a per-camera constant buffer array.
+				DXHelper::ThrowIfFailed(m_commandList->Close());
+				ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+				m_commandQueue->ExecuteCommandLists(1, ppCommandLists);
+				WaitForGPU();
+				DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
+				
+				// Rebind Render Targets for next camera
+				CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandleRebind(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize);
+				m_commandList->OMSetRenderTargets(1, &rtvHandleRebind, FALSE, &dsvHandle);
+			}
 		}
 	}
 	break;
@@ -453,6 +469,21 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 					m_forwardRenderContext->Execute(&wrapper, cam);
 				}
 				if (m_skyboxEnabled) m_skyboxRenderContext->Execute(&wrapper, cam);
+
+				if (c < cameraCount - 1)
+				{
+					// @TODO: This WaitForGPU() is currently required because the VertexUniform (model/view/proj) is shared per object per frame.
+					// Without synchronization, multiple camera updates will overwrite the same constant buffer memory before the GPU can finish rendering previous views.
+					// To optimize this, separate camera-specific constants (View/Projection) from object-specific constants (Model) or use a per-camera constant buffer array.
+					DXHelper::ThrowIfFailed(m_commandList->Close());
+					ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+					m_commandQueue->ExecuteCommandLists(1, ppCommandLists);
+					WaitForGPU();
+					DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
+
+					D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetMSAARtvHeap()->GetCPUDescriptorHandleForHeapStart();
+					m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+				}
 			}
 		}
 		// Deferred Rendering
@@ -495,6 +526,21 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 				m_globalLightingContext->Execute(&wrapper, cam);
 				if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper, cam);
 				if (m_skyboxEnabled) m_skyboxRenderContext->Execute(&wrapper, cam);
+
+				if (c < cameraCount - 1)
+				{
+					// @TODO: This WaitForGPU() is currently required because the VertexUniform (model/view/proj) is shared per object per frame.
+					// Without synchronization, multiple camera updates will overwrite the same constant buffer memory before the GPU can finish rendering previous views.
+					// To optimize this, separate camera-specific constants (View/Projection) from object-specific constants (Model) or use a per-camera constant buffer array.
+					DXHelper::ThrowIfFailed(m_commandList->Close());
+					ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+					m_commandQueue->ExecuteCommandLists(1, ppCommandLists);
+					WaitForGPU();
+					DXHelper::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr));
+
+					D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
+					m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+				}
 			}
 		}
 		m_postProcessContext->Execute(&wrapper);

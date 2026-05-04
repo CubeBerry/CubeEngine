@@ -14,7 +14,7 @@ public:
 	CameraManager() {};
 	~CameraManager();
 
-	void Init(glm::vec2 viewSize, CameraType type = CameraType::TwoDimension, float zoom = 45.f, float angle = 0.f);
+	void Init(glm::vec2 viewSize, CameraType type = CameraType::Orthographic, float zoom = 1.0f, float angle = 0.f);
 	void Update(); 
 	void DrawCameraDebug();
 	void Reset();
@@ -34,6 +34,7 @@ public:
 
 	void CameraControllerImGui();
 	int currentObjIndex = 0;
+	bool showCameraDebug = true;
 private:
 	std::vector<std::unique_ptr<Camera>> cameras;
 	int mainCameraIndex = 0;

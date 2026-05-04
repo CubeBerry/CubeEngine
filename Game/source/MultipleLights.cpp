@@ -9,7 +9,7 @@
 void MultipleLights::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
 	Engine::GetCameraManager().GetCamera()->SetNear(0.01f);
 	Engine::GetCameraManager().GetCamera()->SetFar(1000.f);
 	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);

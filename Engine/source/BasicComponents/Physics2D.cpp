@@ -267,10 +267,21 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2, CollisionMode mode)
             glm::vec2 obj2Center = glm::vec2(obj2->GetPosition());
             glm::vec2 direction = obj2Center - objCenter;
 
-            // Ensure the normal points from obj to obj2 for consistent collision response
-            if (glm::dot(direction, normal) < 0.f)
+            // Use relative velocity to determine the correct normal if objects are moving fast enough to cross midpoints
+            glm::vec2 relativeVel = obj2->GetComponent<Physics2D>()->GetVelocity() - obj->GetComponent<Physics2D>()->GetVelocity();
+            if (std::abs(glm::dot(relativeVel, normal)) > 0.1f)
             {
-                normal = -normal;
+                if (glm::dot(relativeVel, normal) > 0.f)
+                {
+                    normal = -normal;
+                }
+            }
+            else
+            {
+                if (glm::dot(direction, normal) < 0.f)
+                {
+                    normal = -normal;
+                }
             }
 
             // Apply Baumgarte stabilization technique (Slop)
@@ -479,9 +490,22 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir, CollisionMode mode)
     // Ensure collision normal points from Polygon (A) to Circle (B)
     glm::vec2 polyCenter = FindSATCenter(rotatedPoints);
     glm::vec2 direction = circleCenter - polyCenter;
-    if (glm::dot(direction, normal) < 0.f)
+    
+    // Use relative velocity to determine the correct normal if objects are moving fast enough to cross midpoints
+    glm::vec2 relativeVel = cir->GetComponent<Physics2D>()->GetVelocity() - poly->GetComponent<Physics2D>()->GetVelocity();
+    if (std::abs(glm::dot(relativeVel, normal)) > 0.1f)
     {
-        normal = -normal;
+        if (glm::dot(relativeVel, normal) > 0.f)
+        {
+            normal = -normal;
+        }
+    }
+    else
+    {
+        if (glm::dot(direction, normal) < 0.f)
+        {
+            normal = -normal;
+        }
     }
 
     if (mode == CollisionMode::COLLIDE &&

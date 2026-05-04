@@ -82,7 +82,14 @@ void DXSkyboxRenderContext::Execute(ICommandListWrapper* commandListWrapper, Cam
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
 
-	glm::mat4 worldToNDC[2] = { activeCamera->GetViewMatrix(), activeCamera->GetProjectionMatrix() };
+	glm::mat4 projection = activeCamera->GetProjectionMatrix();
+	if (activeCamera->GetCameraType() == CameraType::Orthographic)
+	{
+		float aspect = (float)renderWidth / (float)renderHeight;
+		projection = glm::perspective(glm::radians(activeCamera->GetBaseFov()), aspect, 0.1f, 10.f);
+	}
+
+	glm::mat4 worldToNDC[2] = { activeCamera->GetViewMatrix(), projection };
 	commandList->SetGraphicsRoot32BitConstants(0, 32, &worldToNDC, 0);
 	commandList->SetGraphicsRootDescriptorTable(1, m_skybox->GetCubemapSrv());
 

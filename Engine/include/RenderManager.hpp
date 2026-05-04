@@ -148,6 +148,7 @@ public:
 
 	// Helper function to world-to-screen transform for ImGui drawing
 	glm::vec2 WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj, class Camera* camera = nullptr);
+	void DrawClippedLine(struct ImDrawList* drawList, glm::vec2 p1, glm::vec2 p2, unsigned int color, float thickness = 1.0f, int mainCameraIndex = 0);
 	void RenderingControllerForImGui();
 
 	//Skybox

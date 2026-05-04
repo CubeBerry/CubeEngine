@@ -969,35 +969,53 @@ AABB2D PhysicsManager::ComputeAABB2D(Physics2D* body)
 {
     AABB2D resultAabb;
     Object* currentOwner = body->GetOwner();
+    if (!currentOwner) return resultAabb;
+
     glm::vec2 position = currentOwner->GetPosition();
+    float angle = glm::radians(currentOwner->GetRotate());
+    float cosA = std::cos(angle);
+    float sinA = std::sin(angle);
 
-    // Default half extent
-    glm::vec2 halfExtent(0.5f);
-    const auto& polygon = body->GetCollidePolygon();
-
-    // Calculate extent based on collider type
-    if (body->GetCollideType() == CollideType::POLYGON && polygon.size() >= 3)
+    if (body->GetCollideType() == CollideType::POLYGON)
     {
+        const auto& polygon = body->GetCollidePolygon();
+        if (polygon.empty())
+        {
+            resultAabb.minExtent = position - glm::vec2(0.5f);
+            resultAabb.maxExtent = position + glm::vec2(0.5f);
+            return resultAabb;
+        }
+
         float minX = FLT_MAX, maxX = -FLT_MAX;
         float minY = FLT_MAX, maxY = -FLT_MAX;
 
         for (const auto& vertex : polygon)
         {
-            minX = std::min<float>(minX, vertex.x);
-            maxX = std::max<float>(maxX, vertex.x);
-            minY = std::min<float>(minY, vertex.y);
-            maxY = std::max<float>(maxY, vertex.y);
+            // Apply 2D rotation and translation to each vertex to calculate correct world-space AABB
+            float rx = vertex.x * cosA - vertex.y * sinA;
+            float ry = vertex.x * sinA + vertex.y * cosA;
+            glm::vec2 worldVertex = position + glm::vec2(rx, ry);
+
+            minX = std::min(minX, worldVertex.x);
+            maxX = std::max(maxX, worldVertex.x);
+            minY = std::min(minY, worldVertex.y);
+            maxY = std::max(maxY, worldVertex.y);
         }
-        halfExtent = glm::vec2((maxX - minX) * 0.5f, (maxY - minY) * 0.5f);
+        resultAabb.minExtent = { minX, minY };
+        resultAabb.maxExtent = { maxX, maxY };
     }
     else if (body->GetCollideType() == CollideType::CIRCLE)
     {
         float radius = body->GetCircleCollideRadius();
-        halfExtent = glm::vec2(radius);
+        resultAabb.minExtent = position - glm::vec2(radius);
+        resultAabb.maxExtent = position + glm::vec2(radius);
+    }
+    else
+    {
+        resultAabb.minExtent = position - glm::vec2(0.5f);
+        resultAabb.maxExtent = position + glm::vec2(0.5f);
     }
 
-    resultAabb.minExtent = position - halfExtent;
-    resultAabb.maxExtent = position + halfExtent;
     return resultAabb;
 }
 

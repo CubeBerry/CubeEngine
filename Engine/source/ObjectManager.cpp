@@ -1081,7 +1081,7 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
 	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]); // Extract translation
-	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
+	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj, mainCam);
 
 	// Draw joint point
 	if (screenPos.x != -1 && screenPos.y != -1 && !camManager.IsScreenPointOccluded(screenPos, mainCamIdx))
@@ -1101,19 +1101,12 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::mat4 childWorldMatrix = objectTransform * childGlobalMatrix;
 
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
-			glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj);
+			glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj, mainCam);
 
-			// Draw line if both positions are valid and not occluded
-			if (screenPos.x >= 0 && screenPos.y >= 0 &&
-				childScreenPos.x >= 0 && childScreenPos.y >= 0 &&
-				!camManager.IsScreenPointOccluded(screenPos, mainCamIdx) &&
-				!camManager.IsScreenPointOccluded(childScreenPos, mainCamIdx))
+			// Draw line with natural clipping against other viewports
+			if (screenPos.x >= 0 && screenPos.y >= 0 && childScreenPos.x >= 0 && childScreenPos.y >= 0)
 			{
-				drawList->AddLine(
-					ImVec2(screenPos.x, screenPos.y),
-					ImVec2(childScreenPos.x, childScreenPos.y),
-					IM_COL32(255, 255, 0, 255),
-					2.0f);
+				Engine::GetRenderManager()->DrawClippedLine(drawList, screenPos, childScreenPos, IM_COL32(255, 255, 0, 255), 2.0f, mainCamIdx);
 			}
 		}
 		RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
@@ -1480,15 +1473,13 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			{
 				float theta = (2.0f * PI * i) / segments;
 				glm::vec3 worldPos = center + (right * cos(theta) + up * sin(theta)) * radius;
-				glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos, view, proj);
+				glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos, view, proj, mainCam);
 				
 				if (screenPos.x >= 0 && screenPos.y >= 0)
 				{
-					if (!first && prevScreenPos.x >= 0 && prevScreenPos.y >= 0 &&
-						!camManager.IsScreenPointOccluded(prevScreenPos, mainCamIdx) &&
-						!camManager.IsScreenPointOccluded(screenPos, mainCamIdx))
+					if (!first && prevScreenPos.x >= 0 && prevScreenPos.y >= 0)
 					{
-						drawList->AddLine(ImVec2(prevScreenPos.x, prevScreenPos.y), ImVec2(screenPos.x, screenPos.y), color, 2.0f);
+						Engine::GetRenderManager()->DrawClippedLine(drawList, prevScreenPos, screenPos, color, 2.0f, mainCamIdx);
 					}
 					else if (first)
 					{
@@ -1528,17 +1519,15 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			};
 
 			std::vector<glm::vec2> screenPoints;
-			for(auto& wp : worldPoints) screenPoints.push_back(Engine::GetRenderManager()->WorldToScreen(wp, view, proj));
+			for(auto& wp : worldPoints) screenPoints.push_back(Engine::GetRenderManager()->WorldToScreen(wp, view, proj, mainCam));
 
 			for (int i = 0; i < 12; ++i)
 			{
 				glm::vec2 p1 = screenPoints[edges[i][0]];
 				glm::vec2 p2 = screenPoints[edges[i][1]];
-				if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0 &&
-					!camManager.IsScreenPointOccluded(p1, mainCamIdx) &&
-					!camManager.IsScreenPointOccluded(p2, mainCamIdx))
+				if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
 				{
-					drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
+					Engine::GetRenderManager()->DrawClippedLine(drawList, p1, p2, color, 2.0f, mainCamIdx);
 				}
 			}
 		}
@@ -1615,7 +1604,7 @@ void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
 			float sinTheta = sin(objRotRad);
 			glm::vec2 worldPt = scaledPos + glm::vec2(scaledLocalPt.x * cosTheta - scaledLocalPt.y * sinTheta, scaledLocalPt.x * sinTheta + scaledLocalPt.y * cosTheta);
 
-			glm::vec2 screenPt = Engine::GetRenderManager()->WorldToScreen(glm::vec3(worldPt, 0.f), view, proj);
+			glm::vec2 screenPt = Engine::GetRenderManager()->WorldToScreen(glm::vec3(worldPt, 0.f), view, proj, mainCam);
 			screenPoints.push_back(screenPt);
 		}
 
@@ -1623,11 +1612,9 @@ void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
 		{
 			glm::vec2 p1 = screenPoints[i];
 			glm::vec2 p2 = screenPoints[(i + 1) % screenPoints.size()];
-			if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0 &&
-				!camManager.IsScreenPointOccluded(p1, mainCamIdx) &&
-				!camManager.IsScreenPointOccluded(p2, mainCamIdx))
+			if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
 			{
-				drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
+				Engine::GetRenderManager()->DrawClippedLine(drawList, p1, p2, color, 2.0f, mainCamIdx);
 			}
 		}
 	}
@@ -1635,8 +1622,8 @@ void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
 	{
 		// Scale radius by 2 to match the engine's 2D rendering scale
 		float radius = phy->GetCircleCollideRadius() * 2.0f;
-		glm::vec2 screenCenter = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos, 0.f), view, proj);
-		glm::vec2 screenEdge = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos.x + radius, scaledPos.y, 0.f), view, proj);
+		glm::vec2 screenCenter = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos, 0.f), view, proj, mainCam);
+		glm::vec2 screenEdge = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos.x + radius, scaledPos.y, 0.f), view, proj, mainCam);
 
 		float screenRadius = glm::distance(screenCenter, screenEdge);
 		if (screenCenter.x >= 0 && screenCenter.y >= 0 && !camManager.IsScreenPointOccluded(screenCenter, mainCamIdx))

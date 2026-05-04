@@ -25,7 +25,7 @@ void PhysicsDemo::Init()
 void PhysicsDemo::Init3D()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
 	Engine::GetCameraManager().GetCamera()->SetNear(0.001f);
 	Engine::GetCameraManager().GetCamera()->SetFar(1000.f);
 	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);
@@ -60,7 +60,7 @@ void PhysicsDemo::Init3D()
 void PhysicsDemo::Init2D()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Orthographic, 1.f);
 
 	// Create 2D Floor
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, -300.f, 0.f), glm::vec3(1280.f, 50.f, 1.f), "Floor2D", ObjectType::NONE);

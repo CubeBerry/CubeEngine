@@ -12,6 +12,11 @@
 
 #include "Engine.hpp"
 
+// Debug Imgui Line Clipping
+#include "imgui.h"
+#include "CameraManager.hpp"
+#include <algorithm>
+
 // Helper function to populate bone data into vertices
 // This function finds the first empty slot in the vertex's bone array and fills it.
 void SetVertexBoneData(ThreeDimension::Vertex& vertex, int boneID, float weight)
@@ -1258,11 +1263,22 @@ glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view
 	// Transform world space to clip space
 	glm::vec4 clipSpace = proj * view * glm::vec4(worldPos, 1.0f);
 
-	// Discard points behind the camera
+	// Discard points behind the camera for Perspective (w <= 0)
+	// For Orthographic, w is usually 1.0, so we rely on NDC Z clipping
 	if (clipSpace.w <= 0.0f) return glm::vec2{ -1, -1 };
 
 	// Perspective divide to get Normalized Device Coordinates (NDC)
 	glm::vec3 ndc = glm::vec3(clipSpace) / clipSpace.w;
+
+	// NDC Z clipping: Discards points outside the near/far clipping planes
+	/*if (gMode == GraphicsMode::GL)
+	{
+		if (ndc.z < -1.0f || ndc.z > 1.0f) return glm::vec2{ -1, -1 };
+	}
+	else // DX or VK
+	{
+		if (ndc.z < 0.0f || ndc.z > 1.0f) return glm::vec2{ -1, -1 };
+	}*/
 
 	// Map NDC to screen coordinates using ImGui viewport data
 	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
@@ -1276,7 +1292,7 @@ glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view
 	float screenX = (ndc.x + 1.0f) * 0.5f * (windowSize.x * vp.width) + (windowSize.x * vp.x) + windowPos.x;
 	float screenY = 0.0f;
 
-	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::VK)
+	if (gMode == GraphicsMode::VK)
 	{
 		screenY = (ndc.y + 1.0f) * 0.5f * (windowSize.y * vp.height) + (windowSize.y * vp.y) + windowPos.y;
 	}
@@ -1286,6 +1302,75 @@ glm::vec2 RenderManager::WorldToScreen(glm::vec3 worldPos, const glm::mat4& view
 	}
 
 	return glm::vec2{ screenX, screenY };
+}
+
+void RenderManager::DrawClippedLine(ImDrawList* drawList, glm::vec2 p1, glm::vec2 p2, unsigned int color, float thickness, int mainCameraIndex)
+{
+	if (drawList == nullptr) return;
+	// Discard the entire line if any endpoint is off-screen or behind the camera
+	//if (p1.x <= -1.0f || p1.y <= -1.0f || p2.x <= -1.0f || p2.y <= -1.0f) return;
+
+	struct Interval { float t0, t1; };
+	std::vector<Interval> intervals = { {0.0f, 1.0f} };
+
+	CameraManager& camManager = Engine::GetCameraManager();
+	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+	glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+
+	// Subtract all later camera viewports from this line segment
+	for (int j = mainCameraIndex + 1; j < static_cast<int>(camManager.GetCameraCount()); ++j)
+	{
+		Camera* cam = camManager.GetCamera(j);
+		if (cam == nullptr || !cam->GetIsActive()) continue;
+
+		ViewportRect vp = cam->GetViewport();
+		float L = vp.x * windowSize.x + windowPos.x;
+		float T = vp.y * windowSize.y + windowPos.y;
+		float R = (vp.x + vp.width) * windowSize.x + windowPos.x;
+		float B = (vp.y + vp.height) * windowSize.y + windowPos.y;
+
+		std::vector<Interval> nextIntervals;
+		for (const auto& iv : intervals)
+		{
+			float dx = p2.x - p1.x;
+			float dy = p2.y - p1.y;
+
+			float txMin = (L - p1.x) / (abs(dx) < 1e-6f ? 1e-6f : dx);
+			float txMax = (R - p1.x) / (abs(dx) < 1e-6f ? 1e-6f : dx);
+			if (txMin > txMax) std::swap(txMin, txMax);
+
+			float tyMin = (T - p1.y) / (abs(dy) < 1e-6f ? 1e-6f : dy);
+			float tyMax = (B - p1.y) / (abs(dy) < 1e-6f ? 1e-6f : dy);
+			if (tyMin > tyMax) std::swap(tyMin, tyMax);
+
+			float t_near = std::max(txMin, tyMin);
+			float t_far = std::min(txMax, tyMax);
+
+			float overlap_t0 = std::max(iv.t0, t_near);
+			float overlap_t1 = std::min(iv.t1, t_far);
+
+			if (overlap_t0 < overlap_t1 && t_near < t_far) // Overlap exists
+			{
+				if (overlap_t0 > iv.t0) nextIntervals.push_back({ iv.t0, overlap_t0 });
+				if (overlap_t1 < iv.t1) nextIntervals.push_back({ overlap_t1, iv.t1 });
+			}
+			else
+			{
+				nextIntervals.push_back(iv);
+			}
+		}
+		intervals = std::move(nextIntervals);
+		if (intervals.empty()) break;
+	}
+
+	for (const auto& iv : intervals)
+	{
+		drawList->AddLine(
+			ImVec2(p1.x + (p2.x - p1.x) * iv.t0, p1.y + (p2.y - p1.y) * iv.t0),
+			ImVec2(p1.x + (p2.x - p1.x) * iv.t1, p1.y + (p2.y - p1.y) * iv.t1),
+			color, thickness);
+	}
 }
 
 void RenderManager::RenderingControllerForImGui()

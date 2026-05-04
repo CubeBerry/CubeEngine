@@ -283,7 +283,17 @@ bool GLRenderManager::BeginRender(glm::vec3 bgColor)
 
 			std::span<const float, 16> spanView(&cam->GetViewMatrix()[0][0], 16);
 			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, spanView.data());
-			std::span<const float, 16> spanProjection(&cam->GetProjectionMatrix()[0][0], 16);
+
+			glm::mat4 projection = cam->GetProjectionMatrix();
+			if (cam->GetCameraType() == CameraType::Orthographic)
+			{
+				GLsizei w, h;
+				SDL_GetWindowSizeInPixels(Engine::GetWindow().GetWindow(), &w, &h);
+				float aspect = (float)w / (float)h;
+				projection = glm::perspective(glm::radians(cam->GetBaseFov()), aspect, 0.1f, 10.f);
+			}
+
+			std::span<const float, 16> spanProjection(&projection[0][0], 16);
 			glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, spanProjection.data());
 
 			GLint skyboxLoc = glCheck(glGetUniformLocation(skyboxShader.GetProgramHandle(), "skybox"));

@@ -18,7 +18,7 @@
 void PlatformDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
-	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::Orthographic, 1.f);
 
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();

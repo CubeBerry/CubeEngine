@@ -14,7 +14,7 @@
 void SkeletalAnimationDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
 	Engine::GetCameraManager().GetCamera()->SetNear(cNear);
 	Engine::GetCameraManager().GetCamera()->SetFar(cFar);
 	Engine::GetCameraManager().GetCamera()->SetBaseFov(cFov);

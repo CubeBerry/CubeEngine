@@ -18,7 +18,7 @@
 void BeatEmUpDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
 	Engine::GetCameraManager().GetCamera()->SetFar(91.f);
 	Engine::GetCameraManager().GetCamera()->SetBaseFov(45.f);
 	Engine::GetCameraManager().GetCamera()->SetCameraPosition({ 0.f,10.f, 30.f });

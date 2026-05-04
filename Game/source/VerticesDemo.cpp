@@ -10,7 +10,7 @@
 void VerticesDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
 	Engine::GetCameraManager().GetCamera()->SetFar(45.f);
 	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);
 	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);

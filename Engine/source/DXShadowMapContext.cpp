@@ -402,8 +402,8 @@ void DXShadowMapContext::DrawImGui()
 		drawList->PushClipRect(clipMin, clipMax);
 
 		// Draw light position and target on the screen for debugging
-		glm::vec2 lightScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightPosition, cameraView, cameraProj);
-		glm::vec2 targetScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightTarget, cameraView, cameraProj);
+		glm::vec2 lightScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightPosition, cameraView, cameraProj, mainCam);
+		glm::vec2 targetScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightTarget, cameraView, cameraProj, mainCam);
 		if (lightScreenPos.x != -1.0f && targetScreenPos.x != -1.0f)
 		{
 			// Draw light position if not occluded
@@ -436,18 +436,16 @@ void DXShadowMapContext::DrawImGui()
 			glm::vec4 worldPos = invLightVP * glm::vec4(ndcCorners[i], 1.0f);
 			glm::vec3 worldPos3D = glm::vec3(worldPos) / worldPos.w;
 
-			glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos3D, cameraView, cameraProj);
+			glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos3D, cameraView, cameraProj, mainCam);
 			screenCorners[i] = ImVec2(screenPos.x, screenPos.y);
 			valid[i] = screenPos.x != -1.0f && screenPos.y != -1.0f;
 		}
 
 		auto DrawLine = [&](int index1, int index2)
 			{
-				if (valid[index1] && valid[index2] &&
-					!camManager.IsScreenPointOccluded(glm::vec2(screenCorners[index1].x, screenCorners[index1].y), mainCamIdx) &&
-					!camManager.IsScreenPointOccluded(glm::vec2(screenCorners[index2].x, screenCorners[index2].y), mainCamIdx))
+				if (valid[index1] && valid[index2])
 				{
-					drawList->AddLine(screenCorners[index1], screenCorners[index2], IM_COL32(0, 255, 255, 255), 2.0f);
+					Engine::GetRenderManager()->DrawClippedLine(drawList, glm::vec2(screenCorners[index1].x, screenCorners[index1].y), glm::vec2(screenCorners[index2].x, screenCorners[index2].y), IM_COL32(0, 255, 255, 255), 2.0f, mainCamIdx);
 				}
 			};
 

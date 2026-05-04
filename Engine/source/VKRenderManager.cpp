@@ -1139,7 +1139,15 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				//Bind Vertex DescriptorSet
 				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
 				//Push Constant World-To_NDC
-				glm::mat4 transform[2] = { cam->GetViewMatrix(), cam->GetProjectionMatrix() };
+				glm::mat4 projection = cam->GetProjectionMatrix();
+				if (cam->GetCameraType() == CameraType::Orthographic)
+				{
+					float aspect = (scissor.extent.width) / (float)(scissor.extent.height);
+					projection = glm::perspective(glm::radians(cam->GetBaseFov()), aspect, 0.1f, 10.f);
+					projection[1][1] *= -1; // Vulkan Y-flip
+				}
+
+				glm::mat4 transform[2] = { cam->GetViewMatrix(), projection };
 				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
 				//Draw
 				vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);

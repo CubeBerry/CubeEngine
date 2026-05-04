@@ -24,6 +24,38 @@ Camera* CameraManager::AddCamera(CameraType type, std::string name)
 	glm::vec2 wSize = Engine::GetWindow().GetWindowSize();
 	newCamera->SetViewSize(static_cast<int>(wSize.x), static_cast<int>(wSize.y));
 
+	RenderType rType = Engine::GetRenderManager()->GetRenderType();
+
+	if (newCamera->GetCameraType() == CameraType::Orthographic)
+	{
+		if (rType == RenderType::ThreeDimension)
+		{
+			// In 3D, 1 unit is large. Default ortho bounds are window pixels.
+			// Set zoom to make 3D objects visible (e.g., zoom=200 means visible height is around 4 units)
+			newCamera->SetZoom(200.0f);
+			newCamera->SetCameraPosition(glm::vec3(0.0f, 0.0f, 20.0f));
+		}
+		else
+		{
+			newCamera->SetZoom(1.0f);
+			newCamera->SetCameraPosition(glm::vec3(0.0f, 0.0f, 1.0f));
+		}
+	}
+	else if (newCamera->GetCameraType() == CameraType::Perspective)
+	{
+		if (rType == RenderType::TwoDimension)
+		{
+			// In 2D, coordinates are in pixels (e.g., 400, 300).
+			// Position camera far enough to see the 2D plane.
+			float dist = wSize.y; 
+			newCamera->SetCameraPosition(glm::vec3(0.0f, 0.0f, dist));
+		}
+		else
+		{
+			newCamera->SetCameraPosition(glm::vec3(0.0f, 0.0f, 5.0f));
+		}
+	}
+
 	cameras.push_back(std::move(newCamera));
 
 	return cameras.back().get();
@@ -35,14 +67,24 @@ void CameraManager::DeleteCamera(int index)
 	{
 		cameras.erase(cameras.begin() + index);
 
-		if (mainCameraIndex >= cameras.size())
+		// Adjust mainCameraIndex
+		if (index < mainCameraIndex)
 		{
-			mainCameraIndex = static_cast<int>(cameras.size()) - 1;
+			mainCameraIndex--;
+		}
+		if (mainCameraIndex >= static_cast<int>(cameras.size()))
+		{
+			mainCameraIndex = std::max(0, static_cast<int>(cameras.size()) - 1);
 		}
 
-		if (selectedCameraIndex >= cameras.size())
+		// Adjust selectedCameraIndex
+		if (index < selectedCameraIndex)
 		{
-			selectedCameraIndex = static_cast<int>(cameras.size()) - 1;
+			selectedCameraIndex--;
+		}
+		if (selectedCameraIndex >= static_cast<int>(cameras.size()))
+		{
+			selectedCameraIndex = std::max(0, static_cast<int>(cameras.size()) - 1);
 		}
 	}
 }
@@ -78,18 +120,9 @@ void CameraManager::Init(glm::vec2 viewSize, CameraType type, float zoom, float 
 	{
 		mainCam->SetViewSize(static_cast<int>(viewSize.x), static_cast<int>(viewSize.y));
 		mainCam->SetZoom(zoom);
-		mainCam->Rotate2D(angle);
+		mainCam->RotateOrthographic(angle);
 	}
 
-	switch (type)
-	{
-	case CameraType::TwoDimension:
-		break;
-	case CameraType::ThreeDimension:
-		break;
-	default:
-		break;
-	}
 	Engine::GetLogger().LogDebug(LogCategory::Engine, "Camera Manager Initialized");
 }
 
@@ -220,18 +253,16 @@ void CameraManager::CameraControllerImGui()
 		ImGui::SameLine();
 	}
 
-	if (ImGui::Button("Add"))
+	if (ImGui::Button("Add Ortho"))
 	{
-		if(Engine::GetRenderManager()->GetRenderType() == RenderType::ThreeDimension)
-		{
-			AddCamera(CameraType::ThreeDimension);
-			selectedCameraIndex = cameras.size() - 1;
-		}
-		else
-		{
-			AddCamera(CameraType::TwoDimension);
-			selectedCameraIndex = cameras.size() - 1;
-		}
+		AddCamera(CameraType::Orthographic);
+		selectedCameraIndex = cameras.size() - 1;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Add Persp"))
+	{
+		AddCamera(CameraType::Perspective);
+		selectedCameraIndex = cameras.size() - 1;
 	}
 
 	if (cameras.empty() == false && cameras.size() > 1)
@@ -240,16 +271,10 @@ void CameraManager::CameraControllerImGui()
 		if (ImGui::Button("Remove"))
 		{
 			DeleteCamera(selectedCameraIndex);
-			if (selectedCameraIndex > 0)
-			{
-				selectedCameraIndex = selectedCameraIndex - 1;
-			}
-			else if(selectedCameraIndex == 0)
-			{
-				selectedCameraIndex = 0;
-			}
 		}
 	}
+	
+	ImGui::Checkbox("Show Camera Debug", &showCameraDebug);
 
 	ImGui::Separator();
 
@@ -276,12 +301,13 @@ void CameraManager::CameraControllerImGui()
 			glm::vec3 position = selectedCam->GetCameraPosition();
 			float zoom = selectedCam->GetZoom();
 
-			if (selectedCam->GetCameraType() == CameraType::ThreeDimension)
+			if (selectedCam->GetCameraType() == CameraType::Perspective)
 			{
 				float nearClip = selectedCam->GetNear();
 				float farClip = selectedCam->GetFar();
 				float pitch = selectedCam->GetPitch();
 				float yaw = selectedCam->GetYaw();
+				float roll = selectedCam->GetRoll();
 
 				glm::vec3 cameraOffset = selectedCam->GetCameraOffset();
 				float cameraDistance = selectedCam->GetCameraDistance();
@@ -316,6 +342,9 @@ void CameraManager::CameraControllerImGui()
 				ImGui::DragFloat("Yaw", &yaw, 0.5f);
 				selectedCam->SetYaw(yaw);
 
+				ImGui::DragFloat("Roll", &roll, 0.5f);
+				selectedCam->SetRoll(roll);
+
 				if (isThirdPersonView == true && !Engine::GetObjectManager().GetObjectMap().empty())
 				{
 					if (ImGui::CollapsingHeader("Third Person View Option", ImGuiTreeNodeFlags_DefaultOpen))
@@ -347,23 +376,26 @@ void CameraManager::CameraControllerImGui()
 					}
 				}
 			}
-			else if (selectedCam->GetCameraType() == CameraType::TwoDimension)
+			else if (selectedCam->GetCameraType() == CameraType::Orthographic)
 			{
-				float rotate2D = selectedCam->GetRotate2D();
+				float rotation = selectedCam->GetRotateOrthographic();
 
-				ImGui::DragFloat2("Position", &position.x, 0.1f);
+				ImGui::DragFloat3("Position", &position.x, 0.1f);
 				selectedCam->SetCameraPosition(position);
 
 				ImGui::DragFloat("Zoom", &zoom, 0.1f);
 				selectedCam->SetZoom(zoom);
 
-				ImGui::DragFloat("Rotation", &rotate2D, 0.5f);
-				selectedCam->Rotate2D(rotate2D);
+				ImGui::DragFloat("Rotation", &rotation, 0.5f);
+				selectedCam->RotateOrthographic(rotation);
 			}
 		}
 	}
 
-	DrawCameraDebug();
+	if (showCameraDebug)
+	{
+		DrawCameraDebug();
+	}
 
 	ImGui::End();
 }
@@ -391,7 +423,7 @@ void CameraManager::DrawCameraDebug()
 	for (int i = 0; i < cameras.size(); ++i)
 	{
 		Camera* cam = cameras[i].get();
-		if (cam == nullptr || cam->GetCameraType() != CameraType::ThreeDimension || i == mainCameraIndex) continue;
+		if (cam == nullptr || i == mainCameraIndex) continue;
 
 		// Color: Blue for active, Red for inactive
 		ImU32 color = cam->GetIsActive() ? IM_COL32(0, 120, 255, 255) : IM_COL32(255, 0, 0, 255);
@@ -422,29 +454,23 @@ void CameraManager::DrawCameraDebug()
 		};
 
 		glm::vec2 screenCorners[8];
-		bool hasValidPoint = false;
 		for (int j = 0; j < 8; ++j)
 		{
 			glm::vec4 worldPos = invVP * ndc[j];
 			glm::vec3 p = glm::vec3(worldPos) / worldPos.w;
 			screenCorners[j] = Engine::GetRenderManager()->WorldToScreen(p, mainView, mainProj, mainCam);
-			if (screenCorners[j].x != -1) hasValidPoint = true;
 		}
 
-		if (hasValidPoint)
-		{
-			// Connect Near plane
-			for (int j = 0; j < 4; ++j)
-				drawList->AddLine(ImVec2(screenCorners[j].x, screenCorners[j].y), ImVec2(screenCorners[(j + 1) % 4].x, screenCorners[(j + 1) % 4].y), color, 1.5f);
+		auto drawClippedLine = [&](glm::vec2 p1, glm::vec2 p2) {
+			Engine::GetRenderManager()->DrawClippedLine(drawList, p1, p2, color, 1.5f, mainCameraIndex);
+		};
 
-			// Connect Far plane
-			for (int j = 0; j < 4; ++j)
-				drawList->AddLine(ImVec2(screenCorners[j + 4].x, screenCorners[j + 4].y), ImVec2(screenCorners[(j + 1) % 4 + 4].x, screenCorners[(j + 1) % 4 + 4].y), color, 1.5f);
-
-			// Connect Near to Far
-			for (int j = 0; j < 4; ++j)
-				drawList->AddLine(ImVec2(screenCorners[j].x, screenCorners[j].y), ImVec2(screenCorners[j + 4].x, screenCorners[j + 4].y), color, 1.5f);
-		}
+		// Connect Near plane
+		for (int j = 0; j < 4; ++j) drawClippedLine(screenCorners[j], screenCorners[(j + 1) % 4]);
+		// Connect Far plane
+		for (int j = 0; j < 4; ++j) drawClippedLine(screenCorners[j + 4], screenCorners[(j + 1) % 4 + 4]);
+		// Connect Near to Far
+		for (int j = 0; j < 4; ++j) drawClippedLine(screenCorners[j], screenCorners[j + 4]);
 	}
 
 	drawList->PopClipRect();
@@ -459,30 +485,53 @@ void CameraManager::ControlCamera(float dt)
 		return;
 	}
 
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::W))
+	if (selectedCam->GetCameraType() == CameraType::Perspective)
 	{
-		selectedCam->MoveCameraPos(CameraMoveDir::FOWARD, 5.f * dt);
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::W))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::FOWARD, 5.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::BACKWARD, 5.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::LEFT, 5.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::D))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::RIGHT, 5.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::SPACE))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::UP, 5.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LSHIFT))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::DOWN, 5.f * dt);
+		}
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
+	else if (selectedCam->GetCameraType() == CameraType::Orthographic)
 	{
-		selectedCam->MoveCameraPos(CameraMoveDir::BACKWARD, 5.f * dt);
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::W))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::UP, 50.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::S))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::DOWN, 50.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::LEFT, 50.f * dt);
+		}
+		if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::D))
+		{
+			selectedCam->MoveCameraPos(CameraMoveDir::RIGHT, 50.f * dt);
+		}
 	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::A))
-	{
-		selectedCam->MoveCameraPos(CameraMoveDir::LEFT, 5.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::D))
-	{
-		selectedCam->MoveCameraPos(CameraMoveDir::RIGHT, 5.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::SPACE))
-	{
-		selectedCam->MoveCameraPos(CameraMoveDir::UP, 5.f * dt);
-	}
-	if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LSHIFT))
-	{
-		selectedCam->MoveCameraPos(CameraMoveDir::DOWN, 5.f * dt);
-	}
+
 	if (Engine::GetInputManager().GetMouseWheelMotion().y != 0.f)
 	{
 		selectedCam->SetZoom(selectedCam->GetZoom() + Engine::GetInputManager().GetMouseWheelMotion().y);
@@ -492,7 +541,9 @@ void CameraManager::ControlCamera(float dt)
 
 	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::RIGHT) || SDL_GetWindowRelativeMouseMode(window) == true)
 	{
-		selectedCam->UpdateCameraDirection(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
+		if (selectedCam->GetCameraType() == CameraType::Perspective)
+		{
+			selectedCam->UpdateCameraDirection(Engine::Instance().GetInputManager().GetRelativeMouseState() * dt);
+		}
 	}
-	//TBD
 }
