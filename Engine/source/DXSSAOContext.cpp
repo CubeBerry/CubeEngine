@@ -91,28 +91,21 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
-	uint32_t width = m_renderManager->m_width;
-	uint32_t height = m_renderManager->m_height;
-
-	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
-	{
-		width = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-		height = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	}
+	int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
+	int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
 	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
-	ViewportRect vp = activeCamera->GetViewport();
+	//ViewportRect vp = activeCamera->GetViewport();
 
-	// Keep Viewport as full screen so the full-screen quad's SV_Position perfectly maps to the G-Buffer size.
-	// This ensures `input.uv` goes from 0 to 1 across the ENTIRE texture, matching the G-Buffer coordinates.
-	// We use the Scissor Rect to clip the actual rendering to only the camera's region.
+	// Set Viewport and Scissor Rect
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
-	D3D12_RECT scissorRect = {
-		static_cast<LONG>(vp.x * width),
-		static_cast<LONG>(vp.y * height),
-		static_cast<LONG>((vp.x + vp.width) * width),
-		static_cast<LONG>((vp.y + vp.height) * height)
-	};
+	D3D12_RECT scissorRect = { 0, 0, width, height };
+	//D3D12_RECT scissorRect = {
+	//	static_cast<LONG>(vp.x * width),
+	//	static_cast<LONG>(vp.y * height),
+	//	static_cast<LONG>((vp.x + vp.width) * width),
+	//	static_cast<LONG>((vp.y + vp.height) * height)
+	//};
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -208,14 +201,8 @@ void DXSSAOContext::CleanUp()
 
 void DXSSAOContext::CreateSSAOResources()
 {
-	uint32_t width = m_renderManager->m_width;
-	uint32_t height = m_renderManager->m_height;
-
-	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
-	{
-		width = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-		height = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	}
+	const int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
+	const int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
 	// 1. Create SSAO Render Target
 	D3D12_RESOURCE_DESC textureDesc = {};
@@ -263,14 +250,8 @@ void DXSSAOContext::CreateSSAOResources()
 
 void DXSSAOContext::CreateBlurResources()
 {
-	uint32_t width = m_renderManager->m_width;
-	uint32_t height = m_renderManager->m_height;
-
-	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
-	{
-		width = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-		height = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	}
+	const int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
+	const int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
 	// 1. Create SSAO Render Target
 	D3D12_RESOURCE_DESC textureDesc = {};
