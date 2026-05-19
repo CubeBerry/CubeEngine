@@ -94,14 +94,21 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 	int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
 	int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
+	ViewportRect vp = activeCamera->GetViewport();
+
 	// Set Viewport and Scissor Rect
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, width, height };
+	D3D12_VIEWPORT viewport = { vp.x * width, vp.y * height, vp.width * width, vp.height * height, 0.f, 1.f };
+	D3D12_RECT scissorRect = {
+		static_cast<LONG>(vp.x * width),
+		static_cast<LONG>(vp.y * height),
+		static_cast<LONG>((vp.x + vp.width) * width),
+		static_cast<LONG>((vp.y + vp.height) * height)
+	};
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
 
 	// Update Push Constants
-	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
 	pushConstants.view = activeCamera->GetViewMatrix();
 	pushConstants.projection = activeCamera->GetProjectionMatrix();
 	pushConstants.radius = m_radius;
@@ -127,7 +134,7 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	float clearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 1, &scissorRect);
 
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
@@ -149,7 +156,7 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 
 	rtvHandle = m_blurIntermediateRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 1, &scissorRect);
 
 	pushConstants.blurDirection = glm::ivec2(1, 0);
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
@@ -172,7 +179,7 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 
 	rtvHandle = m_blurRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 1, &scissorRect);
 
 	pushConstants.blurDirection = glm::ivec2(0, 1);
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
