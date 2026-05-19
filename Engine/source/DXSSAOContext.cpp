@@ -84,7 +84,7 @@ void DXSSAOContext::OnResize()
 	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	if (!m_enabled) return;
 
@@ -101,8 +101,9 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
 	commandList->RSSetScissorRects(1, &scissorRect);
 
 	// Update Push Constants
-	pushConstants.view = Engine::GetCameraManager().GetViewMatrix();
-	pushConstants.projection = Engine::GetCameraManager().GetProjectionMatrix();
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
+	pushConstants.view = activeCamera->GetViewMatrix();
+	pushConstants.projection = activeCamera->GetProjectionMatrix();
 	pushConstants.radius = m_radius;
 	pushConstants.scale = m_scale;
 	pushConstants.contrast = m_contrast;
