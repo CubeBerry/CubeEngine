@@ -527,6 +527,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 				if (c == 0) m_shadowMapContext->Execute(&wrapper, cam);
 				m_gBufferContext->Execute(&wrapper, cam);
+				// SSAO must run after G-Buffer (reads position/normal) and before GlobalLighting (reads AO result)
+				m_ssaoContext->Execute(&wrapper, cam);
 				//m_naiveLightingContext->Execute(&wrapper, cam);
 				m_globalLightingContext->Execute(&wrapper, cam);
 				if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper, cam);
