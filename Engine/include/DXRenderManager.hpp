@@ -23,6 +23,7 @@
 #include "DX2DRenderContext.hpp"
 #include "DXForwardRenderContext.hpp"
 #include "DXGBufferContext.hpp"
+#include "DXSSAOContext.hpp"
 #include "DXNaiveLightingContext.hpp"
 #include "DXGlobalLightingContext.hpp"
 #include "DXLocalLightingContext.hpp"
@@ -40,6 +41,7 @@ class DXRenderManager : public RenderManager
 	friend class DX2DRenderContext;
 	friend class DXForwardRenderContext;
 	friend class DXGBufferContext;
+	friend class DXSSAOContext;
 	friend class DXNaiveLightingContext;
 	friend class DXGlobalLightingContext;
 	friend class DXLocalLightingContext;
@@ -63,8 +65,9 @@ public:
 	bool BeginRender(glm::vec3 bgColor) override;
 	void EndRender() override;
 
-	DXShadowMapContext* GetShadowMapContext() const { return m_shadowMapContext.get(); }
-	DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
+	[[nodiscard]] DXShadowMapContext* GetShadowMapContext() const { return m_shadowMapContext.get(); }
+	[[nodiscard]] DXPostProcessContext* GetPostProcessContext() const { return m_postProcessContext.get(); }
+	[[nodiscard]] DXSSAOContext* GetSSAOContext() const { return m_ssaoContext.get(); }
 private:
 	int m_width, m_height;
 	bool m_isResize{ false };
@@ -132,6 +135,7 @@ private:
 	// G-Buffer Render Context
 	std::unique_ptr<DXGBufferContext> m_gBufferContext;
 	DXGBufferContext* GetGBufferContext() const { return m_gBufferContext.get(); }
+	std::unique_ptr<DXSSAOContext> m_ssaoContext;
 	// Naive Lighting Context
 	std::unique_ptr<DXNaiveLightingContext> m_naiveLightingContext;
 	// Global (Directional) Lighting Context
