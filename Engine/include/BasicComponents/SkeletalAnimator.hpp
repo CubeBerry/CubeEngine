@@ -34,9 +34,12 @@ class SkeletalAnimator : public IComponent
 {
 public:
     SkeletalAnimator();
+    ~SkeletalAnimator() override;
 
     void Init() override;
-    void Update(float dt) override;
+    void Update(float dt) override;           // Wrapper: calls UpdateBoneTransforms + QueueGPUBoneUpload
+    void UpdateBoneTransforms(float dt);       // CPU only: time advance, bone transform calculation
+    void QueueGPUBoneUpload();                 // Queues GPU buffer upload to main thread
     void End() override;
 
     // Animation Control

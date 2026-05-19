@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <variant>
 #include <functional>
+#include <mutex>
+#include <vector>
 #include "Window.hpp"
 #include "Utility.hpp"
 #include "Interface/ISprite.hpp"
@@ -94,6 +96,27 @@ public:
 		//}
 	}
 
+	// Thread-safe: queue a GPU command to be executed on the main thread
+	void QueueGPUCommand(std::function<void()> command)
+	{
+		std::lock_guard<std::mutex> lock(gpuCommandMutex);
+		gpuCommandQueue.push_back(std::move(command));
+	}
+
+	// Main thread only: execute all queued GPU commands and clear the queue
+	void ProcessGPUCommands()
+	{
+		std::vector<std::function<void()>> commands;
+		{
+			std::lock_guard<std::mutex> lock(gpuCommandMutex);
+			commands.swap(gpuCommandQueue);
+		}
+		for (auto& cmd : commands)
+		{
+			cmd();
+		}
+	}
+
 	void CreateMesh(
 		std::vector<SubMesh>& subMeshes,
 		MeshType type, const std::filesystem::path& path, int stacks, int slices,
@@ -124,7 +147,8 @@ public:
 	//static float CalculatePointLightRadius(const glm::vec3& lightColor, float intensity, float constant, float linear, float quadratic);
 
 	// Helper function to world-to-screen transform for ImGui drawing
-	glm::vec2 WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj);
+	glm::vec2 WorldToScreen(glm::vec3 worldPos, const glm::mat4& view, const glm::mat4& proj, class Camera* camera = nullptr);
+	void DrawClippedLine(struct ImDrawList* drawList, glm::vec2 p1, glm::vec2 p2, unsigned int color, float thickness = 1.0f, int mainCameraIndex = 0);
 	void RenderingControllerForImGui();
 
 	//Skybox
@@ -211,6 +235,10 @@ private:
 	
 	// Deferred Deletion
 	std::vector<std::function<bool()>> functionQueue;
+
+	// GPU Command Queue (written by worker threads, flushed on main thread)
+	std::vector<std::function<void()>> gpuCommandQueue;
+	std::mutex gpuCommandMutex;
 };
 
 inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* mat)

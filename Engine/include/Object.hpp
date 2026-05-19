@@ -70,9 +70,11 @@ public:
 			return;
 		}
 		ComponentTypes* componentType = new ComponentTypes();
-		dynamic_cast<IComponent*>(componentType)->SetOwner(this);
+		IComponent* component = dynamic_cast<IComponent*>(componentType);
+		component->SetOwner(this);
+		component->Init();
 		this->componentList.push_back(std::move(componentType));
-		LogComponentAction(dynamic_cast<IComponent*>(componentType)->GetType(), true);
+		LogComponentAction(component->GetType(), true);
 	}
 
 	template<typename ComponentTypes> ComponentTypes* GetComponent()

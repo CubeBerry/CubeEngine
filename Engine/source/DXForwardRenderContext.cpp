@@ -103,8 +103,9 @@ void DXForwardRenderContext::Initialize()
 #ifdef _DEBUG
 	// Create root signature and pipeline for Normal 3D
 	rootParameters.clear();
-	rootParameters.resize(1, {});
-	rootParameters[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters.resize(2, {});
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[1].InitAsConstants(16, 0, 1, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	m_renderManager->CreateRootSignature(m_rootSignature3DNormal, rootParameters);
 	DXHelper::ThrowIfFailed(m_rootSignature3DNormal->SetName(L"Normal 3D Root Signature"));
@@ -112,9 +113,12 @@ void DXForwardRenderContext::Initialize()
 	positionLayout.format = DXGI_FORMAT_R32G32B32_FLOAT;
 	positionLayout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
+	DXAttributeLayout boneIndexLayoutNormal{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, offsetof(ThreeDimension::NormalVertex, boneIDs), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+	DXAttributeLayout weightLayoutNormal{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(ThreeDimension::NormalVertex, weights), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA };
+
 	m_pipeline3DNormal = DXPipeLineBuilder(m_renderManager->m_device, m_rootSignature3DNormal)
 		.SetShaders("../Engine/shaders/hlsl/Normal3D.vert.hlsl", "../Engine/shaders/hlsl/Normal3D.frag.hlsl")
-		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout })
+		.SetLayout(std::initializer_list<DXAttributeLayout>{ positionLayout, boneIndexLayoutNormal, weightLayoutNormal })
 		.SetRasterizer(D3D12_FILL_MODE_SOLID, D3D12_CULL_MODE_BACK, true)
 		.SetDepthStencil(true, true)
 		.SetRenderTargets(rtvFormats)
@@ -130,7 +134,7 @@ void DXForwardRenderContext::OnResize()
 
 }
 
-void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -148,10 +152,25 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	// Set the viewport and scissor rect
 	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
-	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+	uint32_t renderWidth = m_renderManager->m_width;
+	uint32_t renderHeight = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
+
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera();
+	ViewportRect vp = activeCamera->GetViewport();
+
+	D3D12_VIEWPORT viewport = { vp.x * renderWidth, vp.y * renderHeight, vp.width * renderWidth, vp.height * renderHeight, 0.f, 1.f };
+	D3D12_RECT scissorRect = {
+		static_cast<LONG>(vp.x * renderWidth),
+		static_cast<LONG>(vp.y * renderHeight),
+		static_cast<LONG>((vp.x + vp.width) * renderWidth),
+		static_cast<LONG>((vp.y + vp.height) * renderHeight)
+	};
 
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
@@ -166,6 +185,12 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 		{
 			auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 			auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+
+			spriteData->vertexUniform.view = activeCamera->GetViewMatrix();
+			spriteData->vertexUniform.projection = activeCamera->GetProjectionMatrix();
+			glm::mat4 inverseView = glm::inverse(spriteData->vertexUniform.view);
+			spriteData->vertexUniform.viewPosition = glm::vec4(inverseView[3].x, inverseView[3].y, inverseView[3].z, 1.0f);
+
 			if (m_renderManager->m_meshShaderEnabled)
 			{
 				commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());
@@ -283,9 +308,11 @@ void DXForwardRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 				commandList->SetGraphicsRootSignature(m_rootSignature3DNormal.Get());
 				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
+				commandList->SetGraphicsRootConstantBufferView(0, spriteData->GetVertexUniformBuffer<DXConstantBuffer<ThreeDimension::VertexUniform>>()->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
+
 				auto& vertexUniform = spriteData->vertexUniform;
 				glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-				commandList->SetGraphicsRoot32BitConstants(0, 16, &modelToNDC, 0);
+				commandList->SetGraphicsRoot32BitConstants(1, 16, &modelToNDC, 0);
 
 				D3D12_VERTEX_BUFFER_VIEW nvbv = buffer->normalVertexBuffer->GetView();
 				commandList->IASetVertexBuffers(0, 1, &nvbv);

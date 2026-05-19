@@ -14,12 +14,12 @@
 void SkeletalAnimationDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(cNear);
-	Engine::GetCameraManager().SetFar(cFar);
-	Engine::GetCameraManager().SetBaseFov(cFov);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
-	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,10.f });
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
+	Engine::GetCameraManager().GetCamera()->SetNear(cNear);
+	Engine::GetCameraManager().GetCamera()->SetFar(cFar);
+	Engine::GetCameraManager().GetCamera()->SetBaseFov(cFov);
+	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().GetCamera()->SetCameraPosition({ 0.f,2.f,10.f });
 
 	// Player with Skeletal Animation
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0, 0, 0), glm::vec3(0.01f, 0.01f, 0.01f), "Player");

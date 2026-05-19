@@ -45,7 +45,6 @@ public:
 private:
 	const char* GameLevelTypeEnumToChar(GameLevel type);
 	void LevelInit();
-	void CollideObjects();
 
 	GameLevel currentLevel = GameLevel::NONE;
 	GameLevel levelSelected = GameLevel::NONE;

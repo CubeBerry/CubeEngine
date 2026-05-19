@@ -18,6 +18,6 @@ public:
 	~IWorkGraphsContext() = default;
 
 	virtual void InitializeWorkGraphs() = 0;
-	virtual void ExecuteWorkGraphs() = 0;
+	virtual void ExecuteWorkGraphs(class Camera* camera = nullptr) = 0;
 	virtual void PrintWorkGraphsResults() = 0;
 };

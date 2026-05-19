@@ -1,4 +1,4 @@
-﻿//Author: DOYEONG LEE
+//Author: DOYEONG LEE
 //Project: CubeEngine
 //File: SkeletalAnimator.cpp
 
@@ -8,6 +8,7 @@
 #include "BasicComponents/DynamicSprite.hpp"
 #include "BufferWrapper.hpp"
 #include "Object.hpp"
+#include "Engine.hpp"
 #include "SkeletalAnimation/SkeletalAnimation.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -30,10 +31,30 @@ SkeletalAnimator::SkeletalAnimator()
         finalBoneMatrices.push_back(glm::mat4(1.0f));
 }
 
-void SkeletalAnimator::Init() {}
-void SkeletalAnimator::End() {}
+SkeletalAnimator::~SkeletalAnimator()
+{
+	End();
+}
+
+void SkeletalAnimator::Init()
+{
+	Engine::GetSkeletalAnimationManager().AddAnimator(this);
+}
+
+void SkeletalAnimator::End()
+{
+	Engine::GetSkeletalAnimationManager().RemoveAnimator(this);
+}
+
 
 void SkeletalAnimator::Update(float dt)
+{
+	// Already updated by SkeletalAnimationManager in parallel worker thread — just return
+	//UpdateBoneTransforms(dt);
+	//QueueGPUBoneUpload();
+}
+
+void SkeletalAnimator::UpdateBoneTransforms(float dt)
 {
     if (!currentAnimation) return;
 
@@ -142,8 +163,6 @@ void SkeletalAnimator::Update(float dt)
             glm::vec3 objRotE = owner->GetRotate3D();
             glm::vec3 objScale = owner->GetSize();
 
-            // Apply translation delta in local space
-            // Match the Engine's exact rotation convention (using negative Euler angles internally)
             glm::quat engineRotQuat = glm::quat(glm::radians(-objRotE));
 
             if (glm::length(dt) > 0.000001f)
@@ -152,13 +171,9 @@ void SkeletalAnimator::Update(float dt)
                 owner->SetPosition(objPos + scaledAndRotatedTranslation);
             }
 
-            // Directly add delta rotation only if there is a noticeable rotation change
-            // This prevents glm::eulerAngles from constantly flipping axes in ImGui when dr is identity
             if (glm::abs(dr.w) < 0.999999f || glm::length(glm::vec3(dr.x, dr.y, dr.z)) > 0.000001f)
             {
                 glm::quat newEngineRotQuat = engineRotQuat * dr;
-                
-                // Negate the extracted Euler angles to match the Engine's positive logic
                 glm::vec3 newEulerAngles = -glm::degrees(glm::eulerAngles(newEngineRotQuat));
 
                 if (std::isnan(newEulerAngles.x)) newEulerAngles.x = objRotE.x;
@@ -183,41 +198,52 @@ void SkeletalAnimator::Update(float dt)
             {
                 if (finalBoneMatrices.size() < meshData->boneInfoMap.size())
                     finalBoneMatrices.resize(meshData->boneInfoMap.size(), glm::mat4(1.0f));
-                
+
                 encodeMatrix = meshData->meshNormalizationTransform;
             }
         }
     }
 
-    // Calculate bone hierarchy transforms
+    // Calculate bone hierarchy transforms — result stored in finalBoneMatrices (CPU only)
     CalculateBoneTransform(&currentAnimation->GetRootNode(), glm::mat4(1.0f), encodeMatrix, false);
-
-    // Upload bone matrices to GPU
-    if (owner)
-    {
-        DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
-        if (sprite)
-        {
-            for (auto& subMesh : sprite->GetSubMeshes())
-            {
-                auto* meshData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
-                if (!meshData) continue;
-
-                int count = (std::min)((int)finalBoneMatrices.size(), ThreeDimension::MAX_BONES);
-                for (int i = 0; i < count; ++i)
-                    meshData->vertexUniform.finalBones[i] = finalBoneMatrices[i];
-
-                if (std::holds_alternative<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer))
-                {
-                    auto& glBuffer = std::get<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer);
-                    glBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &meshData->vertexUniform);
-                }
-            }
-        }
-    }
 
     lastRootMotionTime = currentTime;
 }
+
+void SkeletalAnimator::QueueGPUBoneUpload()
+{
+    if (!currentAnimation) return;
+
+    Object* owner = GetOwner();
+    if (!owner) return;
+
+    DynamicSprite* sprite = owner->GetComponent<DynamicSprite>();
+    if (!sprite) return;
+
+    for (auto& subMesh : sprite->GetSubMeshes())
+    {
+        auto* meshData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+        if (!meshData) continue;
+
+        // Copy bone matrices into CPU-side uniform struct (safe on worker thread)
+        int count = (std::min)((int)finalBoneMatrices.size(), ThreeDimension::MAX_BONES);
+        for (int i = 0; i < count; ++i)
+        {
+            meshData->vertexUniform.finalBones[i] = finalBoneMatrices[i];
+        }
+
+        // Defer GPU upload — executed on main thread via FlushGPUCommands()
+        Engine::GetRenderManager()->QueueGPUCommand([meshData]()
+        {
+            if (std::holds_alternative<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer))
+            {
+                auto& glBuffer = std::get<std::unique_ptr<GLUniformBuffer<ThreeDimension::VertexUniform>>>(meshData->vertexUniformBuffer);
+                glBuffer->UpdateUniform(sizeof(ThreeDimension::VertexUniform), &meshData->vertexUniform);
+            }
+        });
+    }
+}
+
 
 void SkeletalAnimator::PlayAnimation(SkeletalAnimation* newAnimation, bool isLoop, float speed, float blendDuration)
 {

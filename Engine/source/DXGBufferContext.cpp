@@ -210,7 +210,7 @@ void DXGBufferContext::OnResize()
 	}
 }
 
-void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -222,10 +222,25 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	// Set the viewport and scissor rect
 	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
-	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+	uint32_t renderWidth = m_renderManager->m_width;
+	uint32_t renderHeight = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
+
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera();
+	ViewportRect vp = activeCamera->GetViewport();
+
+	D3D12_VIEWPORT viewport = { vp.x * renderWidth, vp.y * renderHeight, vp.width * renderWidth, vp.height * renderHeight, 0.f, 1.f };
+	D3D12_RECT scissorRect = {
+		static_cast<LONG>(vp.x * renderWidth),
+		static_cast<LONG>(vp.y * renderHeight),
+		static_cast<LONG>((vp.x + vp.width) * renderWidth),
+		static_cast<LONG>((vp.y + vp.height) * renderHeight)
+	};
 
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
@@ -253,7 +268,7 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 	{
 		CD3DX12_CPU_DESCRIPTOR_HANDLE currentRtvHandle(rtvHandle, static_cast<INT>(i), rtvDescriptorSize);
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		commandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
+		commandList->ClearRenderTargetView(currentRtvHandle, clearColor, 1, &scissorRect);
 	}
 
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvHandles;
@@ -271,6 +286,12 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper)
 		{
 			auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
 			auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+
+			spriteData->vertexUniform.view = activeCamera->GetViewMatrix();
+			spriteData->vertexUniform.projection = activeCamera->GetProjectionMatrix();
+			glm::mat4 inverseView = glm::inverse(spriteData->vertexUniform.view);
+			spriteData->vertexUniform.viewPosition = glm::vec4(inverseView[3].x, inverseView[3].y, inverseView[3].z, 1.0f);
+
 			if (m_renderManager->m_meshShaderEnabled)
 			{
 				commandList->SetPipelineState(m_meshPipeline3D->GetPipelineState().Get());

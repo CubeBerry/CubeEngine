@@ -50,7 +50,7 @@ void DXNaiveLightingContext::OnResize()
 	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void DXNaiveLightingContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXNaiveLightingContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -69,6 +69,28 @@ void DXNaiveLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderManager->m_renderTarget->GetHDRRtvHeap()->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
+	uint32_t renderWidth = m_renderManager->m_width;
+	uint32_t renderHeight = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
+
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera();
+	ViewportRect vp = activeCamera->GetViewport();
+
+	D3D12_VIEWPORT viewport = { vp.x * renderWidth, vp.y * renderHeight, vp.width * renderWidth, vp.height * renderHeight, 0.f, 1.f };
+	D3D12_RECT scissorRect = {
+		static_cast<LONG>(vp.x * renderWidth),
+		static_cast<LONG>(vp.y * renderHeight),
+		static_cast<LONG>((vp.x + vp.width) * renderWidth),
+		static_cast<LONG>((vp.y + vp.height) * renderHeight)
+	};
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	ID3D12DescriptorHeap* ppHeaps[] = { m_renderManager->m_srvHeap.Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -84,7 +106,7 @@ void DXNaiveLightingContext::Execute(ICommandListWrapper* commandListWrapper)
 		commandList->SetGraphicsRootConstantBufferView(1, m_renderManager->pointLightUniformBuffer->GetGPUVirtualAddress(m_renderManager->m_frameIndex));
 	}
 
-	glm::mat4 inverseView = glm::inverse(Engine::GetCameraManager().GetViewMatrix());
+	glm::mat4 inverseView = glm::inverse(activeCamera->GetViewMatrix());
 	pushConstants = {
 		.viewPosition = pushConstants.viewPosition = glm::vec3(
 		inverseView[3].x,

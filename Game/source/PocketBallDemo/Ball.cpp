@@ -57,40 +57,42 @@ void Ball::CollideObject(Object* obj)
 {
 	switch (obj->GetObjectType())
 	{
-	case ObjectType::WALL:
-		GetComponent<Physics2D>()->CheckCollision(obj);
-		obj->GetComponent<Physics2D>()->CheckCollision(this);
-		break;
-	case ObjectType::BALL:
-		GetComponent<Physics2D>()->CheckCollision(obj);
-		break;
-	case ObjectType::GOAL:
-		if (obj->GetComponent<Physics2D>()->CheckCollision(this) == true)
+		case ObjectType::WALL:
+			// Resolution handled by PhysicsManager
+			break;
+		case ObjectType::BALL:
+			// Resolution handled by PhysicsManager
+			break;
+		case ObjectType::GOAL:
 		{
-			if (ballType != BallType::WHITE)
+			// Detection only for goal logic
+			if (true) // NarrowPhase already confirmed collision if we are here
 			{
-				int time = (rand() % (3 + 1)) + 1;
-				int amount = (rand() % (8 + 4)) + 4;
-				int colorR = (rand() % (10 + 0)) + 0;
-				int colorG = (rand() % (10 + 0)) + 0;
-				int colorB = (rand() % (10 + 0)) + 0;
-				int colorA = (rand() % (10 + 5)) + 5;
-				float x = position.x;
-				float y = position.y;
-				float speedX = (float)(rand() % (15 - (-30) + 1) - 15);
-				float speedY = (float)(rand() % (15 - (-30) + 1) - 15);
+				if (ballType != BallType::WHITE)
+				{
+					int time = (rand() % (3 + 1)) + 1;
+					int amount = (rand() % (8 + 4)) + 4;
+					int colorR = (rand() % (10 + 0)) + 0;
+					int colorG = (rand() % (10 + 0)) + 0;
+					int colorB = (rand() % (10 + 0)) + 0;
+					int colorA = (rand() % (10 + 5)) + 5;
+					float x = position.x;
+					float y = position.y;
+					float speedX = (float)(rand() % (15 - (-30) + 1) - 15);
+					float speedY = (float)(rand() % (15 - (-30) + 1) - 15);
 
-				Engine::GetParticleManager().AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
-					{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) });
+					Engine::GetParticleManager().AddRandomParticle({ x,y,0.f }, { 4.f,4.f,0.f }, { speedX,speedY,0.f }, 0.f, static_cast<float>(time), amount,
+						{ static_cast<float>(colorR * 0.1f),static_cast<float>(colorG * 0.1f),static_cast<float>(colorB * 0.1f),static_cast<float>(colorA * 0.1f) });
 
-				Engine::GetObjectManager().Destroy(Object::id);
-				pocketBallSystem->SetBallNum(pocketBallSystem->GetBallNum() - 1);
+					Engine::GetObjectManager().Destroy(Object::id);
+					pocketBallSystem->SetBallNum(pocketBallSystem->GetBallNum() - 1);
+				}
+				else
+				{
+					Engine::GetGameStateManager().SetGameState(State::RESTART);
+				}
 			}
-			else
-			{
-				Engine::GetGameStateManager().SetGameState(State::RESTART);
-			}
+			break;
 		}
-		break;
 	}
 }

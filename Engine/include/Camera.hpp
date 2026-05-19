@@ -7,6 +7,8 @@
 #include "glm/glm.hpp"
 #include "Ray.hpp"
 
+#include <string>
+
 enum class CameraMoveDir
 {
 	FOWARD,
@@ -19,8 +21,8 @@ enum class CameraMoveDir
 
 enum class CameraType
 {
-	TwoDimension,
-	ThreeDimension,
+	Orthographic,
+	Perspective,
 	NONE
 };
 
@@ -32,6 +34,14 @@ enum CameraCenterMode
 	NormalizedDeviceCoordinates
 };
 
+struct ViewportRect
+{
+	float x;
+	float y;
+	float width;
+	float height;
+};
+
 class Camera
 {
 public:
@@ -40,7 +50,7 @@ public:
 	void Update();
 	void Reset();
 
-	//2D, 3D
+	//Orthographic, Perspective
 	void    SetTarget(glm::vec3 pos);
 	void    SetCameraPosition(glm::vec3 cameraPosition_) noexcept; 
 	void    SetViewSize(int width, int height) noexcept;
@@ -58,37 +68,47 @@ public:
 
 	void MoveCameraPos(CameraMoveDir dir, float speed); 
  
-	//2D
-	void Rotate2D(float angle) noexcept;
-	float GetRotate2D() { return rotate2D; } 
-
+	//Orthographic
+	void RotateOrthographic(float angle) noexcept;
+	float GetRotateOrthographic() { return roll; } 
+	void SetRotationOrthographic(float angle) { roll = angle; }
 	void  SetCameraCenterMode(CameraCenterMode mode) noexcept { cameraCenterMode = mode; }; //(TBD)
 	constexpr CameraCenterMode GetCameraCenterMode() const noexcept { return cameraCenterMode; } //(TBD)
 	
-	//3D
+	//Perspective
 	void LookAt(glm::vec3 pos);
 	float			GetCameraSensitivity() { return cameraSensitivity; }
 
 	void			SetCameraType(CameraType type) { cameraType = type; }
+	CameraType      GetCameraType() const { return cameraType; }
 	void            SetNear(float amount) noexcept { nearClip = amount; }
 	void            SetFar(float amount) noexcept { farClip = amount; }
 	void            SetPitch(float amount) noexcept { pitch = amount; }
 	void            SetYaw(float amount) noexcept { yaw = amount; }
+	void            SetRoll(float amount) noexcept { roll = amount; }
 	void            SetBaseFov(float amount) noexcept { baseFov = amount; }
 	void            SetCameraSensitivity(float amount) noexcept { cameraSensitivity = amount; }
-	void			UpdaetCameraDirectrion(glm::vec2 dir);
+	void			UpdateCameraDirection(glm::vec2 dir);
 	void			SetIsThirdPersonViewMod(bool state) { isThirdPersonView = state; }
 	void            SetCameraDistance(float amount) noexcept { cameraDistance = amount; }
 	void            SetCameraOffset(glm::vec3 amount) noexcept { cameraOffset = amount; }
+	void			SetViewport(float x, float y, float w, float h) { viewport = { x, y, w, h }; }
+	void			SetName(const std::string& name_) { name = name_; }
+	void			SetIsActive(bool state) { isActive = state; }
 
 	float	  GetNear() { return nearClip; }
 	float	  GetFar() { return farClip; }
 	float	  GetPitch() { return pitch; }
 	float	  GetYaw() { return yaw; }
+	float	  GetRoll() { return roll; }
 	float	  GetBaseFov() { return baseFov; }
 	float	  GetIsThirdPersonView() { return isThirdPersonView; }
 	float	  GetCameraDistance() { return cameraDistance; }
 	glm::vec3 GetCameraOffset() { return cameraOffset; }
+	ViewportRect GetViewport() const { return viewport; }
+	std::string GetName() const { return name; }
+	bool GetIsActive() const { return isActive; }
+
 
 	glm::vec3 GetUpVector() const { return up; }
 	glm::vec3 GetBackVector() const { return back; }
@@ -96,7 +116,7 @@ public:
 
 	Ray CalculateRayFrom2DPosition(glm::vec2 pos);
 private:
-	//2D, 3D
+	//Orthographic, Perspective
 	glm::vec3 cameraPosition{ 0.0f, 0.0f, 0.0f }; 
 	glm::vec3 up{ 0.0f, 1.0f, 0.0f }; 
 	glm::vec3 right{ 1.0f, 0.0f, 0.0f }; 
@@ -108,22 +128,26 @@ private:
 	glm::vec2 cameraViewSize = glm::vec2(0.f); 
 	CameraType cameraType = CameraType::NONE; 
 	
-	//2D
-	float rotate2D = 0.f; 
+	//Orthographic
 	CameraCenterMode cameraCenterMode = RightOriginCenter; 
 
-	//3D
+	//Perspective
 	glm::vec3 cameraCenter{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 worldUp{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 back{ 0.0f, 0.0f, -1.0f };
 	glm::vec3 cameraOffset{ 0.0f, 0.0f, 0.0f }; //In ThirdPersonView
 
 	float aspectRatio = 1.f; //(TBD)
-	float nearClip = 1.f;
-	float farClip = 1000.f;
+	float nearClip = 0.001f;
+	float farClip = 45.f;
 	float pitch = 0.0f;
 	float yaw = -90.0f;
+	float roll = 0.0f; // rotationOrthographic
 	float cameraSensitivity = 1.f;
 	float cameraDistance = 5.0f; //In ThirdPersonView
 	bool isThirdPersonView = false; //In ThirdPersonView
+
+	ViewportRect viewport{ 0.0f, 0.0f, 1.0f, 1.0f };
+	std::string name = "Camera";
+	bool isActive = true;
 };

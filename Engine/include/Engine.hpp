@@ -11,9 +11,11 @@
 #include "CameraManager.hpp"
 #include "SoundManager.hpp"
 #include "SpriteManager.hpp"
-#include "ThreadManager.hpp"
+#include "JobSystem.hpp"
 #include "Logger.hpp"
 #include "Particle/ParticleManager.hpp"
+#include "PhysicsManager.hpp"
+#include "SkeletalAnimationManager.hpp"
 
 class Engine
 {
@@ -31,8 +33,12 @@ public:
 	static SoundManager& GetSoundManager() { return Instance().soundManager; }
 	static SpriteManager& GetSpriteManager() { return *Instance().spriteManager; }
 	static ParticleManager& GetParticleManager() { return Instance().particleManager; }
+	static PhysicsManager& GetPhysicsManager() { return Instance().physicsManager; }
 	static Timer& GetTimer() { return Instance().timer; }
 	static Logger& GetLogger() { return *Instance().logger; }
+	static JobSystem& GetJobSystem() { return Instance().jobSystem; }
+	static const InputSnapshot& GetInputSnapshot() { return Instance().inputSnapshot; }
+	static SkeletalAnimationManager& GetSkeletalAnimationManager() { return Instance().skeletalAnimationManager; }
 
 	void Init(const char* title, int windowWidth, int windowHeight, bool fullScreen, WindowMode mode);
 	void Update();
@@ -58,6 +64,9 @@ private:
 	SoundManager soundManager;
 	SpriteManager* spriteManager;
 	ParticleManager particleManager;
-	ThreadManager threadManager;
+	PhysicsManager physicsManager;
+	JobSystem jobSystem;
+	InputSnapshot inputSnapshot;
+	SkeletalAnimationManager skeletalAnimationManager;
 	Logger* logger;
 };

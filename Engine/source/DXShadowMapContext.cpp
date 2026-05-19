@@ -65,7 +65,7 @@ void DXShadowMapContext::OnResize()
 {
 }
 
-void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXShadowMapContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	if (!m_enabled || m_renderManager->directionalLightUniforms.empty()) return;
 
@@ -380,21 +380,44 @@ void DXShadowMapContext::DrawImGui()
 
 	if (showDebugFrustum)
 	{
+		CameraManager& camManager = Engine::GetCameraManager();
+		int mainCamIdx = camManager.GetMainCameraIndex();
+		Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+		// Skip if camera is inactive
+		if (!mainCam || !mainCam->GetIsActive()) return;
+
 		ImDrawList* drawList = ImGui::GetBackgroundDrawList();
-		glm::mat4 cameraView = Engine::GetCameraManager().GetViewMatrix();
-		glm::mat4 cameraProj = Engine::GetCameraManager().GetProjectionMatrix();
+		glm::mat4 cameraView = mainCam->GetViewMatrix();
+		glm::mat4 cameraProj = mainCam->GetProjectionMatrix();
+
+		ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+		glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+		glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+		ViewportRect vp = mainCam->GetViewport();
+
+		ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+		ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+		drawList->PushClipRect(clipMin, clipMax);
 
 		// Draw light position and target on the screen for debugging
-		glm::vec2 lightScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightPosition, cameraView, cameraProj);
-		glm::vec2 targetScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightTarget, cameraView, cameraProj);
+		glm::vec2 lightScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightPosition, cameraView, cameraProj, mainCam);
+		glm::vec2 targetScreenPos = Engine::GetRenderManager()->WorldToScreen(m_lightTarget, cameraView, cameraProj, mainCam);
 		if (lightScreenPos.x != -1.0f && targetScreenPos.x != -1.0f)
 		{
-			// Draw light position
-			drawList->AddCircleFilled(ImVec2(lightScreenPos.x, lightScreenPos.y), 8.0f, IM_COL32(255, 255, 0, 255));
-			drawList->AddText(ImVec2(lightScreenPos.x + 10, lightScreenPos.y - 10), IM_COL32(255, 255, 0, 255), "Sun");
-			// Draw light target
-			drawList->AddCircleFilled(ImVec2(targetScreenPos.x, targetScreenPos.y), 4.0f, IM_COL32(255, 0, 0, 255));
-			drawList->AddText(ImVec2(targetScreenPos.x + 10, targetScreenPos.y - 10), IM_COL32(255, 0, 0, 255), "Target");
+			// Draw light position if not occluded
+			if (!camManager.IsScreenPointOccluded(lightScreenPos, mainCamIdx))
+			{
+				drawList->AddCircleFilled(ImVec2(lightScreenPos.x, lightScreenPos.y), 8.0f, IM_COL32(255, 255, 0, 255));
+				drawList->AddText(ImVec2(lightScreenPos.x + 10, lightScreenPos.y - 10), IM_COL32(255, 255, 0, 255), "Sun");
+			}
+			// Draw light target if not occluded
+			if (!camManager.IsScreenPointOccluded(targetScreenPos, mainCamIdx))
+			{
+				drawList->AddCircleFilled(ImVec2(targetScreenPos.x, targetScreenPos.y), 4.0f, IM_COL32(255, 0, 0, 255));
+				drawList->AddText(ImVec2(targetScreenPos.x + 10, targetScreenPos.y - 10), IM_COL32(255, 0, 0, 255), "Target");
+			}
 		}
 
 		// @TODO Study how this code works
@@ -413,14 +436,17 @@ void DXShadowMapContext::DrawImGui()
 			glm::vec4 worldPos = invLightVP * glm::vec4(ndcCorners[i], 1.0f);
 			glm::vec3 worldPos3D = glm::vec3(worldPos) / worldPos.w;
 
-			glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos3D, cameraView, cameraProj);
+			glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos3D, cameraView, cameraProj, mainCam);
 			screenCorners[i] = ImVec2(screenPos.x, screenPos.y);
 			valid[i] = screenPos.x != -1.0f && screenPos.y != -1.0f;
 		}
 
 		auto DrawLine = [&](int index1, int index2)
 			{
-				if (valid[index1] && valid[index2]) drawList->AddLine(screenCorners[index1], screenCorners[index2], IM_COL32(0, 255, 255, 255), 2.0f);
+				if (valid[index1] && valid[index2])
+				{
+					Engine::GetRenderManager()->DrawClippedLine(drawList, glm::vec2(screenCorners[index1].x, screenCorners[index1].y), glm::vec2(screenCorners[index2].x, screenCorners[index2].y), IM_COL32(0, 255, 255, 255), 2.0f, mainCamIdx);
+				}
 			};
 
 		// Near
@@ -429,5 +455,7 @@ void DXShadowMapContext::DrawImGui()
 		DrawLine(4, 5); DrawLine(5, 6); DrawLine(6, 7); DrawLine(7, 4);
 		// Connect Near and Far
 		DrawLine(0, 4); DrawLine(1, 5); DrawLine(2, 6); DrawLine(3, 7);
+
+		drawList->PopClipRect();
 	}
 }

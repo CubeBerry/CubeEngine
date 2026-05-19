@@ -63,7 +63,7 @@ void DXPostProcessContext::OnResize()
 	m_fidelityFX->OnResize(m_renderManager->m_device, m_renderManager->m_width, m_renderManager->m_height);
 }
 
-void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXPostProcessContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();

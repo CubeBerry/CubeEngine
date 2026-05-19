@@ -22,12 +22,16 @@ void BeatEmUpDemoSystem::Init()
 	emeyHealthBar = new DynamicSprite();
 	emeyHealthBar->AddQuadWithTexture("hpbar", { 0.f,0.f,0.f,0.f });
 	emeyHealthBar->SetSpriteDrawType(SpriteDrawType::UI);
+
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::ENEMY, CollisionMode::DETECT);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::PLAYER, ObjectType::WALL, CollisionMode::COLLIDE);
+	Engine::GetPhysicsManager().SetCollisionMode(ObjectType::ENEMY, ObjectType::ENEMY, CollisionMode::DETECT);
 }
 
 void BeatEmUpDemoSystem::Update(float dt)
 {
-	glm::vec2 viewSize = Engine::GetCameraManager().GetViewSize();
-	glm::vec2 center = Engine::GetCameraManager().GetCenter();
+	glm::vec2 viewSize = Engine::GetCameraManager().GetCamera()->GetViewSize();
+	glm::vec2 center = Engine::GetCameraManager().GetCamera()->GetCenter();
 	healthBar->UpdateModel({ (-viewSize.x / 2.f + 320.f) + center.x + 32.f - (320.f - (320.f * (1.f / maxHp * hp)) / 2.f) , (viewSize.y / 2.f - 64.f) + center.y, 0.f }, { 320.f * (1.f / maxHp * hp), 32.f, 0.f }, 0.f);
 	healthBar->UpdateProjection();
 	healthBar->UpdateView();

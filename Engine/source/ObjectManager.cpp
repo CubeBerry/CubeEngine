@@ -9,6 +9,7 @@
 #include "VKRenderManager.hpp"
 #include "DXRenderManager.hpp"
 
+#include "BasicComponents/Physics2D.hpp"
 #include "BasicComponents/Physics3D.hpp"
 #include "BasicComponents/Light.hpp"
 #include "BasicComponents/SkeletalAnimator.hpp"
@@ -29,8 +30,31 @@ ObjectManager::~ObjectManager()
 
 void ObjectManager::Update(float dt)
 {
-	std::for_each(objectMap.begin(), objectMap.end(), [&](auto& obj) { obj.second->Update(dt); });
-	//DeleteObjectsFromList();
+	if (objectMap.empty())
+	{
+		return;
+	}
+
+	// Cache map values into contiguous vector for parallel iteration
+	std::vector<Object*> objects;
+	objects.reserve(objectMap.size());
+	for (auto& [id, obj] : objectMap)
+	{
+		objects.push_back(obj.get());
+	}
+
+	auto handle = Engine::GetJobSystem().QueueParallelWork(
+		static_cast<uint32_t>(objects.size()),
+		[&objects, dt](uint32_t begin, uint32_t end)
+		{
+			for (uint32_t i = begin; i < end; ++i)
+			{
+				objects[i]->Update(dt);
+			}
+		},
+		32 // Batch size
+	);
+	Engine::GetJobSystem().WaitForWork(handle);
 }
 
 void ObjectManager::DeleteObjectsFromList()
@@ -55,12 +79,9 @@ void ObjectManager::Draw(float dt)
 
 void ObjectManager::Destroy(int id)
 {
-	//objectsToBeDeleted.push_back(id);
-	//objectMap.at(id).get()->DestroyAllComponents();
-
+	// Thread-safe: objects may self-destruct during parallel updates
+	std::lock_guard<std::mutex> lock(queueMutex);
 	objectsToBeDeleted.push_back(id);
-	//std::for_each(objectsToBeDeleted.begin(), objectsToBeDeleted.end(), [&](int id) { objectMap.at(id).reset(); objectMap.erase(id); });
-	//objectsToBeDeleted.clear();
 }
 
 void ObjectManager::DestroyAllObjects()
@@ -194,6 +215,9 @@ void ObjectManager::ObjectControllerForImGui()
 			case ComponentTypes::PHYSICS3D:
 				Physics3DControllerForImGui(reinterpret_cast<Physics3D*>(comp));
 				break;
+			case ComponentTypes::PHYSICS2D:
+				Physics2DControllerForImGui(reinterpret_cast<Physics2D*>(comp));
+				break;
 			case ComponentTypes::LIGHT:
 				LightControllerForImGui(reinterpret_cast<Light*>(comp));
 				break;
@@ -250,12 +274,22 @@ void ObjectManager::ProcessFunctionQueue()
 
 void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 {
+	if (!phy) 
+	{
+		return;
+	}
 	Physics3D* physics = phy;
 	if (ImGui::CollapsingHeader("Physics3D", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		bool isGravityOn = physics->GetIsGravityOn();
 		ImGui::Checkbox("Use Gravity", &isGravityOn);
 		physics->SetGravity(physics->GetGravity(), isGravityOn);
+
+		bool enableRotational = physics->GetEnableRotationalPhysics();
+		if (ImGui::Checkbox("Enable Rotational Physics", &enableRotational))
+		{
+			physics->SetEnableRotationalPhysics(enableRotational);
+		}
 
 		glm::vec3 velocity = physics->GetVelocity();
 		ImGui::DragFloat3("Velocity", &velocity.x, 0.01f);
@@ -280,6 +314,13 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 		float mass = physics->GetMass();
 		ImGui::DragFloat("Mass", &mass, 0.01f);
 		physics->SetMass(mass);
+
+		float inertia = physics->GetMomentOfInertia();
+		ImGui::DragFloat("Moment Of Inertia", &inertia, 0.1f, 0.0f, 1000.0f);
+		if (inertia != physics->GetMomentOfInertia())
+		{
+			physics->SetMomentOfInertia(inertia);
+		}
 
 		ImGui::SeparatorText("Collision");
 		int mode_int = static_cast<int>(phy->GetCollisionDetectionMode());
@@ -318,8 +359,87 @@ void ObjectManager::Physics3DControllerForImGui(Physics3D* phy)
 	physics = nullptr;
 }
 
+void ObjectManager::Physics2DControllerForImGui(Physics2D* phy)
+{
+	if (!phy) 
+	{
+		return;
+	}
+	Physics2D* physics = phy;
+	if (ImGui::CollapsingHeader("Physics2D", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		bool isGravityOn = physics->GetIsGravityOn();
+		ImGui::Checkbox("Use Gravity", &isGravityOn);
+		physics->SetGravity(physics->GetGravity(), isGravityOn);
+
+		bool enableRotational = physics->GetEnableRotationalPhysics();
+		if (ImGui::Checkbox("Enable Rotational Physics", &enableRotational))
+		{
+			physics->SetEnableRotationalPhysics(enableRotational);
+		}
+
+		glm::vec2 velocity = physics->GetVelocity();
+		ImGui::DragFloat2("Velocity", &velocity.x, 0.01f);
+		physics->SetVelocity(velocity);
+
+		glm::vec2 minVelocity = physics->GetMinVelocity();
+		ImGui::DragFloat2("Min Velocity", &minVelocity.x, 0.01f);
+		physics->SetMinVelocity(minVelocity);
+
+		glm::vec2 maxVelocity = physics->GetMaxVelocity();
+		ImGui::DragFloat2("Max Velocity", &maxVelocity.x, 0.01f);
+		physics->SetMaxVelocity(maxVelocity);
+
+		float gravity = physics->GetGravity();
+		ImGui::DragFloat("Gravity", &gravity, 0.01f);
+		physics->SetGravity(gravity, isGravityOn);
+
+		float friction = physics->GetFriction();
+		ImGui::DragFloat("Friction", &friction, 0.01f);
+		physics->SetFriction(friction);
+
+		float mass = physics->GetMass();
+		ImGui::DragFloat("Mass", &mass, 0.01f);
+		physics->SetMass(mass);
+
+		float restitution = physics->GetRestitution();
+		ImGui::DragFloat("Restitution", &restitution, 0.01f);
+		physics->SetRestitution(restitution);
+
+		float inertia = physics->GetMomentOfInertia();
+		ImGui::DragFloat("Moment Of Inertia", &inertia, 0.1f, 0.0f, 1000.0f);
+		if (inertia != physics->GetMomentOfInertia())
+		{
+			physics->SetMomentOfInertia(inertia);
+		}
+
+		if (ImGui::RadioButton("RIGID", physics->GetBodyType() == BodyType::RIGID))
+		{
+			physics->SetBodyType(BodyType::RIGID);
+		}
+		ImGui::SameLine();
+		if (ImGui::RadioButton("BLOCK", physics->GetBodyType() == BodyType::BLOCK))
+		{
+			physics->SetBodyType(BodyType::BLOCK);
+		}
+
+		ImGui::SeparatorText("Debug");
+		ImGui::Checkbox("Show Physics Debug", &isShowPhysics);
+
+		if (isShowPhysics)
+		{
+			RenderPhysics2DDebug(physics);
+		}
+	}
+	physics = nullptr;
+}
+
 void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 {
+	if (!sprite) 
+	{
+		return;
+	}
 	RenderManager* renderManager = Engine::GetRenderManager();
 	DynamicSprite* spriteComp = sprite;
 	bool isSelectedObjModel = false;
@@ -599,6 +719,10 @@ void ObjectManager::SpriteControllerForImGui(DynamicSprite* sprite)
 
 void ObjectManager::LightControllerForImGui(Light* light)
 {
+	if (!light) 
+	{
+		return;
+	}
 	if (light->GetLightType() != LightType::NONE)
 	{
 		glm::vec3 position = light->GetPosition();
@@ -721,7 +845,10 @@ void ObjectManager::LightControllerForImGui(Light* light)
 
 void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animator)
 {
-	if (!animator) return;
+	if (!animator) 
+	{
+		return;
+	}
 
 	if (ImGui::CollapsingHeader("Skeletal Animator"))
 	{
@@ -867,7 +994,18 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 					* rotationMatrix
 					* glm::scale(glm::mat4(1.0f), scale);
 
+				ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+				glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+				glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+				Camera* mainCam = Engine::GetCameraManager().GetCamera();
+				ViewportRect vp = mainCam->GetViewport();
+
+				ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+				ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+				ImGui::GetBackgroundDrawList()->PushClipRect(clipMin, clipMax);
 				RenderBoneHierarchy(&currentAnim->GetRootNode(), transforms, model);
+				ImGui::GetBackgroundDrawList()->PopClipRect();
 			}
 		}
 
@@ -876,7 +1014,10 @@ void ObjectManager::SkeletalAnimatorControllerForImGui(SkeletalAnimator* animato
 
 void ObjectManager::AnimationStateMachineControllerForImGui(SkeletalAnimationStateMachine* fsm)
 {
-	if (!fsm) return;
+	if (!fsm) 
+	{
+		return;
+	}
 
 	ImGui::Text("Animation State Machine");
 	ImGui::Spacing();
@@ -927,29 +1068,23 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 	glm::mat4 nodeGlobalMatrix = animatedTransforms.at(node->name);
 	glm::mat4 nodeWorldMatrix = objectTransform * nodeGlobalMatrix;
 
+	CameraManager& camManager = Engine::GetCameraManager();
+	int mainCamIdx = camManager.GetMainCameraIndex();
+	Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+	// Skip if camera is inactive
+	if (!mainCam || !mainCam->GetIsActive()) return;
+
 	// Convert world position to screen coordinates
-	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
-	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	glm::mat4 view = mainCam->GetViewMatrix();
+	glm::mat4 proj = mainCam->GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
 	glm::vec3 currentPos = glm::vec3(nodeWorldMatrix[3]); // Extract translation
-	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj);
-
-	// Debug: Log bone positions
-	static bool debugPrint = true;
-	if (debugPrint && node->name.find("Armature") == std::string::npos)
-	{
-		char debugBuffer[256];
-		snprintf(debugBuffer, sizeof(debugBuffer),
-			"Bone: %s | GlobalPos: (%.2f, %.2f, %.2f) | ScreenPos: (%.2f, %.2f)",
-			node->name.c_str(),
-			currentPos.x, currentPos.y, currentPos.z,
-			screenPos.x, screenPos.y);
-		Engine::GetLogger().LogDebug(LogCategory::Engine, debugBuffer);
-	}
+	glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(currentPos, view, proj, mainCam);
 
 	// Draw joint point
-	if (screenPos.x != -1 && screenPos.y != -1)
+	if (screenPos.x != -1 && screenPos.y != -1 && !camManager.IsScreenPointOccluded(screenPos, mainCamIdx))
 	{
 		ImU32 color = IM_COL32(0, 255, 0, 255);
 		if (node->name == selectedBoneName) color = IM_COL32(255, 0, 0, 255);
@@ -966,17 +1101,12 @@ void ObjectManager::RenderBoneHierarchy(const AssimpNodeData* node, const std::m
 			glm::mat4 childWorldMatrix = objectTransform * childGlobalMatrix;
 
 			glm::vec3 childPos = glm::vec3(childWorldMatrix[3]);
-			glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj);
+			glm::vec2 childScreenPos = Engine::GetRenderManager()->WorldToScreen(childPos, view, proj, mainCam);
 
-			// Draw line if both positions are valid
-			if (screenPos.x >= 0 && screenPos.y >= 0 &&
-				childScreenPos.x >= 0 && childScreenPos.y >= 0)
+			// Draw line with natural clipping against other viewports
+			if (screenPos.x >= 0 && screenPos.y >= 0 && childScreenPos.x >= 0 && childScreenPos.y >= 0)
 			{
-				drawList->AddLine(
-					ImVec2(screenPos.x, screenPos.y),
-					ImVec2(childScreenPos.x, childScreenPos.y),
-					IM_COL32(255, 255, 0, 255),
-					2.0f);
+				Engine::GetRenderManager()->DrawClippedLine(drawList, screenPos, childScreenPos, IM_COL32(255, 255, 0, 255), 2.0f, mainCamIdx);
 			}
 		}
 		RenderBoneHierarchy(&child, animatedTransforms, objectTransform);
@@ -988,7 +1118,7 @@ void ObjectManager::SelectObjectWithMouse()
 	//SelectObject
 	if (Engine::GetInputManager().IsMouseButtonPressed(MOUSEBUTTON::LEFT) && isShowPopup == false)
 	{
-		Ray ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+		Ray ray = Engine::GetCameraManager().GetCamera()->CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
 		if (isDragObject == false)
 		{
 			float tMin, tMax;
@@ -1031,8 +1161,8 @@ void ObjectManager::SelectObjectWithMouse()
 					objT->GetComponent<Physics3D>()->SetIsGravityOn(false);
 					isObjGravityOn = true;
 				}
-				ray = Engine::GetCameraManager().CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
-				glm::vec3 planeNormal = Engine::GetCameraManager().GetBackVector();
+				ray = Engine::GetCameraManager().GetCamera()->CalculateRayFrom2DPosition(Engine::GetInputManager().GetMousePosition());
+				glm::vec3 planeNormal = Engine::GetCameraManager().GetCamera()->GetBackVector();
 				glm::vec3 objectPosition = objT->GetPosition();
 				float distanceToPlane = glm::dot(planeNormal, objectPosition - ray.origin) / glm::dot(planeNormal, ray.direction);
 				glm::vec3 intersectionPoint = ray.origin + distanceToPlane * ray.direction;
@@ -1289,21 +1419,44 @@ void ObjectManager::SelectObjModelPopUpForImGui()
 
 void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 {
-	if (!phy) return;
+	if (!phy) 
+	{
+		return;
+	}
 	
 	Object* obj = phy->GetOwner();
 	if (!obj) return;
 
-	glm::mat4 view = Engine::GetCameraManager().GetViewMatrix();
-	glm::mat4 proj = Engine::GetCameraManager().GetProjectionMatrix();
+	CameraManager& camManager = Engine::GetCameraManager();
+	int mainCamIdx = camManager.GetMainCameraIndex();
+	Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+	// Skip if camera is inactive
+	if (!mainCam || !mainCam->GetIsActive()) return;
+
+	glm::mat4 view = mainCam->GetViewMatrix();
+	glm::mat4 proj = mainCam->GetProjectionMatrix();
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+	glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+	ViewportRect vp = mainCam->GetViewport();
+
+	ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+	ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+	drawList->PushClipRect(clipMin, clipMax);
 
 	ImU32 color;
 	switch (phy->GetBodyType())
 	{
-	case BodyType3D::RIGID: color = IM_COL32(0, 255, 0, 255); break; // Green
-	case BodyType3D::BLOCK: color = IM_COL32(255, 0, 0, 255); break; // Red
-	default: color = IM_COL32(255, 255, 0, 255); break; // Yellow
+	case BodyType3D::RIGID: color = IM_COL32(0, 255, 0, 255); 
+		break;
+	case BodyType3D::BLOCK: color = IM_COL32(255, 0, 0, 255); 
+		break;
+	default: color = IM_COL32(255, 255, 0, 255); 
+		break;
 	}
 
 	if (phy->GetColliderType() == ColliderType3D::SPHERE)
@@ -1318,15 +1471,15 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			glm::vec2 firstScreenPos;
 			for (int i = 0; i <= segments; ++i)
 			{
-				float theta = (2.0f * 3.14159265359f * i) / segments;
+				float theta = (2.0f * PI * i) / segments;
 				glm::vec3 worldPos = center + (right * cos(theta) + up * sin(theta)) * radius;
-				glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos, view, proj);
+				glm::vec2 screenPos = Engine::GetRenderManager()->WorldToScreen(worldPos, view, proj, mainCam);
 				
 				if (screenPos.x >= 0 && screenPos.y >= 0)
 				{
 					if (!first && prevScreenPos.x >= 0 && prevScreenPos.y >= 0)
 					{
-						drawList->AddLine(ImVec2(prevScreenPos.x, prevScreenPos.y), ImVec2(screenPos.x, screenPos.y), color, 2.0f);
+						Engine::GetRenderManager()->DrawClippedLine(drawList, prevScreenPos, screenPos, color, 2.0f, mainCamIdx);
 					}
 					else if (first)
 					{
@@ -1366,7 +1519,7 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 			};
 
 			std::vector<glm::vec2> screenPoints;
-			for(auto& wp : worldPoints) screenPoints.push_back(Engine::GetRenderManager()->WorldToScreen(wp, view, proj));
+			for(auto& wp : worldPoints) screenPoints.push_back(Engine::GetRenderManager()->WorldToScreen(wp, view, proj, mainCam));
 
 			for (int i = 0; i < 12; ++i)
 			{
@@ -1374,9 +1527,109 @@ void ObjectManager::RenderPhysics3DDebug(Physics3D* phy)
 				glm::vec2 p2 = screenPoints[edges[i][1]];
 				if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
 				{
-					drawList->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y), color, 2.0f);
+					Engine::GetRenderManager()->DrawClippedLine(drawList, p1, p2, color, 2.0f, mainCamIdx);
 				}
 			}
 		}
 	}
+	drawList->PopClipRect();
+}
+
+void ObjectManager::RenderPhysics2DDebug(Physics2D* phy)
+{
+	if (!phy) return;
+	Object* obj = phy->GetOwner();
+	if (!obj) return;
+
+	CameraManager& camManager = Engine::GetCameraManager();
+	int mainCamIdx = camManager.GetMainCameraIndex();
+	Camera* mainCam = camManager.GetCamera(mainCamIdx);
+
+	// Skip if camera is inactive
+	if (!mainCam || !mainCam->GetIsActive()) return;
+
+	glm::mat4 view = mainCam->GetViewMatrix();
+	glm::mat4 proj = mainCam->GetProjectionMatrix();
+	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+	ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+	glm::vec2 windowPos = { imguiViewport->Pos.x, imguiViewport->Pos.y };
+	glm::vec2 windowSize = { imguiViewport->Size.x, imguiViewport->Size.y };
+	ViewportRect vp = mainCam->GetViewport();
+
+	ImVec2 clipMin = { vp.x * windowSize.x + windowPos.x, vp.y * windowSize.y + windowPos.y };
+	ImVec2 clipMax = { (vp.x + vp.width) * windowSize.x + windowPos.x, (vp.y + vp.height) * windowSize.y + windowPos.y };
+
+	drawList->PushClipRect(clipMin, clipMax);
+
+	ImU32 color;
+	switch (phy->GetBodyType())
+	{
+	case BodyType::RIGID: color = IM_COL32(0, 255, 0, 255); 
+		break;
+	case BodyType::BLOCK: color = IM_COL32(255, 0, 0, 255); 
+		break;
+	default: color = IM_COL32(255, 255, 0, 255); 
+		break;
+	}
+
+	glm::vec2 objPos = obj->GetPosition();
+	// Apply the engine's unconventional 2D position scaling (2.0f) to match DynamicSprite and Camera logic
+	glm::vec2 scaledPos = objPos * 2.0f;
+
+	float objRotVal = obj->GetRotate();
+	// Handle graphics API specific rotation direction (GL typically negates the angle)
+	if (Engine::GetRenderManager()->GetGraphicsMode() == GraphicsMode::GL)
+	{
+		objRotVal = -objRotVal;
+	}
+	float objRotRad = objRotVal * PI / 180.f;
+
+	if (phy->GetCollideType() == CollideType::POLYGON)
+	{
+		const auto& localPoints = phy->GetCollidePolygon();
+		if (localPoints.empty()) 
+		{
+			return;
+		}
+
+		std::vector<glm::vec2> screenPoints;
+		for (const auto& localPt : localPoints)
+		{
+			// Scale the local point by 2 to match the engine's 2D rendering scale
+			glm::vec2 scaledLocalPt = localPt * 2.0f;
+
+			// Rotate and scale local point
+			float cosTheta = cos(objRotRad);
+			float sinTheta = sin(objRotRad);
+			glm::vec2 worldPt = scaledPos + glm::vec2(scaledLocalPt.x * cosTheta - scaledLocalPt.y * sinTheta, scaledLocalPt.x * sinTheta + scaledLocalPt.y * cosTheta);
+
+			glm::vec2 screenPt = Engine::GetRenderManager()->WorldToScreen(glm::vec3(worldPt, 0.f), view, proj, mainCam);
+			screenPoints.push_back(screenPt);
+		}
+
+		for (size_t i = 0; i < screenPoints.size(); ++i)
+		{
+			glm::vec2 p1 = screenPoints[i];
+			glm::vec2 p2 = screenPoints[(i + 1) % screenPoints.size()];
+			if (p1.x >= 0 && p1.y >= 0 && p2.x >= 0 && p2.y >= 0)
+			{
+				Engine::GetRenderManager()->DrawClippedLine(drawList, p1, p2, color, 2.0f, mainCamIdx);
+			}
+		}
+	}
+	else if (phy->GetCollideType() == CollideType::CIRCLE)
+	{
+		// Scale radius by 2 to match the engine's 2D rendering scale
+		float radius = phy->GetCircleCollideRadius() * 2.0f;
+		glm::vec2 screenCenter = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos, 0.f), view, proj, mainCam);
+		glm::vec2 screenEdge = Engine::GetRenderManager()->WorldToScreen(glm::vec3(scaledPos.x + radius, scaledPos.y, 0.f), view, proj, mainCam);
+
+		float screenRadius = glm::distance(screenCenter, screenEdge);
+		if (screenCenter.x >= 0 && screenCenter.y >= 0 && !camManager.IsScreenPointOccluded(screenCenter, mainCamIdx))
+		{
+			drawList->AddCircle(ImVec2(screenCenter.x, screenCenter.y), screenRadius, color, 32, 2.0f);
+		}
+	}
+	drawList->PopClipRect();
 }
