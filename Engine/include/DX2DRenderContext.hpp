@@ -16,7 +16,7 @@ public:
 
 	void Initialize() override;
 	void OnResize() override;
-	void Execute(ICommandListWrapper* commandListWrapper) override;
+	void Execute(ICommandListWrapper* commandListWrapper, class Camera* camera = nullptr) override;
 	void CleanUp() override;
 private:
 	DXRenderManager* m_renderManager;

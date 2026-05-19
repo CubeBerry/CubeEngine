@@ -34,6 +34,7 @@ void GameStateManager::LevelInit()
 void GameStateManager::LevelInit(GameLevel currentLevel_)
 {
 	currentLevel = currentLevel_;
+	Engine::GetCameraManager().DeleteAllCameras();
 	LevelInit();
 	Engine::GetObjectManager().ProcessFunctionQueue();
 	state = State::UPDATE;
@@ -55,6 +56,7 @@ void GameStateManager::Update(float dt)
 		}
 		break;
 	case State::LOAD:
+		Engine::GetCameraManager().DeleteAllCameras();
 		LevelInit();
 		Engine::GetObjectManager().ProcessFunctionQueue();
 		Engine::Instance().GetTimer().Init(Engine::Instance().GetTimer().GetFrameRate());
@@ -172,14 +174,46 @@ void GameStateManager::UpdateGameLogic(float dt)
 	}
 	else
 	{
+		// Main thread — level logic (may call PlayAnimation, queue object ops)
 		levelList.at(static_cast<int>(currentLevel))->Update(dt);
-		Engine::GetObjectManager().Update(dt);
-		Engine::GetParticleManager().Update(dt);
+
+		auto& js = Engine::GetJobSystem();
+
+		// Parallel — object and particle updates
+		auto objectsHandle = js.QueueWork([dt]()
+		{
+			Engine::GetObjectManager().Update(dt);
+		});
+
+		auto particleHandle = js.QueueWork([dt]()
+		{
+			Engine::GetParticleManager().Update(dt);
+		});
+
+		js.WaitForAll({ objectsHandle, particleHandle });
+
+		// Bone matrix calculation
+		auto animHandle = js.QueueWork([dt]()
+		{
+			Engine::GetSkeletalAnimationManager().Update(dt);
+		});
+		js.WaitForWork(animHandle);
+
+		// GPU upload
+		Engine::GetRenderManager()->ProcessGPUCommands();
+
+		// Physics — after object updates (objects may modify velocities)
+		auto physicsHandle = js.QueueWork([dt]()
+		{
+			Engine::GetPhysicsManager().Update(dt);
+		});
+		js.WaitForWork(physicsHandle);
+
+		// Main thread — camera (uses InputManager directly for mouse mode)
 		Engine::GetCameraManager().Update();
-		Engine::GetPhysicsManager().Update(dt);
-		Engine::GetSpriteManager().Update(dt);
 	}
 }
+
 
 void GameStateManager::UpdateDraw(float dt)
 {

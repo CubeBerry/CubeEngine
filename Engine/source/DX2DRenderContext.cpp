@@ -38,7 +38,7 @@ void DX2DRenderContext::OnResize()
 
 }
 
-void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper)
+void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
@@ -53,10 +53,31 @@ void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 
 	// Set the viewport and scissor rect
 	// @TODO This is weird but FidelityFX class takes care of viewport size (display size, render size)
-	uint32_t renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
-	uint32_t renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
-	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(renderWidth), static_cast<FLOAT>(renderHeight), 0.f, 1.f };
-	D3D12_RECT scissorRect = { 0, 0, static_cast<LONG>(renderWidth), static_cast<LONG>(renderHeight) };
+	uint32_t renderWidth = m_renderManager->m_width;
+	uint32_t renderHeight = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		renderWidth = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		renderHeight = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
+
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera();
+	ViewportRect vp = activeCamera->GetViewport();
+
+	D3D12_VIEWPORT viewport = { 
+		static_cast<float>(vp.x * renderWidth), 
+		static_cast<float>(vp.y * renderHeight), 
+		static_cast<float>(vp.width * renderWidth), 
+		static_cast<float>(vp.height * renderHeight), 
+		0.0f, 1.0f 
+	};
+	D3D12_RECT scissorRect = { 
+		static_cast<LONG>(vp.x * renderWidth), 
+		static_cast<LONG>(vp.y * renderHeight), 
+		static_cast<LONG>((vp.x + vp.width) * renderWidth), 
+		static_cast<LONG>((vp.y + vp.height) * renderHeight) 
+	};
 
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
@@ -72,6 +93,19 @@ void DX2DRenderContext::Execute(ICommandListWrapper* commandListWrapper)
 		{
 			auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
 			auto* buffer = subMesh->GetBuffer<BufferWrapper::DXBuffer>();
+
+			// Update Matrices per camera
+			spriteData->vertexUniform.view = activeCamera->GetViewMatrix();
+			if (sprite->GetSpriteDrawType() == SpriteDrawType::UI)
+			{
+				glm::vec2 cameraViewSize = activeCamera->GetViewSize();
+				spriteData->vertexUniform.projection = glm::orthoRH_ZO(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+				spriteData->vertexUniform.view = glm::mat4(1.f);
+			}
+			else
+			{
+				spriteData->vertexUniform.projection = activeCamera->GetProjectionMatrix();
+			}
 
 			// Update Constant Buffer
 			spriteData->GetVertexUniformBuffer<DXConstantBuffer<TwoDimension::VertexUniform>>()->UpdateConstant(&spriteData->vertexUniform, sizeof(TwoDimension::VertexUniform), m_renderManager->m_frameIndex);

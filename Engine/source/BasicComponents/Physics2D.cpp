@@ -162,68 +162,100 @@ bool Physics2D::CheckCollision(Object* obj)
 
 bool Physics2D::CollisionPP(Object* obj, Object* obj2, CollisionMode mode)
 {
-    // Polygon vs Polygon collision using Separating Axis Theorem (SAT)
-    if (obj->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false &&
-        obj2->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
+    auto* physics1 = obj->GetComponent<Physics2D>();
+    auto* physics2 = obj2->GetComponent<Physics2D>();
+
+    if (physics1->GetCollidePolygon().empty() == false && physics2->GetCollidePolygon().empty() == false)
     {
-        std::vector<glm::vec2> rotatedPoints1;
-        std::vector<glm::vec2> rotatedPoints2;
-        float depth = INFINITY;
-        glm::vec2 normal = { 0.f, 0.f };
+        const auto& poly1 = physics1->GetCollidePolygon();
+        const auto& poly2 = physics2->GetCollidePolygon();
 
-        float min1 = INFINITY;
-        float min2 = INFINITY;
-        float max1 = -INFINITY;
-        float max2 = -INFINITY;
-
-        // Transform local vertices to world space based on object transform
-        for (const glm::vec2 point : collidePolygon)
+        if (poly1.empty() || poly2.empty())
         {
-            rotatedPoints1.push_back(RotatePoint(glm::vec2(obj->GetPosition()), point, DegreesToRadians(obj->GetRotate())));
+            return false;
         }
 
-        for (const glm::vec2 point : obj2->GetComponent<Physics2D>()->GetCollidePolygon())
+        // Use thread_local to avoid memory allocation overhead on every check
+        static thread_local std::vector<glm::vec2> rotatedPoints1;
+        static thread_local std::vector<glm::vec2> rotatedPoints2;
+        static thread_local std::vector<glm::vec2> collisionAxes;
+
+        rotatedPoints1.clear();
+        rotatedPoints2.clear();
+        collisionAxes.clear();
+
+        // 2D Rotation and Translation matrices
+        float angle1 = glm::radians(obj->GetRotate());
+        float angle2 = glm::radians(obj2->GetRotate());
+
+        glm::mat2 rotMat1(cos(angle1), sin(angle1), -sin(angle1), cos(angle1));
+        glm::mat2 rotMat2(cos(angle2), sin(angle2), -sin(angle2), cos(angle2));
+
+        glm::vec2 pos1 = obj->GetPosition();
+        glm::vec2 pos2 = obj2->GetPosition();
+
+        for (const auto& point : poly1)
         {
-            rotatedPoints2.push_back(RotatePoint(glm::vec2(obj2->GetPosition()), point, DegreesToRadians(obj2->GetRotate())));
+            rotatedPoints1.emplace_back((rotMat1 * point) + pos1);
+        }
+        for (const auto& point : poly2)
+        {
+            rotatedPoints2.emplace_back((rotMat2 * point) + pos2);
         }
 
-        // Test separating axes for the first polygon's edges
-        for (size_t i = 0; i < rotatedPoints1.size(); ++i)
+        // Temporal Coherence: Check previously saved separating axis first
+        auto cacheIterator = physics1->separatingAxisCache.find(physics2);
+        if (cacheIterator != physics1->separatingAxisCache.end())
         {
-            float axisDepth = 0.f;
-            glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
-            glm::vec2 axis = glm::vec2(-edge.y, edge.x); // Perpendicular vector (Normal)
-            axis = normalize(axis);
+            glm::vec2 cachedAxis = cacheIterator->second;
+            float dummyDepth, dummyMin1, dummyMax1, dummyMin2, dummyMax2;
 
-            if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
-            {
-                return false; // Gap found, no collision
-            }
-            if (axisDepth < depth)
-            {
-                depth = axisDepth;
-                normal = ((max1 - min2) < (max2 - min1)) ? axis : -axis;
-            }
-        }
-
-        // Test separating axes for the second polygon's edges
-        for (size_t i = 0; i < rotatedPoints2.size(); ++i)
-        {
-            float axisDepth = 0.f;
-            glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
-            glm::vec2 axis = glm::vec2(-edge.y, edge.x);
-            axis = normalize(axis);
-
-            if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &axisDepth, &min1, &max1, &min2, &max2))
+            if (IsSeparatingAxis(cachedAxis, rotatedPoints1, rotatedPoints2, &dummyDepth, &dummyMin1, &dummyMax1, &dummyMin2, &dummyMax2))
             {
                 return false;
             }
-            if (axisDepth < depth)
+        }
+
+        // Collect face normals as potential separating axes
+        for (size_t i = 0; i < rotatedPoints1.size(); ++i)
+        {
+            glm::vec2 edge = rotatedPoints1[(i + 1) % rotatedPoints1.size()] - rotatedPoints1[i];
+            glm::vec2 axisNormal = glm::normalize(glm::vec2(-edge.y, edge.x));
+            collisionAxes.push_back(axisNormal);
+        }
+        for (size_t i = 0; i < rotatedPoints2.size(); ++i)
+        {
+            glm::vec2 edge = rotatedPoints2[(i + 1) % rotatedPoints2.size()] - rotatedPoints2[i];
+            glm::vec2 axisNormal = glm::normalize(glm::vec2(-edge.y, edge.x));
+            collisionAxes.push_back(axisNormal);
+        }
+
+        float depth = FLT_MAX;
+        glm::vec2 normal(0.f);
+
+        // Test for separation along each axis
+        for (const auto& axis : collisionAxes)
+        {
+            float min1, max1, min2, max2;
+            float currentDepth;
+
+            if (IsSeparatingAxis(axis, rotatedPoints1, rotatedPoints2, &currentDepth, &min1, &max1, &min2, &max2))
             {
-                depth = axisDepth;
+                physics1->separatingAxisCache[physics2] = axis;
+                physics2->separatingAxisCache[physics1] = -axis;
+                return false;
+            }
+
+            if (currentDepth < depth)
+            {
+                depth = currentDepth;
                 normal = ((max1 - min2) < (max2 - min1)) ? axis : -axis;
             }
         }
+
+        // Collision confirmed. Clear cache to recalculate accurately next time.
+        physics1->separatingAxisCache.erase(physics2);
+        physics2->separatingAxisCache.erase(physics1);
 
         // Penetration resolution and collision response
         if (mode == CollisionMode::COLLIDE &&
@@ -235,10 +267,21 @@ bool Physics2D::CollisionPP(Object* obj, Object* obj2, CollisionMode mode)
             glm::vec2 obj2Center = glm::vec2(obj2->GetPosition());
             glm::vec2 direction = obj2Center - objCenter;
 
-            // Ensure the normal points from obj to obj2 for consistent collision response
-            if (glm::dot(direction, normal) < 0.f)
+            // Use relative velocity to determine the correct normal if objects are moving fast enough to cross midpoints
+            glm::vec2 relativeVel = obj2->GetComponent<Physics2D>()->GetVelocity() - obj->GetComponent<Physics2D>()->GetVelocity();
+            if (std::abs(glm::dot(relativeVel, normal)) > 0.1f)
             {
-                normal = -normal;
+                if (glm::dot(relativeVel, normal) > 0.f)
+                {
+                    normal = -normal;
+                }
+            }
+            else
+            {
+                if (glm::dot(direction, normal) < 0.f)
+                {
+                    normal = -normal;
+                }
             }
 
             // Apply Baumgarte stabilization technique (Slop)
@@ -389,9 +432,11 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir, CollisionMode mode)
     // Polygon vs Circle collision check
     glm::vec2 circleCenter = cir->GetPosition();
     float circleRadius = cir->GetComponent<Physics2D>()->GetCircleCollideRadius();
-    std::vector<glm::vec2> rotatedPoints;
+    // Use thread_local static vectors to minimize memory allocations during high-frequency collision checks.
+    static thread_local std::vector<glm::vec2> rotatedPoints;
+    rotatedPoints.clear();
 
-    glm::vec2 normal = { 0.f,0.f };
+    glm::vec2 normal = { 0.f, 0.f };
     float depth = INFINITY;
 
     float min1 = INFINITY;
@@ -445,9 +490,22 @@ bool Physics2D::CollisionPC(Object* poly, Object* cir, CollisionMode mode)
     // Ensure collision normal points from Polygon (A) to Circle (B)
     glm::vec2 polyCenter = FindSATCenter(rotatedPoints);
     glm::vec2 direction = circleCenter - polyCenter;
-    if (glm::dot(direction, normal) < 0.f)
+    
+    // Use relative velocity to determine the correct normal if objects are moving fast enough to cross midpoints
+    glm::vec2 relativeVel = cir->GetComponent<Physics2D>()->GetVelocity() - poly->GetComponent<Physics2D>()->GetVelocity();
+    if (std::abs(glm::dot(relativeVel, normal)) > 0.1f)
     {
-        normal = -normal;
+        if (glm::dot(relativeVel, normal) > 0.f)
+        {
+            normal = -normal;
+        }
+    }
+    else
+    {
+        if (glm::dot(direction, normal) < 0.f)
+        {
+            normal = -normal;
+        }
     }
 
     if (mode == CollisionMode::COLLIDE &&
@@ -487,8 +545,12 @@ bool Physics2D::CollisionPPWithoutPhysics(Object* obj, Object* obj2)
     if (obj->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false &&
         obj2->GetComponent<Physics2D>()->GetCollidePolygon().empty() == false)
     {
-        std::vector<glm::vec2> rotatedPoints1;
-        std::vector<glm::vec2> rotatedPoints2;
+        // Utilize thread_local static vectors to prevent costly heap allocations in parallel loops.
+        static thread_local std::vector<glm::vec2> rotatedPoints1;
+        static thread_local std::vector<glm::vec2> rotatedPoints2;
+        rotatedPoints1.clear();
+        rotatedPoints2.clear();
+
         float depth = INFINITY;
         glm::vec2 normal = { 0.f, 0.f };
 
@@ -710,69 +772,62 @@ glm::vec2 Physics2D::RotatePoint(const glm::vec2 point, const glm::vec2 size, fl
     return glm::vec2(x, y);
 }
 
-bool Physics2D::IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> points1, const std::vector<glm::vec2> points2, float* axisDepth, float* min1, float* max1, float* min2, float* max2)
+bool Physics2D::IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& points1, const std::vector<glm::vec2>& points2, float* axisDepth, float* min1, float* max1, float* min2, float* max2)
 {
-    // Project all points of both polygons onto the given axis
-    float minPoint1 = INFINITY;
-    float minPoint2 = INFINITY;
-    float maxPoint1 = -INFINITY;
-    float maxPoint2 = -INFINITY;
+    // Project both polygons onto an axis to check for overlap
+    float currentMin1 = FLT_MAX;
+    float currentMax1 = -FLT_MAX;
+    float currentMin2 = FLT_MAX;
+    float currentMax2 = -FLT_MAX;
 
-    for (const glm::vec2 point : points1)
+    for (const glm::vec2& vertex : points1)
     {
-        float projection = glm::dot(point, axis);
-        minPoint1 = std::min(minPoint1, projection);
-        maxPoint1 = std::max(maxPoint1, projection);
+        float projection = glm::dot(axis, vertex);
+        currentMin1 = std::min(currentMin1, projection);
+        currentMax1 = std::max(currentMax1, projection);
     }
 
-    for (const glm::vec2 point : points2)
+    for (const glm::vec2& vertex : points2)
     {
-        float projection = glm::dot(point, axis);
-        minPoint2 = std::min(minPoint2, projection);
-        maxPoint2 = std::max(maxPoint2, projection);
+        float projection = glm::dot(axis, vertex);
+        currentMin2 = std::min(currentMin2, projection);
+        currentMax2 = std::max(currentMax2, projection);
     }
 
-    // Check if the two projected ranges overlap
-    *axisDepth = std::min(maxPoint2 - minPoint1, maxPoint1 - minPoint2);
-    *min1 = minPoint1;
-    *max1 = maxPoint1;
-    *min2 = minPoint2;
-    *max2 = maxPoint2;
+    // Determine the amount of overlap along the axis
+    *axisDepth = std::min(currentMax2 - currentMin1, currentMax1 - currentMin2);
+    *min1 = currentMin1;
+    *max1 = currentMax1;
+    *min2 = currentMin2;
+    *max2 = currentMax2;
 
-    // Return true if there is a gap (separation)
-    return !(maxPoint1 >= minPoint2 && maxPoint2 >= minPoint1);
+    return !(currentMax1 >= currentMin2 && currentMax2 >= currentMin1);
 }
 
-bool Physics2D::IsSeparatingAxis(const glm::vec2 axis, const std::vector<glm::vec2> pointsPoly, const glm::vec2 pointCir, const float radius, float* axisDepth, float* min1, float* max1, float* min2, float* max2)
+bool Physics2D::IsSeparatingAxis(const glm::vec2& axis, const std::vector<glm::vec2>& pointsPoly, const glm::vec2& pointCircle, const float radius, float* axisDepth, float* min1, float* max1, float* min2, float* max2)
 {
-    // SAT projection for polygon vs circle
-    float minPoint1 = INFINITY;
-    float maxPoint1 = -INFINITY;
+    // Project polygon and circle onto an axis
+    float currentMin1 = FLT_MAX;
+    float currentMax1 = -FLT_MAX;
 
-    for (const glm::vec2 point : pointsPoly)
+    for (const glm::vec2& vertex : pointsPoly)
     {
-        float projection = glm::dot(point, axis);
-        minPoint1 = std::min(minPoint1, projection);
-        maxPoint1 = std::max(maxPoint1, projection);
+        float projection = glm::dot(vertex, axis);
+        currentMin1 = std::min(currentMin1, projection);
+        currentMax1 = std::max(currentMax1, projection);
     }
 
-    // For circle, the projection range is center +/- radius
-    glm::vec2 direction = normalize(axis);
-    glm::vec2 directionAndRadius = direction * radius;
+    float circleProjection = glm::dot(pointCircle, axis);
+    float currentMin2 = circleProjection - radius;
+    float currentMax2 = circleProjection + radius;
 
-    float p1 = glm::dot(pointCir + directionAndRadius, axis);
-    float p2 = glm::dot(pointCir - directionAndRadius, axis);
+    *axisDepth = std::min(currentMax2 - currentMin1, currentMax1 - currentMin2);
+    *min1 = currentMin1;
+    *max1 = currentMax1;
+    *min2 = currentMin2;
+    *max2 = currentMax2;
 
-    float minPoint2 = std::min(p1, p2);
-    float maxPoint2 = std::max(p1, p2);
-
-    *axisDepth = std::min(maxPoint2 - minPoint1, maxPoint1 - minPoint2);
-    *min1 = minPoint1;
-    *max1 = maxPoint1;
-    *min2 = minPoint2;
-    *max2 = maxPoint2;
-
-    return !(maxPoint1 >= minPoint2 && maxPoint2 >= minPoint1);
+    return !(currentMax1 >= currentMin2 && currentMax2 >= currentMin1);
 }
 
 void Physics2D::CalculateLinearVelocity(Physics2D& body, Physics2D& body2, glm::vec2 normal, float* /*axisDepth*/, glm::vec2 contactPoint)

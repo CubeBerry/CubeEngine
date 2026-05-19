@@ -4,6 +4,8 @@
 #pragma once
 #include "Interface/ICommandListWrapper.hpp"
 
+class Camera;
+
 class IRenderContext
 {
 public:
@@ -11,6 +13,6 @@ public:
 
 	virtual void Initialize() = 0;
 	virtual void OnResize() = 0;
-	virtual void Execute(ICommandListWrapper* commandListWrapper) = 0;
+	virtual void Execute(ICommandListWrapper* commandListWrapper, Camera* camera = nullptr) = 0;
 	virtual void CleanUp() = 0;
 };

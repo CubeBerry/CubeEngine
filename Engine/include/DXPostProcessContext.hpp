@@ -16,7 +16,7 @@ public:
 
 	void Initialize() override;
 	void OnResize() override;
-	void Execute(ICommandListWrapper* commandListWrapper) override;
+	void Execute(ICommandListWrapper* commandListWrapper, class Camera* camera = nullptr) override;
 	void CleanUp() override;
 
 	void UpdateScalePreset(const FidelityFX::UpscaleEffect& effect, const FfxFsr1QualityMode& mode, const FidelityFX::CASScalePreset& preset) const;

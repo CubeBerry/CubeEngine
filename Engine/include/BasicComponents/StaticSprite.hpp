@@ -17,7 +17,7 @@ public:
 		uint32_t primitiveIndexOffset;
 	};
 
-	StaticSprite() : ISprite() { Init(); spriteType = SpriteType::STATIC; };
+	StaticSprite() : ISprite() { spriteType = SpriteType::STATIC; };
 	~StaticSprite() override;
 
 	void Init() override;

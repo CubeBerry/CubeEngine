@@ -18,7 +18,7 @@
 void PlatformDemo::Init()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
-	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+	Engine::Instance().GetCameraManager().Init(Engine::Instance().GetWindow().GetWindowSize(), CameraType::Orthographic, 1.f);
 
 	platformDemoSystem = new PlatformDemoSystem();
 	platformDemoSystem->Init();
@@ -46,7 +46,7 @@ void PlatformDemo::Init()
 
 void PlatformDemo::Update(float dt)
 {
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}
@@ -57,6 +57,7 @@ void PlatformDemo::Update(float dt)
 void PlatformDemo::ImGuiDraw(float /*dt*/)
 {
 	Engine::GetSoundManager().MusicPlayerForImGui(0);
+	Engine::GetCameraManager().CameraControllerImGui();
 	//platformDemoSystem->UpdateMapEditorImGui();
 }
 

@@ -25,13 +25,13 @@ void PhysicsDemo::Init()
 void PhysicsDemo::Init3D()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::ThreeDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::ThreeDimension, 1.f);
-	Engine::GetCameraManager().SetNear(0.001f);
-	Engine::GetCameraManager().SetFar(1000.f);
-	Engine::GetCameraManager().SetBaseFov(22.5f);
-	Engine::GetCameraManager().SetCameraSensitivity(10.f);
-	Engine::GetCameraManager().SetCameraPosition({ 0.f,2.f,13.f });
-	Engine::GetCameraManager().SetTarget(glm::vec3{ 0.f, 0.f,0.f });
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Perspective, 1.f);
+	Engine::GetCameraManager().GetCamera()->SetNear(0.001f);
+	Engine::GetCameraManager().GetCamera()->SetFar(1000.f);
+	Engine::GetCameraManager().GetCamera()->SetBaseFov(22.5f);
+	Engine::GetCameraManager().GetCamera()->SetCameraSensitivity(10.f);
+	Engine::GetCameraManager().GetCamera()->SetCameraPosition({ 0.f,2.f,13.f });
+	Engine::GetCameraManager().GetCamera()->SetTarget(glm::vec3{ 0.f, 0.f,0.f });
 
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3{ 0.f,-2.f,0.f }, glm::vec3{ 20.f,20.f,1.f }, "PLANE", ObjectType::NONE);
 	Engine::GetObjectManager().GetLastObject()->SetXRotate(90.f);
@@ -60,7 +60,7 @@ void PhysicsDemo::Init3D()
 void PhysicsDemo::Init2D()
 {
 	Engine::GetRenderManager()->SetRenderType(RenderType::TwoDimension);
-	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::TwoDimension, 1.f);
+	Engine::GetCameraManager().Init(Engine::GetWindow().GetWindowSize(), CameraType::Orthographic, 1.f);
 
 	// Create 2D Floor
 	Engine::GetObjectManager().AddObject<Object>(glm::vec3(0.f, -300.f, 0.f), glm::vec3(1280.f, 50.f, 1.f), "Floor2D", ObjectType::NONE);
@@ -93,21 +93,21 @@ void PhysicsDemo::Update(float dt)
 			glm::vec3 movement(0.0f);
 			float speed = 200.0f * dt;
 
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::UP))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::UP))
 			{
-				movement += Engine::GetCameraManager().GetBackVector() * speed;
+				movement += Engine::GetCameraManager().GetCamera()->GetBackVector() * speed;
 			}
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::DOWN))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::DOWN))
 			{
-				movement -= Engine::GetCameraManager().GetBackVector() * speed;
+				movement -= Engine::GetCameraManager().GetCamera()->GetBackVector() * speed;
 			}
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::RIGHT))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::RIGHT))
 			{
-				movement += Engine::GetCameraManager().GetRightVector() * speed;
+				movement += Engine::GetCameraManager().GetCamera()->GetRightVector() * speed;
 			}
-			if (Engine::GetInputManager().IsKeyPressed(KEYBOARDKEYS::LEFT))
+			if (Engine::GetInputSnapshot().IsKeyPressed(KEYBOARDKEYS::LEFT))
 			{
-				movement -= Engine::GetCameraManager().GetRightVector() * speed;
+				movement -= Engine::GetCameraManager().GetCamera()->GetRightVector() * speed;
 			}
 
 
@@ -155,7 +155,7 @@ void PhysicsDemo::Update(float dt)
 		}
 	}
 
-	if (Engine::GetInputManager().IsKeyPressOnce(KEYBOARDKEYS::R))
+	if (Engine::GetInputSnapshot().IsKeyPressOnce(KEYBOARDKEYS::R))
 	{
 		Engine::GetGameStateManager().SetGameState(State::RESTART);
 	}
@@ -166,14 +166,14 @@ void PhysicsDemo::Update(float dt)
 void PhysicsDemo::ImGuiDraw(float /*dt*/)
 {
 	ImGui::Begin("Physics Control");
-	/*if (mode == PhysicsMode::ThreeDimension)
+	if (mode == PhysicsMode::ThreeDimension)
 	{
-		if (ImGui::Button("Switch to 2D"))
+		/*if (ImGui::Button("Switch to 2D"))
 		{
 			ClearScene();
 			mode = PhysicsMode::TwoDimension;
 			Init();
-		}
+		}*/
 	}
 	else
 	{
@@ -183,7 +183,26 @@ void PhysicsDemo::ImGuiDraw(float /*dt*/)
 			mode = PhysicsMode::ThreeDimension;
 			Init();
 		}
-	}*/
+	}
+
+
+	if (ImGui::Button("Spawn Object (Amount = 100)"))
+	{
+		if (mode == PhysicsMode::ThreeDimension)
+		{
+			for (int i = 0; i < 100; ++i)
+			{
+				Spawn3D();
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < 30; i++)
+			{
+				Spawn2D();
+			}
+		}
+	}
 
 	if (ImGui::Button("Spawn Object"))
 	{

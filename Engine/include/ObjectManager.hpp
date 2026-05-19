@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <mutex>
 #include <iostream>
 
 #include "glm/matrix.hpp"
@@ -73,6 +74,7 @@ public:
             return;
         }
 
+        std::lock_guard<std::mutex> lock(queueMutex);
         functionQueue.push_back([component, func]()
         {
             func(component);
@@ -87,6 +89,7 @@ public:
             std::cerr << "nullptr object!" << '\n';
             return;
         }
+        std::lock_guard<std::mutex> lock(queueMutex);
         functionQueue.push_back([object, func]() 
         {
             func(object);
@@ -130,6 +133,7 @@ private:
     float roughness = 0.3f;
 
     std::vector<std::function<void()>> functionQueue;
+    std::mutex queueMutex; // Protects functionQueue and objectsToBeDeleted
     //For ObjectController
     
     // Debug Options

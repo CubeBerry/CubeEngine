@@ -139,7 +139,10 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 
 #ifdef _DEBUG
 	// Initialize Descriptor3DNormal
-	vkDescriptor3DNormal = new VKDescriptor(vkInit, {}, {});
+	VKDescriptorLayout normalVertexLayout;
+	normalVertexLayout.descriptorType = VKDescriptorLayout::UNIFORM_DYNAMIC;
+	normalVertexLayout.descriptorCount = 1;
+	vkDescriptor3DNormal = new VKDescriptor(vkInit, { normalVertexLayout }, {});
 #endif
 
 	vkShader2D = new VKShader(vkInit->GetDevice());
@@ -203,8 +206,18 @@ void VKRenderManager::Initialize(SDL_Window* window_)
 	position_layout.format = VK_FORMAT_R32G32B32_SFLOAT;
 	position_layout.offset = offsetof(ThreeDimension::NormalVertex, position);
 
+	VKAttributeLayout normal_boneId_layout;
+	normal_boneId_layout.vertex_layout_location = 7;
+	normal_boneId_layout.format = VK_FORMAT_R32G32B32A32_SINT;
+	normal_boneId_layout.offset = offsetof(ThreeDimension::NormalVertex, boneIDs);
+
+	VKAttributeLayout normal_weight_layout;
+	normal_weight_layout.vertex_layout_location = 8;
+	normal_weight_layout.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	normal_weight_layout.offset = offsetof(ThreeDimension::NormalVertex, weights);
+
 	vkPipeline3DNormal = new VKPipeLine(vkInit->GetDevice(), vkDescriptor3DNormal->GetDescriptorSetLayout());
-	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
+	vkPipeline3DNormal->InitPipeLine(vkNormal3DShader->GetVertexModule(), vkNormal3DShader->GetFragmentModule(), vkSwapChain->GetSwapChainImageExtent(), &vkRenderPass, sizeof(ThreeDimension::NormalVertex), { position_layout, normal_boneId_layout, normal_weight_layout }, vkRenderTarget->GetMSAASamples(), VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_CULL_MODE_BACK_BIT, POLYGON_MODE::FILL, true, sizeof(glm::mat4), VK_SHADER_STAGE_VERTEX_BIT);
 #endif
 
 	// Uniform
@@ -820,6 +833,29 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
 		}
+#ifdef _DEBUG
+		if (m_normalVectorVisualization)
+		{
+			auto& vertexUniformBuffer = uniformBuffer3D.vertexUniformBuffer;
+			VkDescriptorSet* normalVertexDescriptorSet = &(*vkDescriptor3DNormal->GetVertexDescriptorSets())[frameIndex];
+			{
+				VkDescriptorBufferInfo bufferInfo;
+				bufferInfo.buffer = (*vertexUniformBuffer->GetUniformBuffers())[frameIndex];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(ThreeDimension::VertexUniform);
+
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = *normalVertexDescriptorSet;
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorWrite.pBufferInfo = &bufferInfo;
+
+				vkUpdateDescriptorSets(*vkInit->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+		}
+#endif
 		break;
 	}
 
@@ -891,174 +927,245 @@ bool VKRenderManager::BeginRender(glm::vec3 bgColor)
 
 	VkDeviceSize vertexBufferOffset{ 0 };
 
-	switch (rMode)
-	{
-	case RenderType::TwoDimension:
-	{
-		void* vertexMappedMemory = uniformBuffer2D.vertexUniformBuffer->GetMappedMemory(frameIndex);
-		void* fragmentMappedMemory = uniformBuffer2D.fragmentUniformBuffer->GetMappedMemory(frameIndex);
+	size_t cameraCount = Engine::GetCameraManager().GetCameraCount();
+	// @TODO Can I use dynamic polygon type (FILL or LINE)?
+	uint64_t subMeshIndex2D{ 0 };
+	uint64_t subMeshIndex3D{ 0 };
 
-		// Bind Pipeline
-		vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
-		for (size_t i = 0; i < sprites.size(); ++i)
+	void* vertexMappedMemory2D = nullptr;
+	void* fragmentMappedMemory2D = nullptr;
+	void* vertexMappedMemory3D = nullptr;
+	void* fragmentMappedMemory3D = nullptr;
+	void* materialMappedMemory3D = nullptr;
+
+	if (rMode == RenderType::TwoDimension) 
+	{
+		vertexMappedMemory2D = uniformBuffer2D.vertexUniformBuffer->GetMappedMemory(frameIndex);
+		fragmentMappedMemory2D = uniformBuffer2D.fragmentUniformBuffer->GetMappedMemory(frameIndex);
+	} 
+	else if (rMode == RenderType::ThreeDimension) 
+	{
+		vertexMappedMemory3D = uniformBuffer3D.vertexUniformBuffer->GetMappedMemory(frameIndex);
+		fragmentMappedMemory3D = uniformBuffer3D.fragmentUniformBuffer->GetMappedMemory(frameIndex);
+		materialMappedMemory3D = uniformBuffer3D.materialUniformBuffer->GetMappedMemory(frameIndex);
+	}
+
+	for (size_t c = 0; c < cameraCount; ++c)
+	{
+		Camera* cam = Engine::GetCameraManager().GetCamera(static_cast<int>(c));
+		if (cam == nullptr || !cam->GetIsActive()) continue;
+
+		ViewportRect vp = cam->GetViewport();
+		viewport.x = vp.x * static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->width);
+		viewport.y = vp.y * static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
+		viewport.width = vp.width * static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->width);
+		viewport.height = vp.height * static_cast<float>(vkSwapChain->GetSwapChainImageExtent()->height);
+		vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+
+		// Clear only the camera's viewport region
+		VkClearAttachment clearAttachments[2] = {};
+		clearAttachments[0].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		clearAttachments[0].colorAttachment = 0;
+		clearAttachments[0].clearValue.color = { {bgColor.r, bgColor.g, bgColor.b, 1.f} };
+		clearAttachments[1].aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		clearAttachments[1].clearValue.depthStencil = { 1.f, 0 };
+
+		VkClearRect clearRect = {};
+		clearRect.rect.offset = { static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y) };
+		clearRect.rect.extent = { static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height) };
+		clearRect.baseArrayLayer = 0;
+		clearRect.layerCount = 1;
+
+		vkCmdClearAttachments(*currentCommandBuffer, 2, clearAttachments, 1, &clearRect);
+
+		switch (rMode)
 		{
-			for (auto& subMesh : sprites[i]->GetSubMeshes())
+		case RenderType::TwoDimension:
+		{
+			// Bind Pipeline
+			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLine());
+			for (size_t i = 0; i < sprites.size(); ++i)
 			{
-				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
-				auto* buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
-				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer->vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-				// Dynamic Viewport & Scissor
-				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				// Bind Vertex DescriptorSet
-				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
-				size_t uniformSize = sizeof(TwoDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+				for (auto& subMesh : sprites[i]->GetSubMeshes())
+				{
+					auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite2D>();
+					auto* buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
 
-				TwoDimension::VertexUniform* vertexDest = (TwoDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = spriteData->vertexUniform;
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
+					spriteData->vertexUniform.view = cam->GetViewMatrix();
+					if (sprites[i]->GetSpriteDrawType() == SpriteDrawType::UI)
+					{
+						glm::vec2 cameraViewSize = cam->GetViewSize();
+						spriteData->vertexUniform.projection = glm::ortho(-cameraViewSize.x, cameraViewSize.x, -cameraViewSize.y, cameraViewSize.y, -1.f, 1.f);
+						// Flip y-axis for Vulkan
+						spriteData->vertexUniform.projection[1][1] *= -1;
+						spriteData->vertexUniform.view = glm::mat4(1.f);
+					}
+					else
+					{
+						spriteData->vertexUniform.projection = cam->GetProjectionMatrix();
+					}
 
-				// Bind Fragment DescriptorSet
-				uniformSize = sizeof(TwoDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(i * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+					// Bind Vertex Buffer
+					vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer->vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+					// Bind Index Buffer
+					vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+					// Dynamic Viewport & Scissor (set above per camera, scissor is same)
+					// vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
+					vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+					
+					// Bind Vertex DescriptorSet
+					size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
+					size_t uniformSize = sizeof(TwoDimension::VertexUniform);
+					uint32_t dynamicOffset = static_cast<uint32_t>(subMeshIndex2D * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-				TwoDimension::FragmentUniform* fragmentDest = (TwoDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = spriteData->fragmentUniform;
+					TwoDimension::VertexUniform* vertexDest = (TwoDimension::VertexUniform*)((uint8_t*)vertexMappedMemory2D + dynamicOffset);
+					*vertexDest = spriteData->vertexUniform;
+					vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
 
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 1, &dynamicOffset);
-				// Change Primitive Topology
-				//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-				//Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(spriteData->indices.size()), 1, 0, 0, 0);
+					// Bind Fragment DescriptorSet
+					uniformSize = sizeof(TwoDimension::FragmentUniform);
+					dynamicOffset = static_cast<uint32_t>(subMeshIndex2D * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+
+					TwoDimension::FragmentUniform* fragmentDest = (TwoDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory2D + dynamicOffset);
+					*fragmentDest = spriteData->fragmentUniform;
+
+					vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline2D->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 1, &dynamicOffset);
+					//Draw
+					vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(spriteData->indices.size()), 1, 0, 0, 0);
+
+					subMeshIndex2D++;
+				}
 			}
 		}
-		uniformBuffer2D.vertexUniformBuffer->UnmapMemory(frameIndex);
-		uniformBuffer2D.fragmentUniformBuffer->UnmapMemory(frameIndex);
-	}
-	break;
-	case RenderType::ThreeDimension:
-		void* vertexMappedMemory = uniformBuffer3D.vertexUniformBuffer->GetMappedMemory(frameIndex);
-		void* fragmentMappedMemory = uniformBuffer3D.fragmentUniformBuffer->GetMappedMemory(frameIndex);
-		void* materialMappedMemory = uniformBuffer3D.materialUniformBuffer->GetMappedMemory(frameIndex);
-
-		// @TODO Can I use dynamic polygon type (FILL or LINE)?
-		uint64_t subMeshIndex{ 0 };
-		for (const auto& sprite : sprites)
-		{
-			for (auto& subMesh : sprite->GetSubMeshes())
+		break;
+		case RenderType::ThreeDimension:
+			for (const auto& sprite : sprites)
 			{
-				auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
-				auto* buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
-				// Bind Pipeline
-				auto* pipeline = pMode == PolygonType::FILL ? vkPipeline3D : vkPipeline3DLine;
-				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLine());
-				// Bind Vertex Buffer
-				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer->vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-				// Bind Index Buffer
-				vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-				// Dynamic Viewport & Scissor
-				vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-				// Bind Vertex DescriptorSet
-				size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
-				size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
-				uint32_t dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+				for (auto& subMesh : sprite->GetSubMeshes())
+				{
+					auto* spriteData = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>();
+					auto* buffer = subMesh->GetBuffer<BufferWrapper::VKBuffer>();
 
-				ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory + dynamicOffset);
-				*vertexDest = spriteData->vertexUniform;
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
+					spriteData->vertexUniform.view = cam->GetViewMatrix();
+					spriteData->vertexUniform.projection = cam->GetProjectionMatrix();
+					glm::mat4 inverseView = glm::inverse(spriteData->vertexUniform.view);
+					spriteData->vertexUniform.viewPosition = glm::vec4(inverseView[3].x, inverseView[3].y, inverseView[3].z, 1.0f);
 
-				// Bind Fragment DescriptorSet
-				uint32_t dynamicOffsets[2];
-				// Fragment Uniform Offset
-				uniformSize = sizeof(ThreeDimension::FragmentUniform);
-				dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[0] = dynamicOffset;
+					// Bind Pipeline
+					auto* pipeline = pMode == PolygonType::FILL ? vkPipeline3D : vkPipeline3DLine;
+					vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLine());
+					// Bind Vertex Buffer
+					vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, buffer->vertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+					// Bind Index Buffer
+					vkCmdBindIndexBuffer(*currentCommandBuffer, *buffer->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+					// Dynamic Viewport & Scissor (viewport set above)
+					vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
 
-				ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory + dynamicOffset);
-				*fragmentDest = spriteData->fragmentUniform;
+					// Bind Vertex DescriptorSet
+					size_t alignment = vkInit->GetMinUniformBufferOffsetAlignment();
+					size_t uniformSize = sizeof(ThreeDimension::VertexUniform);
+					uint32_t dynamicOffset = static_cast<uint32_t>(subMeshIndex3D * ((uniformSize + alignment - 1) & ~(alignment - 1)));
 
-				// Material Uniform Offset
-				uniformSize = sizeof(ThreeDimension::Material);
-				dynamicOffset = static_cast<uint32_t>(subMeshIndex * ((uniformSize + alignment - 1) & ~(alignment - 1)));
-				dynamicOffsets[1] = dynamicOffset;
+					ThreeDimension::VertexUniform* vertexDest = (ThreeDimension::VertexUniform*)((uint8_t*)vertexMappedMemory3D + dynamicOffset);
+					*vertexDest = spriteData->vertexUniform;
+					vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 0, 1, currentVertexDescriptorSet, 1, &dynamicOffset);
 
-				ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory + dynamicOffset);
-				*materialDest = spriteData->material;
+					// Bind Fragment DescriptorSet
+					uint32_t dynamicOffsets[2];
+					// Fragment Uniform Offset
+					uniformSize = sizeof(ThreeDimension::FragmentUniform);
+					dynamicOffset = static_cast<uint32_t>(subMeshIndex3D * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+					dynamicOffsets[0] = dynamicOffset;
 
-				// @TODO do not use magic number for dynamicOffsetCount
-				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
+					ThreeDimension::FragmentUniform* fragmentDest = (ThreeDimension::FragmentUniform*)((uint8_t*)fragmentMappedMemory3D + dynamicOffset);
+					*fragmentDest = spriteData->fragmentUniform;
 
-				// Change Primitive Topology
-				// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-				// vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
-				// Push Constant Active Lights
-				pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
-				pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
-				vkCmdPushConstants(*currentCommandBuffer, *pipeline->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
-				// Draw
-				vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(spriteData->indices.size()), 1, 0, 0, 0);
+					// Material Uniform Offset
+					uniformSize = sizeof(ThreeDimension::Material);
+					dynamicOffset = static_cast<uint32_t>(subMeshIndex3D * ((uniformSize + alignment - 1) & ~(alignment - 1)));
+					dynamicOffsets[1] = dynamicOffset;
+
+					ThreeDimension::Material* materialDest = (ThreeDimension::Material*)((uint8_t*)materialMappedMemory3D + dynamicOffset);
+					*materialDest = spriteData->material;
+
+					vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline->GetPipeLineLayout(), 1, 1, currentFragmentDescriptorSet, 2, dynamicOffsets);
+
+					pushConstants.activeDirectionalLight = static_cast<int>(directionalLightUniforms.size());
+					pushConstants.activePointLight = static_cast<int>(pointLightUniforms.size());
+					vkCmdPushConstants(*currentCommandBuffer, *pipeline->GetPipeLineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pushConstants);
+					// Draw
+					vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(spriteData->indices.size()), 1, 0, 0, 0);
 
 #ifdef _DEBUG
-				if (m_normalVectorVisualization)
-				{
-					VkBuffer* normalVertexBuffer = buffer->normalVertexBuffer->GetVertexBuffer();
-					//Bind Pipeline
-					vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLine());
-					//Bind Vertex Buffer
-					vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, normalVertexBuffer, &vertexBufferOffset);
-					//Dynamic Viewport & Scissor
-					vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-					vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-					//Change Primitive Topology
-					//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-					//Push Constant Model-To_NDC
-					auto& vertexUniform = spriteData->vertexUniform;
-					glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
-					vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DNormal->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &modelToNDC);
-					//Draw
-					vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(spriteData->normalVertices.size()), 1, 0, 0);
-				}
+					if (m_normalVectorVisualization)
+					{
+						VkBuffer* normalVertexBuffer = buffer->normalVertexBuffer->GetVertexBuffer();
+						//Bind Pipeline
+						vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLine());
+						//Bind Vertex Buffer
+						vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, normalVertexBuffer, &vertexBufferOffset);
+						//Dynamic Viewport & Scissor (viewport set above)
+						vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+
+						// Bind Vertex DescriptorSet (for bone matrices)
+						size_t normalAlignment = vkInit->GetMinUniformBufferOffsetAlignment();
+						size_t normalUniformSize = sizeof(ThreeDimension::VertexUniform);
+						uint32_t normalDynamicOffset = static_cast<uint32_t>(subMeshIndex3D * ((normalUniformSize + normalAlignment - 1) & ~(normalAlignment - 1)));
+						VkDescriptorSet* normalVertexDescriptorSet = &(*vkDescriptor3DNormal->GetVertexDescriptorSets())[frameIndex];
+						vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DNormal->GetPipeLineLayout(), 0, 1, normalVertexDescriptorSet, 1, &normalDynamicOffset);
+
+						//Push Constant Model-To_NDC
+						auto& vertexUniform = spriteData->vertexUniform;
+						glm::mat4 modelToNDC = vertexUniform.projection * vertexUniform.view * vertexUniform.model;
+						vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DNormal->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &modelToNDC);
+						//Draw
+						vkCmdDraw(*currentCommandBuffer, static_cast<uint32_t>(spriteData->normalVertices.size()), 1, 0, 0);
+					}
 #endif
 
-				subMeshIndex++;
+					subMeshIndex3D++;
+				}
 			}
-		}
 
+			if (m_skyboxEnabled)
+			{
+				//Skybox
+				//Bind Vertex Buffer
+				vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
+				//Bind Pipeline
+				vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
+				//Dynamic Viewport & Scissor (viewport set above)
+				vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
+				//Bind Vertex DescriptorSet
+				vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
+				//Push Constant World-To_NDC
+				glm::mat4 projection = cam->GetProjectionMatrix();
+				if (cam->GetCameraType() == CameraType::Orthographic)
+				{
+					float aspect = (scissor.extent.width) / (float)(scissor.extent.height);
+					projection = glm::perspective(glm::radians(cam->GetBaseFov()), aspect, 0.1f, 10.f);
+					projection[1][1] *= -1; // Vulkan Y-flip
+				}
+
+				glm::mat4 transform[2] = { cam->GetViewMatrix(), projection };
+				vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
+				//Draw
+				vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
+			}
+			break;
+		}
+	}
+
+	if (rMode == RenderType::TwoDimension) 
+	{
+		uniformBuffer2D.vertexUniformBuffer->UnmapMemory(frameIndex);
+		uniformBuffer2D.fragmentUniformBuffer->UnmapMemory(frameIndex);
+	} 
+	else if (rMode == RenderType::ThreeDimension) 
+	{
 		uniformBuffer3D.vertexUniformBuffer->UnmapMemory(frameIndex);
 		uniformBuffer3D.fragmentUniformBuffer->UnmapMemory(frameIndex);
 		uniformBuffer3D.materialUniformBuffer->UnmapMemory(frameIndex);
-
-		if (m_skyboxEnabled)
-		{
-			//Skybox
-			//Bind Vertex Buffer
-			vkCmdBindVertexBuffers(*currentCommandBuffer, 0, 1, skyboxVertexBuffer->GetVertexBuffer(), &vertexBufferOffset);
-			//Bind Pipeline
-			vkCmdBindPipeline(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLine());
-			//Dynamic Viewport & Scissor
-			vkCmdSetViewport(*currentCommandBuffer, 0, 1, &viewport);
-			vkCmdSetScissor(*currentCommandBuffer, 0, 1, &scissor);
-			//Bind Vertex DescriptorSet
-			vkCmdBindDescriptorSets(*currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkPipeline3DSkybox->GetPipeLineLayout(), 0, 1, currentFragmentSkyboxDescriptorSet, 0, nullptr);
-			//Change Primitive Topology
-			//vkCmdSetPrimitiveTopology(*currentCommandBuffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-			//Push Constant World-To_NDC
-			glm::mat4 transform[2] = { Engine::GetCameraManager().GetViewMatrix(), Engine::GetCameraManager().GetProjectionMatrix() };
-			vkCmdPushConstants(*currentCommandBuffer, *vkPipeline3DSkybox->GetPipeLineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) * 2, &transform[0]);
-			//Draw
-			//vkCmdDrawIndexed(*currentCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-			vkCmdDraw(*currentCommandBuffer, 36, 1, 0, 0);
-		}
-
-		break;
 	}
 
 	imguiManager->Begin();

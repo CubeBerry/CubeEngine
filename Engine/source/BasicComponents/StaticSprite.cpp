@@ -126,7 +126,7 @@ void StaticSprite::UpdateView()
 	for (auto& subMesh : subMeshes)
 	{
 		auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
-		vertexUniform.view = Engine::GetCameraManager().GetViewMatrix();
+		vertexUniform.view = Engine::GetCameraManager().GetCamera()->GetViewMatrix();
 		// @TODO move to push constants later
 		glm::mat4 inverseView = glm::inverse(vertexUniform.view);
 		vertexUniform.viewPosition = glm::vec4(
@@ -143,7 +143,7 @@ void StaticSprite::UpdateProjection()
 	for (auto& subMesh : subMeshes)
 	{
 		auto& vertexUniform = subMesh->GetData<BufferWrapper::DynamicSprite3DMesh>()->vertexUniform;
-		vertexUniform.projection = Engine::GetCameraManager().GetProjectionMatrix();
+		vertexUniform.projection = Engine::GetCameraManager().GetCamera()->GetProjectionMatrix();
 	}
 }
 
