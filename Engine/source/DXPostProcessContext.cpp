@@ -191,25 +191,8 @@ void DXPostProcessContext::UpdateScalePreset(const FidelityFX::UpscaleEffect& ef
 			{
 				m_fidelityFX->OnResize(m_renderManager->m_device, m_renderManager->m_width, m_renderManager->m_height);
 
-				// @TODO Recreate Render Target should not be here! It's just temporary solution, must be handled properly in RenderManager
-				m_renderManager->m_renderTarget.reset();
-				m_renderManager->m_renderTarget = std::make_unique<DXRenderTarget>(
-					m_renderManager->m_device, Engine::GetWindow().GetWindow(),
-					m_fidelityFX->GetRenderWidth(),
-					m_fidelityFX->GetRenderHeight(),
-					m_renderManager->m_deferredRenderingEnabled
-				);
-				// Allocate SRV handle for tone mapping
-				// @TODO This should be inside DXRenderTarget
-				m_renderManager->m_renderTarget->CreateSRV(m_renderManager->m_hdrSrvHandle.first);
-
-				if (m_renderManager->m_deferredRenderingEnabled)
-				{
-					m_renderManager->m_gBufferContext->OnResize();
-					m_renderManager->m_globalLightingContext->OnResize();
-					m_renderManager->m_localLightingContext->OnResize();
-					m_renderManager->m_naiveLightingContext->OnResize();
-				}
+				// Recreate render targets and dependent contexts due to FSR resolution change
+				m_renderManager->RecreateRenderTargets();
 			}
 
 			return true;

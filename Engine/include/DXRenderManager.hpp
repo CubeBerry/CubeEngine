@@ -72,6 +72,7 @@ private:
 	int m_width, m_height;
 	bool m_isResize{ false };
 	void OnResize();
+	void RecreateRenderTargets();
 	void WaitForGPU();
 
 	// Initialize DirectX 12 components
