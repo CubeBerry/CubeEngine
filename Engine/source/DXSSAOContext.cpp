@@ -91,8 +91,14 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 	DXCommandListWrapper* dxCommandListWrapper = dynamic_cast<DXCommandListWrapper*>(commandListWrapper);
 	ID3D12GraphicsCommandList10* commandList = dxCommandListWrapper->GetDXCommandList();
 
-	int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
-	int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
+	uint32_t width = m_renderManager->m_width;
+	uint32_t height = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		width = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		height = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
 
 	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
 	ViewportRect vp = activeCamera->GetViewport();
@@ -202,8 +208,14 @@ void DXSSAOContext::CleanUp()
 
 void DXSSAOContext::CreateSSAOResources()
 {
-	const int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
-	const int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
+	uint32_t width = m_renderManager->m_width;
+	uint32_t height = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		width = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		height = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
 
 	// 1. Create SSAO Render Target
 	D3D12_RESOURCE_DESC textureDesc = {};
@@ -251,8 +263,14 @@ void DXSSAOContext::CreateSSAOResources()
 
 void DXSSAOContext::CreateBlurResources()
 {
-	const int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
-	const int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
+	uint32_t width = m_renderManager->m_width;
+	uint32_t height = m_renderManager->m_height;
+
+	if (m_renderManager->m_postProcessContext->GetFidelityFX()->GetCurrentEffect() != FidelityFX::UpscaleEffect::NONE)
+	{
+		width = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderWidth();
+		height = m_renderManager->m_postProcessContext->GetFidelityFX()->GetRenderHeight();
+	}
 
 	// 1. Create SSAO Render Target
 	D3D12_RESOURCE_DESC textureDesc = {};
