@@ -97,8 +97,10 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
 	ViewportRect vp = activeCamera->GetViewport();
 
-	// Set Viewport and Scissor Rect
-	D3D12_VIEWPORT viewport = { vp.x * width, vp.y * height, vp.width * width, vp.height * height, 0.f, 1.f };
+	// Keep Viewport as full screen so the full-screen quad's SV_Position perfectly maps to the G-Buffer size.
+	// This ensures `input.uv` goes from 0 to 1 across the ENTIRE texture, matching the G-Buffer coordinates.
+	// We use the Scissor Rect to clip the actual rendering to only the camera's region.
+	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
 	D3D12_RECT scissorRect = {
 		static_cast<LONG>(vp.x * width),
 		static_cast<LONG>(vp.y * height),
