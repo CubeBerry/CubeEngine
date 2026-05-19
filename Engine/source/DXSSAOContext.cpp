@@ -136,7 +136,7 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	float clearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 1, &scissorRect);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
 	D3D12_GPU_DESCRIPTOR_HANDLE gBufferGpuHandle = m_renderManager->m_srvHeap->GetGPUDescriptorHandleForHeapStart();
@@ -158,7 +158,7 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 
 	rtvHandle = m_blurIntermediateRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 1, &scissorRect);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	pushConstants.blurDirection = glm::ivec2(1, 0);
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
@@ -181,7 +181,7 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* cam
 
 	rtvHandle = m_blurRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 1, &scissorRect);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	pushConstants.blurDirection = glm::ivec2(0, 1);
 	commandList->SetGraphicsRoot32BitConstants(0, sizeof(PushConstants) / 4, &pushConstants, 0);
