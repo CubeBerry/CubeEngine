@@ -268,7 +268,7 @@ void DXGBufferContext::Execute(ICommandListWrapper* commandListWrapper, Camera* 
 	{
 		CD3DX12_CPU_DESCRIPTOR_HANDLE currentRtvHandle(rtvHandle, static_cast<INT>(i), rtvDescriptorSize);
 		float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		commandList->ClearRenderTargetView(currentRtvHandle, clearColor, 1, &scissorRect);
+		commandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 	}
 
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvHandles;
