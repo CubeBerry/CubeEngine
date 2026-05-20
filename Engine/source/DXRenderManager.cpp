@@ -338,6 +338,20 @@ void DXRenderManager::OnResize()
 	// Recreate FidelityFX
 	m_postProcessContext->OnResize();
 
+	RecreateRenderTargets();
+
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+	//OutputDebugStringA("OnResize: Finished successfully.\n");
+
+	UINT64 completedValue = m_fence->GetCompletedValue();
+	for (auto& fenceValue : m_fenceValues)
+	{
+		fenceValue = completedValue;
+	}
+}
+
+void DXRenderManager::RecreateRenderTargets()
+{
 	// unique_ptr's release() == give up ownership, does not deallocate memory
 	// unique_ptr's reset() == deallocate the memory
 	m_renderTarget.reset();
@@ -361,16 +375,9 @@ void DXRenderManager::OnResize()
 		m_localLightingContext->OnResize();
 		m_naiveLightingContext->OnResize();
 	}
-
-	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-	//OutputDebugStringA("OnResize: Finished successfully.\n");
-
-	UINT64 completedValue = m_fence->GetCompletedValue();
-	for (auto& fenceValue : m_fenceValues)
-	{
-		fenceValue = completedValue;
-	}
 }
+
+
 
 bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 {
@@ -527,6 +534,8 @@ bool DXRenderManager::BeginRender(glm::vec3 bgColor)
 
 				if (c == 0) m_shadowMapContext->Execute(&wrapper, cam);
 				m_gBufferContext->Execute(&wrapper, cam);
+				// SSAO must run after G-Buffer (reads position/normal) and before GlobalLighting (reads AO result)
+				m_ssaoContext->Execute(&wrapper, cam);
 				//m_naiveLightingContext->Execute(&wrapper, cam);
 				m_globalLightingContext->Execute(&wrapper, cam);
 				if (!m_meshletVisualization) m_localLightingContext->Execute(&wrapper, cam);

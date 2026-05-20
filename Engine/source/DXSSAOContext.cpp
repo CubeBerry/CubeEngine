@@ -84,7 +84,7 @@ void DXSSAOContext::OnResize()
 	m_renderManager->m_device->CopyDescriptorsSimple(4, destHandle, srcHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
+void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper, Camera* camera)
 {
 	if (!m_enabled) return;
 
@@ -94,15 +94,24 @@ void DXSSAOContext::Execute(ICommandListWrapper* commandListWrapper)
 	int width = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderWidth();
 	int height = m_renderManager->GetPostProcessContext()->GetFidelityFX()->GetRenderHeight();
 
+	Camera* activeCamera = camera ? camera : Engine::GetCameraManager().GetCamera(Engine::GetCameraManager().GetMainCameraIndex());
+	//ViewportRect vp = activeCamera->GetViewport();
+
 	// Set Viewport and Scissor Rect
 	D3D12_VIEWPORT viewport = { 0.f, 0.f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.f, 1.f };
 	D3D12_RECT scissorRect = { 0, 0, width, height };
+	//D3D12_RECT scissorRect = {
+	//	static_cast<LONG>(vp.x * width),
+	//	static_cast<LONG>(vp.y * height),
+	//	static_cast<LONG>((vp.x + vp.width) * width),
+	//	static_cast<LONG>((vp.y + vp.height) * height)
+	//};
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
 
 	// Update Push Constants
-	pushConstants.view = Engine::GetCameraManager().GetViewMatrix();
-	pushConstants.projection = Engine::GetCameraManager().GetProjectionMatrix();
+	pushConstants.view = activeCamera->GetViewMatrix();
+	pushConstants.projection = activeCamera->GetProjectionMatrix();
 	pushConstants.radius = m_radius;
 	pushConstants.scale = m_scale;
 	pushConstants.contrast = m_contrast;
