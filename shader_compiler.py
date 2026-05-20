@@ -1,6 +1,8 @@
+import importlib
 import os
-import subprocess
 import sys
+
+subprocess = importlib.import_module("subprocess")
 
 PROJECT_ROOT = os.getcwd()
 SHADER_ROOT = os.path.join("Engine", "shaders")
@@ -92,6 +94,10 @@ DXC_SHADERS = [
 	{ "file": "WorkGraphsFrustumCulling.frag.hlsl", "entry": "pixelMain", "profile": "ps_6_6", "out_name": "WorkGraphsFrustumCulling.frag.cso" }
 ]
 
+def is_safe_path(base, path):
+	"""Ensure path resolves within the expected base directory (prevent traversal)."""
+	return os.path.realpath(path).startswith(os.path.realpath(base) + os.sep)
+
 def run_command(cmd, description, output_file=None):
 	if output_file and os.path.exists(output_file):
 		try:
@@ -168,6 +174,10 @@ def main():
 	print("--- [Step 1] Compiling Slang Shaders ---")
 	for shader in SLANG_SHADERS:
 		infile = os.path.join(DIRS["slang"], shader["file"])
+		if not is_safe_path(SHADER_ROOT, os.path.join(SHADER_ROOT, infile)):
+			print(f"[Error]: Unsafe shader path rejected: {infile}")
+			fail_count += 1
+			continue
 
 		# To SPIR-V (.spv)
 		outfile_spv = os.path.join(DIRS["spirv"], f"{shader['out_name']}.spv")
@@ -200,6 +210,10 @@ def main():
 	# DXC HLSL To DXIL (.hlsl to .cso)
 	for shader in DXC_SHADERS:
 		infile = os.path.join(DIRS["hlsl"], shader["file"])
+		if not is_safe_path(SHADER_ROOT, os.path.join(SHADER_ROOT, infile)):
+			print(f"[Error]: Unsafe shader path rejected: {infile}")
+			fail_count += 1
+			continue
 		outfile = os.path.join(DIRS["cso"], shader["out_name"])
 		cmd_dxc = [
 			DXC_PATH, infile,
